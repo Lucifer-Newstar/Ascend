@@ -181,3 +181,15 @@ def test_warm_ups_are_not_working_sets() -> None:
     )
     t = prog.next_target(BENCH, [s], NOW)
     assert t.sets == 2 and t.inputs["last_sets"] == "8, 8"
+
+
+def test_bodyweight_above_the_top_never_gets_a_lower_target() -> None:
+    # 22 bodyweight reps is above the 12-20 zone: the next target is 23, not 21
+    pushup = ExerciseInfo("X", "bodyweight", "reps", "compound", "push")
+    hist = [SessionRec(NOW - timedelta(days=1), (SetRec(22, 0.0, None),))]
+    t = prog.next_target(pushup, hist, NOW)
+    assert (t.reason, t.reps) == ("top_no_load", 23)
+    held = prog.next_target(pushup, hist, NOW, readiness=0.0)
+    assert held.reason == "hold_recovering" and held.reps == 22
+    capped = [SessionRec(NOW - timedelta(days=1), (SetRec(35, 0.0, None),))]
+    assert prog.next_target(pushup, capped, NOW).reps == 35

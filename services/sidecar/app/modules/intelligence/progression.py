@@ -583,7 +583,10 @@ def _reps_target(
         return make("hold", "criterion_confirm", why, skill.target, load)
     if all_top:
         if inc is None:
-            reps = min(MAX_BODYWEIGHT_REPS, hi + 1)
+            # One rep past the top or past what was done, whichever is more: a set already
+            # above the range must never get a lower "up" target (capped at 30 unless the
+            # sets were already above that, then they are repeated).
+            reps = min(max(hi, min_reps) + 1, max(MAX_BODYWEIGHT_REPS, min_reps))
             return make(
                 "up_reps",
                 "top_no_load",
