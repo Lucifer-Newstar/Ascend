@@ -4,6 +4,51 @@ All notable changes to ASCEND. Versions follow [Semantic Versioning](https://sem
 entries are grouped from Conventional Commits and written for users first.
 Formula and model versions are listed where a number you see could change.
 
+## [0.3.0] - 2026-10-20
+
+Release notes: [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md).
+
+### Import, export and backups
+- New **Import & export** screen: pick or drop a Strong or Hevy CSV, preview what will be
+  imported (sessions, sets, unmatched exercise names, dropped rows), then confirm.
+  Re-importing the same file adds nothing. Imported history counts towards muscle load and
+  PRs but gives no XP, and History marks imported sessions with their source.
+- Backups (engine only, no screen yet): `POST /backup` writes an `.ascendbak` file
+  (SQLite snapshot plus a manifest with a SHA-256 checksum), `GET /backups` lists them and
+  `POST /restore` restores one after first saving a safety copy of the current data.
+- Before an update migrates the database, the old database is backed up automatically;
+  the newest 5 automatic copies are kept.
+
+### Coach
+- Every local-AI reply is checked before you see it. A reply with a number that is not in
+  your data or your question (rounding within 2%, same unit), a medicine or dose, a diagnosis or a claim
+  that your plan was changed is replaced by the rule-based tip, with a short note why.
+
+### App
+- Loading skeletons, empty states with a next step, and errors that say whether the
+  engine is unreachable, on every screen. Stale data stays visible with a notice.
+- Accessibility: AA contrast for text and status colours in both themes, a skip link,
+  focus moves to the page heading, Ctrl+1…8 page shortcuts, Enter logs a set, Esc closes
+  the muscle drill-down, error toasts are announced, every chart has a "Show the numbers"
+  table, and reduced motion is respected.
+- Back and Forward switch pages.
+- The workout list can be filtered by section, source and date range.
+
+### Project
+- Engine events go through a transactional outbox with retries, and `GET /events` streams
+  them as server-sent events (resumable with `Last-Event-ID`).
+- Request bodies reject unknown fields with a 422 naming the field; profile updates still
+  ignore read-only fields sent back by the app.
+- Windows installer configuration: per-user NSIS install that keeps your data on
+  uninstall, app icons, Electron fuses and a hardened sidecar build with a smoke test.
+- Docker: hardened sidecar image and compose profiles for tests, development, the web
+  renderer and MLflow, checked in CI.
+- Database migrations 0008 (event outbox) and 0009 (workout source and import key).
+
+### Fixed
+- History showed runs and other timed sets as "1 reps".
+- Some CSV files could not be read when picked from the file dialog.
+
 ## [0.2.0] - 2026-10-20
 
 ### Training
