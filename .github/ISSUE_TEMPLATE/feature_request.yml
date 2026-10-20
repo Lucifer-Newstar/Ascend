@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a feature or a change to an existing one
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or missing today? Who runs into it?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should ASCEND do instead? Sketches welcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: release
+    attributes:
+      label: Suggested release
+      options: [MVP / v1.0, v1.1, v2, Not sure]
+  - type: checkboxes
+    id: offline
+    attributes:
+      label: Constraints
+      options:
+        - label: Works fully offline (no cloud service)
+          required: true
+        - label: Works with AI turned off

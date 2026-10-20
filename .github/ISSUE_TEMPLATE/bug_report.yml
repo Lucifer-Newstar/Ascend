@@ -1,0 +1,40 @@
+name: Bug report
+description: Something in ASCEND does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Workout
+        2. Log a set of 60 kg x 8
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Desktop UI, Sidecar / API, Database / migrations, Coach / AI, Installer, CI, ML pipeline, Docs]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings → About, or the installer file name.
+      placeholder: 0.2.0
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Sidecar log lines or a diagnostics bundle. Remove anything personal first.
+      render: text
