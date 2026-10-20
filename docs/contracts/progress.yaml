@@ -197,7 +197,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      x-status: planned
+      x-status: implemented
       tags:
       - progress
   /body-metrics:
@@ -220,7 +220,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/BodyMetricOut'
-      x-status: planned
+      x-status: implemented
       tags:
       - progress
     post:
@@ -239,7 +239,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BodyMetricOut'
-      x-status: planned
+      x-status: implemented
       tags:
       - progress
   /progress/eta:
@@ -253,7 +253,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EtaOut'
-      x-status: planned
+      x-status: implemented
       tags:
       - progress
   /checkins:
@@ -276,6 +276,94 @@ paths:
       x-status: planned
       tags:
       - progress
+  /body-metrics/{metric_id}:
+    delete:
+      tags:
+      - progress
+      summary: Delete a weigh-in
+      operationId: delete_body_metric
+      parameters:
+      - name: metric_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: implemented
+  /measurements:
+    get:
+      tags:
+      - progress
+      summary: Tape measurements (optionally one site)
+      operationId: list_measurements
+      parameters:
+      - name: site
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MeasurementOut'
+      x-status: implemented
+    post:
+      tags:
+      - progress
+      summary: Log a tape measurement
+      operationId: log_measurement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeasurementIn'
+      responses:
+        '201':
+          description: Logged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeasurementOut'
+      x-status: implemented
+  /progress/weekly:
+    get:
+      tags:
+      - progress
+      summary: Weekly training summary (Monday-start weeks, oldest first)
+      operationId: progress_weekly
+      parameters:
+      - name: weeks
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 8
+          minimum: 1
+          maximum: 52
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WeekSummary'
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -572,6 +660,12 @@ components:
           - very_active
           title: Activity
           default: moderate
+        target_weight_kg:
+          type:
+          - number
+          - 'null'
+          minimum: 30
+          maximum: 300
       type: object
       required:
       - age
@@ -933,6 +1027,7 @@ components:
       required:
       - day
       - eff_sets
+      - readiness
     MuscleHistory:
       type: object
       properties:
@@ -965,10 +1060,34 @@ components:
                 type: number
               es:
                 type: number
+              at:
+                type: string
+                format: date-time
         suggestion:
           type:
           - string
           - 'null'
+        label:
+          type: string
+        status:
+          type: string
+          enum:
+          - under
+          - optimal
+          - recovering
+          - over
+          - no_data
+        es_7d:
+          type: number
+        readiness:
+          type: number
+        ready_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        formula_version:
+          type: string
       required:
       - code
       - days
@@ -984,9 +1103,17 @@ components:
           minimum: 20
           maximum: 300
         waist_cm:
-          type: number
+          type:
+          - number
+          - 'null'
+          minimum: 30
+          maximum: 250
         resting_hr:
-          type: integer
+          type:
+          - integer
+          - 'null'
+          minimum: 25
+          maximum: 150
       required:
       - weight_kg
     BodyMetricOut:
@@ -1001,10 +1128,19 @@ components:
           type: number
         trend_kg:
           type: number
+        waist_cm:
+          type:
+          - number
+          - 'null'
+        resting_hr:
+          type:
+          - integer
+          - 'null'
       required:
       - id
       - measured_at
       - weight_kg
+      - trend_kg
     EtaOut:
       type: object
       properties:
@@ -1041,6 +1177,10 @@ components:
         note:
           type: string
           const: Estimate, not a promise
+        formula_version:
+          type: string
+          examples:
+          - trend-v1
       required:
       - confidence
       - on_track
@@ -1100,3 +1240,80 @@ components:
         code:
           type: string
           description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING
+    MeasurementIn:
+      type: object
+      properties:
+        measured_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        site:
+          type: string
+          enum:
+          - waist
+          - hips
+          - chest
+          - arm
+          - thigh
+          - calf
+          - neck
+        cm:
+          type: number
+          minimum: 10
+          maximum: 250
+      required:
+      - site
+      - cm
+    MeasurementOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        measured_at:
+          type: string
+          format: date-time
+        site:
+          type: string
+        cm:
+          type: number
+        change_cm:
+          type:
+          - number
+          - 'null'
+      required:
+      - id
+      - measured_at
+      - site
+      - cm
+    WeekSummary:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+        sessions:
+          type: integer
+        sets:
+          type: integer
+        volume_kg:
+          type: number
+        active_minutes:
+          type: number
+        xp:
+          type: integer
+        avg_kcal_in:
+          type:
+          - number
+          - 'null'
+        avg_weight_kg:
+          type:
+          - number
+          - 'null'
+      required:
+      - week_start
+      - sessions
+      - sets
+      - volume_kg
+      - active_minutes
+      - xp
