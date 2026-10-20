@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 import os
 import signal
 import threading
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from app import __version__
+from app.core import outbox_worker, stream
 from app.core.config import Settings, load_settings
 from app.core.db import checkpoint_wal, make_engine, make_session_factory
 from app.core.events import EventBus
@@ -51,10 +55,34 @@ def build_bus() -> EventBus:
     return bus
 
 
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Run the outbox worker for the life of the server (off when interval is 0)."""
+    interval: float = app.state.outbox_interval
+    task = None
+    if interval > 0:
+        task = asyncio.create_task(
+            outbox_worker.loop(
+                app.state.session_factory,
+                lambda: app.state.outbox_consumers,
+                lambda: app.state.clock(),
+                interval,
+            )
+        )
+    try:
+        yield
+    finally:
+        if task is not None:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+
+
 def create_app(
     settings: Settings | None = None,
     clock: Callable[[], datetime] | None = None,
     migrate: bool = True,
+    outbox_interval: float = 2.0,
 ) -> FastAPI:
     settings = settings or load_settings()
     db_url = settings.resolved_db_url
@@ -65,13 +93,20 @@ def create_app(
         title="ASCEND sidecar",
         version=__version__,
         description="Local API for the ASCEND desktop app. Bound to 127.0.0.1 only.",
+        lifespan=lifespan,
     )
+    app.state.outbox_interval = outbox_interval
+    # Async consumers of domain events, by name (empty until a module registers one).
+    app.state.outbox_consumers = {}
     engine = make_engine(db_url)
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)
-    app.state.bus = build_bus()
     app.state.clock = clock or datetime.now
+    app.state.bus = build_bus()
+    app.state.bus.outbox = True
+    # Read through app.state so tests that swap the clock also move outbox timestamps.
+    app.state.bus.clock = lambda: app.state.clock()
     # Tests replace this so POST /shutdown does not stop the test process.
     app.state.request_exit = _exit_soon
 
@@ -115,6 +150,37 @@ def create_app(
         checkpoint = checkpoint_wal(engine)
         app.state.request_exit()
         return {"status": "stopping", "wal_checkpoint": checkpoint}
+
+    @app.get(
+        "/events",
+        tags=["system"],
+        response_class=StreamingResponse,
+        responses={
+            200: {
+                "description": "text/event-stream; each message is a ServerEvent",
+                "content": {
+                    "text/event-stream": {"schema": {"$ref": "#/components/schemas/ServerEvent"}}
+                },
+            }
+        },
+    )
+    async def events(
+        request: Request,
+        once: bool = False,
+        last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+    ) -> StreamingResponse:
+        """Server-sent stream of dashboard changes, completed quests and PRs, read from the
+        outbox. Reconnect with Last-Event-ID to resume; `once=true` sends the backlog and
+        closes."""
+        gen = stream.stream(
+            app.state.session_factory,
+            stream.parse_last_id(last_event_id),
+            once,
+            request.is_disconnected,
+        )
+        return StreamingResponse(
+            gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache"}
+        )
 
     for router in (
         workouts_router,

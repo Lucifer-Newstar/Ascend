@@ -114,13 +114,23 @@ Handler = Callable[[Session, Any], None]
 
 
 class EventBus:
-    def __init__(self) -> None:
+    """Synchronous handlers run inline; with `outbox=True` every published event is also
+    written to events_outbox in the same transaction, for consumers outside the request
+    (the /events stream, background jobs) to read later."""
+
+    def __init__(self, outbox: bool = False, clock: Callable[[], datetime] | None = None) -> None:
         self._handlers: dict[type[Event], list[Handler]] = defaultdict(list)
+        self.outbox = outbox
+        self.clock: Callable[[], datetime] = clock or datetime.now
 
     def subscribe(self, event_type: type[E], handler: Callable[[Session, E], None]) -> None:
         self._handlers[event_type].append(handler)
 
     def publish(self, session: Session, event: Event) -> None:
+        if self.outbox:
+            from app.core.outbox import record
+
+            record(session, event, self.clock())
         for handler in self._handlers.get(type(event), []):
             log.debug("dispatch %s -> %s", type(event).__name__, handler.__qualname__)
             handler(session, event)
