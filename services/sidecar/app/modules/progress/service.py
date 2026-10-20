@@ -13,6 +13,7 @@ from app.modules.nutrition import tdee as tdee_engine
 from app.modules.progress import muscle_load
 from app.modules.progress.models import MuscleLoadEvent, Profile, Setting
 from app.modules.progress.schemas import EnergyTargets, ProfileIn
+from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
 from app.modules.workouts.models import Exercise
 
 PROFILE_ID = 1
@@ -85,15 +86,23 @@ def on_set_logged(db: Session, event: SetLogged | SetUpdated) -> None:
     exercise = db.get(Exercise, event.exercise_id)
     if exercise is None:
         return
-    eff = muscle_load.effort(event.rpe)
+    if event.duration_s and exercise.section in TIME_BASED_SECTIONS:
+        base = muscle_load.time_effective_sets(event.duration_s, event.rpe)
+        version = muscle_load.TIME_FORMULA_VERSION
+    else:
+        base = muscle_load.effort(event.rpe)
+        version = muscle_load.FORMULA_VERSION
     for link in exercise.muscles:
+        es = round(link.weight * base, 3)
+        if es <= 0:
+            continue
         db.add(
             MuscleLoadEvent(
                 set_id=event.set_id,
                 muscle=link.muscle,
-                es=round(link.weight * eff, 3),
+                es=es,
                 at=event.performed_at,
-                formula_version=muscle_load.FORMULA_VERSION,
+                formula_version=version,
             )
         )
 

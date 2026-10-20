@@ -58,3 +58,17 @@ def test_edit_duration_of_a_logged_round(client, profile):
     r = client.patch(f"/workouts/{w['id']}/sets/{s['id']}", json={"duration_s": 240})
     assert r.status_code == 200
     assert r.json()["duration_s"] == 240
+
+
+def test_run_loads_calves_and_stretch_loads_nothing(client, profile):
+    run = ex(client, "Running")
+    stretch = ex(client, "Standing Hamstring Stretch")
+    w = client.post("/workouts").json()
+    client.post(f"/workouts/{w['id']}/sets", json={"exercise_id": stretch["id"], "duration_s": 90})
+    hams = next(m for m in client.get("/muscles").json() if m["key"] == "hamstrings")
+    assert hams["es_7d"] == 0
+    client.post(
+        f"/workouts/{w['id']}/sets", json={"exercise_id": run["id"], "duration_s": 1800, "rpe": 7}
+    )
+    calves = next(m for m in client.get("/muscles").json() if m["key"] == "calves")
+    assert calves["es_7d"] == 3.0  # weight 1.0 x min(3, 30/10) x effort 1.0

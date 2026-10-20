@@ -5,6 +5,11 @@
   fatigue F_m(t) = sum ES x 2^(-(t - t_set) / half_life_m)
   readiness_m    = 1 - min(1, F_m / C_m)
 
+Time-based sets (cardio, martial arts) convert minutes into effective sets:
+  time ES = min(3, minutes / 10) x effort(RPE)  then x the activity's muscle weight
+so a 30-minute run at RPE 7 counts like 3 hard sets for its primary muscle.
+TIME_FORMULA_VERSION versions this separately from the lifting formula.
+
 Status precedence: over > recovering > under / optimal.
   over        ES_7d > weekly_high x 1.25
   recovering  readiness < 0.70
@@ -24,6 +29,9 @@ from typing import Literal
 from app.modules.progress.taxonomy import MUSCLES, Muscle
 
 FORMULA_VERSION = "load-v1"
+TIME_FORMULA_VERSION = "load-time-v1"
+MINUTES_PER_TIME_ES = 10.0
+MAX_TIME_ES_PER_SET = 3.0
 RECOVERING_BELOW = 0.70
 READY_AT_FATIGUE_FRACTION = 0.30
 OVER_FACTOR = 1.25
@@ -37,6 +45,14 @@ def effort(rpe: float | None) -> float:
     if rpe >= 5:
         return 0.5
     return 0.25
+
+
+def time_effective_sets(duration_s: int | None, rpe: float | None) -> float:
+    """Effective-set equivalent of one timed bout, before the muscle weight."""
+    if not duration_s or duration_s <= 0:
+        return 0.0
+    minutes = duration_s / 60
+    return min(MAX_TIME_ES_PER_SET, minutes / MINUTES_PER_TIME_ES) * effort(rpe)
 
 
 @dataclass(frozen=True)

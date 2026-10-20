@@ -66,3 +66,14 @@ def test_worst_status_precedence():
     assert worst_status(["optimal", "recovering", "under"]) == "recovering"
     assert worst_status(["over", "recovering"]) == "over"
     assert worst_status([]) == "no_data"
+
+
+def test_time_effective_sets_scale_with_minutes_and_cap_at_three():
+    from app.modules.progress.muscle_load import time_effective_sets
+
+    assert time_effective_sets(600, 8) == 1.0  # 10 min hard
+    assert time_effective_sets(1800, None) == 3.0  # 30 min, no RPE counts as hard
+    assert time_effective_sets(3 * 3600, 9) == 3.0  # capped
+    assert time_effective_sets(1200, 6) == 1.0  # 20 min x effort 0.5
+    assert time_effective_sets(None, 8) == 0.0
+    assert time_effective_sets(0, 8) == 0.0
