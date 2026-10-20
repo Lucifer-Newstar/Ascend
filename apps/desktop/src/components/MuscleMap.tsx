@@ -46,7 +46,9 @@ export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; s
   return (
     <div className="space-y-4">
     <div className="flex gap-5">
-      <div className="flex shrink-0 gap-2" aria-label="Muscle map, front and back">
+      {/* The artwork is a mouse shortcut; the lists beside it carry the same information
+          for keyboard and screen-reader users, so the SVGs are hidden from assistive tech. */}
+      <div className="flex shrink-0 gap-2" aria-hidden="true">
         <div className="text-center">
           <Body {...common} side="front" />
           <div className="mt-1 text-[10px] uppercase tracking-widest text-faint">Front</div>
@@ -83,6 +85,14 @@ export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; s
             )}
           </div>
         )}
+        <details className="group">
+          <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-muted hover:text-ink">
+            All muscles ({muscles.length})
+          </summary>
+          <div className="mt-2 max-h-64 overflow-y-auto pr-1">
+            {muscles.map((m) => <RegionRow key={m.key} m={m} onOpen={setDetail} />)}
+          </div>
+        </details>
       </div>
     </div>
     {detail && <MuscleDrilldown key={detail} code={detail} onClose={() => setDetail(null)} />}
@@ -96,7 +106,6 @@ function RegionRow({ m, onOpen }: { m: MuscleState; onOpen: (code: string) => vo
     <button
       type="button"
       onClick={() => onOpen(m.key)}
-      aria-label={`${m.label} details`}
       className="flex w-full items-center justify-between gap-2 border-b border-line/60 py-1.5 text-left text-xs last:border-0 hover:bg-panel/60"
     >
       <span className="flex min-w-0 items-center gap-2">
@@ -106,6 +115,7 @@ function RegionRow({ m, onOpen }: { m: MuscleState; onOpen: (code: string) => vo
       <span className="shrink-0 text-right text-muted" title="Effective sets in the last 7 days vs the weekly target band (estimate)">
         {m.es_7d} / {band} sets · {Math.round(m.readiness * 100)}%{m.status === "recovering" ? ` · ${readyAtLabel(m.ready_at)}` : ""}
       </span>
+      <span className="sr-only">, {STATUS_LABELS[m.status]}. Open details</span>
     </button>
   );
 }
