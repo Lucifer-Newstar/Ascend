@@ -54,6 +54,7 @@ export function MuscleDrilldown({ code, onClose }: { code: string; onClose: () =
                 labels={h.data.daily.map((d) => dayLabel(d.day))}
                 values={h.data.daily.map((d) => Math.round(d.eff_sets * 10) / 10)}
                 summary={`Effective sets per day for ${h.data.label} over ${h.data.days} days`}
+                valueLabel="Effective sets"
               />
             </div>
           )}

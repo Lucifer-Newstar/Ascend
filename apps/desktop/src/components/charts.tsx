@@ -7,6 +7,44 @@ import { compact, extent, linePath, linearScale, niceTicks } from "../lib/chart"
 const W = 560;
 const PAD = { top: 12, right: 20, bottom: 24, left: 52 };
 
+/**
+ * "Show the numbers" disclosure under a chart: the same data as a real table, for
+ * screen readers and for anyone who wants exact values instead of a line.
+ */
+export function ChartData({ labels, columns, unit = "" }: {
+  labels: string[];
+  columns: { label: string; values: (number | null)[] }[];
+  unit?: string;
+}) {
+  return (
+    <details className="mt-1 text-xs text-muted">
+      <summary className="cursor-pointer select-none hover:text-ink">Show the numbers</summary>
+      <div className="mt-2 max-h-48 overflow-y-auto">
+        <table className="w-full text-left">
+          <thead className="text-faint">
+            <tr>
+              <th scope="col" className="py-1 font-medium">Date</th>
+              {columns.map((c) => <th key={c.label} scope="col" className="py-1 text-right font-medium">{c.label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {labels.map((l, i) => (
+              <tr key={`${l}-${i}`} className="border-t border-line">
+                <th scope="row" className="py-1 font-normal">{l}</th>
+                {columns.map((c) => (
+                  <td key={c.label} className="py-1 text-right text-ink">
+                    {c.values[i] === null || c.values[i] === undefined ? "–" : `${c.values[i]}${unit}`}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
 export interface Series {
   label: string;
   values: (number | null)[];
@@ -15,12 +53,13 @@ export interface Series {
   dashed?: boolean;
 }
 
-export function LineChart({ labels, series, height = 200, unit = "", summary }: {
+export function LineChart({ labels, series, height = 200, unit = "", summary, table = true }: {
   labels: string[];
   series: Series[];
   height?: number;
   unit?: string;
   summary: string;
+  table?: boolean;
 }) {
   const ext = extent(series.flatMap((s) => s.values));
   if (!ext || labels.length === 0) return null;
@@ -68,11 +107,12 @@ export function LineChart({ labels, series, height = 200, unit = "", summary }: 
           </span>
         ))}
       </figcaption>
+      {table && <ChartData labels={labels} unit={unit} columns={series.map((s) => ({ label: s.label, values: s.values }))} />}
     </figure>
   );
 }
 
-export function BarChart({ labels, values, height = 160, width = W, unit = "", summary, className = "fill-accent" }: {
+export function BarChart({ labels, values, height = 160, width = W, unit = "", summary, className = "fill-accent", table = true, valueLabel = "Value" }: {
   labels: string[];
   values: number[];
   height?: number;
@@ -80,6 +120,8 @@ export function BarChart({ labels, values, height = 160, width = W, unit = "", s
   unit?: string;
   summary: string;
   className?: string;
+  table?: boolean;
+  valueLabel?: string;
 }) {
   if (!values.length) return null;
   const every = Math.max(1, Math.ceil(values.length / Math.floor(width / 70)));
@@ -91,6 +133,7 @@ export function BarChart({ labels, values, height = 160, width = W, unit = "", s
   const bw = Math.min(36, band * 0.6);
 
   return (
+    <div className="w-full">
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={summary}>
       {ticks.map((t) => (
         <g key={t}>
@@ -112,5 +155,7 @@ export function BarChart({ labels, values, height = 160, width = W, unit = "", s
         );
       })}
     </svg>
+    {table && <ChartData labels={labels} unit={unit} columns={[{ label: valueLabel, values }]} />}
+    </div>
   );
 }
