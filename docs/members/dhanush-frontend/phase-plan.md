@@ -87,7 +87,7 @@
 - [x] `feat(ui): meditation timers (box, 4-7-8, body scan) with mood before/after` — sit logging for box breathing, mindfulness and body scan; live timers and mood open
 - [ ] `feat(ui): activity gallery cards with mini body map`
 - [ ] `feat(ui): progress photos capture with ghost overlay and compare slider`
-- [ ] `feat(ui): morning check-in dialog`
+- [x] `feat(ui): morning check-in dialog` — inline dashboard card instead of a dialog
 - [ ] `feat(ui): quests & rank page with trials and weekly challenge`
 - [x] `feat(ui): light theme tokens`
 - [ ] `test(ui): visual regression baselines for key screens` (pair: Gokul)
