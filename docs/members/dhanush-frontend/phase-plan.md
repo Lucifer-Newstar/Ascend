@@ -31,7 +31,7 @@
 
 - [ ] `feat(ui): API client hooks with TanStack Query over window.ascend.request`
 - [ ] `feat(ui): exercise picker with search (Ctrl+K)`
-- [ ] `feat(ui): set table with weight/reps/RPE inputs and inline validation`
+- [x] `feat(ui): set table with weight/reps/RPE inputs and inline validation` — plus inline edit and delete per set
 - [ ] `feat(ui): keyboard flow (Enter completes set, Space rest, Ctrl+Z undo)`
 - [ ] `feat(ui): rest timer with toast when window unfocused`
 - [ ] `feat(ui): PR toast and PR flag on the set row`
@@ -82,9 +82,9 @@
 
 ### Phase 4 · Breadth (8 Feb – 21 Mar)
 
-- [ ] `feat(ui): martial arts round timer and session form`
-- [ ] `feat(ui): flexibility routines and ROM test entry`
-- [ ] `feat(ui): meditation timers (box, 4-7-8, body scan) with mood before/after`
+- [x] `feat(ui): martial arts round timer and session form` — session form with 3:00 round default, duration, HR and RPE; a live round timer is still open
+- [x] `feat(ui): flexibility routines and ROM test entry` — hold logging per stretch; routines and ROM tests open
+- [x] `feat(ui): meditation timers (box, 4-7-8, body scan) with mood before/after` — sit logging for box breathing, mindfulness and body scan; live timers and mood open
 - [ ] `feat(ui): activity gallery cards with mini body map`
 - [ ] `feat(ui): progress photos capture with ghost overlay and compare slider`
 - [ ] `feat(ui): morning check-in dialog`
