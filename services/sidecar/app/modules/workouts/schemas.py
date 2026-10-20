@@ -158,6 +158,16 @@ class CustomExerciseIn(StrictIn):
             seen.add(m.muscle)
         if self.section not in ("meditation", "flexibility") and not self.muscles:
             raise ValueError("pick at least one muscle region")
+        if sum(1 for m in self.muscles if m.weight >= 1.0) > 3:
+            # One set counts as a hard set for every primary muscle; more than 3 would let
+            # a single custom exercise tick every muscle quest at once.
+            raise ValueError("at most 3 primary muscles; mark the rest as secondary")
+        timed = self.section in ("cardio", "martial_arts", "flexibility", "meditation")
+        if timed != (self.measure == "time"):
+            raise ValueError(
+                "cardio, martial arts, mobility and mind exercises are measured in time; "
+                "strength and calisthenics in reps or holds"
+            )
         if self.rep_low and self.rep_high and self.rep_low > self.rep_high:
             raise ValueError("rep_low must not exceed rep_high")
         if self.met is not None and self.measure != "time":
