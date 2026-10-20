@@ -34,6 +34,7 @@ import type {
   ExerciseDetail,
   ExerciseAnalysis,
   CustomExerciseIn,
+  OnlineLogEntry,
   SkillDetail,
   SkillSummary,
   SkillTrainResult,
@@ -128,8 +129,10 @@ export const api = {
   exercises: (q = "", section?: Section) =>
     call<Exercise[]>("GET", `/exercises?q=${encodeURIComponent(q)}${section ? `&section=${section}` : ""}`),
   exercise: (id: number) => call<ExerciseDetail>("GET", `/exercises/${id}`),
-  analyzeExercise: (body: { name: string; equipment?: string | null; notes?: string; online?: boolean }) =>
+  analyzeExercise: (body: { name: string; equipment?: string | null; notes?: string; online?: boolean; allow_once?: boolean }) =>
     call<ExerciseAnalysis>("POST", "/exercises/analyze", body),
+  onlineLog: (limit = 100) => call<OnlineLogEntry[]>("GET", `/exercises/online-log?limit=${limit}`),
+  clearOnlineLog: () => call<void>("DELETE", "/exercises/online-log"),
   createExercise: (body: CustomExerciseIn) => call<ExerciseDetail>("POST", "/exercises", body),
   archiveExercise: (id: number) => call<void>("DELETE", `/exercises/${id}`),
   skills: () => call<SkillSummary[]>("GET", "/skills"),
