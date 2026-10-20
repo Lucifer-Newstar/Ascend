@@ -88,7 +88,9 @@ def find_duplicate(db: Session, name: str) -> Exercise | None:
 
 def library_matches(db: Session, name: str, limit: int = 5) -> list[tuple[Exercise, float, str]]:
     exercises = {e.id: e for e in _candidates(db)}
-    found = lib.best_matches(name, [(e.id, e.name, e.aliases) for e in exercises.values()], limit)
+    found = lib.best_matches(
+        name, [(e.id, e.name, e.aliases) for e in exercises.values()], limit, cutoff=0.7
+    )
     return [(exercises[m.exercise_id], m.score, m.via) for m in found]
 
 

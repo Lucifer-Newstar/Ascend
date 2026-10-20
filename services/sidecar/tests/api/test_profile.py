@@ -25,6 +25,7 @@ def test_ai_toggle_round_trip(client):
         "theme": "dark",
         "sessions_per_week": 3,
         "reduce_motion": False,
+        "online_lookup": False,
     }
     assert client.get("/settings").json() == defaults
     assert client.put("/settings", json={"ai_enabled": False}).json() == {
@@ -43,6 +44,7 @@ def test_settings_partial_update_keeps_other_values(client):
         "theme": "light",
         "sessions_per_week": 4,
         "reduce_motion": False,
+        "online_lookup": False,
     }
 
 
