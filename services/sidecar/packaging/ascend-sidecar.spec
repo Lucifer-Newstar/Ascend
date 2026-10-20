@@ -68,6 +68,11 @@ a = Analysis(
             str(ROOT / "app" / "modules" / "workouts" / "library_data"),
             "app/modules/workouts/library_data",
         ),
+        # Versioned prompt for the custom-exercise classifier (read at runtime).
+        (
+            str(ROOT / "app" / "modules" / "workouts" / "prompts"),
+            "app/modules/workouts/prompts",
+        ),
     ],
     hiddenimports=hiddenimports,
     # Dev and test tooling never runs inside the app; keeping it out shrinks the
