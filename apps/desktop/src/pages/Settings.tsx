@@ -85,6 +85,19 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           </div>
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">
+              Reduce motion
+              <br />
+              <span className="text-xs text-muted">No tilt, flips, count-ups or celebrations. Your Windows animation setting is always honoured.</span>
+            </span>
+            <input
+              type="checkbox"
+              className="h-5 w-5 shrink-0 accent-accent"
+              checked={Boolean(settings.reduce_motion)}
+              onChange={(e) => save({ reduce_motion: e.target.checked }, e.target.checked ? "Reduce motion: on" : "Reduce motion: off")}
+            />
+          </label>
+          <label className="flex items-center justify-between gap-4">
+            <span className="text-sm text-ink">
               Training days per week
               <br />
               <span className="text-xs text-muted">Used by the weekly review to judge adherence.</span>
