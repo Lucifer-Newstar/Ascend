@@ -21,7 +21,7 @@ def state(states: list[rec.MuscleRecovery], key: str) -> rec.MuscleRecovery:
 
 
 @pytest.mark.parametrize(
-    ("rir", "expected"), [(0, 1.0), (1, 1.0), (2, 0.9), (3, 0.8), (5, 0.6), (8, 0.3), (10, 0.3)]
+    ("rir", "expected"), [(0, 1.0), (2, 1.0), (3, 0.9), (4, 0.8), (5, 0.7), (9, 0.3), (10, 0.3)]
 )
 def test_intensity_from_rir(rir: float, expected: float) -> None:
     assert rec.intensity(rir) == pytest.approx(expected)
@@ -54,16 +54,23 @@ def test_volume_rules() -> None:
 
 
 def test_dose_is_weight_times_intensity_times_volume() -> None:
-    c = rec.contributions([s(0, rpe=8.0)])
+    c = rec.contributions([s(0, rpe=7.0)])  # RIR 3 -> I = 0.9
     by = {x.muscle: x.es for x in c}
     assert by["lower_chest"] == pytest.approx(0.9)
     assert by["triceps"] == pytest.approx(0.45)
 
 
+def test_timed_bouts_keep_the_load_time_v1_effort() -> None:
+    run = s(0, kind="time", duration_s=1800, rpe=7.0, muscles={"calves": 1.0})
+    assert rec.dose(run).es == pytest.approx(3.0)
+    easy = s(0, kind="time", duration_s=1800, rpe=5.5, muscles={"calves": 1.0})
+    assert rec.dose(easy).es == pytest.approx(1.5)
+
+
 def test_one_half_life_halves_the_fatigue() -> None:
-    # lower chest: half-life 36 h, capacity 10; one RPE-8 set = 0.9 ES
-    fresh = state(rec.compute([s(0, rpe=8.0)], NOW), "lower_chest")
-    later = state(rec.compute([s(36, rpe=8.0)], NOW), "lower_chest")
+    # lower chest: half-life 36 h, capacity 10; one RPE-7 set = 0.9 ES
+    fresh = state(rec.compute([s(0, rpe=7.0)], NOW), "lower_chest")
+    later = state(rec.compute([s(36, rpe=7.0)], NOW), "lower_chest")
     assert fresh.fatigue == pytest.approx(0.9)
     assert later.fatigue == pytest.approx(0.45)
     assert later.readiness == pytest.approx(1 - 0.045)
@@ -71,7 +78,7 @@ def test_one_half_life_halves_the_fatigue() -> None:
 
 def test_personal_k_stretches_the_half_life() -> None:
     k = {"Push": 1.5}
-    m = state(rec.compute([s(54, rpe=8.0)], NOW, k), "lower_chest")
+    m = state(rec.compute([s(54, rpe=7.0)], NOW, k), "lower_chest")
     assert m.half_life_h == pytest.approx(54.0)
     assert m.fatigue == pytest.approx(0.45)
     assert m.k == 1.5

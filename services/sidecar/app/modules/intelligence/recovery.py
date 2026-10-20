@@ -9,15 +9,18 @@ Dose. Each logged set adds an effective-set dose to every muscle the exercise wo
     ES = w(exercise, muscle) x I(RIR) x V(set)
 
   w     the exercise's muscle weight (1.0 primary, 0.5 or 0.3 secondary, from the library)
-  I     intensity, from reps in reserve: I = clamp(1 - 0.1 x max(0, RIR - 1), 0.3, 1).
-        RIR 0-1 counts fully, RIR 3 counts 0.8, RIR 5 counts 0.6 and very easy sets 0.3.
+  I     intensity, from reps in reserve: I = clamp(1 - 0.1 x max(0, RIR - 2), 0.3, 1).
+        A hard set (RIR 0-2) counts fully, RIR 3 counts 0.9, RIR 5 counts 0.7 and very easy
+        sets 0.3, so the weekly bands keep meaning "hard sets" as in load-v1.
         RIR = 10 - RPE when RPE is logged (Zourdos et al. 2016 RIR-based RPE scale).
         Without RPE, RIR is estimated from the user's own best e1RM for that exercise
         (Epley inverse: reps possible = 30 x (e1RM / load - 1), RIR = that - reps done),
-        and with neither the population default RIR 2 is used (I = 0.9).
+        and with neither the population default RIR 2 is used (I = 1, as in load-v1).
   V     volume: 1 for 5-20 reps, 0.85 for 1-4 reps (heavy singles to quads fatigue the
         muscle less per set), 1.1 above 20 reps; a hold counts seconds / 30 (0.25-1.5);
-        a timed bout counts min(3, minutes / 10), the load-v1 time rule.
+        a timed bout counts min(3, minutes / 10), the load-v1 time rule. Timed bouts keep
+        the load-time-v1 effort too (RPE >= 7 or none: 1, 5-6.5: 0.5, below: 0.25), since a
+        cardio RPE is whole-session exertion, not reps in reserve.
 
 Decay. Fatigue of muscle m at time t:
 
@@ -151,8 +154,8 @@ def clamp(x: float, lo: float, hi: float) -> float:
 
 
 def intensity(rir: float) -> float:
-    """I(RIR) = clamp(1 - 0.1 max(0, RIR - 1), 0.3, 1)."""
-    return clamp(1.0 - 0.1 * max(0.0, rir - 1.0), 0.3, 1.0)
+    """I(RIR) = clamp(1 - 0.1 max(0, RIR - 2), 0.3, 1)."""
+    return clamp(1.0 - 0.1 * max(0.0, rir - 2.0), 0.3, 1.0)
 
 
 def estimate_rir(s: SetInput) -> tuple[float, RirSource]:
@@ -187,7 +190,19 @@ def volume(s: SetInput) -> float:
     return 1.0
 
 
+def time_intensity(rpe: float | None) -> float:
+    """Timed bouts (cardio, rounds) keep the load-time-v1 effort scale: an RPE there is
+    whole-session exertion, not reps in reserve. RPE >= 7 or none: 1, 5-6.5: 0.5, else 0.25."""
+    if rpe is None or rpe >= 7:
+        return 1.0
+    return 0.5 if rpe >= 5 else 0.25
+
+
 def dose(s: SetInput) -> Dose:
+    if s.kind == "time":
+        v = volume(s)
+        i = time_intensity(s.rpe)
+        return Dose(es=i * v, intensity=i, volume=v, rir=None, rir_source="default")
     rir, source = estimate_rir(s)
     i = intensity(rir)
     v = volume(s)
@@ -271,10 +286,22 @@ def compute(
     k: Mapping[str, float] | None = None,
     checkin: CheckinInput | None = None,
 ) -> list[MuscleRecovery]:
-    """Every muscle's state at `now` (sets after `now` are ignored)."""
+    """Every muscle's state at `now` from logged sets (sets after `now` are ignored)."""
+    return compute_from(contributions(s for s in sets if s.at <= now), now, k, checkin)
+
+
+def compute_from(
+    contribs: Iterable[Contribution],
+    now: datetime,
+    k: Mapping[str, float] | None = None,
+    checkin: CheckinInput | None = None,
+) -> list[MuscleRecovery]:
+    """Every muscle's state at `now` from stored per-muscle doses (the app's path: doses
+    are written when a set is logged, see doses.py)."""
     by_muscle: dict[str, list[Contribution]] = {}
-    for c in contributions(s for s in sets if s.at <= now):
-        by_muscle.setdefault(c.muscle, []).append(c)
+    for c in contribs:
+        if c.at <= now:
+            by_muscle.setdefault(c.muscle, []).append(c)
     week_ago = now - timedelta(days=7)
     month_ago = now - timedelta(days=LOOKBACK_DAYS)
     out: list[MuscleRecovery] = []
