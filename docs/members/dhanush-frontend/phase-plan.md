@@ -73,7 +73,7 @@
 - [x] `feat(ui): empty/loading/error states pass across all screens` — skeletons, offline-aware errors and stale-data notices on every screen
 - [x] `feat(ui): settings (units, reset hour, language, notifications, quiet hours)` — units, theme and training days done; reset hour, language, notifications and quiet hours open
 - [ ] `feat(ui): backup and restore screens`
-- [ ] `feat(ui): import Strong/Hevy with dry-run report`
+- [x] `feat(ui): import Strong/Hevy with dry-run report` — Import & export page: preview, confirm, duplicates, unmatched names; History marks imported sessions
 - [ ] `feat(ui): diagnostics page and export bundle button`
 - [ ] `feat(desktop): Windows toasts + tray with start-at-login opt-in`
 - [ ] `feat(ui): update available banner and install-on-restart` (pair: Gokul)
