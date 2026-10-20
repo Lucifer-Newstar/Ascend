@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
@@ -11,17 +11,26 @@ from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.skills import service as skills
-from app.modules.workouts import deload_service, service
+from app.modules.workouts import custom, deload_service, service
 from app.modules.workouts.activity_seed import SECTIONS
+from app.modules.workouts.models import Exercise
 from app.modules.workouts.schemas import (
+    AttributionOut,
+    CustomExerciseIn,
+    ExerciseAnalysis,
+    ExerciseAnalyzeIn,
     ExerciseDetail,
+    ExerciseMatch,
     ExerciseOut,
+    ExerciseProposal,
     FinishedWorkout,
     LoggedSet,
+    MuscleWeight,
     PROut,
     SetIn,
     SetOut,
     SetPatch,
+    StageStatus,
     UnlockedStep,
     WorkoutOut,
     WorkoutSummary,
@@ -82,6 +91,105 @@ def list_exercises(
         custom=custom,
     )
     return [service.exercise_out(e) for e in service.list_exercises(db, f=f)]
+
+
+@exercises_router.post("/analyze", response_model=ExerciseAnalysis)
+def analyze_exercise(
+    body: ExerciseAnalyzeIn, request: Request, db: Session = Depends(get_db)
+) -> ExerciseAnalysis:
+    """Propose every field of a new exercise, each with its source: library match,
+    rules, the local model (when AI is on and installed) and, only if Settings allows
+    it and the request asks, wger.de. Nothing is saved."""
+    from app.modules.progress import service as progress
+
+    settings = request.app.state.settings
+    a = custom.analyse(
+        db,
+        body.name,
+        equipment_hint=body.equipment,
+        notes=body.notes,
+        ai_enabled=progress.ai_enabled(db),
+        ollama_host=settings.ollama_host,
+        model=settings.coach_model,
+        online_allowed=progress.online_lookup(db),
+        online_requested=body.online,
+        http=getattr(request.app.state, "wger_client", None),
+    )
+    v = a.proposal.values
+
+    def match(e: Exercise, score: float, via: str) -> ExerciseMatch:
+        return ExerciseMatch(
+            id=e.id, name=e.name, score=score, via=via, section=e.section, image=e.image
+        )
+
+    return ExerciseAnalysis(
+        name=a.name,
+        proposal=ExerciseProposal(
+            section=v["section"],
+            equipment=v["equipment"],
+            measure=v["measure"],
+            pattern=v["pattern"],
+            difficulty=v.get("difficulty"),
+            muscles=[MuscleWeight(muscle=k, weight=w) for k, w in v.get("muscles", {}).items()],
+            rep_low=v.get("rep_low"),
+            rep_high=v.get("rep_high"),
+            met=v.get("met"),
+            instructions=v.get("instructions", []),
+            aliases=v.get("aliases", []),
+        ),
+        field_sources=a.proposal.sources,
+        attribution=[AttributionOut(**x) for x in a.proposal.attribution],
+        matches=[match(*m) for m in a.matches],
+        duplicate_of=match(a.duplicate, 1.0, "exact") if a.duplicate else None,
+        ai=StageStatus(
+            status=a.ai.status, detail=a.ai.detail, model=a.ai.model, applied=a.ai.applied
+        ),
+        online=StageStatus(
+            status=a.online.status, detail=a.online.detail, applied=a.online.applied
+        ),
+    )
+
+
+@exercises_router.post("", response_model=ExerciseDetail, status_code=201)
+def create_exercise(
+    body: CustomExerciseIn,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> ExerciseDetail:
+    """Save a reviewed custom exercise and publish ExerciseAdded. 409 when the name or
+    an alias already exists (use that exercise instead)."""
+    values = body.model_dump(exclude={"name", "field_sources", "attribution"})
+    values["muscles"] = {m.muscle: m.weight for m in body.muscles}
+    try:
+        e = custom.create(
+            db,
+            bus,
+            now,
+            name=body.name,
+            values=values,
+            field_sources=dict(body.field_sources),
+            attribution=[x.model_dump() for x in body.attribution],
+        )
+    except custom.Duplicate as d:
+        raise HTTPException(
+            409, f"'{d.exercise.name}' is already in the library (id {d.exercise.id})"
+        ) from d
+    return service.exercise_detail(db, e.id)
+
+
+@exercises_router.delete("/{exercise_id}", status_code=204)
+def archive_exercise(exercise_id: int, db: Session = Depends(get_db)) -> Response:
+    """Archive one of your own exercises: hidden from the library and pickers, its
+    logged sets and stats stay. Library exercises cannot be removed (409)."""
+    e = db.get(Exercise, exercise_id)
+    if e is None:
+        raise HTTPException(404, f"exercise {exercise_id} not found")
+    if not e.is_custom:
+        raise HTTPException(409, "only exercises you added can be removed")
+    e.archived = True
+    db.flush()
+    return Response(status_code=204)
 
 
 @exercises_router.get("/{exercise_id}", response_model=ExerciseDetail)

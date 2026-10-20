@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.schemas import StrictIn
 
@@ -60,6 +61,108 @@ class ExerciseDetail(ExerciseOut):
     created_at: datetime | None = None
     skills: list[SkillLinkOut] = []
     sets_logged: int = 0
+
+
+FieldSource = Literal["library", "rules", "local_ai", "wger", "user"]
+
+
+class ExerciseAnalyzeIn(StrictIn):
+    name: str = Field(min_length=2, max_length=80)
+    equipment: str | None = Field(default=None, max_length=20)
+    notes: str = Field(default="", max_length=300)
+    # Ask wger.de as well. Only honoured when Settings -> online lookup is on.
+    online: bool = False
+
+
+class ExerciseProposal(BaseModel):
+    section: str
+    equipment: str
+    measure: str
+    pattern: str
+    difficulty: str | None = None
+    muscles: list[MuscleWeight] = []
+    rep_low: int | None = None
+    rep_high: int | None = None
+    met: float | None = None
+    instructions: list[str] = []
+    aliases: list[str] = []
+
+
+class ExerciseMatch(BaseModel):
+    id: int
+    name: str
+    score: float
+    # exact | alias | fuzzy
+    via: str
+    section: str
+    image: str | None = None
+
+
+class StageStatus(BaseModel):
+    """What one optional stage did. local_ai: ok | off | unavailable | error | invalid.
+    online: off | not_requested | ok | not_found | error."""
+
+    status: str
+    detail: str = ""
+    model: str | None = None
+    applied: list[str] = []
+
+
+class ExerciseAnalysis(BaseModel):
+    name: str
+    proposal: ExerciseProposal
+    # field -> library | rules | local_ai | wger
+    field_sources: dict[str, str]
+    attribution: list[AttributionOut] = []
+    matches: list[ExerciseMatch] = []
+    # Set when the name (or an alias) already exists: creating it would be refused.
+    duplicate_of: ExerciseMatch | None = None
+    ai: StageStatus
+    online: StageStatus
+
+
+class CustomExerciseIn(StrictIn):
+    """A reviewed custom exercise. field_sources says where each field came from; the
+    client marks fields the user changed as "user"."""
+
+    name: str = Field(min_length=2, max_length=80)
+    section: Literal["gym", "calisthenics", "cardio", "martial_arts", "flexibility", "meditation"]
+    equipment: str = Field(min_length=2, max_length=20, pattern=r"^[a-z_]+$")
+    measure: Literal["reps", "hold", "time"]
+    pattern: Literal[
+        "push", "pull", "squat", "hinge", "lunge", "core", "isometric",
+        "carry", "olympic", "locomotion", "mobility", "other",
+    ]  # fmt: skip
+    difficulty: Literal["beginner", "intermediate", "expert"] | None = None
+    muscles: list[MuscleWeight] = Field(default=[], max_length=8)
+    rep_low: int | None = Field(default=None, ge=1, le=600)
+    rep_high: int | None = Field(default=None, ge=1, le=600)
+    met: float | None = Field(default=None, ge=1.0, le=23.0)
+    instructions: list[Annotated[str, Field(max_length=300)]] = Field(default=[], max_length=12)
+    aliases: list[Annotated[str, Field(max_length=60)]] = Field(default=[], max_length=10)
+    field_sources: dict[str, FieldSource] = {}
+    attribution: list[AttributionOut] = Field(default=[], max_length=3)
+
+    @model_validator(mode="after")
+    def _consistent(self) -> CustomExerciseIn:
+        from app.modules.progress.taxonomy import MUSCLE_BY_KEY
+
+        seen: set[str] = set()
+        for m in self.muscles:
+            if m.muscle not in MUSCLE_BY_KEY:
+                raise ValueError(f"unknown muscle region '{m.muscle}'")
+            if m.muscle in seen:
+                raise ValueError(f"muscle '{m.muscle}' listed twice")
+            if not 0.25 <= m.weight <= 1.0:
+                raise ValueError("muscle weights must be between 0.25 and 1")
+            seen.add(m.muscle)
+        if self.section not in ("meditation", "flexibility") and not self.muscles:
+            raise ValueError("pick at least one muscle region")
+        if self.rep_low and self.rep_high and self.rep_low > self.rep_high:
+            raise ValueError("rep_low must not exceed rep_high")
+        if self.met is not None and self.measure != "time":
+            raise ValueError("met only applies to time-based exercises")
+        return self
 
 
 class SetIn(StrictIn):
