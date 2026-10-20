@@ -5,10 +5,12 @@ import type { Settings } from "@ascend/shared";
 import { api } from "./api/client";
 import { Layout, type Page } from "./components/Layout";
 import { ErrorState, Loading } from "./components/States";
+import { SystemEvents } from "./components/SystemEvents";
 import { ToastProvider } from "./components/Toast";
 import { XpChip } from "./components/XpChip";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { usePageShortcuts } from "./lib/shortcuts";
+import { useApi } from "./lib/useApi";
 import { DashboardPage } from "./pages/Dashboard";
 
 // The Dashboard is the first screen, so it ships in the main chunk; every other page
@@ -121,9 +123,12 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
     bump();
   };
   const aiEnabled = settings.ai_enabled;
+  // Level, rank and quest state for the System notices (level up, quest complete).
+  const game = useApi(api.game, [refreshKey]);
   return (
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpChip refreshKey={refreshKey} />}>
+      <SystemEvents game={game.data} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
