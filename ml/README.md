@@ -1,37 +1,58 @@
-# ml/ (placeholder): Indian food classifier
+# ml/: Indian food classifier pipeline
 
-Not part of the MVP. The MVP logs food by **search** in a seeded table; photo recognition
-comes in a later phase (see the plan's ML phase). This folder holds the pipeline skeleton
-so the MLOps work (Navin's area) has a home from day one.
-
-## Planned pipeline
+Photo recognition is a later phase; the MVP logs food by **search** in the seeded table.
+This folder holds the working MLOps pipeline (Navin's area). It runs end to end today
+on a **synthetic smoke set** so it can be tested anywhere; real training waits for the
+licensed datasets and the team photo set (see [ml-pipeline.md](../docs/architecture/ml-pipeline.md)).
 
 ```
-data/raw  --(prepare)-->  data/processed  --(train)-->  models/food_clf.pt
-   --(export)-->  models/food_clf.onnx  --(evaluate)-->  metrics.json
+data/raw ──prepare──> data/processed ──train──> models/food_clf.pt
+        ──export──> models/food_clf.onnx + models-manifest.json ──evaluate──> metrics.json
 ```
 
-| Piece | Tool | Status |
+| Piece | Where | Status |
 |---|---|---|
-| Dataset versioning | DVC (`dvc.yaml`, `params.yaml`) | stub |
-| Experiment tracking | MLflow, local file store (`mlruns/`) | stub |
-| Model | Small CNN (e.g. MobileNetV3 / EfficientNet-B0) fine-tuned on Indian dishes | not started |
-| Runtime | ONNX Runtime on **CPU** inside the sidecar (keeps the 4 GB GPU free for the LLM) | not started |
-| Metric gate | top-3 accuracy on a held-out set; ONNX vs PyTorch parity on 200 images | not started |
+| Preprocessing contract (256 → crop 224, ImageNet norm) + shared test vector | `src/common.py`, `tests/test_preprocess.py` | done |
+| prepare: sha256 + perceptual dedupe, size check, stratified split, team photos test-only | `src/prepare.py` | done |
+| train: MobileNetV3-Small, fixed seeds, BN recalibration, MLflow logging | `src/train.py` | done (smoke data) |
+| export: ONNX opset 17, parity gate vs PyTorch, SHA-256 manifest | `src/export_onnx.py` | done |
+| evaluate: top-1, top-3, macro-F1, ECE, confusion; team-photo subset separately | `src/evaluate.py` | done |
+| labels.json → food table check | `labels.json`, `src/check_labels.py` | done (6 classes) |
+| DVC stages + MLflow project | `dvc.yaml`, `params.yaml`, `MLproject` | done |
+| CI | `.github/workflows/ml.yml` | lint, tests, smoke `dvc repro` |
+| Real datasets, licences, team photos, v0 model | DVC remote | **not started** |
+| Temperature scaling, INT8 quantisation | | not started |
 
-Datasets and model files are **never committed to git**: `ml/data/raw`, `ml/data/processed`,
-`ml/models/*.onnx` and `mlruns/` are in `.gitignore`; DVC tracks them instead.
+Datasets, weights and run outputs are **never committed**: `data/`, `models/*.pt|*.onnx`,
+the generated manifest, `reports/`, `metrics.json` and `mlruns/` are git-ignored.
 
-## Getting started (later)
+## Smoke run (any machine, CPU, ~2 minutes)
 
 ```bash
 cd ml
-uv venv --python 3.12 && uv pip install -r requirements.txt
-dvc init --subdir           # once
-dvc repro                   # runs prepare -> train -> export -> evaluate
-mlflow ui --backend-store-uri ./mlruns
+uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/python src/make_smoke_data.py      # synthetic shapes, NOT food photos
+PATH="$PWD/.venv/bin:$PATH" dvc repro         # prepare -> train -> export -> evaluate
+PATH="$PWD/.venv/bin:$PATH" dvc metrics show
+.venv/bin/python -m pytest                    # 17 tests
 ```
 
-Candidate datasets (licences must be checked before use): Indian Food Images (Kaggle),
-IndianFood101-style collections, plus the team's own labelled photos. Nutrition values
-come from IFCT 2017 / INDB, not from the classifier.
+Without DVC: `python src/prepare.py && python src/train.py && python src/export_onnx.py && python src/evaluate.py`.
+
+The smoke classes are colour/shape patterns, so near-perfect scores there only prove the
+plumbing works. They say nothing about food accuracy.
+
+## Real data (when the datasets are cleared)
+
+1. Put images under `data/raw/<class>/` and the team's consented photos under
+   `data/raw/_test-own/<class>/` (they are only ever used for testing).
+2. `dvc add data/raw && git add data/raw.dvc` and push to the external-drive remote.
+3. Add every class to `labels.json`; `python src/check_labels.py --classes data/processed/classes.json`.
+4. Set `train.pretrained: true` (ImageNet weights) and bump `export.version`.
+5. `dvc repro`, then commit `dvc.lock` and `params.yaml` together.
+
+## Experiment tracking
+
+Runs log to MLflow in a SQLite store under `ml/mlruns/` (the file store is deprecated).
+`mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db`, or set `MLFLOW_TRACKING_URI`
+to the compose server (`infra/compose/mlflow.yml`).
