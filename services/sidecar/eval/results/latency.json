@@ -1,0 +1,57 @@
+{
+  "history": {
+    "days": 365,
+    "sessions": 293,
+    "sets": 3478,
+    "seed": 2026
+  },
+  "engine": {
+    "recovery states, 28-day window (19 muscles)": {
+      "p50_ms": 0.7,
+      "p95_ms": 0.7,
+      "max_ms": 0.7
+    },
+    "personal factor fit, 365 days (6 groups)": {
+      "p50_ms": 166.4,
+      "p95_ms": 232.4,
+      "max_ms": 232.4
+    },
+    "progression target, 120 days of bench": {
+      "p50_ms": 0.6,
+      "p95_ms": 0.6,
+      "max_ms": 0.6
+    }
+  },
+  "api": {
+    "GET /muscles": {
+      "p50_ms": 12.5,
+      "p95_ms": 24.0,
+      "max_ms": 31.6
+    },
+    "GET /intelligence/recovery": {
+      "p50_ms": 13.1,
+      "p95_ms": 18.7,
+      "max_ms": 43.6
+    },
+    "GET /intelligence/progression/{bench}": {
+      "p50_ms": 20.2,
+      "p95_ms": 36.4,
+      "max_ms": 123.2
+    },
+    "GET /deload (stall check over every lift)": {
+      "p50_ms": 72.4,
+      "p95_ms": 127.4,
+      "max_ms": 203.9
+    },
+    "GET /intelligence/notices": {
+      "p50_ms": 129.6,
+      "p95_ms": 215.3,
+      "max_ms": 244.5
+    },
+    "finish a workout (doses, refit, skills, quests)": {
+      "p50_ms": 394.2,
+      "p95_ms": 557.2,
+      "max_ms": 557.2
+    }
+  }
+}

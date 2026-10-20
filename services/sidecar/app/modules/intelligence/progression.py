@@ -32,7 +32,7 @@ Rules for a reps exercise, first match wins (L = last session's working sets):
   hold_recovering  any "up" target is held when the exercise's primary muscles are below
                  40 % recovered (recovery-v2), so the two engines never disagree. (60 % was
                  tried first; in the simulator it held so often that users without RPE
-                 ended up 10+ reps from failure, see docs/ai/evaluation.md.)
+                 ended up 10+ reps above the target reserve, see docs/ai/evaluation.md.)
 Holds use the same shape with seconds: +10 % (at least 2 s) toward the top or the
 criterion; at the top they advance (next step, or +2.5 kg on a weighted hold).
 
