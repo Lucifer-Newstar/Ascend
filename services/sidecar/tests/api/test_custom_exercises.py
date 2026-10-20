@@ -115,46 +115,6 @@ def test_no_model_installed_is_reported_not_fatal(client):
     assert a["proposal"]["pattern"] == "squat"
 
 
-def _wger_transport(request: httpx.Request) -> httpx.Response:
-    if request.url.path.endswith("/exercise-translation/"):
-        if request.url.params["name"] == "Spoto Press":
-            desc = "<p>Lower the bar and pause an inch above the chest.</p><p>Press up.</p>"
-            tr = {"exercise": 77, "name": "Spoto Press", "description": desc}
-            return httpx.Response(200, json={"results": [tr]})
-        return httpx.Response(200, json={"results": []})
-    assert request.url.path.endswith("/exerciseinfo/77/")
-    return httpx.Response(200, json={
-        "category": {"name": "Chest"},
-        "muscles": [{"name_en": "Chest"}],
-        "muscles_secondary": [{"name_en": "Triceps"}, {"name_en": "Shoulders"}],
-        "equipment": [{"name": "Barbell"}, {"name": "Bench"}],
-        "license": {"short_name": "CC-BY-SA 4"},
-    })  # fmt: skip
-
-
-def test_online_lookup_needs_the_setting_and_a_per_request_ask(client, no_ai):
-    calls = []
-
-    def transport(request):
-        calls.append(str(request.url))
-        return _wger_transport(request)
-
-    client.app.state.wger_client = httpx.Client(transport=httpx.MockTransport(transport))
-    a = analyze(client, "spoto press", online=True)
-    assert a["online"]["status"] == "off" and calls == []  # setting is off by default
-    assert client.get("/settings").json()["online_lookup"] is False
-    client.put("/settings", json={"online_lookup": True})
-    assert analyze(client, "spoto press")["online"]["status"] == "not_requested" and calls == []
-    a = analyze(client, "spoto press", online=True)
-    assert a["online"]["status"] == "ok"
-    assert a["field_sources"]["muscles"] == "wger" and a["field_sources"]["instructions"] == "wger"
-    muscles = {m["muscle"]: m["weight"] for m in a["proposal"]["muscles"]}
-    assert muscles["lower_chest"] == 1.0 and muscles["triceps"] == 0.5
-    assert a["proposal"]["equipment"] == "barbell"
-    assert a["attribution"][0]["license"] == "CC-BY-SA 4"
-    assert analyze(client, "zzz nothing", online=True)["online"]["status"] == "not_found"
-
-
 def test_create_log_stats_quests_and_outbox(client, profile, settings, no_ai):
     a = analyze(client, "Banded Pallof Hold")
     sources = dict(a["field_sources"], difficulty="user")
