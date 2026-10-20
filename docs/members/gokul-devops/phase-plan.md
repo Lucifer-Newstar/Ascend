@@ -31,7 +31,7 @@
 ### Phase 1 · Core loop (9 Nov – 13 Dec)
 
 - [ ] `ci: coverage gate 80% on rules modules`
-- [ ] `ci: contract drift check against docs/contracts via manifest.json`
+- [x] `ci: contract drift check against docs/contracts via manifest.json` — fails on a mismatch: it found real drift on its first run, fixed in the same PR
 - [ ] `ci: regenerate OpenAPI TS types and fail if stale`
 - [ ] `ci: migration upgrade test from fixture databases`
 - [ ] `ci: import-linter layering contracts`
