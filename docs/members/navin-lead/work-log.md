@@ -7,3 +7,4 @@
 | Date | What I shipped | PR / evidence | Notes (handoff, follow-up) |
 |---|---|---|---|
 | 2026-10-20 | ML pipeline: preprocessing contract, prepare (dedupe/split/test-own), MobileNetV3 training with MLflow, ONNX export + parity + manifest, evaluate (top-1/3, F1, ECE), labels.json check, DVC stages; ML CI workflow with Gokul | PR #12 (`feat/ml-pipeline`) | Runs on synthetic smoke data only; real datasets, licences and the v0 model are still open |
+| 2026-10-20 | Release 0.2.0: version bump across desktop/shared/sidecar, build-time app version, CHANGELOG; merged PRs #1-#16 as lead | PR #16 (`release/v0.2.0`) | Tag v0.2.0 on the merge commit |
