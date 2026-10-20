@@ -84,7 +84,10 @@ export function QuestWindow({ items, rank, onComplete, onStart }: {
                   {complete && <IconCheck width={14} height={14} />}
                 </button>
                 <div className="min-w-0 flex-1">
-                  <div className={`truncate text-sm font-medium ${complete ? "text-muted line-through decoration-faint" : "text-ink"}`}>{q.title}</div>
+                  <div className={`truncate text-sm font-medium ${complete ? "text-muted line-through decoration-faint" : "text-ink"}`}>
+                    {q.title}
+                    {q.code === "comeback" && <span className="chip ml-2 border-good/50 text-good no-underline">Recovery quest · no penalty</span>}
+                  </div>
                   <div className="truncate text-xs text-muted">{KIND_LABEL[q.kind]} · {manual ? q.detail : "auto-tracked"}</div>
                 </div>
                 {!manual && (

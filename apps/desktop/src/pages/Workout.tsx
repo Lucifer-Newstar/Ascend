@@ -2,6 +2,7 @@ import type { Exercise, Section, SetIn, SetPatch, SkillUnlock, Workout, WorkoutS
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
+import { play } from "../lib/sound";
 import { Transient } from "../components/Celebrate";
 import { IconCheck, IconSearch, IconTrophy } from "../components/Icons";
 import { NumberField, RestTimer, RPE_OPTIONS, RpeSelect } from "../components/logger/fields";
@@ -131,6 +132,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
       const fresh = await api.activeWorkout();
       setWorkout(fresh);
       setLogged((prev) => ({ id: res.set.id, xp: res.xp_awarded, n: (prev?.n ?? 0) + 1 }));
+      play("set");
       if (!selected.time_based) {
         setRestLeft(REST_SECONDS);
         setRestPaused(false);

@@ -89,6 +89,15 @@ Formula and model versions are listed where a number you see could change.
     nothing, so existing profiles behave as before.
   - Profile gains `focus`, `equipment` and a read-only `baseline` (migration 0013; old
     clients that omit the new fields keep working). See `docs/architecture/awakening.md`.
+- **Streak details**: the flame in the top bar opens a short explainer with the current and
+  best streak, freezes held (of 2) and used, and the rule that a missed day never removes
+  XP, levels, ranks or unlocked skills. The Comeback item a missed day adds to the next
+  quest is labelled "Recovery quest · no penalty".
+- **Optional sound effects** (UI-7), off by default: short WebAudio tones (no audio files)
+  for a logged set, a cleared quest, a level-up and a new skill, with a volume slider and a
+  Test button in Settings → Appearance. Kept in this browser profile, so no API change.
+- **States**: a compact inline error with Retry (used by the check-in card instead of raw
+  error text) and an optional action button on empty states.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

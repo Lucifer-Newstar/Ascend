@@ -8,6 +8,7 @@
  * level starts its bar and count from zero (keyed by level) instead of sliding backwards.
  */
 import type { GameSummary } from "@ascend/shared";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import { CountUp, useReducedMotion } from "../lib/motion";
@@ -54,7 +55,6 @@ export function XpStatus({ game }: { game: GameSummary | undefined }) {
   const { riseKey: levelKey } = useRise(xp?.level);
   if (!xp || !game) return null;
   const fill = Math.min(1, xp.xp_into_level / Math.max(1, xp.xp_for_next));
-  const streak = game.streak.current;
   return (
     <div className="flex items-center gap-3" data-testid="xp-status">
       <div className="relative flex items-center gap-2.5 rounded-md border border-line py-1 pl-1 pr-3 text-xs" data-testid="xp-chip">
@@ -74,11 +74,54 @@ export function XpStatus({ game }: { game: GameSummary | undefined }) {
         </Transient>
         <span role="status" className="sr-only">{levelKey > 0 ? `Level up! You reached level ${xp.level}.` : ""}</span>
       </div>
-      <span className="flex items-center gap-1 text-sm font-semibold text-ink" title={`${streak}-day streak · best ${game.streak.best} · ${game.streak.freezes_held} freeze${game.streak.freezes_held === 1 ? "" : "s"} held`} data-testid="top-streak">
-        <span className={`inline-flex ${streak > 0 ? "flame" : "opacity-50"}`} aria-hidden="true"><IconFlame width={16} height={16} className="text-warn" /></span>
-        {streak}
-        <span className="sr-only">-day streak</span>
-      </span>
+      <StreakButton streak={game.streak} />
+    </div>
+  );
+}
+
+/**
+ * The streak flame. Clicking it explains the rules: freezes cover missed days, and a missed
+ * day never removes XP, levels, ranks or skills (the next quest adds a Comeback item).
+ */
+export function StreakButton({ streak: s }: { streak: GameSummary["streak"] }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const id = useId();
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onDown = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("mousedown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("mousedown", onDown);
+    };
+  }, [open]);
+  return (
+    <div className="relative" ref={box}>
+      <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)} data-testid="top-streak"
+        aria-label={`${s.current}-day streak, details`}
+        className="flex items-center gap-1 rounded-md px-1.5 py-1 text-sm font-semibold text-ink transition-colors duration-150 hover:bg-panel-2">
+        <span className={`inline-flex ${s.current > 0 ? "flame" : "opacity-50"}`} aria-hidden="true"><IconFlame width={16} height={16} className="text-warn" /></span>
+        {s.current}
+      </button>
+      {open && (
+        <div id={id} role="dialog" aria-label="Streak" className="card panel-in absolute right-0 top-full z-40 mt-2 w-72 p-4 text-left shadow-[var(--shadow-panel)]">
+          <p className="text-h3 text-ink">{s.current}-day streak</p>
+          <p className="text-xs text-muted">Best {s.best} · {s.active_today ? "today counted" : "today not counted yet"}</p>
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted">
+            <span className="flex gap-1" aria-hidden="true">
+              {[0, 1].map((i) => <span key={i} className={`h-3 w-3 rounded-sm border ${i < s.freezes_held ? "border-accent bg-accent/60" : "border-line-2"}`} />)}
+            </span>
+            {s.freezes_held} of 2 freezes held{s.freezes_used ? ` · ${s.freezes_used} used so far` : ""}
+          </div>
+          <ul className="mt-3 space-y-1.5 text-xs text-muted">
+            <li>Every 7 active days in a row earns a freeze (hold up to 2). A missed day spends one on its own.</li>
+            <li><span className="font-medium text-ink">Progress is never lost.</span> A missed day never removes XP, levels, ranks or unlocked skills; the next day&apos;s quest adds a short Comeback item instead.</li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
