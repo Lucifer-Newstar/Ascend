@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
@@ -15,6 +15,8 @@ from app.modules.workouts.schemas import (
     LoggedSet,
     MuscleWeight,
     SetIn,
+    SetOut,
+    SetPatch,
     WorkoutOut,
     WorkoutSummary,
 )
@@ -105,3 +107,34 @@ def finish(
     return FinishedWorkout(
         workout=service.workout_out(workout), xp_awarded=xp, active_minutes=minutes, hard_sets=hard
     )
+
+
+@router.patch("/{workout_id}/sets/{set_id}", response_model=SetOut)
+def edit_set(
+    workout_id: int,
+    set_id: int,
+    body: SetPatch,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+) -> SetOut:
+    """Fix a logged set. PRs for the exercise and the set's muscle load are re-derived;
+    XP already awarded is kept (the XP ledger is append-only)."""
+    try:
+        row = service.update_set(db, bus, workout_id, set_id, body)
+    except service.NotFound as e:
+        raise HTTPException(404, str(e)) from e
+    return service.set_out(row)
+
+
+@router.delete("/{workout_id}/sets/{set_id}", status_code=204)
+def delete_set(
+    workout_id: int,
+    set_id: int,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+) -> Response:
+    try:
+        service.delete_set(db, bus, workout_id, set_id)
+    except service.NotFound as e:
+        raise HTTPException(404, str(e)) from e
+    return Response(status_code=204)

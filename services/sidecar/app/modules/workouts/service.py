@@ -8,11 +8,11 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.events import EventBus, SetLogged, WorkoutLogged
+from app.core.events import EventBus, SetDeleted, SetLogged, SetUpdated, WorkoutLogged
 from app.modules.gamification.formulas import HARD_SET_RPE
 from app.modules.workouts import pr
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
-from app.modules.workouts.schemas import SetIn, SetOut, WorkoutOut, WorkoutSummary
+from app.modules.workouts.schemas import SetIn, SetOut, SetPatch, WorkoutOut, WorkoutSummary
 
 
 class NotFound(Exception):
@@ -165,3 +165,66 @@ def list_workouts(
             )
         )
     return out
+
+
+def _get_set(db: Session, workout_id: int, set_id: int) -> WorkoutSet:
+    row = db.get(WorkoutSet, set_id)
+    if row is None or row.workout_id != workout_id:
+        raise NotFound(f"set {set_id} not found in workout {workout_id}")
+    return row
+
+
+def recompute_prs(db: Session, exercise_id: int) -> None:
+    """Re-derive e1RM and the PR flag for every set of one exercise, oldest first.
+
+    Needed after an edit or delete: fixing a typo (100 kg instead of 10 kg) must
+    also clear the false PR it created and restore later PRs it masked.
+    """
+    rows = db.scalars(
+        select(WorkoutSet)
+        .where(WorkoutSet.exercise_id == exercise_id)
+        .order_by(WorkoutSet.performed_at, WorkoutSet.id)
+    ).all()
+    best: float | None = None
+    for row in rows:
+        row.e1rm = pr.e1rm_or_none(row.weight_kg, row.reps)
+        row.is_pr = pr.is_new_pr(row.e1rm, best)
+        if row.e1rm is not None and (best is None or row.e1rm > best):
+            best = row.e1rm
+
+
+def update_set(
+    db: Session, bus: EventBus, workout_id: int, set_id: int, patch: SetPatch
+) -> WorkoutSet:
+    row = _get_set(db, workout_id, set_id)
+    changes = patch.model_dump(exclude_unset=True)
+    for key, value in changes.items():
+        if key in ("weight_kg", "reps") and value is None:
+            continue  # cannot null a required field; ignore
+        setattr(row, key, value)
+    db.flush()
+    recompute_prs(db, row.exercise_id)
+    db.flush()
+    bus.publish(
+        db,
+        SetUpdated(
+            set_id=row.id,
+            workout_id=row.workout_id,
+            exercise_id=row.exercise_id,
+            weight_kg=row.weight_kg,
+            reps=row.reps,
+            rpe=row.rpe,
+            performed_at=row.performed_at,
+        ),
+    )
+    db.refresh(row)
+    return row
+
+
+def delete_set(db: Session, bus: EventBus, workout_id: int, set_id: int) -> None:
+    row = _get_set(db, workout_id, set_id)
+    exercise_id = row.exercise_id
+    bus.publish(db, SetDeleted(set_id=row.id, workout_id=workout_id, exercise_id=exercise_id))
+    db.delete(row)
+    db.flush()
+    recompute_prs(db, exercise_id)

@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import cast
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.core.events import EventBus, SetLogged
+from app.core.events import EventBus, SetDeleted, SetLogged, SetUpdated
 from app.modules.nutrition import tdee as tdee_engine
 from app.modules.progress import muscle_load
 from app.modules.progress.models import MuscleLoadEvent, Profile, Setting
@@ -80,7 +80,7 @@ def muscle_states(db: Session, now: datetime) -> list[muscle_load.MuscleState]:
     return muscle_load.compute_states(contribs, now)
 
 
-def on_set_logged(db: Session, event: SetLogged) -> None:
+def on_set_logged(db: Session, event: SetLogged | SetUpdated) -> None:
     """Event handler: turn one logged set into per-muscle effective-set rows."""
     exercise = db.get(Exercise, event.exercise_id)
     if exercise is None:
@@ -98,5 +98,17 @@ def on_set_logged(db: Session, event: SetLogged) -> None:
         )
 
 
+def on_set_updated(db: Session, event: SetUpdated) -> None:
+    """Replace the set's muscle rows: effort (RPE) may have changed."""
+    db.execute(delete(MuscleLoadEvent).where(MuscleLoadEvent.set_id == event.set_id))
+    on_set_logged(db, event)
+
+
+def on_set_deleted(db: Session, event: SetDeleted) -> None:
+    db.execute(delete(MuscleLoadEvent).where(MuscleLoadEvent.set_id == event.set_id))
+
+
 def register(bus: EventBus) -> None:
     bus.subscribe(SetLogged, on_set_logged)
+    bus.subscribe(SetUpdated, on_set_updated)
+    bus.subscribe(SetDeleted, on_set_deleted)
