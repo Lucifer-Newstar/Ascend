@@ -8,12 +8,25 @@ export function Loading({ label = "Loading…" }: { label?: string }) {
   );
 }
 
-export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function ErrorState({ message, onRetry, offline = false }: { message: string; onRetry?: () => void; offline?: boolean }) {
   return (
-    <div className="card m-6 border-bad/40 p-5">
-      <div className="text-sm font-semibold text-bad">Something went wrong</div>
-      <p className="mt-1 text-sm text-muted">{message}</p>
+    <div className="card m-6 border-bad/40 p-5" role="alert">
+      <div className="text-sm font-semibold text-bad">{offline ? "The local engine isn't responding" : "Something went wrong"}</div>
+      <p className="mt-1 text-sm text-muted">
+        {offline ? "Your data is safe on this PC. ASCEND restarts the engine on its own; try again in a few seconds." : message}
+      </p>
+      {offline && <p className="mt-1 text-xs text-faint">Details: {message}</p>}
       {onRetry && <button type="button" className="btn-ghost mt-3" onClick={onRetry}>Retry</button>}
+    </div>
+  );
+}
+
+/** Small inline notice when a refresh failed but older data is still on screen. */
+export function StaleNotice({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="status" className="flex items-center justify-between gap-3 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
+      <span>Couldn't refresh ({message}). Showing the last data loaded.</span>
+      <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={onRetry}>Retry</button>
     </div>
   );
 }

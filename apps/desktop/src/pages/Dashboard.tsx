@@ -9,14 +9,14 @@ import { MuscleMap } from "../components/MuscleMap";
 import { QuestList } from "../components/QuestCard";
 import { Rings } from "../components/Rings";
 import { LoadingLayout, Skeleton, SkeletonCard } from "../components/Skeleton";
-import { ErrorState } from "../components/States";
+import { ErrorState, StaleNotice } from "../components/States";
 import { useToast } from "../components/Toast";
 import { XpBar } from "../components/XpBar";
 import { grams } from "../lib/format";
-import { useApi } from "../lib/useApi";
+import { isOffline, useApi } from "../lib/useApi";
 
 export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => void; refreshKey: number }) {
-  const { data, error, loading, reload } = useApi(api.dashboard, [refreshKey]);
+  const { data, error, status, loading, reload } = useApi(api.dashboard, [refreshKey]);
   const [tip, setTip] = useState<CoachReply | null>(null);
   const toast = useToast();
 
@@ -25,7 +25,7 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
   }, [refreshKey]);
 
   if (loading && !data) return <DashboardSkeleton />;
-  if (error || !data) return <ErrorState message={error ?? "No data"} onRetry={reload} />;
+  if (!data) return <ErrorState message={error ?? "No data"} onRetry={reload} offline={isOffline(status)} />;
 
   async function complete(id: number) {
     try {
@@ -40,6 +40,7 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
   const n = data.nutrition;
   return (
     <div className="grid grid-cols-12 gap-5">
+      {error && <div className="col-span-12"><StaleNotice message={error} onRetry={reload} /></div>}
       <section className="card col-span-12 p-5 xl:col-span-8"><XpBar xp={data.game.xp} streak={data.game.streak} /></section>
       <section className="card col-span-12 flex flex-col justify-between p-5 xl:col-span-4">
         <div className="flex items-center justify-between">
