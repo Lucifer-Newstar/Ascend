@@ -35,6 +35,18 @@ permissions:
   contents: read
 
 jobs:
+  commits:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # commitlint needs the commits being checked
+      - uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: commitlint.config.mjs
+
   sidecar:
     name: Sidecar (lint, types, tests) · ${{ matrix.os }}
     # The app ships on Windows, so tests run there too; Linux stays the fast signal.
