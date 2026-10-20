@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { expectNoAxeViolations } from "../test/axe";
@@ -33,6 +34,17 @@ describe("Layout", () => {
     );
     expect(document.title).toBe("Diet · ASCEND");
     expect(screen.getByRole("heading", { level: 1, name: "Diet" })).toHaveFocus();
+  });
+
+  it("does not grab focus on first load under StrictMode's double effects", () => {
+    render(
+      <StrictMode>
+        <Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Dashboard">
+          <p>content</p>
+        </Layout>
+      </StrictMode>,
+    );
+    expect(screen.getByRole("heading", { level: 1 })).not.toHaveFocus();
   });
 
   it("lets the keyboard reach the scrollable main area on pages without controls", async () => {
