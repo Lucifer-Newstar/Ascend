@@ -95,7 +95,10 @@ async function call<T>(method: HttpMethod, path: string, body?: unknown): Promis
   } catch {
     throw new ApiError(0, "Can't reach the local engine. Is the sidecar running?");
   }
-  if (res.status === 204) return null as T;
+  if (res.status === 204) {
+    await res.text(); // drain the empty body; an unread stream shows up as an aborted request
+    return null as T;
+  }
   const type = res.headers.get("content-type") ?? "";
   const data: unknown = type.includes("json") ? await res.json() : await res.text();
   if (!res.ok) throw new ApiError(res.status, errorMessage(data));
