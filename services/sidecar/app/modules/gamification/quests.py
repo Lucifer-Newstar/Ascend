@@ -4,6 +4,9 @@ One training item (or mobility on a recovery day), one nutrition item, one
 recovery/mind item, plus a short Recovery item if yesterday's quest was
 missed. Difficulty scales x0.9 / x1.1 with the last 7 days' completion rate.
 A seeded RNG keyed on the date keeps the quest stable all day.
+
+quest-v2: the morning check-in's readiness band resizes the training item
+(amber: one set fewer; red: swapped for mobility), see apply_readiness().
 """
 
 from __future__ import annotations
@@ -15,7 +18,7 @@ from datetime import date
 
 from app.modules.progress.muscle_load import MuscleState
 
-GENERATOR_VERSION = "quest-v1"
+GENERATOR_VERSION = "quest-v2"
 
 TRAINING_XP = 40
 NUTRITION_XP = 25
@@ -59,6 +62,39 @@ def difficulty_multiplier(completion_rate_7d: float | None) -> float:
     return 1.0
 
 
+def _mobility_item(detail: str) -> QuestItemSpec:
+    return QuestItemSpec(
+        kind="training",
+        code="mobility_15",
+        title="15 minutes of mobility",
+        detail=detail,
+        metric="manual",
+        target=1,
+        xp=TRAINING_XP // 2,
+    )
+
+
+def apply_readiness(item: QuestItemSpec, band: str | None) -> QuestItemSpec:
+    """Resize a training item for the morning readiness band (green/None: unchanged)."""
+    if item.kind != "training" or band in (None, "green"):
+        return item
+    if band == "red":
+        return _mobility_item("Readiness is low today, so training is swapped for mobility.")
+    if band == "amber" and item.metric.startswith("sets:"):
+        sets = max(1, item.target - 1)
+        muscle_label = item.title.split(" for ", 1)[1] if " for " in item.title else "the target"
+        return QuestItemSpec(
+            kind=item.kind,
+            code=item.code,
+            title=f"{sets} hard sets for {muscle_label}",
+            detail=f"{item.detail} One set shorter after an amber check-in.",
+            metric=item.metric,
+            target=sets,
+            xp=item.xp,
+        )
+    return item
+
+
 def _training_item(
     states: Sequence[MuscleState], exercises: Sequence[ExerciseRef], mult: float, rng: random.Random
 ) -> QuestItemSpec:
@@ -79,15 +115,7 @@ def _training_item(
                 target=sets,
                 xp=TRAINING_XP,
             )
-    return QuestItemSpec(
-        kind="training",
-        code="mobility_15",
-        title="15 minutes of mobility",
-        detail="Most muscles are still recovering, so today is a light day.",
-        metric="manual",
-        target=1,
-        xp=TRAINING_XP // 2,
-    )
+    return _mobility_item("Most muscles are still recovering, so today is a light day.")
 
 
 def generate_daily_quest(
@@ -97,10 +125,11 @@ def generate_daily_quest(
     protein_target_g: int | None,
     completion_rate_7d: float | None = None,
     missed_yesterday: bool = False,
+    readiness_band: str | None = None,
 ) -> list[QuestItemSpec]:
     rng = random.Random(day.toordinal())
     mult = difficulty_multiplier(completion_rate_7d)
-    items = [_training_item(states, exercises, mult, rng)]
+    items = [apply_readiness(_training_item(states, exercises, mult, rng), readiness_band)]
 
     if protein_target_g and rng.random() < 0.5:
         items.append(
