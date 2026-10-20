@@ -142,6 +142,14 @@ def _band_today(db: Session, today: date) -> str | None:
     return c.band if c else None
 
 
+def training_quest_started(db: Session, day: date) -> bool:
+    """True once a set has counted towards today's training item (or it is done)."""
+    row = db.scalars(
+        select(QuestItem).where(QuestItem.day == day, QuestItem.kind == "training")
+    ).first()
+    return row is not None and (row.completed_at is not None or row.progress > 0)
+
+
 def resize_training_for_readiness(db: Session, now: datetime, band: str) -> None:
     """Regenerate today's training item for a new check-in band.
 

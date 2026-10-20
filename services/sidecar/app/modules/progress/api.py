@@ -256,8 +256,10 @@ def post_checkin(
     bus: EventBus = Depends(get_bus),
     now: datetime = Depends(get_now),
 ) -> CheckinOut:
-    """20-second morning check-in. Re-submitting the same day replaces the answer."""
-    return checkins.record(db, bus, body_in, now)
+    """20-second morning check-in. Re-submitting the same day replaces the answer.
+    The reply's quest_adjustment says what actually happened to today's quest."""
+    started = game.training_quest_started(db, now.date())
+    return checkins.record(db, bus, body_in, now, quest_started=started)
 
 
 @router.get("/checkins/today", response_model=CheckinOut | None)
