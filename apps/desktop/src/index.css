@@ -393,6 +393,29 @@ body {
   animation: asc-set-flash var(--dur-fast) ease-out both;
 }
 
+/* The current (next) skill step glows softly in System blue; static with Reduce motion. */
+@keyframes asc-node-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+.skill-node-current::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--color-system-glow) 70%, transparent);
+  animation: asc-node-glow 2.4s ease-in-out infinite;
+}
+:root[data-theme="light"] .skill-node-current::before {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
 .pop-in {
   animation: asc-pop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
