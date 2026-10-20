@@ -97,3 +97,23 @@ class EtaOut(BaseModel):
     reason: str | None
     formula_version: str
     note: Literal["Estimate, not a promise"] = "Estimate, not a promise"
+
+
+class CheckinIn(BaseModel):
+    sleep: int = Field(ge=1, le=5)
+    energy: int = Field(ge=1, le=5)
+    soreness: Literal["none", "some", "a_lot"]
+    mood: int = Field(ge=1, le=5)
+
+
+class CheckinOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    day: date
+    sleep: int
+    energy: int
+    soreness: str
+    mood: int
+    readiness: int
+    band: Literal["green", "amber", "red"]
+    quest_adjustment: str
+    algo_version: str

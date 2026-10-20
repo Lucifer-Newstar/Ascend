@@ -95,6 +95,14 @@ class MealLogged(Event):
 
 
 @dataclass(frozen=True)
+class CheckinRecorded(Event):
+    day: date
+    at: datetime
+    readiness: int
+    band: str
+
+
+@dataclass(frozen=True)
 class QuestCompleted(Event):
     quest_item_id: int
     day: date
