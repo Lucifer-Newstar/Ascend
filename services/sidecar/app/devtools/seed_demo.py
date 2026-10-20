@@ -21,7 +21,7 @@ import random
 from datetime import datetime, time, timedelta
 from typing import Literal
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.core.config import load_settings
 from app.core.db import Base, make_engine, make_session_factory
@@ -43,7 +43,7 @@ from app.modules.progress.schemas import (
     SettingsIn,
 )
 from app.modules.workouts import service as workouts
-from app.modules.workouts.models import Exercise
+from app.modules.workouts.models import Exercise, ExerciseMuscle
 from app.modules.workouts.schemas import SetIn
 
 # Push / pull / legs split: (exercise, start kg, reps)
@@ -195,6 +195,10 @@ def seed(days: int, wipe: bool) -> None:
             for table in reversed(Base.metadata.sorted_tables):
                 if table.name not in ("exercises", "exercise_muscles", "foods", "alembic_version"):
                     db.execute(table.delete())
+            # The library stays; exercises the user added are user data and go too.
+            custom_ids = select(Exercise.id).where(Exercise.is_custom.is_(True))
+            db.execute(delete(ExerciseMuscle).where(ExerciseMuscle.exercise_id.in_(custom_ids)))
+            db.execute(delete(Exercise).where(Exercise.is_custom.is_(True)))
             db.commit()
         progress.upsert_profile(
             db,

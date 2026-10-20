@@ -46,3 +46,26 @@ def test_seed_demo_wipe_is_repeatable(tmp_path: Path, monkeypatch: pytest.Monkey
     with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
         assert len(c.get("/checkins").json()) == 6
         assert len(c.get("/measurements").json()) == 6  # 3 sites x first and last day
+
+
+def test_seed_demo_wipe_removes_user_added_exercises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ASCEND_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ASCEND_TOKEN", "t")
+    seed_demo.seed(days=3, wipe=True)
+    app = create_app(load_settings(), outbox_interval=0)
+    with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
+        library = len(c.get("/exercises").json())
+        c.put("/settings", json={"ai_enabled": False})
+        body = {
+            "name": "Banded Pallof Hold", "section": "gym", "equipment": "band",
+            "measure": "hold", "pattern": "isometric",
+            "muscles": [{"muscle": "obliques", "weight": 1}],
+        }  # fmt: skip
+        assert c.post("/exercises", json=body).status_code == 201
+    seed_demo.seed(days=3, wipe=True)
+    app = create_app(load_settings(), outbox_interval=0)
+    with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
+        assert c.get("/exercises", params={"custom": True}).json() == []
+        assert len(c.get("/exercises").json()) == library
