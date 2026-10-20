@@ -87,6 +87,10 @@ class MuscleStateOut(BaseModel):
     weekly_high: float
     readiness: float
     ready_at: datetime | None
+    # recovery-v2: the same muscle with the population decay (k = 1), for "population vs
+    # you", and the engine version that produced these numbers.
+    readiness_population: float = 1.0
+    algo_version: str = "recovery-v2"
 
 
 Units = Literal["metric", "imperial"]

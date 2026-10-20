@@ -709,6 +709,15 @@ components:
             format: date-time
           - type: 'null'
           title: Ready At
+        readiness_population:
+          type: number
+          title: Readiness Population
+          default: 1.0
+          description: recovery-v2 readiness with the population decay (k = 1), for "population vs you".
+        algo_version:
+          type: string
+          title: Algo Version
+          default: recovery-v2
       type: object
       required:
       - key

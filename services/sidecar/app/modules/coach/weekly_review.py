@@ -28,12 +28,11 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.modules.intelligence import recovery_service
 from app.modules.nutrition.service import day_totals, meal_count
 from app.modules.progress import body
 from app.modules.progress import service as progress
 from app.modules.progress import trend as trend_engine
-from app.modules.progress.models import MuscleLoadEvent
-from app.modules.progress.muscle_load import Contribution, compute_states
 from app.modules.workouts import deload, deload_service
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
 
@@ -86,10 +85,7 @@ def _planned(db: Session) -> int:
 
 
 def _muscle_states_at(db: Session, at: datetime) -> list[Any]:
-    rows = db.scalars(
-        select(MuscleLoadEvent).where(MuscleLoadEvent.at >= at - timedelta(days=28))
-    ).all()
-    return compute_states([Contribution(r.muscle, r.es, r.at) for r in rows], at)
+    return list(recovery_service.states(db, at, use_checkin=False))
 
 
 def _weekly_best(db: Session, exercise_id: int, start: date) -> float | None:

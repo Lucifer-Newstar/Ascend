@@ -78,6 +78,9 @@ export interface MuscleState {
   weekly_high: number;
   readiness: number;
   ready_at: string | null;
+  /** recovery-v2 readiness with the population decay (k = 1): "population vs you". */
+  readiness_population?: number;
+  algo_version?: string;
 }
 
 /** GET /muscles/activity?days=1..30: per-muscle load over a window (map hover card). */
@@ -740,4 +743,52 @@ export interface ImportReport {
   skipped_warmups: number;
   /** Source exercise name -> ASCEND library name. */
   matched_exercises: Record<string, string>;
+}
+
+// --- intelligence layer (docs/contracts/intelligence.yaml) ---------------------------
+
+/** The "Why?" of one number: the formula in words and every input with its value. */
+export interface Why {
+  formula: string;
+  inputs: Record<string, number | string | null>;
+}
+
+export interface MuscleRecovery {
+  key: string;
+  label: string;
+  group: string;
+  status: MuscleStatus;
+  readiness: number;
+  readiness_population: number;
+  fatigue: number;
+  capacity: number;
+  half_life_h: number;
+  prior_half_life_h: number;
+  k: number;
+  modifier: number;
+  es_7d: number;
+  ready_at: string | null;
+  last_trained: string | null;
+  top_sets: { exercise: string; dose_now: number; hours_ago: number }[];
+  why: Why;
+}
+
+export interface RecoveryGroup {
+  group: string;
+  k: number;
+  k_low: number;
+  k_high: number;
+  n: number;
+  personal: boolean;
+  alpha: number | null;
+  updated_at: string | null;
+}
+
+/** GET /intelligence/recovery */
+export interface RecoveryReport {
+  algo_version: string;
+  formula: string;
+  checkin: { sleep: number; soreness: string } | null;
+  groups: RecoveryGroup[];
+  muscles: MuscleRecovery[];
 }

@@ -26,6 +26,8 @@ from app.core.security import TokenAuthMiddleware
 from app.modules.coach.api import router as coach_router
 from app.modules.gamification import service as gamification_service
 from app.modules.gamification.api import router as game_router
+from app.modules.intelligence import recovery_service
+from app.modules.intelligence.api import router as intelligence_router
 from app.modules.io.api import router as io_router
 from app.modules.nutrition.api import router as nutrition_router
 from app.modules.progress import service as progress_service
@@ -55,6 +57,7 @@ def build_bus() -> EventBus:
     """Subscribe module handlers. Order matters: muscle load is written before XP/quests run."""
     bus = EventBus()
     progress_service.register(bus)
+    recovery_service.register(bus)
     gamification_service.register(bus)
     skills_service.register(bus)
     return bus
@@ -215,6 +218,7 @@ def create_app(
         skills_router,
         coach_router,
         io_router,
+        intelligence_router,
     ):
         app.include_router(router)
     return app

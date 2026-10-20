@@ -10,6 +10,7 @@ from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
+from app.modules.intelligence import recovery_service
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
 from app.modules.progress import (
@@ -107,8 +108,10 @@ def put_settings(body: SettingsIn, db: Session = Depends(get_db)) -> SettingsOut
 
 def _muscles(db: Session, now: datetime) -> list[MuscleStateOut]:
     return [
-        MuscleStateOut(**{k: getattr(s, k) for k in MuscleStateOut.model_fields})
-        for s in service.muscle_states(db, now)
+        MuscleStateOut(
+            **{k: getattr(s, k) for k in MuscleStateOut.model_fields if k != "algo_version"}
+        )
+        for s in recovery_service.states(db, now)
     ]
 
 
