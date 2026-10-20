@@ -44,12 +44,24 @@ class MuscleStateOut(BaseModel):
     ready_at: datetime | None
 
 
+Units = Literal["metric", "imperial"]
+Theme = Literal["dark", "light", "system"]
+
+
 class SettingsOut(BaseModel):
     ai_enabled: bool
+    units: Units = "metric"
+    theme: Theme = "dark"
+    sessions_per_week: int = 3
 
 
 class SettingsIn(BaseModel):
-    ai_enabled: bool
+    """Partial update: only the fields sent are changed."""
+
+    ai_enabled: bool | None = None
+    units: Units | None = None
+    theme: Theme | None = None
+    sessions_per_week: int | None = Field(default=None, ge=1, le=7)
 
 
 class BodyMetricIn(BaseModel):

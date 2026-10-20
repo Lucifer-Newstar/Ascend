@@ -64,13 +64,13 @@ def put_profile(body: ProfileIn, db: Session = Depends(get_db)) -> ProfileOut:
 
 @router.get("/settings", response_model=SettingsOut)
 def get_settings(db: Session = Depends(get_db)) -> SettingsOut:
-    return SettingsOut(ai_enabled=service.ai_enabled(db))
+    return service.read_settings(db)
 
 
 @router.put("/settings", response_model=SettingsOut)
 def put_settings(body: SettingsIn, db: Session = Depends(get_db)) -> SettingsOut:
-    service.set_setting(db, "ai_enabled", "true" if body.ai_enabled else "false")
-    return SettingsOut(ai_enabled=body.ai_enabled)
+    """Partial update; omitted fields keep their stored value."""
+    return service.update_settings(db, body)
 
 
 def _muscles(db: Session, now: datetime) -> list[MuscleStateOut]:

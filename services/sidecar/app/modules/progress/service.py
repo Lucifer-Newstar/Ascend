@@ -12,7 +12,14 @@ from app.core.events import EventBus, SetDeleted, SetLogged, SetUpdated
 from app.modules.nutrition import tdee as tdee_engine
 from app.modules.progress import energy, muscle_load
 from app.modules.progress.models import MuscleLoadEvent, Profile, Setting
-from app.modules.progress.schemas import EnergyTargets, ProfileIn
+from app.modules.progress.schemas import (
+    EnergyTargets,
+    ProfileIn,
+    SettingsIn,
+    SettingsOut,
+    Theme,
+    Units,
+)
 from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
 from app.modules.workouts.models import Exercise, Workout
 
@@ -69,6 +76,25 @@ def set_setting(db: Session, key: str, value: str) -> None:
 
 def ai_enabled(db: Session) -> bool:
     return get_setting(db, "ai_enabled", "true") == "true"
+
+
+def read_settings(db: Session) -> SettingsOut:
+    return SettingsOut(
+        ai_enabled=ai_enabled(db),
+        units=cast(Units, get_setting(db, "units", "metric")),
+        theme=cast(Theme, get_setting(db, "theme", "dark")),
+        sessions_per_week=int(get_setting(db, "sessions_per_week", "3")),
+    )
+
+
+def update_settings(db: Session, data: SettingsIn) -> SettingsOut:
+    changes = data.model_dump(exclude_none=True)
+    for key, value in changes.items():
+        if isinstance(value, bool):
+            value = "true" if value else "false"
+        set_setting(db, key, str(value))
+    db.flush()
+    return read_settings(db)
 
 
 # --- muscle load ------------------------------------------------------------
