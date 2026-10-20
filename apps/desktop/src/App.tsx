@@ -16,6 +16,7 @@ import { DashboardPage } from "./pages/Dashboard";
 const CoachPage = lazy(() => import("./pages/Coach").then((m) => ({ default: m.CoachPage })));
 const DataPage = lazy(() => import("./pages/Data").then((m) => ({ default: m.DataPage })));
 const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.DietPage })));
+const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default: m.LibraryPage })));
 const HistoryPage = lazy(() => import("./pages/History").then((m) => ({ default: m.HistoryPage })));
 const ProgressPage = lazy(() => import("./pages/Progress").then((m) => ({ default: m.ProgressPage })));
 const Onboarding = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.Onboarding })));
@@ -25,6 +26,7 @@ const WorkoutPage = lazy(() => import("./pages/Workout").then((m) => ({ default:
 const TITLES: Record<Page, string> = {
   dashboard: "Dashboard",
   workout: "Training",
+  library: "Exercises",
   progress: "Progress",
   diet: "Diet",
   coach: "Coach",
@@ -124,6 +126,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
       {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenCoach={() => navigate("coach")} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
+      {page === "library" && <LibraryPage onNavigate={navigate} refreshKey={refreshKey} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
