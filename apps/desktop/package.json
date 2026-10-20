@@ -38,6 +38,7 @@
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.2",
+    "axe-core": "^4.14.0",
     "concurrently": "^9.0.1",
     "cross-env": "^7.0.3",
     "electron": "^33.0.0",
