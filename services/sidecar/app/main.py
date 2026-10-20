@@ -70,8 +70,11 @@ def create_app(
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)
-    app.state.bus = build_bus()
     app.state.clock = clock or datetime.now
+    app.state.bus = build_bus()
+    app.state.bus.outbox = True
+    # Read through app.state so tests that swap the clock also move outbox timestamps.
+    app.state.bus.clock = lambda: app.state.clock()
     # Tests replace this so POST /shutdown does not stop the test process.
     app.state.request_exit = _exit_soon
 
