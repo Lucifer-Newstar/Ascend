@@ -427,6 +427,145 @@ body {
   transform: none;
 }
 
+/*
+ * System window (components/SystemWindow.tsx): glass, border, corner brackets, bracketed
+ * header. --sw is the window's accent (System blue by default, tinted by rank or variant).
+ */
+@keyframes asc-sys-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes asc-scan {
+  from {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(320%);
+    opacity: 0;
+  }
+}
+@keyframes asc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@layer components {
+  .sys-window {
+    --sw: var(--color-accent);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--sw) 45%, transparent);
+    background: var(--color-system-glass);
+    box-shadow:
+      0 0 24px color-mix(in srgb, var(--color-system-glow) 25%, transparent),
+      inset 0 0 36px -14px color-mix(in srgb, var(--sw) 40%, transparent),
+      var(--shadow-panel);
+    backdrop-filter: blur(6px);
+    padding: 20px 22px;
+    animation: asc-sys-in var(--dur-base) var(--ease-out) both;
+  }
+  .sys-corner {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    pointer-events: none;
+    border: 0 solid var(--sw);
+  }
+  .sys-tl {
+    top: 6px;
+    left: 6px;
+    border-top-width: 2px;
+    border-left-width: 2px;
+  }
+  .sys-tr {
+    top: 6px;
+    right: 6px;
+    border-top-width: 2px;
+    border-right-width: 2px;
+  }
+  .sys-bl {
+    bottom: 6px;
+    left: 6px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+  }
+  .sys-br {
+    bottom: 6px;
+    right: 6px;
+    border-bottom-width: 2px;
+    border-right-width: 2px;
+  }
+  .sys-scan {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 35%;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--sw) 16%, transparent), transparent);
+    animation: asc-scan var(--dur-slow) 120ms var(--ease-out) both;
+  }
+  .sys-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .sys-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sw);
+  }
+  .sys-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .sys-backdrop {
+    background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+    animation: asc-fade-in var(--dur-base) ease both;
+  }
+  /* Light theme: same shape, no glow, no blur, a firmer border. */
+  :root[data-theme="light"] .sys-window {
+    border-color: color-mix(in srgb, var(--sw) 75%, transparent);
+    box-shadow: var(--shadow-panel);
+    backdrop-filter: none;
+  }
+  :root[data-theme="light"] .sys-backdrop {
+    background: rgba(11, 20, 36, 0.35);
+  }
+  /* Reduce motion: the entrance becomes a 120 ms fade (these beat the global 0.01 ms rule). */
+  :root[data-motion="reduce"] .sys-window {
+    animation: asc-fade-in 120ms linear both !important;
+    animation-duration: 120ms !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sys-window {
+      animation: asc-fade-in 120ms linear both !important;
+      animation-duration: 120ms !important;
+    }
+  }
+}
+
 *:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
