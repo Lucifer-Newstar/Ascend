@@ -5,21 +5,33 @@ import { CountUp, useReducedMotion } from "../lib/motion";
 import { Confetti, Flash, Transient, useRise } from "./Celebrate";
 import { IconFlame, IconSnow } from "./Icons";
 
-export const RANK_COLORS: Record<string, string> = {
-  E: "#94a3b8",
-  D: "#4ade80",
-  C: "#22d3ee",
-  B: "#818cf8",
-  A: "#f59e0b",
-  S: "#f43f5e",
+/** Rank colours come from the rank tokens in index.css (both themes meet AA on panels). */
+export const RANK_TOKENS: Record<string, string> = {
+  E: "--color-rank-e",
+  D: "--color-rank-d",
+  C: "--color-rank-c",
+  B: "--color-rank-b",
+  A: "--color-rank-a",
+  S: "--color-rank-s",
 };
 
-export function RankBadge({ rank, size = 44 }: { rank: string; size?: number }) {
-  const color = RANK_COLORS[rank] ?? "#94a3b8";
+export const rankColor = (rank: string): string => `var(${RANK_TOKENS[rank] ?? RANK_TOKENS.E})`;
+
+/** The rank letter is always shown as text (never colour alone), with an accessible name. */
+export function RankBadge({ rank, size = 44, title }: { rank: string; size?: number; title?: string }) {
+  const color = rankColor(rank);
   return (
-    <div className="grid shrink-0 place-items-center rounded-lg border font-display font-bold"
-      style={{ width: size, height: size, borderColor: `${color}66`, color, background: `${color}14`, fontSize: size * 0.55 }}>
-      {rank}
+    <div className="grid shrink-0 place-items-center rounded-md border font-display font-semibold leading-none"
+      role="img" aria-label={`Rank ${rank}${title ? `, ${title}` : ""}`} data-rank={rank}
+      style={{
+        width: size,
+        height: size,
+        borderColor: `color-mix(in srgb, ${color} 55%, transparent)`,
+        color,
+        background: `color-mix(in srgb, ${color} 9%, transparent)`,
+        fontSize: size * 0.55,
+      }}>
+      <span aria-hidden="true">{rank}</span>
     </div>
   );
 }
@@ -46,7 +58,7 @@ export function XpFill({ fill, className = "h-2", sheenKey = 0 }: { fill: number
     <div className={`relative overflow-hidden rounded-full bg-xp/15 ${className}`}>
       <div
         data-testid="xp-fill"
-        className="h-full w-full rounded-full bg-xp shadow-[0_0_10px_rgba(139,124,255,0.6)] will-change-transform"
+        className="h-full w-full rounded-full bg-xp shadow-[0_0_10px_color-mix(in_srgb,var(--color-xp)_60%,transparent)] will-change-transform"
         style={{ transform: `translateX(${(fill - 1) * 100}%)`, transition: "transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1)" }}
       />
       {sheenKey > 0 && (
