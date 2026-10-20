@@ -49,7 +49,7 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
         )}
       </section>
 
-      <WeeklyCard refreshKey={refreshKey + tick} />
+      <WeeklyCard refreshKey={refreshKey + tick} units={units} />
       <PrCard refreshKey={refreshKey} units={units} />
       <MeasurementsCard refreshKey={refreshKey} units={units} />
     </div>
@@ -185,10 +185,11 @@ function EtaCard({ eta, units, profile, onSaved }: { eta: Eta; units: Units; pro
 
 type WeeklyMetric = "volume_kg" | "sessions" | "active_minutes";
 
-function WeeklyCard({ refreshKey }: { refreshKey: number }) {
+function WeeklyCard({ refreshKey, units }: { refreshKey: number; units: Units }) {
   const weeks = useApi(() => api.weekly(8), [refreshKey]);
   const [metric, setMetric] = useState<WeeklyMetric>("volume_kg");
-  const unit = metric === "volume_kg" ? " kg" : metric === "active_minutes" ? " min" : "";
+  const unit = metric === "volume_kg" ? ` ${weightUnit(units)}` : metric === "active_minutes" ? " min" : "";
+  const value = (w: WeekSummary) => Math.round(metric === "volume_kg" ? toDisplayWeight(w.volume_kg, units, 0) : w[metric]);
   const data: WeekSummary[] = weeks.data ?? [];
   return (
     <section className="card col-span-12 p-5 xl:col-span-8" aria-labelledby="weekly-title">
@@ -205,7 +206,7 @@ function WeeklyCard({ refreshKey }: { refreshKey: number }) {
         data.every((w) => w.sessions === 0) ? <Empty title="No training logged in the last 8 weeks." /> : (
           <BarChart
             labels={data.map((w) => shortDate(w.week_start))}
-            values={data.map((w) => Math.round(w[metric]))}
+            values={data.map(value)}
             unit={unit}
             summary={`Weekly ${metric.replace("_", " ")} for the last ${data.length} weeks`}
           />
