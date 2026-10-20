@@ -1,0 +1,71 @@
+# Windows installer build.
+#
+# Runs on a version tag (v0.1.0, ...) or manually from the Actions tab.
+# Steps: build the sidecar with PyInstaller on Windows, build the renderer +
+# Electron code, then electron-builder packs both into an NSIS installer.
+#
+# STATUS: written but NOT yet run on real Windows / GitHub's windows runners.
+# Expect to fix small path or packaging issues on the first run.
+name: Release (Windows installer)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    strategy:
+      matrix:
+        os: [windows-latest]   # add windows-2022 etc. here to test more images
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: services/sidecar/uv.lock
+
+      - name: Build sidecar (PyInstaller)
+        working-directory: services/sidecar
+        run: |
+          uv sync --frozen --group build
+          uv run --group build pyinstaller packaging/ascend-sidecar.spec --noconfirm
+
+      - name: Smoke test sidecar.exe
+        working-directory: services/sidecar
+        shell: pwsh
+        run: |
+          $env:ASCEND_PORT = "8799"; $env:ASCEND_TOKEN = "ci-token"; $env:ASCEND_DATA_DIR = "$env:RUNNER_TEMP\data"
+          $p = Start-Process -FilePath .\dist\ascend-sidecar\ascend-sidecar.exe -PassThru -NoNewWindow
+          for ($i = 0; $i -lt 30; $i++) {
+            try { Invoke-RestMethod http://127.0.0.1:8799/health; Stop-Process $p.Id; exit 0 } catch { Start-Sleep 1 }
+          }
+          Stop-Process $p.Id -ErrorAction SilentlyContinue
+          throw "sidecar.exe did not become healthy"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build installer (electron-builder)
+        working-directory: apps/desktop
+        env:
+          # No code-signing certificate yet: build unsigned.
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npm run dist:win
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ascend-windows-installer
+          path: apps/desktop/release/*.exe
+          if-no-files-found: error
