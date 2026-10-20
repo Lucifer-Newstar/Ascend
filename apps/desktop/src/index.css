@@ -1,66 +1,119 @@
 @import "tailwindcss";
 
 /*
- * ASCEND design tokens. Dark is the default; [data-theme="light"] on <html>
- * swaps the surface and ink tokens (see the light block below). Restrained cyan
- * accent, violet for XP, and four status colours shared by the muscle map and
- * its legend.
+ * ASCEND design tokens (v5, "System" palette). Dark is the default; [data-theme="light"]
+ * on <html> swaps them (see the light block below).
+ *
+ * - Surfaces are navy-black, never #000.
+ * - System blue (accent) is for System UI and interactive chrome only, never for data status.
+ * - Arcane violet (xp) is for XP and levels.
+ * - Status colours have one meaning each, shared by the muscle map, its legend and its pulse.
+ * - Every text token meets WCAG AA (4.5:1) on bg, panel, panel-2 and panel-3 in both themes
+ *   (asserted in src/lib/tokens.test.ts).
+ *
+ * `static` keeps every variable in the output even when no utility uses it, because
+ * components read some of them from JS (cssVar) and from inline SVG styles.
  */
-@theme {
-  --color-bg: #0a0e15;
-  --color-panel: #0f1520;
-  --color-panel-2: #141b28;
-  --color-line: #1e2736;
-  --color-line-2: #2a3446;
-  --color-ink: #e6edf7;
-  /* Text tokens meet WCAG AA (4.5:1) on bg, panel and panel-2. */
-  --color-muted: #8f9bac;
-  --color-faint: #78849a;
-  --color-accent: #22d3ee;
-  --color-accent-dim: #0e7490;
-  --color-xp: #9a8cff;
-  --color-good: #22c55e;
-  --color-warn: #f5a524;
-  --color-bad: #ef4444;
-  --color-under: #4f7bd9;
-  --color-nodata: #2a3345;
-  --color-ring-tasks: #22d3ee;
+@theme static {
+  /* Surfaces */
+  --color-bg: #070b13;
+  --color-panel: #0c1322;
+  --color-panel-2: #111b2e;
+  --color-panel-3: #18253d;
+  --color-line: #1e2d4a;
+  --color-line-2: #2c4470;
+  --color-line-input: #52709e;
+  --color-sidebar: #0a101c;
+  --color-map-fill: #16213a;
+  /* Ink */
+  --color-ink: #e8f0ff;
+  --color-muted: #9aa9c4;
+  --color-faint: #8090ad;
+  /* The System */
+  --color-accent: #4da8ff;
+  --color-accent-hover: #7cc0ff;
+  --color-accent-dim: #1b4f8a;
+  --color-on-accent: #04101f;
+  --color-system-glow: #1f7bff;
+  --color-system-glass: rgba(12, 19, 34, 0.82);
+  --color-xp: #a08cff;
+  /* Status: one meaning each */
+  --color-good: #34d399;
+  --color-warn: #f5b83d;
+  --color-bad: #ff6b6b;
+  --color-under: #6e8ef5;
+  --color-nodata: #26324a;
+  --color-gold: #f5c542;
+  /* Ranks */
+  --color-rank-e: #8b95a7;
+  --color-rank-d: #3ddc97;
+  --color-rank-c: #4da8ff;
+  --color-rank-b: #a08cff;
+  --color-rank-a: #f5c542;
+  --color-rank-s: #ff5a7a;
+  /* Daily rings (quest tasks are System, kcal in/out are data) */
+  --color-ring-tasks: #4da8ff;
   --color-ring-in: #34d399;
   --color-ring-out: #fb923c;
-  --color-sidebar: #0c111a;
-  --color-on-accent: #04141a;
-  --color-accent-hover: #5ee3f5;
-  --color-map-fill: #1a2232;
 
+  /* Type */
   --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-display: "Rajdhani", "Inter", sans-serif;
+
+  /* Radii, elevation, motion */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-system: 0 0 0 1px rgba(77, 168, 255, 0.45), 0 0 24px rgba(31, 123, 255, 0.25);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 600ms;
 }
 
 /*
- * Light theme: same hues, light surfaces. Accent darkens one step so text and
- * focus rings on white keep WCAG AA contrast (cyan-700 on white is ~5.4:1).
+ * Light theme: its own hierarchy rather than an inversion. Borders replace glows,
+ * accents darken so text and focus rings on white keep WCAG AA.
  */
 :root[data-theme="light"] {
-  --color-bg: #f4f6fa;
+  --color-bg: #f3f6fb;
   --color-panel: #ffffff;
-  --color-panel-2: #eef1f6;
-  --color-line: #dde3ec;
-  --color-line-2: #c9d2df;
-  --color-ink: #0f1722;
-  --color-muted: #4a5768;
-  --color-faint: #616d7e;
-  --color-accent: #0c6680;
-  --color-accent-dim: #67c6dc;
-  --color-accent-hover: #09536a;
-  --color-on-accent: #ffffff;
-  --color-xp: #5b49d6;
-  /* Status text needs darker shades on white than on the dark panels (AA 4.5:1). */
-  --color-warn: #b45309;
-  --color-good: #15803d;
-  --color-bad: #c42b2b;
-  --color-nodata: #d5dbe5;
+  --color-panel-2: #eaf0f8;
+  --color-panel-3: #dde6f2;
+  --color-line: #d3ddea;
+  --color-line-2: #afc0d8;
+  /* Spec value #7a8ca8 is 2.98:1 on panel-2; one step darker meets 3:1 on every surface. */
+  --color-line-input: #71839f;
   --color-sidebar: #ffffff;
-  --color-map-fill: #e3e8f0;
+  --color-map-fill: #e2e9f3;
+  --color-ink: #0b1424;
+  --color-muted: #46566e;
+  --color-faint: #54627a;
+  --color-accent: #0b5fc4;
+  --color-accent-hover: #084a99;
+  --color-accent-dim: #9cc6f5;
+  --color-on-accent: #ffffff;
+  --color-system-glow: transparent;
+  --color-system-glass: rgba(255, 255, 255, 0.92);
+  --color-xp: #5b45d6;
+  --color-good: #136b3b;
+  --color-warn: #874f00;
+  --color-bad: #b42323;
+  --color-under: #3552c4;
+  --color-nodata: #d3dbe6;
+  --color-gold: #765500;
+  --color-rank-e: #5a6578;
+  --color-rank-d: #136b3b;
+  --color-rank-c: #0b5fc4;
+  --color-rank-b: #5b45d6;
+  --color-rank-a: #765500;
+  --color-rank-s: #b4234a;
+  --color-ring-tasks: #0b5fc4;
+  --color-ring-in: #1f9d61;
+  --color-ring-out: #e0761f;
+  --shadow-panel: 0 1px 2px rgba(11, 20, 36, 0.06);
+  --shadow-system: 0 0 0 1px rgba(11, 95, 196, 0.55);
   color-scheme: light;
 }
 
@@ -80,6 +133,9 @@ body {
 }
 
 body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 22px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -99,13 +155,30 @@ body {
 
 /* Reusable component classes (Tailwind v4 @utility so they can be composed with @apply). */
 @utility card {
-  @apply rounded-xl border border-line bg-panel;
+  @apply rounded-lg border border-line bg-panel shadow-panel;
 }
+/* Window header style (Rajdhani 14/20, 600, uppercase, +0.08em): card and window titles. */
 @utility card-title {
-  @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+  @apply font-display text-[14px] leading-5 font-semibold uppercase tracking-[0.08em] text-muted;
+}
+/* Typography scale (12 / 14 / 16 / 20 / 24 / 32 / 48). */
+@utility text-display-xl {
+  @apply font-display text-[48px] leading-[52px] font-semibold;
+}
+@utility text-display-l {
+  @apply font-display text-[32px] leading-9 font-semibold;
+}
+@utility text-h2 {
+  @apply text-[20px] leading-7 font-semibold;
+}
+@utility text-h3 {
+  @apply text-[16px] leading-6 font-semibold;
+}
+@utility text-small {
+  @apply text-[12px] leading-[18px] font-medium;
 }
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100;
 }
 @utility btn-primary {
   @apply btn bg-accent text-on-accent hover:bg-accent-hover;
@@ -114,10 +187,10 @@ body {
   @apply btn border border-line-2 text-ink hover:border-accent/60 hover:text-accent;
 }
 @utility input {
-  @apply w-full rounded-lg border border-line-2 bg-panel-2 px-3 py-2 text-sm text-ink placeholder:text-faint outline-none focus:border-accent/70 focus:ring-2 focus:ring-accent/20;
+  @apply w-full rounded-md border border-line-input bg-panel-2 px-3 py-2 text-sm text-ink placeholder:text-faint outline-none focus:border-accent/70 focus:ring-2 focus:ring-accent/20;
 }
 @utility chip {
-  @apply inline-flex items-center rounded-md border border-line-2 px-1.5 py-0.5 text-[11px] text-muted;
+  @apply inline-flex items-center rounded-sm border border-line-2 px-1.5 py-0.5 text-[11px] text-muted;
 }
 
 /*
