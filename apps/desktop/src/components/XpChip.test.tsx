@@ -1,5 +1,6 @@
 import type { GameSummary } from "@ascend/shared";
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "../api/client";
@@ -81,7 +82,21 @@ describe("XpChip", () => {
     expect(segments).toHaveLength(10);
     // 250 of 500 XP: five full segments, five empty.
     expect([...segments].map((s) => s.getAttribute("data-fill"))).toEqual(["1.00", "1.00", "1.00", "1.00", "1.00", "0.00", "0.00", "0.00", "0.00", "0.00"]);
-    expect(screen.getByTestId("top-streak")).toHaveTextContent("2-day streak");
+    expect(screen.getByTestId("top-streak")).toHaveAccessibleName("2-day streak, details");
+  });
+
+  it("explains the streak rules on click: freezes, and progress is never lost", async () => {
+    vi.mocked(api.game).mockResolvedValueOnce({ ...summary(250, 3, 250), streak: { current: 9, best: 12, freezes_held: 1, freezes_used: 1, active_today: false } });
+    render(renderChip(0, true));
+    const button = await screen.findByRole("button", { name: /9-day streak, details/ });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(button);
+    const pop = screen.getByRole("dialog", { name: "Streak" });
+    expect(pop).toHaveTextContent("Best 12 · today not counted yet");
+    expect(pop).toHaveTextContent("1 of 2 freezes held · 1 used so far");
+    expect(pop).toHaveTextContent("never removes XP, levels, ranks or unlocked skills");
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Streak" })).toBeNull();
   });
 });
 
