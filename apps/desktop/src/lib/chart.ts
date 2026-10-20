@@ -7,7 +7,7 @@ export function linearScale([d0, d1]: [number, number], [r0, r1]: [number, numbe
   return (v: number) => r0 + ((v - d0) / span) * (r1 - r0);
 }
 
-/** Round step (1, 2 or 5 x 10^n) giving about `count` ticks between min and max. */
+/** Round step (1, 2 or 5 x 10^n) giving about `count` ticks spanning min..max. */
 export function niceTicks(min: number, max: number, count = 4): number[] {
   if (!Number.isFinite(min) || !Number.isFinite(max)) return [];
   if (min === max) {
@@ -18,8 +18,9 @@ export function niceTicks(min: number, max: number, count = 4): number[] {
   const mag = 10 ** Math.floor(Math.log10(raw));
   const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? 10 * mag;
   const start = Math.floor(min / step) * step;
+  const end = Math.ceil(max / step - 1e-9) * step; // the top tick always covers the largest value
   const ticks: number[] = [];
-  for (let v = start; v <= max + step * 1e-9; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
+  for (let v = start; v <= end + step * 1e-9; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
   return ticks;
 }
 
@@ -46,4 +47,10 @@ export function extent(values: (number | null | undefined)[], pad = 0.05): [numb
   const hi = Math.max(...v);
   const p = (hi - lo || Math.abs(hi) || 1) * pad;
   return [lo - p, hi + p];
+}
+
+/** Compact axis label: 1250 -> "1.3k". */
+export function compact(v: number): string {
+  if (Math.abs(v) >= 1000) return `${Math.round(v / 100) / 10}k`;
+  return String(v);
 }

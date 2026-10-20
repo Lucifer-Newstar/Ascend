@@ -2,10 +2,10 @@
  * Minimal SVG charts that follow the theme tokens: a line chart (one or two
  * series, optional dots) and a bar chart. Both carry an accessible summary.
  */
-import { extent, linePath, linearScale, niceTicks } from "../lib/chart";
+import { compact, extent, linePath, linearScale, niceTicks } from "../lib/chart";
 
 const W = 560;
-const PAD = { top: 12, right: 12, bottom: 24, left: 40 };
+const PAD = { top: 12, right: 20, bottom: 24, left: 52 };
 
 export interface Series {
   label: string;
@@ -37,11 +37,11 @@ export function LineChart({ labels, series, height = 200, unit = "", summary }: 
         {ticks.map((t) => (
           <g key={t}>
             <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} className="stroke-line" strokeWidth={1} />
-            <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" className="fill-faint text-[10px]">{t}{unit}</text>
+            <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" className="fill-faint text-[10px]">{compact(t)}{unit}</text>
           </g>
         ))}
         {labels.map((l, i) => (i % every === 0 || i === labels.length - 1) && (
-          <text key={`${l}-${i}`} x={x(i)} y={height - 6} textAnchor="middle" className="fill-faint text-[10px]">{l}</text>
+          <text key={`${l}-${i}`} x={x(i)} y={height - 6} textAnchor={i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"} className="fill-faint text-[10px]">{l}</text>
         ))}
         {series.map((s) => (
           <g key={s.label}>
@@ -93,7 +93,7 @@ export function BarChart({ labels, values, height = 160, unit = "", summary, cla
       {ticks.map((t) => (
         <g key={t}>
           <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} className="stroke-line" strokeWidth={1} />
-          <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" className="fill-faint text-[10px]">{t}{unit}</text>
+          <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" className="fill-faint text-[10px]">{compact(t)}{unit}</text>
         </g>
       ))}
       {values.map((v, i) => {
