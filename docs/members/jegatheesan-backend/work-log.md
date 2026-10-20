@@ -6,9 +6,5 @@
 
 | Date | What I shipped | PR / evidence | Notes (handoff, follow-up) |
 |---|---|---|---|
-|  |  |  |  |
-
-<!--
-Example row (delete when you add your first real one):
-| 2026-11-03 | Example: describe the merged change | #12 | Handed to <member> for <next step> |
--->
+| 2026-10-20 | /health db + migration head; WAL checkpoint on /shutdown; Bearer-scheme fix; typed versioned events | PR #3 (`feat/backend-core`) | Electron still only needs the 200 from /health |
+| 2026-10-20 | GET /workouts (keyset paging); PATCH/DELETE sets with PR recompute and muscle-load rewrite | PR #3 | Dhanush: the logger can now offer edit/delete on a set row |

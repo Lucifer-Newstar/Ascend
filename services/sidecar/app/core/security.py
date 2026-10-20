@@ -31,7 +31,11 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
             return JSONResponse({"detail": "bad host"}, status_code=403)
         if request.method == "OPTIONS" or request.url.path in OPEN_PATHS:
             return await call_next(request)
-        supplied = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
-        if not self._token or not hmac.compare_digest(supplied, self._token):
+        scheme, _, supplied = request.headers.get("authorization", "").partition(" ")
+        if (
+            not self._token
+            or scheme != "Bearer"
+            or not hmac.compare_digest(supplied.strip(), self._token)
+        ):
             return JSONResponse({"detail": "unauthorised"}, status_code=401)
         return await call_next(request)

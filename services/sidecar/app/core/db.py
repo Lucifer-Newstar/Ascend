@@ -33,6 +33,20 @@ def make_engine(url: str) -> Engine:
     return engine
 
 
+def checkpoint_wal(engine: Engine) -> str:
+    """Fold the -wal file back into the database (TRUNCATE also empties the WAL).
+
+    Returns "ok", "busy" (a reader held the WAL; SQLite retries on next start)
+    or "skipped" for non-SQLite URLs.
+    """
+    if engine.dialect.name != "sqlite":
+        return "skipped"
+    with engine.connect() as conn:
+        row = conn.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)").one()
+    busy = int(row[0])
+    return "busy" if busy else "ok"
+
+
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, expire_on_commit=False)
 

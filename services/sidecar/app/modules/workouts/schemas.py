@@ -57,3 +57,21 @@ class FinishedWorkout(BaseModel):
     xp_awarded: int
     active_minutes: float
     hard_sets: int
+
+
+class WorkoutSummary(BaseModel):
+    id: int
+    day: date
+    started_at: datetime
+    finished_at: datetime | None
+    sets: int
+    volume_kg: float
+    xp: int
+
+
+class SetPatch(BaseModel):
+    """Partial edit of a logged set; omitted fields keep their value."""
+
+    weight_kg: float | None = Field(default=None, ge=0, le=500)
+    reps: int | None = Field(default=None, ge=1, le=100)
+    rpe: float | None = Field(default=None, ge=1, le=10)

@@ -15,20 +15,20 @@
 
 ### Phase 0 · Foundations (26 Oct – 8 Nov)
 
-- [ ] `feat(core): /health reports db status and alembic head`
-- [ ] `feat(core): POST /shutdown checkpoints WAL before exit`
-- [ ] `feat(core): verify WAL, foreign_keys and busy_timeout pragmas on connect`
-- [ ] `test(core): token and Host middleware reject bad requests`
+- [x] `feat(core): /health reports db status and alembic head`
+- [x] `feat(core): POST /shutdown checkpoints WAL before exit`
+- [x] `feat(core): verify WAL, foreign_keys and busy_timeout pragmas on connect` — pragmas set in the skeleton's engine; /health now reports journal_mode and db status
+- [x] `test(core): token and Host middleware reject bad requests`
 - [ ] `docs(contracts): review module YAMLs with Dhanush, freeze core paths`
 - [ ] `chore(sidecar): npm run mock script for Prism`
-- [ ] `refactor(core): typed event classes with version field`
+- [x] `refactor(core): typed event classes with version field`
 - [ ] `refactor(coach): move the v0 system prompt into prompts/ with registry.yaml`
 - [ ] `test(coach): fake Ollama server fixture (normal, slow, error streams)`
 
 ### Phase 1 · Core loop (9 Nov – 13 Dec)
 
-- [ ] `feat(workouts): list workouts with pagination`
-- [ ] `feat(workouts): edit and delete a set with SetUpdated event`
+- [x] `feat(workouts): list workouts with pagination`
+- [x] `feat(workouts): edit and delete a set with SetUpdated event`
 - [ ] `feat(workouts): PR types (e1RM, rep PR, volume) with typo guard`
 - [ ] `feat(workouts): double progression and RPE load rule`
 - [ ] `feat(workouts): deload triggers (planned 3+1 and reactive)`
