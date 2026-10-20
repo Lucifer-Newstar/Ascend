@@ -155,3 +155,14 @@ class ExplanationOut(BaseModel):
     checks: dict[str, str] | None
     facts: str
     version: str
+
+
+class NoticeOut(BaseModel):
+    """A System notice (deload advised, target raised, muscle recovered); the id is stable
+    so the app shows each notice once."""
+
+    id: str
+    code: Literal["deload", "raised", "recovered"]
+    title: str
+    text: str
+    at: datetime

@@ -866,3 +866,12 @@ export interface Explanation {
   facts: string;
   version: string;
 }
+
+/** GET /intelligence/notices: the System's rare notices; `id` is stable (show once). */
+export interface SystemNotice {
+  id: string;
+  code: "deload" | "raised" | "recovered";
+  title: string;
+  text: string;
+  at: string;
+}

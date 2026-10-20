@@ -9,7 +9,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
-from app.modules.intelligence import explain, personal, progression_service, recovery_service
+from app.modules.intelligence import (
+    explain,
+    notices,
+    personal,
+    progression_service,
+    recovery_service,
+)
 from app.modules.intelligence import progression as prog
 from app.modules.intelligence import recovery as rec
 from app.modules.intelligence.schemas import (
@@ -20,6 +26,7 @@ from app.modules.intelligence.schemas import (
     E1rmPoint,
     ExplanationOut,
     MuscleRecoveryOut,
+    NoticeOut,
     RecoveryGroupOut,
     RecoveryOut,
     SkillGoalOut,
@@ -266,3 +273,14 @@ def recovery_explanation(
     template, facts = explain.muscle_template(m)
     key = ("muscle", m.key, f"{m.readiness}:{m.fatigue}:{m.k}:{m.modifier}")
     return _explanation_out(explain.explain(db, request.app.state.settings, key, template, facts))
+
+
+@router.get("/notices", response_model=list[NoticeOut])
+def system_notices(
+    db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> list[NoticeOut]:
+    """The System's current notices, most important first (at most one of each kind)."""
+    return [
+        NoticeOut(id=n.id, code=n.code, title=n.title, text=n.text, at=n.at)  # type: ignore[arg-type]
+        for n in notices.current(db, now)
+    ]
