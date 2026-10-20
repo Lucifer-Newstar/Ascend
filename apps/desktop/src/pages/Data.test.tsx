@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "../api/client";
 import { ToastProvider } from "../components/Toast";
+import { expectNoAxeViolations } from "../test/axe";
 import { DataPage } from "./Data";
 
 vi.mock("../api/client", () => ({
@@ -72,7 +73,7 @@ describe("DataPage import", () => {
     });
     setup();
     await userEvent.upload(screen.getByLabelText(/drop your strong export/i), csv());
-    expect(await screen.findByRole("alert")).toHaveTextContent("Strong or Hevy");
+    expect(await screen.findByText(/not look like a Strong or Hevy export/)).toHaveAttribute("role", "alert");
   });
 
   it("asks for a fresh preview after an option changes", async () => {
@@ -84,5 +85,18 @@ describe("DataPage import", () => {
     expect(screen.queryByText(/ready to import/i)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /check strong.csv again/i }));
     expect(api.importCsv).toHaveBeenLastCalledWith("strong", expect.objectContaining({ unit: "lb", dry_run: true }));
+  });
+
+  it("has no axe violations before and after a preview", async () => {
+    vi.mocked(api.importCsv).mockResolvedValue(report());
+    const { container } = render(
+      <ToastProvider>
+        <DataPage onChanged={vi.fn()} onOpenHistory={vi.fn()} />
+      </ToastProvider>,
+    );
+    await expectNoAxeViolations(container);
+    await userEvent.upload(screen.getByLabelText(/drop your strong export/i), csv());
+    await screen.findByText(/ready to import/i);
+    await expectNoAxeViolations(container);
   });
 });

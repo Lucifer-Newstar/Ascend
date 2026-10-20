@@ -2,7 +2,7 @@
  * Drill-down for one muscle region: daily effective sets and readiness over 1, 7 or
  * 30 days, the sets that loaded it, and the rule-based suggestion from the sidecar.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import { readyAtLabel } from "../lib/format";
@@ -21,9 +21,22 @@ const timeLabel = (iso: string) =>
 export function MuscleDrilldown({ code, onClose }: { code: string; onClose: () => void }) {
   const [range, setRange] = useState<Range>("7");
   const h = useApi(() => api.muscleHistory(code, Number(range)), [code, range]);
+  const panel = useRef<HTMLElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+
+  // Opening moves focus into the panel (once); Esc closes it from anywhere on the page.
+  useEffect(() => {
+    panel.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
-    <section className="rounded-xl border border-accent/30 bg-panel-2 p-4" aria-label="Muscle details" aria-live="polite">
+    <section ref={panel} tabIndex={-1} className="rounded-xl border border-accent/30 bg-panel-2 p-4 outline-none" aria-label="Muscle details" aria-live="polite">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-ink">{h.data?.label ?? code}</h3>
         <div className="flex items-center gap-3">
@@ -54,6 +67,7 @@ export function MuscleDrilldown({ code, onClose }: { code: string; onClose: () =
                 labels={h.data.daily.map((d) => dayLabel(d.day))}
                 values={h.data.daily.map((d) => Math.round(d.eff_sets * 10) / 10)}
                 summary={`Effective sets per day for ${h.data.label} over ${h.data.days} days`}
+                valueLabel="Effective sets"
               />
             </div>
           )}

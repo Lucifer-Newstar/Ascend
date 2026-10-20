@@ -13,11 +13,12 @@
   --color-line: #1e2736;
   --color-line-2: #2a3446;
   --color-ink: #e6edf7;
-  --color-muted: #7d8899;
-  --color-faint: #4f5a6b;
+  /* Text tokens meet WCAG AA (4.5:1) on bg, panel and panel-2. */
+  --color-muted: #8f9bac;
+  --color-faint: #78849a;
   --color-accent: #22d3ee;
   --color-accent-dim: #0e7490;
-  --color-xp: #8b7cff;
+  --color-xp: #9a8cff;
   --color-good: #22c55e;
   --color-warn: #f5a524;
   --color-bad: #ef4444;
@@ -46,13 +47,17 @@
   --color-line: #dde3ec;
   --color-line-2: #c9d2df;
   --color-ink: #0f1722;
-  --color-muted: #536173;
-  --color-faint: #8592a3;
-  --color-accent: #0e7490;
+  --color-muted: #4a5768;
+  --color-faint: #616d7e;
+  --color-accent: #0c6680;
   --color-accent-dim: #67c6dc;
-  --color-accent-hover: #0b5f76;
+  --color-accent-hover: #09536a;
   --color-on-accent: #ffffff;
-  --color-xp: #6d5ce8;
+  --color-xp: #5b49d6;
+  /* Status text needs darker shades on white than on the dark panels (AA 4.5:1). */
+  --color-warn: #b45309;
+  --color-good: #15803d;
+  --color-bad: #c42b2b;
   --color-nodata: #d5dbe5;
   --color-sidebar: #ffffff;
   --color-map-fill: #e3e8f0;
@@ -115,7 +120,41 @@ body {
   @apply inline-flex items-center rounded-md border border-line-2 px-1.5 py-0.5 text-[11px] text-muted;
 }
 
+/*
+ * Reduced motion (Windows: Settings → Accessibility → Visual effects → Animation effects off):
+ * ring and XP bar fills, spinners and pulses stop animating. Inline transitions are covered
+ * too, hence !important.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 *:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/* Skip link: off-screen until focused with the keyboard. */
+.skip-link {
+  position: fixed;
+  left: 12px;
+  top: -48px;
+  z-index: 60;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: top 120ms;
+}
+.skip-link:focus {
+  top: 12px;
 }

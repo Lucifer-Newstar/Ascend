@@ -219,6 +219,7 @@ function WeeklyCard({ refreshKey, units }: { refreshKey: number; units: Units })
             values={data.map(value)}
             unit={unit}
             summary={`Weekly ${metric.replace("_", " ")} for the last ${data.length} weeks`}
+            valueLabel={metric === "volume_kg" ? "Volume" : metric === "sessions" ? "Sessions" : "Minutes"}
           />
         )}
     </section>

@@ -11,6 +11,14 @@ import { usePrefs } from "../lib/prefs";
 import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
+const SHORTCUTS: [string, string][] = [
+  ["Ctrl+1 … Ctrl+8", "Open a page, in sidebar order"],
+  ["Tab / Shift+Tab", "Move between controls; the first Tab offers “Skip to content”"],
+  ["Alt+← / Alt+→", "Back / forward between pages"],
+  ["Enter", "Log the set or confirm the form you are in"],
+  ["Esc", "Close an open detail panel"],
+];
+
 export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi: () => void; onChanged: () => void; onOpenData: () => void }) {
   const profile = useApi(api.profile, []);
   const toast = useToast();
@@ -96,6 +104,17 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           <h2 className="card-title mb-2">Your data</h2>
           <p className="mb-3 text-sm text-muted">Import history from Strong or Hevy, or export everything you logged.</p>
           <button type="button" className="btn-ghost" onClick={onOpenData}><IconDatabase width={16} height={16} /> Open Import & export</button>
+        </section>
+        <section className="card p-5" aria-labelledby="keys-title">
+          <h2 id="keys-title" className="card-title mb-3">Keyboard shortcuts</h2>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
+            {SHORTCUTS.map(([keys, what]) => (
+              <div key={keys} className="contents">
+                <dt><kbd className="chip font-mono">{keys}</kbd></dt>
+                <dd className="text-muted">{what}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
         <section className="card p-5 text-xs leading-relaxed text-muted">
           <h2 className="card-title mb-2">About</h2>
