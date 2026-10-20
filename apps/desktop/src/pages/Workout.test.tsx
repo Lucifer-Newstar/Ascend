@@ -1,5 +1,5 @@
 import type { Exercise, Workout } from "@ascend/shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -91,5 +91,22 @@ describe("Training page", () => {
     await userEvent.click(screen.getByRole("button", { name: "Delete set 1?" }));
     await waitFor(() => expect(api.deleteSet).toHaveBeenCalledWith(9, 4));
     expect(await screen.findByText("No sets yet today.")).toBeInTheDocument();
+  });
+
+  it("logs a lift by pressing Enter in the reps field", async () => {
+    vi.mocked(api.activeWorkout).mockResolvedValue({ ...session([]), section: "gym" });
+    const loggedSet = {
+      id: 5, exercise_id: 1, exercise_name: "Barbell Bench Press", weight_kg: 60, reps: 8, rpe: 8, duration_s: null,
+      distance_m: null, avg_hr: null, e1rm: 76, is_pr: false, performed_at: "2026-10-20T07:12:00",
+    };
+    vi.mocked(api.logSet).mockResolvedValue({ set: loggedSet, xp_awarded: 10, previous_best_e1rm: null });
+    renderPage();
+    await userEvent.click(await screen.findByText("Barbell Bench Press"));
+    const form = screen.getByRole("form", { name: "Log a set of Barbell Bench Press" });
+    const reps = within(form).getByRole("spinbutton", { name: "Reps" });
+    expect(form).toContainElement(reps);
+    await userEvent.type(reps, "{Enter}");
+    await waitFor(() => expect(api.logSet).toHaveBeenCalled());
+    expect(vi.mocked(api.logSet).mock.calls.at(-1)?.[1]).toMatchObject({ exercise_id: 1 });
   });
 });
