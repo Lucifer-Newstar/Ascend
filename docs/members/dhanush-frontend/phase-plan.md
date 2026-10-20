@@ -59,7 +59,7 @@
 - [ ] `feat(ui): portion unit + oil level controls with live kcal range`
 - [ ] `feat(ui): scan failure state with search-and-pick fallback`
 - [ ] `feat(ui): injury report flow on the body map`
-- [ ] `feat(ui): muscle drill-down with 1–30 day slider and contributing sets`
+- [x] `feat(ui): muscle drill-down with 1–30 day slider and contributing sets` — 1 / 7 / 30-day switch rather than a slider
 - [ ] `feat(ui): onboarding hardware check + model download cards`
 - [ ] `test(ui): component tests for chips and proposal diff`
 - [ ] `feat(ui): replace a chat reply in place when chat.done carries final_text`
