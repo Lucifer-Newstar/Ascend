@@ -1,7 +1,16 @@
-# Planned ML dependencies (not installed by the app). Pin exact versions when work starts.
-dvc
-mlflow
-onnx
-onnxruntime
-torch
-torchvision
+# ML pipeline dependencies (training machine only; the app ships ONNX Runtime alone).
+# CPU wheels are enough for the smoke pipeline; install the CUDA build of torch on the
+# training PC instead:  uv pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1
+torchvision==0.20.1
+numpy>=2.0,<3
+pillow>=11
+pyyaml>=6
+onnx>=1.17
+onnxruntime>=1.20
+mlflow-skinny>=2.17
+sqlalchemy>=2       # MLflow's SQLite store (the file store is deprecated)
+alembic>=1.13
+dvc>=3.50
+pytest>=8

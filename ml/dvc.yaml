@@ -1,23 +1,26 @@
-# DVC pipeline (stub). Each stage declares its inputs (deps), outputs (outs) and
-# parameters, so `dvc repro` only reruns what changed. Scripts are placeholders.
+# DVC pipeline: `dvc repro` reruns only the stages whose deps or params changed.
+# data/raw is a DVC-tracked dataset (dvc add data/raw) or, for a smoke run, the
+# synthetic set from `python src/make_smoke_data.py` (see README).
 stages:
   prepare:
     cmd: python src/prepare.py
-    deps: [src/prepare.py, data/raw]
+    deps: [src/prepare.py, src/common.py, data/raw]
     params: [prepare]
     outs: [data/processed]
   train:
     cmd: python src/train.py
-    deps: [src/train.py, data/processed]
-    params: [train]
-    outs: [models/food_clf.pt]
+    deps: [src/train.py, src/common.py, data/processed]
+    params: [prepare.seed, train]
+    outs: [models/food_clf.pt, reports/train.json]
   export:
     cmd: python src/export_onnx.py
-    deps: [src/export_onnx.py, models/food_clf.pt]
-    outs: [models/food_clf.onnx]
+    deps: [src/export_onnx.py, src/train.py, models/food_clf.pt]
+    params: [export]
+    outs: [models/food_clf.onnx, models/models-manifest.json]
   evaluate:
     cmd: python src/evaluate.py
     deps: [src/evaluate.py, models/food_clf.onnx, data/processed]
+    outs: [reports/confusion.csv]
     metrics:
       - metrics.json:
           cache: false

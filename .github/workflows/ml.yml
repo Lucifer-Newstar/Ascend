@@ -1,0 +1,89 @@
+# ML pipeline checks (owner: Navin, workflow: Gokul).
+#
+#   lint-test -> ruff + pytest for ml/ (preprocessing contract, prepare rules, metrics,
+#                ONNX parity) and the labels.json check against the food table
+#   smoke     -> the whole pipeline on the synthetic set: prepare -> train -> export ->
+#                evaluate, then uploads metrics.json and the model manifest
+#
+# Only runs when ml/ or the food table changes (and nightly / by hand), because the
+# torch install is the slowest thing in CI.
+name: ML
+
+on:
+  push:
+    branches: ["**"]
+    paths: ["ml/**", "services/sidecar/app/modules/nutrition/seed.py", ".github/workflows/ml.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["ml/**", "services/sidecar/app/modules/nutrition/seed.py", ".github/workflows/ml.yml"]
+  workflow_dispatch:
+  schedule:
+    - cron: "30 20 * * *"
+
+concurrency:
+  group: ml-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || 'latest' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ml
+
+jobs:
+  lint-test:
+    name: ML lint + tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: ml/requirements.txt
+      - run: uv venv --python 3.12 .venv
+      - run: uv pip install --python .venv/bin/python -r requirements.txt
+      - name: Ruff
+        run: uvx ruff@0.17.1 check . && uvx ruff@0.17.1 format --check .
+      - name: Pytest
+        run: .venv/bin/python -m pytest
+      - name: Labels resolve to food rows
+        run: .venv/bin/python src/check_labels.py
+
+  smoke:
+    name: Pipeline smoke run (synthetic data)
+    needs: lint-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MLFLOW_DISABLE_AGENT_HINT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: ml/requirements.txt
+      - run: uv venv --python 3.12 .venv
+      - run: uv pip install --python .venv/bin/python -r requirements.txt
+      - name: Generate synthetic data
+        run: .venv/bin/python src/make_smoke_data.py --classes 4 --per-class 30 --own 5
+      - name: dvc repro
+        run: PATH="$PWD/.venv/bin:$PATH" dvc repro
+      - name: Gate (smoke)
+        # The synthetic classes are easy; anything under this means the pipeline broke.
+        run: |
+          .venv/bin/python - <<'EOF'
+          import json
+          m = json.load(open("metrics.json"))
+          top1 = m["test"]["top1"]
+          print(f"smoke top-1 {top1}")
+          assert top1 >= 0.8, f"smoke top-1 {top1} < 0.8"
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ml-smoke-${{ github.sha }}
+          path: |
+            ml/metrics.json
+            ml/models/models-manifest.json
+            ml/reports/

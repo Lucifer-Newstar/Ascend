@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "note": "Maps classifier classes to the sidecar food table. food_name must match a row in services/sidecar/app/modules/nutrition/seed.py (checked by src/check_labels.py). indb_id is filled from the full INDB import once its licence is recorded in SOURCES.md. Tamil names are pending review by a native speaker (ta_reviewed).",
+  "classes": {
+    "idli": {
+      "food_name": "Idli",
+      "en": "Idli",
+      "ta": "இட்லி",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "dosa": {
+      "food_name": "Plain dosa",
+      "en": "Dosa",
+      "ta": "தோசை",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "sambar": {
+      "food_name": "Sambar",
+      "en": "Sambar",
+      "ta": "சாம்பார்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "chapati": {
+      "food_name": "Chapati",
+      "en": "Chapati",
+      "ta": "சப்பாத்தி",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "rice": {
+      "food_name": "Steamed rice",
+      "en": "Steamed rice",
+      "ta": "சாதம்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "dal": {
+      "food_name": "Toor dal",
+      "en": "Toor dal",
+      "ta": "துவரம் பருப்பு",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    }
+  }
+}

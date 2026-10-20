@@ -1,0 +1,4 @@
+# Lint ml/ with the sidecar's rules; pipeline scripts in src/ import each other as
+# first-party top-level modules.
+extend = "../services/sidecar/pyproject.toml"
+src = ["src", "tests"]

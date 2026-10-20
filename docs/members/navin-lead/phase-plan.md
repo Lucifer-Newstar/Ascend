@@ -15,12 +15,12 @@
 
 ### Phase 0 · Foundations (26 Oct – 8 Nov)
 
-- [ ] `docs: add docs/ folder (architecture, planning, team, members)`
-- [ ] `chore(meta): CODEOWNERS, PR template, issue templates`
-- [ ] `chore(meta): branch protection notes + labels in CONTRIBUTING`
+- [x] `docs: add docs/ folder (architecture, planning, team, members)`
+- [x] `chore(meta): CODEOWNERS, PR template, issue templates` — CODEOWNERS in PR #1; templates by Gokul in PR #2
+- [x] `chore(meta): branch protection notes + labels in CONTRIBUTING` — PR #1, docs/development/branch-protection.md
 - [ ] `docs(meta): README with AI-assistance line, quickstart, screenshots`
-- [ ] `docs(adr): mark ADR-0001…0012 accepted after kickoff`
-- [ ] `docs(planning): kickoff minutes and decision log K1–K8`
+- [x] `docs(adr): mark ADR-0001…0012 accepted after kickoff` — PR #1
+- [x] `docs(planning): kickoff minutes and decision log K1–K8`
 - [ ] `docs(planning): tracker updated for the Phase 0 gate`
 - [ ] `docs(ml): start the two-week team food diary for the class list`
 
@@ -30,13 +30,13 @@
 - [ ] `docs(architecture): XP, quests and streak spec with examples`
 - [ ] `docs(architecture): energy targets and ETA spec with examples`
 - [ ] `docs(operations): evaluation protocol and report template`
-- [ ] `feat(ml): ml/ skeleton with params.yaml and dvc.yaml stages`
+- [x] `feat(ml): ml/ skeleton with params.yaml and dvc.yaml stages` — stages are real code now, `dvc repro` runs end to end
 - [ ] `feat(ml): DVC remote on external drive + first dataset import`
-- [ ] `feat(ml): prepare stage (dedupe, resize, split, label map)`
-- [ ] `feat(ml): labels.json mapping classes to INDB/IFCT ids + CI check`
+- [x] `feat(ml): prepare stage (dedupe, resize, split, label map)`
+- [x] `feat(ml): labels.json mapping classes to INDB/IFCT ids + CI check` — maps to food-table rows; INDB ids pending the full import
 - [ ] `feat(ml): collect and dvc add 300 team meal photos (test-own tag)`
 - [ ] `feat(ml): baseline classifier run logged to MLflow`
-- [ ] `test(ml): training refuses rows tagged test-own`
+- [x] `test(ml): training refuses rows tagged test-own`
 - [ ] `docs(ml): dataset SOURCES.md with the licence of every source`
 - [ ] `feat(ml): v0 class list from the food diary and dataset coverage`
 - [ ] `feat(ml): not_food image set (dvc add)`
@@ -46,9 +46,9 @@
 - [ ] `bench(ai): coach model tokens/s, first token and VRAM on reference laptop`
 - [ ] `docs(adr): update ADR-0004 with benchmark results`
 - [ ] `feat(ml): train classifier v0 with fixed seeds (timm backbone)`
-- [ ] `feat(ml): evaluate stage (top-1, top-3, macro-F1, confusion matrix)`
-- [ ] `feat(ml): ONNX export stage`
-- [ ] `test(ml): ONNX parity on 200 images`
+- [x] `feat(ml): evaluate stage (top-1, top-3, macro-F1, confusion matrix)` — plus ECE
+- [x] `feat(ml): ONNX export stage`
+- [x] `test(ml): ONNX parity on 200 images` — up to 200 processed images; gate in export
 - [ ] `test(ml): preprocessing test vector shared with sidecar`
 - [ ] `ci(ml): eval gate in ml-eval.yml compares with production` (pair: Gokul)
 - [ ] `feat(ml): register v0 in MLflow and write models-manifest.json`

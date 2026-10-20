@@ -1,7 +1,12 @@
-# MLflow project definition (stub).
+# MLflow project: `mlflow run ml -e smoke` runs the whole pipeline on synthetic data.
 name: ascend-food-classifier
+python_env: python_env.yaml
 entry_points:
   main:
     parameters:
       epochs: {type: int, default: 15}
-    command: "python src/train.py --epochs {epochs}"
+    command: "python src/prepare.py && python src/train.py --epochs {epochs} && python src/export_onnx.py && python src/evaluate.py"
+  smoke:
+    parameters:
+      epochs: {type: int, default: 8}
+    command: "python src/make_smoke_data.py && python src/prepare.py && python src/train.py --epochs {epochs} && python src/export_onnx.py && python src/evaluate.py"

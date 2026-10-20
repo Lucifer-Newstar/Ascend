@@ -30,6 +30,10 @@ data/
 ml/data/raw/
 ml/data/processed/
 ml/models/*.onnx
+ml/models/*.pt
+ml/models/models-manifest.json
+ml/reports/
+ml/metrics.json
 mlruns/
 
 # --- OS / editors ---
