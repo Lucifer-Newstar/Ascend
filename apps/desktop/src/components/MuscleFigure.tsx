@@ -17,6 +17,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, type PointerEvent, type
 import Body, { type ExtendedBodyPart } from "react-muscle-highlighter";
 
 import { useReducedMotion } from "../lib/motion";
+import { READY_TOKEN } from "../lib/muscleMap";
 
 export const MAX_TILT_DEG = 5;
 
@@ -102,7 +103,7 @@ export function MuscleFigure(props: MuscleFigureProps) {
       `${s} svg path[id] { filter: url(#${scope}-shade); }`,
     ];
     if (glow.length) rules.push(`${sel(s, glow)} { filter: url(#${scope}-glow); }`);
-    if (pulse.length) rules.push(`${sel(s, pulse)} { animation: asc-muscle-pulse 2.8s ease-in-out infinite; }`);
+    if (pulse.length) rules.push(`${sel(s, pulse)} { animation: asc-muscle-pulse 2.8s ease-in-out infinite; stroke: var(${READY_TOKEN}); stroke-width: 1.6px; vector-effect: non-scaling-stroke; }`);
     const live = [...interactive];
     if (live.length) rules.push(`${sel(s, live)} { cursor: pointer; }`);
     if (hovered) {

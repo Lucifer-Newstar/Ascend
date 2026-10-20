@@ -1,12 +1,31 @@
 import type { MuscleActivity, MuscleState, MuscleStatus } from "@ascend/shared";
 
-/** Status colours (same tokens as index.css), used by the map and its legend. */
+/**
+ * Each status has exactly one colour token (index.css), shared by the map, its legend,
+ * the hover card and the "ready to train" pulse. System blue (--color-accent) is never a
+ * status colour.
+ */
+export const STATUS_TOKEN: Record<MuscleStatus, string> = {
+  over: "--color-bad",
+  recovering: "--color-warn",
+  under: "--color-under",
+  optimal: "--color-good",
+  no_data: "--color-nodata",
+};
+
+/** A muscle that is ready to train again pulses in the "ready / recovered" colour. */
+export const READY_TOKEN = "--color-good";
+
+/** CSS colour for a status, as a var() reference (for style attributes and CSS rules). */
+export const statusVar = (status: MuscleStatus): string => `var(${STATUS_TOKEN[status]})`;
+
+/** Dark-theme values of the status tokens, used only when a token cannot be read (tests, SSR). */
 export const STATUS_COLORS: Record<MuscleStatus, string> = {
-  over: "#ef4444",
-  recovering: "#f5a524",
-  under: "#4f7bd9",
-  optimal: "#22c55e",
-  no_data: "#2a3345",
+  over: "#ff6b6b",
+  recovering: "#f5b83d",
+  under: "#6e8ef5",
+  optimal: "#34d399",
+  no_data: "#26324a",
 };
 
 export const STATUS_LABELS: Record<MuscleStatus, string> = {

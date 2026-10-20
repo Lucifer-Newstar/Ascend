@@ -6,6 +6,17 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Changed (v5 redesign)
+- **New "System" colour palette and type scale** (UI-1). Navy-black surfaces, System blue
+  for System UI and controls, arcane violet for XP and levels, gold for PRs, and rank colours
+  E to S, in both themes. Every text colour meets WCAG AA (4.5:1) on every surface, and a test
+  checks it straight from the stylesheet. Card and window headers use Rajdhani in the
+  "window header" style; numbers are tabular. See `docs/development/design-system.md`.
+- **One colour per muscle status** (UI-4). The map, its legend, the hover card and the "ready
+  to train" pulse now use the same token for each status; a ready muscle pulses with a green
+  outline (the "ready" colour) instead of System blue or a neutral ring.
+- Only Latin and Latin Extended font files are bundled (font files 1,034 KB → 496 KB).
+
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,
   plank to V-sit, headstand to handstand push-up, pistol squat, front lever, back lever, planche,

@@ -14,8 +14,11 @@ import type { ExtendedBodyPart, Slug } from "react-muscle-highlighter";
 import { api } from "../api/client";
 import { readyAtLabel } from "../lib/format";
 import {
+  READY_TOKEN,
   STATUS_COLORS,
   STATUS_LABELS,
+  STATUS_TOKEN,
+  statusVar,
   agoLabel,
   heatColor,
   primaryRegion,
@@ -36,9 +39,12 @@ type View = "recovery" | "volume";
 type Range = "1" | "7" | "30";
 const RANGE_WORDS: Record<Range, string> = { "1": "today", "7": "last 7 days", "30": "last 30 days" };
 
-/** "No data" follows the theme (a dark blob on a light page reads as a warning). */
+/**
+ * The figure library needs literal colours, so the status token is read at render time
+ * (and re-read when the theme changes). The legend uses the very same token.
+ */
 function statusColor(status: MuscleStatus): string {
-  return status === "no_data" ? cssVar("--color-nodata", STATUS_COLORS.no_data) : STATUS_COLORS[status];
+  return cssVar(STATUS_TOKEN[status], STATUS_COLORS[status]);
 }
 
 export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[]; refreshKey?: number }) {
@@ -145,11 +151,11 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
               ))}
               {ready.length > 0 && (
                 <li className="flex items-center gap-2 text-muted">
-                  {/* The figure pulses a ready muscle in its own status colour, so the key shows
-                      the pulse itself (a neutral ring) rather than a colour of its own. */}
+                  {/* The figure outlines and pulses a ready muscle in the "ready" token; the key
+                      shows the same token with the same pulse. */}
                   <span
-                    className="h-2.5 w-2.5 rounded-full border-2 border-ink/70 motion-reduce:animate-none"
-                    style={{ animation: "asc-muscle-pulse 2.8s ease-in-out infinite" }}
+                    className="h-2.5 w-2.5 rounded-full border-2 motion-reduce:animate-none"
+                    style={{ borderColor: `var(${READY_TOKEN})`, animation: "asc-muscle-pulse 2.8s ease-in-out infinite" }}
                     data-testid="legend-ready"
                   />{" "}
                   Ready to train (pulsing)
@@ -209,7 +215,7 @@ function MuscleTooltip({ s, view, rangeWords }: { s: SlugSummary; view: View; ra
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="font-semibold text-ink">{s.label}</span>
         <span className="flex items-center gap-1.5 text-muted">
-          <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS[s.status] }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: statusVar(s.status) }} />
           {s.readyAgain ? "Ready to train" : STATUS_LABELS[s.status]}
         </span>
       </div>
@@ -248,7 +254,7 @@ function RegionRow({ m, onOpen }: { m: MuscleState; onOpen: (code: string) => vo
       className="flex w-full items-center justify-between gap-2 border-b border-line/60 py-1.5 text-left text-xs transition-transform last:border-0 hover:translate-x-0.5 hover:bg-panel/60"
     >
       <span className="flex min-w-0 items-center gap-2">
-        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_COLORS[m.status] }} />
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: statusVar(m.status) }} />
         <span className="truncate text-ink">{m.label}</span>
       </span>
       <span className="shrink-0 text-right text-muted" title="Effective sets in the last 7 days vs the weekly target band (estimate)">
