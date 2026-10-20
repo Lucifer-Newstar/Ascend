@@ -8,7 +8,15 @@ export function Loading({ label = "Loading…" }: { label?: string }) {
   );
 }
 
-export function ErrorState({ message, onRetry, offline = false }: { message: string; onRetry?: () => void; offline?: boolean }) {
+export function ErrorState({ message, onRetry, offline = false, compact = false }: { message: string; onRetry?: () => void; offline?: boolean; compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-md border border-bad/40 px-3 py-2 text-xs" role="alert">
+        <span className="text-bad">Couldn&apos;t load: <span className="text-muted">{message}</span></span>
+        {onRetry && <button type="button" className="font-medium text-ink underline-offset-2 hover:underline" onClick={onRetry}>Retry</button>}
+      </div>
+    );
+  }
   return (
     <div className="card m-6 border-bad/40 p-5" role="alert">
       <div className="text-sm font-semibold text-bad">{offline ? "The local engine isn't responding" : "Something went wrong"}</div>
@@ -24,18 +32,19 @@ export function ErrorState({ message, onRetry, offline = false }: { message: str
 /** Small inline notice when a refresh failed but older data is still on screen. */
 export function StaleNotice({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="status" className="flex items-center justify-between gap-3 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
+    <div role="status" className="flex items-center justify-between gap-3 rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
       <span>Couldn't refresh ({message}). Showing the last data loaded.</span>
       <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={onRetry}>Retry</button>
     </div>
   );
 }
 
-export function Empty({ title, hint }: { title: string; hint?: string }) {
+export function Empty({ title, hint, action }: { title: string; hint?: string; action?: { label: string; onClick: () => void } }) {
   return (
-    <div className="rounded-lg border border-dashed border-line-2 p-6 text-center">
+    <div className="rounded-md border border-dashed border-line-2 p-6 text-center">
       <div className="text-sm text-muted">{title}</div>
       {hint && <div className="mt-1 text-xs text-faint">{hint}</div>}
+      {action && <button type="button" className="btn-ghost mt-3 px-3 py-1.5 text-xs" onClick={action.onClick}>{action.label}</button>}
     </div>
   );
 }
