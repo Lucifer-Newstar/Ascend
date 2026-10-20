@@ -2,7 +2,8 @@ import type { Exercise, Section, SetIn, SetPatch, Workout, WorkoutSet } from "@a
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
-import { IconSearch, IconTrophy } from "../components/Icons";
+import { Transient } from "../components/Celebrate";
+import { IconCheck, IconSearch, IconTrophy } from "../components/Icons";
 import { NumberField, RestTimer, RPE_OPTIONS, RpeSelect } from "../components/logger/fields";
 import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
 import { TimedSetForm } from "../components/logger/TimedSetForm";
@@ -10,6 +11,7 @@ import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
 import { count } from "../lib/format";
 import { sessionLoad } from "../lib/load";
+import { useReducedMotion } from "../lib/motion";
 import { MUSCLE_LABEL } from "../lib/muscles";
 import { usePrefs } from "../lib/prefs";
 import { formatDistance, formatDuration, fromDisplayWeight, parseDuration, toDisplayWeight, weightUnit } from "../lib/units";
@@ -31,6 +33,8 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const [rpe, setRpe] = useState<number | null>(8);
   const [busy, setBusy] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
+  // The set just logged: its row slides in with a check, and "+N XP" floats off the button.
+  const [logged, setLogged] = useState<{ id: number; xp: number; n: number } | null>(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -66,6 +70,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
       const res = await api.logSet(w.id, payload);
       const fresh = await api.activeWorkout();
       setWorkout(fresh);
+      setLogged((prev) => ({ id: res.set.id, xp: res.xp_awarded, n: (prev?.n ?? 0) + 1 }));
       if (!selected.time_based) setRestLeft(REST_SECONDS);
       if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
       else toast(`${selected.time_based ? formatDuration(res.set.duration_s ?? 0) + " logged" : "Set logged"} · +${res.xp_awarded} XP`, "xp");
@@ -181,7 +186,10 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               </div>
               {selected.time_based ? (
                 <div className="mt-5">
-                  <TimedSetForm key={selected.id} exercise={selected} units={units} busy={busy} onSubmit={(s) => logSet(s)} />
+                  <div className="relative">
+                    <TimedSetForm key={selected.id} exercise={selected} units={units} busy={busy} onSubmit={(s) => logSet(s)} />
+                    <XpGain logged={logged} className="bottom-10 right-4" />
+                  </div>
                   <p className="mt-2 text-[11px] text-faint">
                     Calories use the activity's MET value ({selected.met ?? "n/a"}) × your weight × time, an estimate.
                     {selected.muscles.length === 0 && " Stretching and meditation add no muscle load."}
@@ -198,7 +206,10 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                     <NumberField label={`Weight (${weightUnit(units)})`} value={weight} step={units === "imperial" ? 5 : 2.5} onChange={setWeight} />
                     <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
                     <RpeSelect value={rpe} onChange={setRpe} />
-                    <button type="submit" className="btn-primary h-[38px] px-5" disabled={busy}>Log set</button>
+                    <span className="relative">
+                      <button type="submit" className="btn-primary h-[38px] px-5 transition-transform active:scale-95" disabled={busy}>Log set</button>
+                      <XpGain logged={logged} className="-top-5 right-2" />
+                    </span>
                   </form>
                   <p className="mt-2 text-[11px] text-faint">RPE 10 = no reps left in the tank, 8 = two left. PRs use the Epley e1RM formula (1–10 reps).</p>
                 </>
@@ -226,7 +237,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               {groups.map(([name, sets]) => (
                 <div key={name}>
                   <div className="mb-1.5 text-sm font-medium text-ink">{name}</div>
-                  <SetTable sets={sets} units={units} onEdit={editSet} onDelete={deleteSet} busy={busy} />
+                  <SetTable sets={sets} units={units} onEdit={editSet} onDelete={deleteSet} busy={busy} justLogged={logged?.id} />
                 </div>
               ))}
             </div>
@@ -258,8 +269,22 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   );
 }
 
-function SetTable({ sets, units, onEdit, onDelete, busy }: {
+/** "+N XP" that floats up and fades once per logged set (decoration; hidden with reduced motion). */
+function XpGain({ logged, className }: { logged: { xp: number; n: number } | null; className: string }) {
+  const reduce = useReducedMotion();
+  if (reduce || !logged || logged.xp <= 0) return null;
+  return (
+    <Transient trigger={logged.n} ms={1100}>
+      <span aria-hidden="true" className={`float-up motion-decor pointer-events-none absolute whitespace-nowrap text-xs font-semibold text-xp ${className}`} data-testid="set-xp-gain">
+        +{logged.xp} XP
+      </span>
+    </Transient>
+  );
+}
+
+function SetTable({ sets, units, onEdit, onDelete, busy, justLogged }: {
   sets: WorkoutSet[];
+  justLogged?: number;
   units: "metric" | "imperial";
   onEdit: (s: WorkoutSet, patch: SetPatch) => void;
   onDelete: (s: WorkoutSet) => void;
@@ -291,8 +316,13 @@ function SetTable({ sets, units, onEdit, onDelete, busy }: {
             onCancel={() => setEditing(null)}
             onSave={(patch) => { onEdit(s, patch); setEditing(null); }} />
         ) : (
-          <tr key={s.id} className="group border-t border-line/70">
-            <td className="py-1.5 text-muted">{i + 1}</td>
+          <tr key={s.id} className={`group border-t border-line/70 ${s.id === justLogged ? "set-row-in" : ""}`} data-just-logged={s.id === justLogged || undefined}>
+            <td className="py-1.5 text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                {i + 1}
+                {s.id === justLogged && <IconCheck width={12} height={12} className="pop-in text-good" aria-hidden="true" />}
+              </span>
+            </td>
             {timed ? (
               <>
                 <td className="text-ink">{formatDuration(s.duration_s ?? 0)}</td>

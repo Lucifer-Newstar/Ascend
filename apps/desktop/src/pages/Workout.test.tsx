@@ -76,7 +76,46 @@ describe("Training page", () => {
     expect(api.startWorkout).toHaveBeenCalledWith("cardio");
     expect(vi.mocked(api.logSet).mock.calls[0][1]).toMatchObject({ exercise_id: 50, duration_s: 1800, rpe: 7 });
     expect(await screen.findByText("30:00")).toBeInTheDocument();
-    expect(await screen.findByText(/\+15 XP/)).toBeInTheDocument();
+    // The toast says it, and "+15 XP" floats off the form.
+    expect((await screen.findAllByText(/\+15 XP/)).length).toBeGreaterThan(0);
+  });
+
+  it("animates a freshly logged lift: the row slides in with a check and +XP floats up", async () => {
+    vi.mocked(api.startWorkout).mockResolvedValue({ ...session([]), section: "gym" });
+    const lift = {
+      id: 7, exercise_id: 1, exercise_name: "Barbell Bench Press", weight_kg: 60, reps: 8, rpe: 8, duration_s: null,
+      distance_m: null, avg_hr: null, e1rm: 76, is_pr: false, performed_at: "2026-10-20T07:30:00",
+    };
+    vi.mocked(api.logSet).mockResolvedValue({ set: lift, xp_awarded: 12, previous_best_e1rm: null });
+    renderPage();
+    await userEvent.click(await screen.findByText("Barbell Bench Press"));
+    vi.mocked(api.activeWorkout).mockResolvedValue({ ...session([lift]), section: "gym" });
+    await userEvent.click(screen.getByRole("button", { name: "Log set" }));
+    expect(await screen.findByTestId("set-xp-gain")).toHaveTextContent("+12 XP");
+    const row = document.querySelector("tr[data-just-logged]");
+    expect(row).toHaveClass("set-row-in");
+    expect(within(row as HTMLElement).getByText("1")).toBeInTheDocument();
+  });
+
+  it("skips the +XP float with Reduce motion on (the toast still confirms)", async () => {
+    vi.mocked(api.startWorkout).mockResolvedValue({ ...session([]), section: "gym" });
+    const lift = {
+      id: 8, exercise_id: 1, exercise_name: "Barbell Bench Press", weight_kg: 60, reps: 8, rpe: 8, duration_s: null,
+      distance_m: null, avg_hr: null, e1rm: 76, is_pr: false, performed_at: "2026-10-20T07:30:00",
+    };
+    vi.mocked(api.logSet).mockResolvedValue({ set: lift, xp_awarded: 12, previous_best_e1rm: null });
+    render(
+      <PrefsProvider initial={{ ...DEFAULT_SETTINGS, reduce_motion: true }} save={vi.fn()}>
+        <ToastProvider>
+          <WorkoutPage onChanged={() => {}} />
+        </ToastProvider>
+      </PrefsProvider>,
+    );
+    await userEvent.click(await screen.findByText("Barbell Bench Press"));
+    vi.mocked(api.activeWorkout).mockResolvedValue({ ...session([lift]), section: "gym" });
+    await userEvent.click(screen.getByRole("button", { name: "Log set" }));
+    expect(await screen.findByText(/Set logged · \+12 XP/)).toBeInTheDocument();
+    expect(screen.queryByTestId("set-xp-gain")).toBeNull();
   });
 
   it("has no axe violations with a logged lift and a logged run", async () => {
