@@ -1,0 +1,31 @@
+# Docker Compose for local development and tests (not used by end users).
+#
+#   docker compose -f docker/docker-compose.yml run --rm sidecar-tests   # ruff + pytest
+#   docker compose -f docker/docker-compose.yml up sidecar               # API on http://localhost:8765/docs
+#
+# Paths are relative to this file.
+name: ascend
+
+services:
+  sidecar-tests:
+    build:
+      context: ../services/sidecar
+      dockerfile: ../../docker/sidecar.Dockerfile
+      target: test
+    # Tests create their own temporary SQLite files; nothing to mount.
+
+  sidecar:
+    build:
+      context: ../services/sidecar
+      dockerfile: ../../docker/sidecar.Dockerfile
+      target: runtime
+    ports:
+      - "127.0.0.1:8765:8765"   # bind to localhost on the host too
+    environment:
+      # Reach an Ollama running on the host (Docker Desktop on Windows/macOS).
+      OLLAMA_HOST: http://host.docker.internal:11434
+    volumes:
+      - sidecar-data:/data
+
+volumes:
+  sidecar-data:
