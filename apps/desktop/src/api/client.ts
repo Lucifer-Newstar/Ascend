@@ -32,6 +32,8 @@ import type {
   DayLog,
   Exercise,
   ExerciseDetail,
+  ExerciseAnalysis,
+  CustomExerciseIn,
   SkillDetail,
   SkillSummary,
   SkillTrainResult,
@@ -126,6 +128,10 @@ export const api = {
   exercises: (q = "", section?: Section) =>
     call<Exercise[]>("GET", `/exercises?q=${encodeURIComponent(q)}${section ? `&section=${section}` : ""}`),
   exercise: (id: number) => call<ExerciseDetail>("GET", `/exercises/${id}`),
+  analyzeExercise: (body: { name: string; equipment?: string | null; notes?: string; online?: boolean }) =>
+    call<ExerciseAnalysis>("POST", "/exercises/analyze", body),
+  createExercise: (body: CustomExerciseIn) => call<ExerciseDetail>("POST", "/exercises", body),
+  archiveExercise: (id: number) => call<void>("DELETE", `/exercises/${id}`),
   skills: () => call<SkillSummary[]>("GET", "/skills"),
   skill: (key: string) => call<SkillDetail>("GET", `/skills/${encodeURIComponent(key)}`),
   skillUnlocks: (limit = 10) => call<SkillUnlock[]>("GET", `/skills/unlocks?limit=${limit}`),
