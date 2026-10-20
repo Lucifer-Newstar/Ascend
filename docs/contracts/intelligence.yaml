@@ -183,6 +183,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+  /intelligence/notices:
+    get:
+      tags:
+      - intelligence
+      summary: System Notices
+      description: The System's current notices, most important first (at most one of each kind).
+      operationId: system_notices_intelligence_notices_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NoticeOut'
+                type: array
+                title: Response System Notices Intelligence Notices Get
+      x-status: implemented
 components:
   schemas:
     CheckinUsed:
@@ -447,6 +465,39 @@ components:
       - top_sets
       - why
       title: MuscleRecoveryOut
+    NoticeOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        code:
+          type: string
+          enum:
+          - deload
+          - raised
+          - recovered
+          title: Code
+        title:
+          type: string
+          title: Title
+        text:
+          type: string
+          title: Text
+        at:
+          type: string
+          format: date-time
+          title: At
+      type: object
+      required:
+      - id
+      - code
+      - title
+      - text
+      - at
+      title: NoticeOut
+      description: 'A System notice (deload advised, target raised, muscle recovered); the id is stable
+
+        so the app shows each notice once.'
     RecoveryGroupOut:
       properties:
         group:
