@@ -285,6 +285,14 @@ def map_pattern(name: str, category: str | None, force: str | None, primary: lis
         return "hinge"
     if primary and primary[0] in ("abdominals",):
         return "core"
+    if re.search(r"leg curl|hamstring curl|glute.ham", lower):
+        return "hinge"
+    if "calf" in lower:
+        return "other"
+    if re.search(r"pull.?up|chin|\brow\b|rows\b|pulldown|pull.?down|curl|shrug|face pull", lower):
+        return "pull"
+    if re.search(r"press|push.?up|dip|fly|flye|extension|pushdown|raise", lower):
+        return "push" if force != "static" else "isometric"
     if force == "static":
         return "isometric"
     if force == "push":
