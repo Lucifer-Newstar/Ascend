@@ -50,6 +50,13 @@ def test_two_signals_trigger_a_reactive_deload():
     assert (a.recommended, a.kind) == (True, "reactive")
     active = {s.code for s in a.signals if s.active}
     assert active == {"LOW_READINESS", "PERFORMANCE_DROP"}
+    drop = next(s for s in a.signals if s.code == "PERFORMANCE_DROP")
+    assert drop.detail == "e1RM down 3% or more on Back Squat, Deadlift"
+
+
+def test_signal_wording_reads_as_a_sentence_when_nothing_dropped():
+    drop = next(s for s in advise(inputs()).signals if s.code == "PERFORMANCE_DROP")
+    assert drop.detail == "No key lift has dropped 3% or more in e1RM"
 
 
 def test_soreness_plus_fatigue_also_trigger():
