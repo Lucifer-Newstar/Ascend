@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -30,3 +31,31 @@ class ImportReport(BaseModel):
     skipped_duplicates: int = 0
     skipped_warmups: int = 0
     matched_exercises: dict[str, str] = {}
+
+
+class BackupIn(BaseModel):
+    password: str | None = Field(
+        default=None, description="Optional AES-256 password; not supported yet (422)"
+    )
+
+
+class BackupOut(BaseModel):
+    path: str
+    size_bytes: int
+    sha256: str
+    created_at: datetime
+    schema_revision: str
+    app_version: str
+    reason: Literal["manual", "pre-migration"] | str = "manual"
+
+
+class RestoreIn(BaseModel):
+    path: str = Field(min_length=1, max_length=1024)
+    password: str | None = None
+
+
+class RestoreOut(BaseModel):
+    restored_from: str
+    backup_created_at: datetime
+    schema_revision: str
+    safety_backup: str
