@@ -114,6 +114,19 @@
         "implemented": 7,
         "planned": 1
       }
+    },
+    {
+      "id": "skills",
+      "package": "app.modules.skills",
+      "contract": "skills.yaml",
+      "path_prefixes": [
+        "/skills"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 4,
+        "planned": 0
+      }
     }
   ]
 }

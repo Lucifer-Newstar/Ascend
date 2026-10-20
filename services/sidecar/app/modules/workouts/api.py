@@ -10,6 +10,7 @@ from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.progress.taxonomy import MUSCLE_BY_KEY
+from app.modules.skills import service as skills
 from app.modules.workouts import deload_service, service
 from app.modules.workouts.activity_seed import SECTIONS
 from app.modules.workouts.schemas import (
@@ -21,6 +22,7 @@ from app.modules.workouts.schemas import (
     SetIn,
     SetOut,
     SetPatch,
+    UnlockedStep,
     WorkoutOut,
     WorkoutSummary,
 )
@@ -160,7 +162,10 @@ def log_set(
     except service.Conflict as e:
         raise HTTPException(409, str(e)) from e
     xp = game.xp_for_refs(db, sources=("set", "pr"), ref_id=row.id)
-    return LoggedSet(set=service.set_out(row), xp_awarded=xp, previous_best_e1rm=previous)
+    unlocks = [UnlockedStep(**u.model_dump()) for u in skills.unlocks_for_set(db, row.id)]
+    return LoggedSet(
+        set=service.set_out(row), xp_awarded=xp, previous_best_e1rm=previous, unlocks=unlocks
+    )
 
 
 @router.post("/{workout_id}/finish", response_model=FinishedWorkout)

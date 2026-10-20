@@ -9,14 +9,16 @@ from app.core.db import Base
 
 
 class XpEvent(Base):
-    """Append-only XP ledger. Total XP = SUM(amount); nothing is ever subtracted."""
+    """Append-only XP ledger. Total XP = SUM(amount). Rows are never edited or deleted;
+    a correction (e.g. a skill step revoked because its sets were deleted) is a new row
+    with a negative amount that cancels an earlier grant."""
 
     __tablename__ = "xp_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     day: Mapped[date] = mapped_column(Date, index=True)
     at: Mapped[datetime] = mapped_column(DateTime)
-    source: Mapped[str] = mapped_column(String(16))  # set | session | meal | pr | quest
+    source: Mapped[str] = mapped_column(String(16))  # set | session | meal | pr | quest | skill
     ref_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     amount: Mapped[int] = mapped_column(Integer)
     formula_version: Mapped[str] = mapped_column(String(16))
