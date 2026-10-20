@@ -4,6 +4,8 @@ import type { CoachReply } from "@ascend/shared";
 
 import { api } from "../api/client";
 import { CheckinCard } from "../components/CheckinCard";
+import { FirstSteps } from "../components/FirstSteps";
+import type { Page } from "../components/Layout";
 import { IconSpark } from "../components/Icons";
 import { MuscleMap } from "../components/MuscleMap";
 import { QuestList } from "../components/QuestCard";
@@ -16,7 +18,12 @@ import { grams } from "../lib/format";
 import { CountUp } from "../lib/motion";
 import { isOffline, useApi } from "../lib/useApi";
 
-export function DashboardPage({ onOpenCoach, refreshKey, onChanged }: { onOpenCoach: () => void; refreshKey: number; onChanged?: () => void }) {
+export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }: {
+  onOpenCoach: () => void;
+  refreshKey: number;
+  onChanged?: () => void;
+  onNavigate?: (p: Page) => void;
+}) {
   const { data, error, status, loading, reload } = useApi(api.dashboard, [refreshKey]);
   const [tip, setTip] = useState<CoachReply | null>(null);
   const toast = useToast();
@@ -44,6 +51,7 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged }: { onOpenCo
   return (
     <div className="grid grid-cols-12 gap-5">
       {error && <div className="col-span-12"><StaleNotice message={error} onRetry={reload} /></div>}
+      {onNavigate && data.game.xp.total === 0 && <FirstSteps onNavigate={onNavigate} />}
       <section className="card card-hover col-span-12 p-5 xl:col-span-8"><XpBar xp={data.game.xp} streak={data.game.streak} /></section>
       <section className="card card-hover card-lift col-span-12 flex flex-col justify-between p-5 xl:col-span-4">
         <div className="flex items-center justify-between">
