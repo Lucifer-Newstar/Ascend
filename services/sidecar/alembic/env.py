@@ -21,8 +21,9 @@ def _url() -> str:
 
 
 def run_migrations_offline() -> None:
-    context.configure(url=_url(), target_metadata=target_metadata, render_as_batch=True,
-                      literal_binds=True)
+    context.configure(
+        url=_url(), target_metadata=target_metadata, render_as_batch=True, literal_binds=True
+    )
     with context.begin_transaction():
         context.run_migrations()
 
@@ -31,8 +32,9 @@ def run_migrations_online() -> None:
     engine = make_engine(_url())  # same PRAGMAs (WAL, foreign keys) as the app
     with engine.connect() as connection:
         # render_as_batch: SQLite can't ALTER most columns, so Alembic copies tables instead.
-        context.configure(connection=connection, target_metadata=target_metadata,
-                          render_as_batch=True)
+        context.configure(
+            connection=connection, target_metadata=target_metadata, render_as_batch=True
+        )
         with context.begin_transaction():
             context.run_migrations()
     engine.dispose()

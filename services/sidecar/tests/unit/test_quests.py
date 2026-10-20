@@ -37,7 +37,9 @@ def test_training_item_avoids_recovering_muscles():
 
 
 def test_missed_day_adds_gentle_comeback_item():
-    items = generate_daily_quest(DAY, compute_states([], NOW), EXERCISES, 120, missed_yesterday=True)
+    items = generate_daily_quest(
+        DAY, compute_states([], NOW), EXERCISES, 120, missed_yesterday=True
+    )
     assert items[-1].code == "comeback"
     assert items[-1].xp <= 10
 

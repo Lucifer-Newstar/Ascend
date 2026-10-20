@@ -12,6 +12,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
+from starlette.types import ASGIApp
 
 # /health is polled before the token is in use; the API docs expose schema only, never data.
 OPEN_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
@@ -19,7 +20,7 @@ ALLOWED_HOSTS = {"127.0.0.1", "localhost", "testserver"}
 
 
 class TokenAuthMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, token: str) -> None:  # type: ignore[no-untyped-def]
+    def __init__(self, app: ASGIApp, token: str) -> None:
         super().__init__(app)
         self._token = token
 

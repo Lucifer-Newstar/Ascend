@@ -36,13 +36,16 @@ def coach_status(request: Request, db: Session = Depends(get_db)) -> CoachStatus
 
 
 @router.get("/tip", response_model=CoachOut)
-def tip(request: Request, db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> CoachOut:
+def tip(
+    request: Request, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> CoachOut:
     r = service.reply(db, request.app.state.settings, now, None)
     return CoachOut(**r.__dict__)
 
 
 @router.post("/ask", response_model=CoachOut)
-def ask(body: AskIn, request: Request, db: Session = Depends(get_db),
-        now: datetime = Depends(get_now)) -> CoachOut:
+def ask(
+    body: AskIn, request: Request, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> CoachOut:
     r = service.reply(db, request.app.state.settings, now, body.question or None)
     return CoachOut(**r.__dict__)

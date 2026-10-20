@@ -68,30 +68,58 @@ def export_json(db: Session, now: datetime) -> dict[str, Any]:
         "app_version": __version__,
         "export_schema_version": EXPORT_SCHEMA_VERSION,
         "exported_at": now.isoformat(),
-        "profile": None if profile is None else {
+        "profile": None
+        if profile is None
+        else {
             k: getattr(profile, k)
             for k in ("name", "age", "sex", "height_cm", "weight_kg", "goal", "activity")
         },
         "workouts": [workouts.workout_out(w).model_dump(mode="json") for w in ws],
         "meals": [nutrition.meal_out(m).model_dump(mode="json") for m in ms],
         "xp_events": [
-            {"day": x.day.isoformat(), "source": x.source, "amount": x.amount,
-             "formula_version": x.formula_version, "note": x.note}
+            {
+                "day": x.day.isoformat(),
+                "source": x.source,
+                "amount": x.amount,
+                "formula_version": x.formula_version,
+                "note": x.note,
+            }
             for x in db.scalars(select(XpEvent).order_by(XpEvent.id)).all()
         ],
         "quests": [
-            {"day": q.day.isoformat(), "title": q.title, "xp": q.xp,
-             "completed": q.completed_at is not None}
+            {
+                "day": q.day.isoformat(),
+                "title": q.title,
+                "xp": q.xp,
+                "completed": q.completed_at is not None,
+            }
             for q in db.scalars(select(QuestItem).order_by(QuestItem.id)).all()
         ],
     }
 
 
 # Column order follows Strong's CSV export where it overlaps, so other tools can read it.
-WORKOUT_CSV_COLUMNS = ["Date", "Workout #", "Exercise Name", "Set Order", "Weight (kg)",
-                       "Reps", "RPE", "e1RM (kg)", "PR"]
-MEAL_CSV_COLUMNS = ["Date", "Meal", "Food", "Portions", "kcal", "Protein (g)", "Carbs (g)",
-                    "Fat (g)"]
+WORKOUT_CSV_COLUMNS = [
+    "Date",
+    "Workout #",
+    "Exercise Name",
+    "Set Order",
+    "Weight (kg)",
+    "Reps",
+    "RPE",
+    "e1RM (kg)",
+    "PR",
+]
+MEAL_CSV_COLUMNS = [
+    "Date",
+    "Meal",
+    "Food",
+    "Portions",
+    "kcal",
+    "Protein (g)",
+    "Carbs (g)",
+    "Fat (g)",
+]
 
 
 def export_csv(db: Session, kind: str) -> str:
@@ -103,16 +131,35 @@ def export_csv(db: Session, kind: str) -> str:
             order: dict[int, int] = {}
             for s in w.sets:
                 order[s.exercise_id] = order.get(s.exercise_id, 0) + 1
-                writer.writerow([s.performed_at.isoformat(sep=" "), w.id, s.exercise.name,
-                                 order[s.exercise_id], s.weight_kg, s.reps,
-                                 "" if s.rpe is None else s.rpe,
-                                 "" if s.e1rm is None else s.e1rm, int(s.is_pr)])
+                writer.writerow(
+                    [
+                        s.performed_at.isoformat(sep=" "),
+                        w.id,
+                        s.exercise.name,
+                        order[s.exercise_id],
+                        s.weight_kg,
+                        s.reps,
+                        "" if s.rpe is None else s.rpe,
+                        "" if s.e1rm is None else s.e1rm,
+                        int(s.is_pr),
+                    ]
+                )
     elif kind == "meals":
         writer.writerow(MEAL_CSV_COLUMNS)
         for m in db.scalars(select(Meal).order_by(Meal.logged_at)).all():
             for i in m.items:
-                writer.writerow([m.logged_at.isoformat(sep=" "), m.meal_type, i.food_name,
-                                 i.portions, i.kcal, i.protein_g, i.carbs_g, i.fat_g])
+                writer.writerow(
+                    [
+                        m.logged_at.isoformat(sep=" "),
+                        m.meal_type,
+                        i.food_name,
+                        i.portions,
+                        i.kcal,
+                        i.protein_g,
+                        i.carbs_g,
+                        i.fat_g,
+                    ]
+                )
     else:
         raise ValueError(f"unknown export kind {kind!r}")
     return buf.getvalue()

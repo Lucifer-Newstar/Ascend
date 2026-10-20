@@ -11,8 +11,8 @@ database) starts with the same library. User data is never touched here.
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 from app.modules.nutrition.seed import FOODS, SOURCE
 from app.modules.workouts.seed import EXERCISES
 
@@ -22,18 +22,27 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 exercises = sa.table(
-    "exercises", sa.column("id", sa.Integer), sa.column("name", sa.String),
+    "exercises",
+    sa.column("id", sa.Integer),
+    sa.column("name", sa.String),
     sa.column("equipment", sa.String),
 )
 exercise_muscles = sa.table(
-    "exercise_muscles", sa.column("exercise_id", sa.Integer), sa.column("muscle", sa.String),
+    "exercise_muscles",
+    sa.column("exercise_id", sa.Integer),
+    sa.column("muscle", sa.String),
     sa.column("weight", sa.Float),
 )
 foods = sa.table(
-    "foods", sa.column("name", sa.String), sa.column("portion_label", sa.String),
-    sa.column("portion_g", sa.Float), sa.column("kcal", sa.Float),
-    sa.column("protein_g", sa.Float), sa.column("carbs_g", sa.Float),
-    sa.column("fat_g", sa.Float), sa.column("source", sa.String),
+    "foods",
+    sa.column("name", sa.String),
+    sa.column("portion_label", sa.String),
+    sa.column("portion_g", sa.Float),
+    sa.column("kcal", sa.Float),
+    sa.column("protein_g", sa.Float),
+    sa.column("carbs_g", sa.Float),
+    sa.column("fat_g", sa.Float),
+    sa.column("source", sa.String),
 )
 
 
@@ -53,8 +62,16 @@ def upgrade() -> None:
     op.bulk_insert(
         foods,
         [
-            {"name": n, "portion_label": pl, "portion_g": pg, "kcal": k, "protein_g": p,
-             "carbs_g": c, "fat_g": f, "source": SOURCE}
+            {
+                "name": n,
+                "portion_label": pl,
+                "portion_g": pg,
+                "kcal": k,
+                "protein_g": p,
+                "carbs_g": c,
+                "fat_g": f,
+                "source": SOURCE,
+            }
             for (n, pl, pg, k, p, c, f) in FOODS
         ],
     )

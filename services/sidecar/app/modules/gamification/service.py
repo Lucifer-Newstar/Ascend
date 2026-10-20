@@ -32,19 +32,32 @@ class QuestNotFound(Exception):
 
 
 def earned_on(db: Session, day: date) -> int:
-    return int(db.scalar(select(func.coalesce(func.sum(XpEvent.amount), 0)).where(XpEvent.day == day)) or 0)
+    return int(
+        db.scalar(select(func.coalesce(func.sum(XpEvent.amount), 0)).where(XpEvent.day == day)) or 0
+    )
 
 
 def total_xp(db: Session) -> int:
     return int(db.scalar(select(func.coalesce(func.sum(XpEvent.amount), 0))) or 0)
 
 
-def award(db: Session, at: datetime, source: str, ref_id: int | None, amount: int, note: str = "") -> int:
+def award(
+    db: Session, at: datetime, source: str, ref_id: int | None, amount: int, note: str = ""
+) -> int:
     """Append an XP event, clipped by the daily cap. Returns the XP actually granted."""
     granted = f.apply_daily_cap(amount, earned_on(db, at.date()))
     if granted > 0:
-        db.add(XpEvent(day=at.date(), at=at, source=source, ref_id=ref_id, amount=granted,
-                       formula_version=f.FORMULA_VERSION, note=note))
+        db.add(
+            XpEvent(
+                day=at.date(),
+                at=at,
+                source=source,
+                ref_id=ref_id,
+                amount=granted,
+                formula_version=f.FORMULA_VERSION,
+                note=note,
+            )
+        )
         db.flush()
     return granted
 
@@ -77,13 +90,16 @@ def streak(db: Session, today: date) -> StreakState:
 def _exercise_refs(db: Session) -> list[ExerciseRef]:
     from app.modules.workouts.models import Exercise
 
-    return [ExerciseRef(e.id, e.name, {m.muscle: m.weight for m in e.muscles})
-            for e in db.scalars(select(Exercise)).all()]
+    return [
+        ExerciseRef(e.id, e.name, {m.muscle: m.weight for m in e.muscles})
+        for e in db.scalars(select(Exercise)).all()
+    ]
 
 
 def _completion_rate(db: Session, today: date) -> float | None:
-    rows = db.scalars(select(QuestItem).where(QuestItem.day >= today - timedelta(days=7),
-                                              QuestItem.day < today)).all()
+    rows = db.scalars(
+        select(QuestItem).where(QuestItem.day >= today - timedelta(days=7), QuestItem.day < today)
+    ).all()
     if not rows:
         return None
     return sum(1 for r in rows if r.completed_at) / len(rows)
@@ -93,22 +109,44 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
     from app.modules.progress import service as progress
 
     today = now.date()
-    items = list(db.scalars(select(QuestItem).where(QuestItem.day == today).order_by(QuestItem.id)).all())
+    items = list(
+        db.scalars(select(QuestItem).where(QuestItem.day == today).order_by(QuestItem.id)).all()
+    )
     if items:
         return items
     profile = progress.get_profile(db)
     protein = progress.energy_for(profile).protein_target_g if profile else None
-    had_history = db.scalar(select(func.count()).select_from(QuestItem).where(QuestItem.day < today))
+    had_history = db.scalar(
+        select(func.count()).select_from(QuestItem).where(QuestItem.day < today)
+    )
     yesterday = today - timedelta(days=1)
     missed = bool(had_history) and yesterday not in active_days(db)
-    specs = generate_daily_quest(today, progress.muscle_states(db, now), _exercise_refs(db),
-                                 protein, _completion_rate(db, today), missed)
+    specs = generate_daily_quest(
+        today,
+        progress.muscle_states(db, now),
+        _exercise_refs(db),
+        protein,
+        _completion_rate(db, today),
+        missed,
+    )
     for s in specs:
-        db.add(QuestItem(day=today, kind=s.kind, code=s.code, title=s.title, detail=s.detail,
-                         metric=s.metric, target=s.target, xp=s.xp,
-                         generator_version=GENERATOR_VERSION))
+        db.add(
+            QuestItem(
+                day=today,
+                kind=s.kind,
+                code=s.code,
+                title=s.title,
+                detail=s.detail,
+                metric=s.metric,
+                target=s.target,
+                xp=s.xp,
+                generator_version=GENERATOR_VERSION,
+            )
+        )
     db.flush()
-    return list(db.scalars(select(QuestItem).where(QuestItem.day == today).order_by(QuestItem.id)).all())
+    return list(
+        db.scalars(select(QuestItem).where(QuestItem.day == today).order_by(QuestItem.id)).all()
+    )
 
 
 def _metric_value(db: Session, metric: str, day: date) -> int | None:
@@ -121,9 +159,12 @@ def _metric_value(db: Session, metric: str, day: date) -> int | None:
             select(func.count(WorkoutSet.id))
             .join(Workout, Workout.id == WorkoutSet.workout_id)
             .join(ExerciseMuscle, ExerciseMuscle.exercise_id == WorkoutSet.exercise_id)
-            .where(Workout.day == day, ExerciseMuscle.muscle == muscle,
-                   ExerciseMuscle.weight >= 1.0,
-                   (WorkoutSet.rpe.is_(None)) | (WorkoutSet.rpe >= f.HARD_SET_RPE))
+            .where(
+                Workout.day == day,
+                ExerciseMuscle.muscle == muscle,
+                ExerciseMuscle.weight >= 1.0,
+                (WorkoutSet.rpe.is_(None)) | (WorkoutSet.rpe >= f.HARD_SET_RPE),
+            )
         )
         return int(db.scalar(stmt) or 0)
     if metric == "meals":
@@ -176,11 +217,24 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
     letter, title = f.rank_for_level(info.level)
     s = streak(db, now.date())
     return GameSummary(
-        xp=XpOut(total=total, today=earned_on(db, now.date()), level=info.level,
-                 xp_into_level=info.xp_into_level, xp_for_next=info.xp_for_next, rank=letter,
-                 rank_title=title, daily_cap=f.DAILY_CAP, formula_version=f.FORMULA_VERSION),
-        streak=StreakOut(current=s.current, best=s.best, freezes_held=s.freezes_held,
-                         freezes_used=s.freezes_used, active_today=s.active_today),
+        xp=XpOut(
+            total=total,
+            today=earned_on(db, now.date()),
+            level=info.level,
+            xp_into_level=info.xp_into_level,
+            xp_for_next=info.xp_for_next,
+            rank=letter,
+            rank_title=title,
+            daily_cap=f.DAILY_CAP,
+            formula_version=f.FORMULA_VERSION,
+        ),
+        streak=StreakOut(
+            current=s.current,
+            best=s.best,
+            freezes_held=s.freezes_held,
+            freezes_used=s.freezes_used,
+            active_today=s.active_today,
+        ),
         quest=[QuestItemOut.model_validate(q) for q in ensure_quest(db, now)],
     )
 
@@ -201,8 +255,14 @@ def make_handlers(bus: EventBus) -> None:
         workout = db.get(Workout, e.workout_id)
         at = workout.finished_at if workout and workout.finished_at else datetime.now()
         set_ids = [s.id for s in workout.sets] if workout else []
-        already = int(db.scalar(select(func.coalesce(func.sum(XpEvent.amount), 0)).where(
-            XpEvent.source == "set", XpEvent.ref_id.in_(set_ids))) or 0)
+        already = int(
+            db.scalar(
+                select(func.coalesce(func.sum(XpEvent.amount), 0)).where(
+                    XpEvent.source == "set", XpEvent.ref_id.in_(set_ids)
+                )
+            )
+            or 0
+        )
         bonus = f.session_completion_xp(e.active_minutes, already)
         mult = f.streak_multiplier(streak(db, at.date()).current)
         award(db, at, "session", e.workout_id, round(bonus * mult), note="session complete")

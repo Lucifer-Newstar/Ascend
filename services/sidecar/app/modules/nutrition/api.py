@@ -21,8 +21,12 @@ def search_foods(q: str = "", db: Session = Depends(get_db)) -> list[FoodOut]:
 
 
 @router.post("/meals", response_model=MealLoggedOut, status_code=201)
-def log_meal(body: MealIn, db: Session = Depends(get_db), bus: EventBus = Depends(get_bus),
-             now: datetime = Depends(get_now)) -> MealLoggedOut:
+def log_meal(
+    body: MealIn,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> MealLoggedOut:
     try:
         meal = service.log_meal(db, bus, body, now)
     except service.NotFound as e:
@@ -41,13 +45,15 @@ def delete_meal(meal_id: int, db: Session = Depends(get_db)) -> Response:
 
 
 @router.get("/meals/day", response_model=DayLog)
-def day_log(day: date | None = None, db: Session = Depends(get_db),
-            now: datetime = Depends(get_now)) -> DayLog:
+def day_log(
+    day: date | None = None, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> DayLog:
     d = day or now.date()
     profile = progress.get_profile(db)
     energy = progress.energy_for(profile) if profile else None
     return DayLog(
-        day=d, meals=[service.meal_out(m) for m in service.meals_on(db, d)],
+        day=d,
+        meals=[service.meal_out(m) for m in service.meals_on(db, d)],
         totals=service.day_totals(db, d),
         kcal_target=energy.kcal_target if energy else None,
         protein_target_g=energy.protein_target_g if energy else None,

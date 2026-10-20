@@ -74,7 +74,7 @@ def _training_item(
                 kind="training",
                 code=f"train_{target.key}",
                 title=f"{sets} hard sets for {target.label.lower()}",
-                detail=f"Suggested: {ex.name}. Any exercise that works {target.label.lower()} counts.",
+                detail=f"Suggested: {ex.name}. Any {target.label.lower()} exercise counts.",
                 metric=f"sets:{target.key}",
                 target=sets,
                 xp=TRAINING_XP,
@@ -104,15 +104,28 @@ def generate_daily_quest(
 
     if protein_target_g and rng.random() < 0.5:
         items.append(
-            QuestItemSpec("nutrition", "protein", f"Reach {protein_target_g} g protein",
-                          "Counted from the meals you log today.", "protein_g",
-                          protein_target_g, NUTRITION_XP)
+            QuestItemSpec(
+                "nutrition",
+                "protein",
+                f"Reach {protein_target_g} g protein",
+                "Counted from the meals you log today.",
+                "protein_g",
+                protein_target_g,
+                NUTRITION_XP,
+            )
         )
     else:
         meals = 3
         items.append(
-            QuestItemSpec("nutrition", "log_meals", f"Log {meals} meals",
-                          "Breakfast, lunch and dinner all count.", "meals", meals, NUTRITION_XP)
+            QuestItemSpec(
+                "nutrition",
+                "log_meals",
+                f"Log {meals} meals",
+                "Breakfast, lunch and dinner all count.",
+                "meals",
+                meals,
+                NUTRITION_XP,
+            )
         )
 
     code, title, detail = rng.choice(MIND_ITEMS)
@@ -120,8 +133,14 @@ def generate_daily_quest(
 
     if missed_yesterday:
         items.append(
-            QuestItemSpec("recovery", "comeback", "Comeback: 10 easy minutes",
-                          "Missed yesterday? No penalty. Any light movement clears this.",
-                          "manual", 1, MISSED_DAY_XP)
+            QuestItemSpec(
+                "recovery",
+                "comeback",
+                "Comeback: 10 easy minutes",
+                "Missed yesterday? No penalty. Any light movement clears this.",
+                "manual",
+                1,
+                MISSED_DAY_XP,
+            )
         )
     return items

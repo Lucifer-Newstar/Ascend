@@ -14,14 +14,21 @@ router = APIRouter(prefix="/game", tags=["gamification"])
 
 
 @router.get("/summary", response_model=GameSummary)
-def summary(db: Session = Depends(get_db), bus: EventBus = Depends(get_bus),
-            now: datetime = Depends(get_now)) -> GameSummary:
+def summary(
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> GameSummary:
     return service.summary(db, bus, now)
 
 
 @router.post("/quests/{item_id}/complete", response_model=QuestItemOut)
-def complete(item_id: int, db: Session = Depends(get_db), bus: EventBus = Depends(get_bus),
-             now: datetime = Depends(get_now)) -> QuestItemOut:
+def complete(
+    item_id: int,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> QuestItemOut:
     try:
         return QuestItemOut.model_validate(service.complete_manual(db, bus, item_id, now))
     except service.QuestNotFound as e:

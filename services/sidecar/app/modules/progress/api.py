@@ -30,9 +30,9 @@ def _profile_out(db: Session) -> ProfileOut:
     p = service.get_profile(db)
     if p is None:
         raise HTTPException(404, "no profile yet: finish onboarding")
-    return ProfileOut(name=p.name, age=p.age, sex=p.sex, height_cm=p.height_cm,  # type: ignore[arg-type]
-                      weight_kg=p.weight_kg, goal=p.goal, activity=p.activity,  # type: ignore[arg-type]
-                      energy=service.energy_for(p))
+    fields = ("name", "age", "sex", "height_cm", "weight_kg", "goal", "activity")
+    data = {k: getattr(p, k) for k in fields}
+    return ProfileOut.model_validate({**data, "energy": service.energy_for(p)})
 
 
 @router.get("/profile", response_model=ProfileOut)
@@ -58,12 +58,16 @@ def put_settings(body: SettingsIn, db: Session = Depends(get_db)) -> SettingsOut
 
 
 def _muscles(db: Session, now: datetime) -> list[MuscleStateOut]:
-    return [MuscleStateOut(**{k: getattr(s, k) for k in MuscleStateOut.model_fields})
-            for s in service.muscle_states(db, now)]
+    return [
+        MuscleStateOut(**{k: getattr(s, k) for k in MuscleStateOut.model_fields})
+        for s in service.muscle_states(db, now)
+    ]
 
 
 @router.get("/muscles", response_model=list[MuscleStateOut])
-def muscles(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> list[MuscleStateOut]:
+def muscles(
+    db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> list[MuscleStateOut]:
     return _muscles(db, now)
 
 
@@ -84,8 +88,11 @@ class Dashboard(BaseModel):
 
 
 @router.get("/dashboard", response_model=Dashboard)
-def dashboard(db: Session = Depends(get_db), bus: EventBus = Depends(get_bus),
-              now: datetime = Depends(get_now)) -> Dashboard:
+def dashboard(
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> Dashboard:
     today = now.date()
     profile = service.get_profile(db)
     targets = service.energy_for(profile) if profile else None
@@ -96,7 +103,9 @@ def dashboard(db: Session = Depends(get_db), bus: EventBus = Depends(get_bus),
     if profile:
         for w in db.query(Workout).filter(Workout.day == today).all():
             dur = ((w.finished_at - w.started_at).total_seconds() / 60) if w.finished_at else None
-            burned += energy.strength_kcal(energy.session_minutes(dur, len(w.sets)), profile.weight_kg)
+            burned += energy.strength_kcal(
+                energy.session_minutes(dur, len(w.sets)), profile.weight_kg
+            )
 
     done = sum(1 for q in g.quest if q.completed_at)
     return Dashboard(
@@ -104,10 +113,18 @@ def dashboard(db: Session = Depends(get_db), bus: EventBus = Depends(get_bus),
         has_profile=profile is not None,
         rings={
             "tasks": Ring(value=done, target=max(1, len(g.quest)), label="Quest tasks"),
-            "kcal_in": Ring(value=totals.kcal, target=targets.kcal_target if targets else 2000,
-                            label="kcal eaten", is_estimate=True),
-            "kcal_out": Ring(value=round(burned), target=energy.DEFAULT_BURN_TARGET_KCAL,
-                             label="kcal burned (training)", is_estimate=True),
+            "kcal_in": Ring(
+                value=totals.kcal,
+                target=targets.kcal_target if targets else 2000,
+                label="kcal eaten",
+                is_estimate=True,
+            ),
+            "kcal_out": Ring(
+                value=round(burned),
+                target=energy.DEFAULT_BURN_TARGET_KCAL,
+                label="kcal burned (training)",
+                is_estimate=True,
+            ),
         },
         nutrition=totals,
         game=g,
@@ -116,8 +133,9 @@ def dashboard(db: Session = Depends(get_db), bus: EventBus = Depends(get_bus),
 
 
 @router.get("/history", response_model=list[history.HistoryDay])
-def get_history(days: int = 30, db: Session = Depends(get_db),
-                now: datetime = Depends(get_now)) -> list[history.HistoryDay]:
+def get_history(
+    days: int = 30, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> list[history.HistoryDay]:
     return history.history(db, now, max(1, min(days, 365)))
 
 
@@ -129,6 +147,7 @@ def export_json(db: Session = Depends(get_db), now: datetime = Depends(get_now))
 @router.get("/export/csv/{kind}")
 def export_csv(kind: Literal["workouts", "meals"], db: Session = Depends(get_db)) -> Response:
     return Response(
-        content=history.export_csv(db, kind), media_type="text/csv",
+        content=history.export_csv(db, kind),
+        media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="ascend-{kind}.csv"'},
     )

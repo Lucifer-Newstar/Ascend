@@ -30,8 +30,12 @@ from app.modules.workouts.api import router as workouts_router
 log = logging.getLogger("ascend")
 
 # Vite dev server origins. Only used with --dev (browser development without Electron).
-DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173",
-               "http://localhost:4173", "http://127.0.0.1:4173"]
+DEV_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+]
 
 
 def build_bus() -> EventBus:
@@ -42,8 +46,11 @@ def build_bus() -> EventBus:
     return bus
 
 
-def create_app(settings: Settings | None = None, clock: Callable[[], datetime] | None = None,
-               migrate: bool = True) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    clock: Callable[[], datetime] | None = None,
+    migrate: bool = True,
+) -> FastAPI:
     settings = settings or load_settings()
     db_url = settings.resolved_db_url
     if migrate:
@@ -63,8 +70,9 @@ def create_app(settings: Settings | None = None, clock: Callable[[], datetime] |
 
     app.add_middleware(TokenAuthMiddleware, token=settings.token)
     if settings.dev:
-        app.add_middleware(CORSMiddleware, allow_origins=DEV_ORIGINS, allow_methods=["*"],
-                           allow_headers=["*"])
+        app.add_middleware(
+            CORSMiddleware, allow_origins=DEV_ORIGINS, allow_methods=["*"], allow_headers=["*"]
+        )
 
     @app.get("/health", tags=["system"])
     def health() -> dict[str, str]:
@@ -78,7 +86,13 @@ def create_app(settings: Settings | None = None, clock: Callable[[], datetime] |
         threading.Timer(0.2, lambda: os.kill(os.getpid(), signal.SIGTERM)).start()
         return {"status": "stopping"}
 
-    for router in (workouts_router, exercises_router, nutrition_router, game_router,
-                   progress_router, coach_router):
+    for router in (
+        workouts_router,
+        exercises_router,
+        nutrition_router,
+        game_router,
+        progress_router,
+        coach_router,
+    ):
         app.include_router(router)
     return app

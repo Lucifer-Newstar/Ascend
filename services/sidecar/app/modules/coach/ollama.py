@@ -40,7 +40,10 @@ def chat(host: str, model: str, facts: str, question: str, timeout: float = 20.0
         "options": {"temperature": 0.4, "num_predict": 220},
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Facts (from the app's own formulas):\n{facts}\n\nQuestion: {question}"},
+            {
+                "role": "user",
+                "content": f"Facts (from the app's own formulas):\n{facts}\n\nQuestion: {question}",
+            },
         ],
     }
     try:

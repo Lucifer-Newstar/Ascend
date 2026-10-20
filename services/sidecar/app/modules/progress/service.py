@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -34,15 +35,17 @@ def upsert_profile(db: Session, data: ProfileIn) -> Profile:
 
 
 def energy_for(profile: Profile) -> EnergyTargets:
-    bmr = tdee_engine.bmr_mifflin_st_jeor(
-        profile.sex, profile.weight_kg, profile.height_cm, profile.age  # type: ignore[arg-type]
-    )
-    total = tdee_engine.tdee(bmr, profile.activity)  # type: ignore[arg-type]
+    """Estimated BMR, TDEE (kcal/day) and calorie/protein targets for a profile."""
+    sex = cast(tdee_engine.Sex, profile.sex)
+    goal = cast(tdee_engine.Goal, profile.goal)
+    activity = cast(tdee_engine.Activity, profile.activity)
+    bmr = tdee_engine.bmr_mifflin_st_jeor(sex, profile.weight_kg, profile.height_cm, profile.age)
+    total = tdee_engine.tdee(bmr, activity)
     return EnergyTargets(
         bmr=round(bmr),
         tdee=round(total),
-        kcal_target=tdee_engine.calorie_target(total, profile.goal),  # type: ignore[arg-type]
-        protein_target_g=tdee_engine.protein_target_g(profile.weight_kg, profile.goal),  # type: ignore[arg-type]
+        kcal_target=tdee_engine.calorie_target(total, goal),
+        protein_target_g=tdee_engine.protein_target_g(profile.weight_kg, goal),
         formula_version=tdee_engine.FORMULA_VERSION,
     )
 

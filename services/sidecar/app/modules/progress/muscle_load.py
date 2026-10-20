@@ -95,7 +95,9 @@ def compute_states(contributions: Iterable[Contribution], now: datetime) -> list
     for m in MUSCLES:
         mine = [c for c in contribs if c.muscle == m.key]
         es_7d = sum(c.es for c in mine if c.at >= week_ago)
-        fatigue = sum(decayed(c.es, (now - c.at).total_seconds() / 3600, m.half_life_h) for c in mine)
+        fatigue = sum(
+            decayed(c.es, (now - c.at).total_seconds() / 3600, m.half_life_h) for c in mine
+        )
         readiness = 1 - min(1.0, fatigue / m.capacity_es)
         has_data = any(c.at >= month_ago for c in mine)
         states.append(

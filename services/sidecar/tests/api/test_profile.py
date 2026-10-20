@@ -11,8 +11,10 @@ def test_onboarding_computes_estimated_targets(client, profile):
 
 
 def test_profile_validation(client):
-    r = client.put("/profile", json={"age": 5, "sex": "male", "height_cm": 175, "weight_kg": 70,
-                                     "goal": "bulk"})
+    r = client.put(
+        "/profile",
+        json={"age": 5, "sex": "male", "height_cm": 175, "weight_kg": 70, "goal": "bulk"},
+    )
     assert r.status_code == 422
 
 

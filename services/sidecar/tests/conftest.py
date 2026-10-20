@@ -30,8 +30,12 @@ def clock() -> FakeClock:
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
     # Point Ollama at a closed port so the coach always takes the rules path in tests.
-    return Settings(data_dir=tmp_path, db_url=f"sqlite:///{tmp_path / 'test.db'}", token=TOKEN,
-                    ollama_host="http://127.0.0.1:9")
+    return Settings(
+        data_dir=tmp_path,
+        db_url=f"sqlite:///{tmp_path / 'test.db'}",
+        token=TOKEN,
+        ollama_host="http://127.0.0.1:9",
+    )
 
 
 @pytest.fixture
@@ -43,7 +47,17 @@ def client(settings: Settings, clock: FakeClock) -> TestClient:
 
 @pytest.fixture
 def profile(client: TestClient) -> dict:
-    r = client.put("/profile", json={"name": "Navin", "age": 21, "sex": "male", "height_cm": 175,
-                                     "weight_kg": 70, "goal": "bulk", "activity": "moderate"})
+    r = client.put(
+        "/profile",
+        json={
+            "name": "Navin",
+            "age": 21,
+            "sex": "male",
+            "height_cm": 175,
+            "weight_kg": 70,
+            "goal": "bulk",
+            "activity": "moderate",
+        },
+    )
     assert r.status_code == 200
     return r.json()

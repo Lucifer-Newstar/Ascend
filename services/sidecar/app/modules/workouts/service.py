@@ -32,15 +32,26 @@ def list_exercises(db: Session, q: str = "") -> list[Exercise]:
 
 def set_out(s: WorkoutSet) -> SetOut:
     return SetOut(
-        id=s.id, exercise_id=s.exercise_id, exercise_name=s.exercise.name,
-        weight_kg=s.weight_kg, reps=s.reps, rpe=s.rpe, e1rm=s.e1rm, is_pr=s.is_pr,
+        id=s.id,
+        exercise_id=s.exercise_id,
+        exercise_name=s.exercise.name,
+        weight_kg=s.weight_kg,
+        reps=s.reps,
+        rpe=s.rpe,
+        e1rm=s.e1rm,
+        is_pr=s.is_pr,
         performed_at=s.performed_at,
     )
 
 
 def workout_out(w: Workout) -> WorkoutOut:
-    return WorkoutOut(id=w.id, day=w.day, started_at=w.started_at, finished_at=w.finished_at,
-                      sets=[set_out(s) for s in w.sets])
+    return WorkoutOut(
+        id=w.id,
+        day=w.day,
+        started_at=w.started_at,
+        finished_at=w.finished_at,
+        sets=[set_out(s) for s in w.sets],
+    )
 
 
 def start_workout(db: Session, now: datetime) -> Workout:
@@ -66,7 +77,9 @@ def best_e1rm(db: Session, exercise_id: int) -> float | None:
     return db.scalar(select(func.max(WorkoutSet.e1rm)).where(WorkoutSet.exercise_id == exercise_id))
 
 
-def log_set(db: Session, bus: EventBus, workout_id: int, data: SetIn, now: datetime) -> tuple[WorkoutSet, float | None]:
+def log_set(
+    db: Session, bus: EventBus, workout_id: int, data: SetIn, now: datetime
+) -> tuple[WorkoutSet, float | None]:
     workout = get_workout(db, workout_id)
     if workout.finished_at is not None:
         raise Conflict("workout already finished")
@@ -76,21 +89,37 @@ def log_set(db: Session, bus: EventBus, workout_id: int, data: SetIn, now: datet
     e1rm = pr.e1rm_or_none(data.weight_kg, data.reps)
     previous = best_e1rm(db, data.exercise_id)
     row = WorkoutSet(
-        workout_id=workout.id, exercise_id=data.exercise_id, weight_kg=data.weight_kg,
-        reps=data.reps, rpe=data.rpe, e1rm=e1rm, is_pr=pr.is_new_pr(e1rm, previous),
+        workout_id=workout.id,
+        exercise_id=data.exercise_id,
+        weight_kg=data.weight_kg,
+        reps=data.reps,
+        rpe=data.rpe,
+        e1rm=e1rm,
+        is_pr=pr.is_new_pr(e1rm, previous),
         performed_at=now,
     )
     db.add(row)
     db.flush()
-    bus.publish(db, SetLogged(
-        set_id=row.id, workout_id=workout.id, exercise_id=row.exercise_id,
-        weight_kg=row.weight_kg, reps=row.reps, rpe=row.rpe, performed_at=now, is_pr=row.is_pr,
-    ))
+    bus.publish(
+        db,
+        SetLogged(
+            set_id=row.id,
+            workout_id=workout.id,
+            exercise_id=row.exercise_id,
+            weight_kg=row.weight_kg,
+            reps=row.reps,
+            rpe=row.rpe,
+            performed_at=now,
+            is_pr=row.is_pr,
+        ),
+    )
     db.refresh(row)
     return row, previous
 
 
-def finish_workout(db: Session, bus: EventBus, workout_id: int, now: datetime) -> tuple[Workout, float, int]:
+def finish_workout(
+    db: Session, bus: EventBus, workout_id: int, now: datetime
+) -> tuple[Workout, float, int]:
     workout = get_workout(db, workout_id)
     if workout.finished_at is not None:
         raise Conflict("workout already finished")
@@ -100,6 +129,10 @@ def finish_workout(db: Session, bus: EventBus, workout_id: int, now: datetime) -
     minutes = min(180.0, (now - workout.started_at).total_seconds() / 60)
     hard = sum(1 for s in workout.sets if s.rpe is None or s.rpe >= HARD_SET_RPE)
     db.flush()
-    bus.publish(db, WorkoutLogged(workout_id=workout.id, day=workout.day, hard_sets=hard,
-                                  active_minutes=round(minutes, 1)))
+    bus.publish(
+        db,
+        WorkoutLogged(
+            workout_id=workout.id, day=workout.day, hard_sets=hard, active_minutes=round(minutes, 1)
+        ),
+    )
     return workout, round(minutes, 1), hard

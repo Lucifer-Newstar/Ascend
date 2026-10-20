@@ -7,9 +7,18 @@ NOW = datetime(2026, 10, 20, 19, 0)
 
 
 def ctx(**over):
-    base = dict(now=NOW, has_profile=True, muscles=compute_states([], NOW), kcal_eaten=0,
-                kcal_target=2500, protein_g=0, protein_target_g=110, streak=0,
-                active_today=False, sets_today=0)
+    base = dict(
+        now=NOW,
+        has_profile=True,
+        muscles=compute_states([], NOW),
+        kcal_eaten=0,
+        kcal_target=2500,
+        protein_g=0,
+        protein_target_g=110,
+        streak=0,
+        active_today=False,
+        sets_today=0,
+    )
     base.update(over)
     return CoachContext(**base)
 
@@ -19,7 +28,9 @@ def test_onboarding_first():
 
 
 def test_overreaching_beats_everything():
-    c = [Contribution("calves", 1.0, NOW - timedelta(days=d)) for d in range(1, 7) for _ in range(3)]
+    c = [
+        Contribution("calves", 1.0, NOW - timedelta(days=d)) for d in range(1, 7) for _ in range(3)
+    ]
     assert rule_tip(ctx(muscles=compute_states(c, NOW))).code == "over"
 
 

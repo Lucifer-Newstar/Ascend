@@ -7,6 +7,7 @@ and turns foreign keys on, which SQLite leaves off by default.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from typing import Any
 
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
@@ -16,7 +17,7 @@ class Base(DeclarativeBase):
     pass
 
 
-def _set_sqlite_pragmas(dbapi_conn, _record) -> None:  # type: ignore[no-untyped-def]
+def _set_sqlite_pragmas(dbapi_conn: Any, _record: Any) -> None:
     cur = dbapi_conn.cursor()
     cur.execute("PRAGMA journal_mode=WAL")
     cur.execute("PRAGMA synchronous=NORMAL")

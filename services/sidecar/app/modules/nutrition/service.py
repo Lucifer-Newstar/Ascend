@@ -30,11 +30,17 @@ def log_meal(db: Session, bus: EventBus, data: MealIn, now: datetime) -> Meal:
         if food is None:
             raise NotFound(f"food {item.food_id} not found")
         p = item.portions
-        meal.items.append(MealItem(
-            food_id=food.id, food_name=food.name, portions=p,
-            kcal=round(food.kcal * p, 1), protein_g=round(food.protein_g * p, 1),
-            carbs_g=round(food.carbs_g * p, 1), fat_g=round(food.fat_g * p, 1),
-        ))
+        meal.items.append(
+            MealItem(
+                food_id=food.id,
+                food_name=food.name,
+                portions=p,
+                kcal=round(food.kcal * p, 1),
+                protein_g=round(food.protein_g * p, 1),
+                carbs_g=round(food.carbs_g * p, 1),
+                fat_g=round(food.fat_g * p, 1),
+            )
+        )
     db.add(meal)
     db.flush()
     bus.publish(db, MealLogged(meal_id=meal.id, day=meal.day))
@@ -64,17 +70,28 @@ def meal_count(db: Session, day: date) -> int:
 def day_totals(db: Session, day: date) -> Totals:
     row = db.execute(
         select(
-            func.coalesce(func.sum(MealItem.kcal), 0), func.coalesce(func.sum(MealItem.protein_g), 0),
-            func.coalesce(func.sum(MealItem.carbs_g), 0), func.coalesce(func.sum(MealItem.fat_g), 0),
-        ).join(Meal, Meal.id == MealItem.meal_id).where(Meal.day == day)
+            func.coalesce(func.sum(MealItem.kcal), 0),
+            func.coalesce(func.sum(MealItem.protein_g), 0),
+            func.coalesce(func.sum(MealItem.carbs_g), 0),
+            func.coalesce(func.sum(MealItem.fat_g), 0),
+        )
+        .join(Meal, Meal.id == MealItem.meal_id)
+        .where(Meal.day == day)
     ).one()
-    return Totals(kcal=round(row[0], 1), protein_g=round(row[1], 1), carbs_g=round(row[2], 1),
-                  fat_g=round(row[3], 1))
+    return Totals(
+        kcal=round(row[0], 1),
+        protein_g=round(row[1], 1),
+        carbs_g=round(row[2], 1),
+        fat_g=round(row[3], 1),
+    )
 
 
 def meal_out(meal: Meal) -> MealOut:
     return MealOut(
-        id=meal.id, day=meal.day, meal_type=meal.meal_type, logged_at=meal.logged_at,
+        id=meal.id,
+        day=meal.day,
+        meal_type=meal.meal_type,
+        logged_at=meal.logged_at,
         items=meal.items,  # type: ignore[arg-type]
         kcal=round(sum(i.kcal for i in meal.items), 1),
     )

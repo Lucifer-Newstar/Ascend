@@ -31,14 +31,21 @@ def build_context(db: Session, now: datetime) -> CoachContext:
     energy = progress.energy_for(profile) if profile else None
     totals = nutrition.day_totals(db, now.date())
     s = game.streak(db, now.date())
-    sets_today = db.scalar(
-        select(func.count(WorkoutSet.id)).join(Workout).where(Workout.day == now.date())
-    ) or 0
+    sets_today = (
+        db.scalar(select(func.count(WorkoutSet.id)).join(Workout).where(Workout.day == now.date()))
+        or 0
+    )
     return CoachContext(
-        now=now, has_profile=profile is not None, muscles=progress.muscle_states(db, now),
-        kcal_eaten=totals.kcal, kcal_target=energy.kcal_target if energy else None,
-        protein_g=totals.protein_g, protein_target_g=energy.protein_target_g if energy else None,
-        streak=s.current, active_today=s.active_today, sets_today=int(sets_today),
+        now=now,
+        has_profile=profile is not None,
+        muscles=progress.muscle_states(db, now),
+        kcal_eaten=totals.kcal,
+        kcal_target=energy.kcal_target if energy else None,
+        protein_g=totals.protein_g,
+        protein_target_g=energy.protein_target_g if energy else None,
+        streak=s.current,
+        active_today=s.active_today,
+        sets_today=int(sets_today),
     )
 
 
@@ -51,8 +58,11 @@ def facts_text(ctx: CoachContext, tip: Tip) -> str:
     ]
     for m in ctx.muscles:
         if m.status != "no_data":
-            lines.append(f"{m.label}: {m.status}, {m.es_7d} effective sets this week "
-                         f"(target {m.weekly_low:g}-{m.weekly_high:g}), readiness {round(m.readiness * 100)}%")
+            lines.append(
+                f"{m.label}: {m.status}, {m.es_7d} effective sets this week "
+                f"(target {m.weekly_low:g}-{m.weekly_high:g}), "
+                f"readiness {round(m.readiness * 100)}%"
+            )
     return "\n".join(lines)
 
 
@@ -65,8 +75,13 @@ def reply(db: Session, settings: Settings, now: datetime, question: str | None) 
         return CoachReply("rules", tip.text, tip.code, None, "ollama_unavailable")
     q = question or "Give me today's single most useful tip, based on the facts."
     try:
-        text = ollama.chat(settings.ollama_host, settings.coach_model, facts_text(ctx, tip), q,
-                           timeout=settings.coach_timeout_s)
+        text = ollama.chat(
+            settings.ollama_host,
+            settings.coach_model,
+            facts_text(ctx, tip),
+            q,
+            timeout=settings.coach_timeout_s,
+        )
     except ollama.OllamaUnavailable as e:
         return CoachReply("rules", tip.text, tip.code, None, f"ollama_error: {e}"[:120])
     return CoachReply("ollama", text, tip.code, settings.coach_model, None)

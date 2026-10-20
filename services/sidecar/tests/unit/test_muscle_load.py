@@ -47,12 +47,18 @@ def test_light_old_volume_is_under():
 
 
 def test_volume_inside_band_and_recovered_is_optimal():
-    c = [Contribution("biceps", 1.0, NOW - timedelta(days=d, hours=1)) for d in range(1, 6) for _ in range(2)]
+    c = [
+        Contribution("biceps", 1.0, NOW - timedelta(days=d, hours=1))
+        for d in range(1, 6)
+        for _ in range(2)
+    ]
     assert state(compute_states(c, NOW), "biceps").status == "optimal"
 
 
 def test_too_much_weekly_volume_is_over():
-    c = [Contribution("calves", 1.0, NOW - timedelta(days=d)) for d in range(1, 7) for _ in range(3)]
+    c = [
+        Contribution("calves", 1.0, NOW - timedelta(days=d)) for d in range(1, 7) for _ in range(3)
+    ]
     assert state(compute_states(c, NOW), "calves").status == "over"
 
 

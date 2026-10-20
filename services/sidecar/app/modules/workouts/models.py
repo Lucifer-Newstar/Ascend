@@ -39,7 +39,9 @@ class Workout(Base):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     notes: Mapped[str] = mapped_column(String(500), default="")
     sets: Mapped[list[WorkoutSet]] = relationship(
-        back_populates="workout", cascade="all, delete-orphan", lazy="selectin",
+        back_populates="workout",
+        cascade="all, delete-orphan",
+        lazy="selectin",
         order_by="WorkoutSet.id",
     )
 
