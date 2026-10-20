@@ -36,9 +36,22 @@ Formula and model versions are listed where a number you see could change.
   - You review the suggestions and confirm. Any field you change is marked as yours.
   - Duplicates of library exercises are caught.
   - Custom exercises count in muscle load, quests and stats, and can be removed (their sets stay).
-  - The wger.de lookup is **off by default**. Settings → "Online exercise lookup" turns it on after
-    a consent step; even then it runs only when you ask for it on an exercise, and it sends only the
-    exercise name. See ADR-0013.
+  - Every suggested field shows a **confidence** (High / Medium / Low). When the offline data is not
+    enough (a core field is only a fallback guess), the review says so in plain words and asks
+    "Look it up online?" with **Allow once**, **Always** (turns the setting on) or **No**.
+  - **Online research** asks wger.de (exercise data, CC-BY-SA 4.0) for the fields and Wikipedia
+    (CC BY-SA 4.0) for a short summary, sending only the exercise name. The result is a **research
+    report**: each field it found, with its value, a link to its source and the offline guess it
+    would replace. You can keep the offline guess per field, edit anything, and nothing is saved
+    until you confirm. wger matches names exactly, so a few spellings are tried (as typed, Title
+    Case, Sentence case, lower case, "push-up" hyphens); no connection, timeouts and rate limits
+    leave the offline proposal in place.
+  - Settings → **Online research** is **off by default** and turns on after a consent step. When it
+    is off and you have not allowed a lookup once, ASCEND makes **no network requests** (a test
+    proves it). While it is on, the header shows an "Online research on" indicator.
+  - Every lookup is written to a **local lookup log** (time, name, sources asked, outcome), shown
+    in Settings with a Clear button. New endpoints `GET`/`DELETE /exercises/online-log`;
+    migration `0012`. See ADR-0013.
 - The demo seed (`app.devtools.seed_demo`) now logs morning calisthenics, so the skill trees show
   progress partway through.
 
