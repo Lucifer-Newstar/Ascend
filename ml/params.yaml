@@ -1,0 +1,10 @@
+# Hyper-parameters read by the pipeline scripts (tracked by DVC, logged to MLflow).
+prepare:
+  image_size: 224
+  val_split: 0.15
+  seed: 42
+train:
+  backbone: mobilenet_v3_small
+  epochs: 15
+  batch_size: 32
+  lr: 0.0005

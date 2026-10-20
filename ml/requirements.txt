@@ -1,0 +1,7 @@
+# Planned ML dependencies (not installed by the app). Pin exact versions when work starts.
+dvc
+mlflow
+onnx
+onnxruntime
+torch
+torchvision

@@ -1,0 +1,23 @@
+# DVC pipeline (stub). Each stage declares its inputs (deps), outputs (outs) and
+# parameters, so `dvc repro` only reruns what changed. Scripts are placeholders.
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps: [src/prepare.py, data/raw]
+    params: [prepare]
+    outs: [data/processed]
+  train:
+    cmd: python src/train.py
+    deps: [src/train.py, data/processed]
+    params: [train]
+    outs: [models/food_clf.pt]
+  export:
+    cmd: python src/export_onnx.py
+    deps: [src/export_onnx.py, models/food_clf.pt]
+    outs: [models/food_clf.onnx]
+  evaluate:
+    cmd: python src/evaluate.py
+    deps: [src/evaluate.py, models/food_clf.onnx, data/processed]
+    metrics:
+      - metrics.json:
+          cache: false

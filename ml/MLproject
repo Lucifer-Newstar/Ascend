@@ -1,0 +1,7 @@
+# MLflow project definition (stub).
+name: ascend-food-classifier
+entry_points:
+  main:
+    parameters:
+      epochs: {type: int, default: 15}
+    command: "python src/train.py --epochs {epochs}"
