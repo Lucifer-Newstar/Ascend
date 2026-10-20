@@ -48,3 +48,25 @@ def test_difficulty_scaling():
     assert difficulty_multiplier(None) == 1.0
     assert difficulty_multiplier(0.4) == 0.9
     assert difficulty_multiplier(0.95) == 1.1
+
+
+def test_apply_readiness_resizes_only_training_items():
+    from app.modules.gamification.quests import QuestItemSpec, apply_readiness
+
+    item = QuestItemSpec(
+        "training",
+        "train_quads",
+        "3 hard sets for quads",
+        "Suggested: Back Squat.",
+        "sets:quads",
+        3,
+        40,
+    )
+    assert apply_readiness(item, None) == item
+    assert apply_readiness(item, "green") == item
+    amber = apply_readiness(item, "amber")
+    assert (amber.target, amber.title) == (2, "2 hard sets for quads")
+    red = apply_readiness(item, "red")
+    assert red.code == "mobility_15" and red.metric == "manual"
+    meal = QuestItemSpec("nutrition", "log_meals", "Log 3 meals", "", "meals", 3, 25)
+    assert apply_readiness(meal, "red") == meal

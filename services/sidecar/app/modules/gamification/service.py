@@ -12,7 +12,14 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.events import EventBus, MealLogged, QuestCompleted, SetLogged, WorkoutLogged
+from app.core.events import (
+    CheckinRecorded,
+    EventBus,
+    MealLogged,
+    QuestCompleted,
+    SetLogged,
+    WorkoutLogged,
+)
 from app.modules.gamification import formulas as f
 from app.modules.gamification.models import QuestItem, XpEvent
 from app.modules.gamification.quests import (
@@ -128,6 +135,40 @@ def _completion_rate(db: Session, today: date) -> float | None:
     return sum(1 for r in rows if r.completed_at) / len(rows)
 
 
+def _band_today(db: Session, today: date) -> str | None:
+    from app.modules.progress import checkins
+
+    c = checkins.for_day(db, today)
+    return c.band if c else None
+
+
+def resize_training_for_readiness(db: Session, now: datetime, band: str) -> None:
+    """Regenerate today's training item for a new check-in band.
+
+    Only an untouched item is resized: once a set has counted towards it, a later
+    check-in leaves the quest as it is."""
+    from app.modules.progress import service as progress
+
+    items = ensure_quest(db, now)
+    row = next((i for i in items if i.kind == "training"), None)
+    if row is None or row.completed_at or row.progress > 0:
+        return
+    profile = progress.get_profile(db)
+    protein = progress.energy_for(profile).protein_target_g if profile else None
+    spec = generate_daily_quest(
+        now.date(),
+        progress.muscle_states(db, now),
+        _exercise_refs(db),
+        protein,
+        _completion_rate(db, now.date()),
+        readiness_band=band,
+    )[0]
+    row.code, row.title, row.detail = spec.code, spec.title, spec.detail
+    row.metric, row.target, row.xp = spec.metric, spec.target, spec.xp
+    row.generator_version = GENERATOR_VERSION
+    db.flush()
+
+
 def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
     from app.modules.progress import service as progress
 
@@ -151,6 +192,7 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
         protein,
         _completion_rate(db, today),
         missed,
+        readiness_band=_band_today(db, today),
     )
     for s in specs:
         db.add(
@@ -305,9 +347,13 @@ def make_handlers(bus: EventBus) -> None:
         award(db, meal.logged_at, "meal", e.meal_id, f.meal_xp(meals_before))
         refresh_quest(db, bus, meal.logged_at)
 
+    def on_checkin(db: Session, e: CheckinRecorded) -> None:
+        resize_training_for_readiness(db, e.at, e.band)
+
     bus.subscribe(SetLogged, on_set_logged)
     bus.subscribe(WorkoutLogged, on_workout_logged)
     bus.subscribe(MealLogged, on_meal_logged)
+    bus.subscribe(CheckinRecorded, on_checkin)
 
 
 def register(bus: EventBus) -> None:

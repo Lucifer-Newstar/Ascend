@@ -13,10 +13,12 @@ from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
-from app.modules.progress import body, drilldown, energy, history, service, weekly
+from app.modules.progress import body, checkins, drilldown, energy, history, service, weekly
 from app.modules.progress.schemas import (
     BodyMetricIn,
     BodyMetricOut,
+    CheckinIn,
+    CheckinOut,
     EtaOut,
     MeasurementIn,
     MeasurementOut,
@@ -242,3 +244,33 @@ def progress_weekly(
 ) -> list[weekly.WeekSummary]:
     """Per-week sessions, sets, lifting volume, minutes, XP, average intake and weight."""
     return weekly.weekly(db, now, weeks)
+
+
+# --- readiness check-in -------------------------------------------------------------
+
+
+@router.post("/checkins", response_model=CheckinOut, status_code=201)
+def post_checkin(
+    body_in: CheckinIn,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> CheckinOut:
+    """20-second morning check-in. Re-submitting the same day replaces the answer."""
+    return checkins.record(db, bus, body_in, now)
+
+
+@router.get("/checkins/today", response_model=CheckinOut | None)
+def checkin_today(
+    db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> CheckinOut | None:
+    return checkins.for_day(db, now.date())
+
+
+@router.get("/checkins", response_model=list[CheckinOut])
+def list_checkins(
+    days: int = Query(default=14, ge=1, le=90),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> list[CheckinOut]:
+    return checkins.recent(db, now.date(), days)

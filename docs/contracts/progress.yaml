@@ -258,7 +258,7 @@ paths:
       - progress
   /checkins:
     post:
-      summary: 20-second morning check-in → readiness (v1.1)
+      summary: 20-second morning check-in → readiness; a re-submit the same day replaces it
       operationId: checkin
       requestBody:
         required: true
@@ -273,9 +273,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CheckinOut'
-      x-status: planned
+      x-status: implemented
       tags:
       - progress
+    get:
+      tags:
+      - progress
+      summary: Recent check-ins, oldest first
+      operationId: list_checkins
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 14
+          minimum: 1
+          maximum: 90
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CheckinOut'
+      x-status: implemented
   /body-metrics/{metric_id}:
     delete:
       tags:
@@ -363,6 +387,22 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/WeekSummary'
+      x-status: implemented
+  /checkins/today:
+    get:
+      tags:
+      - progress
+      summary: Today's check-in, or null if skipped
+      operationId: checkin_today
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/CheckinOut'
+                - type: 'null'
       x-status: implemented
 components:
   securitySchemes:
@@ -1214,6 +1254,21 @@ components:
     CheckinOut:
       type: object
       properties:
+        day:
+          type: string
+          format: date
+        sleep:
+          type: integer
+        energy:
+          type: integer
+        soreness:
+          type: string
+          enum:
+          - none
+          - some
+          - a_lot
+        mood:
+          type: integer
         readiness:
           type: integer
           minimum: 0
@@ -1226,9 +1281,16 @@ components:
           - red
         quest_adjustment:
           type: string
+        algo_version:
+          type: string
+          examples:
+          - readiness-v1
       required:
+      - day
       - readiness
       - band
+      - quest_adjustment
+      - algo_version
     Error:
       type: object
       required:

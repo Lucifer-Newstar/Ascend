@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
-from app.modules.workouts import service
+from app.modules.workouts import deload_service, service
 from app.modules.workouts.activity_seed import SECTIONS, TIME_BASED_SECTIONS
 from app.modules.workouts.schemas import (
     ExerciseOut,
@@ -26,6 +26,24 @@ from app.modules.workouts.schemas import (
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 exercises_router = APIRouter(prefix="/exercises", tags=["workouts"])
 prs_router = APIRouter(prefix="/prs", tags=["workouts"])
+deload_router = APIRouter(prefix="/deload", tags=["workouts"])
+
+
+@deload_router.get("", response_model=deload_service.DeloadOut)
+def deload_advice(
+    db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> deload_service.DeloadOut:
+    """Is a deload week due? Planned after 3 training weeks, or reactive when 2 of the
+    4 fatigue signals hold. Each signal is listed with the numbers behind it."""
+    return deload_service.advice(db, now)
+
+
+@deload_router.post("/start", response_model=deload_service.DeloadOut)
+def start_deload(
+    db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> deload_service.DeloadOut:
+    """Accept the deload: the current week is recorded as the deload week."""
+    return deload_service.start_deload_week(db, now)
 
 
 @prs_router.get("", response_model=list[PROut])

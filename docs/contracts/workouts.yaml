@@ -334,6 +334,28 @@ paths:
       x-status: planned
       tags:
       - workouts
+  /deload:
+    get:
+      tags:
+      - workouts
+      summary: Is a deload due? (planned 3+1 or 2 of 4 reactive signals)
+      operationId: deload_advice
+      responses: &id002
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeloadOut'
+      x-status: implemented
+  /deload/start:
+    post:
+      tags:
+      - workouts
+      summary: 'Accept the deload: record this week as the deload week'
+      operationId: start_deload
+      responses: *id002
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -754,3 +776,58 @@ components:
         code:
           type: string
           description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING
+    DeloadSignal:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+          - LOW_READINESS
+          - HEAVY_SORENESS
+          - PERFORMANCE_DROP
+          - FATIGUE_BUILDUP
+        active:
+          type: boolean
+        detail:
+          type: string
+      required:
+      - code
+      - active
+      - detail
+    DeloadOut:
+      type: object
+      properties:
+        recommended:
+          type: boolean
+        kind:
+          type: string
+          enum:
+          - planned
+          - reactive
+          - active
+          - none
+        training_weeks:
+          type: integer
+        signals:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeloadSignal'
+        guidance:
+          type:
+          - string
+          - 'null'
+        deload_week:
+          type:
+          - string
+          - 'null'
+          format: date
+        algo_version:
+          type: string
+          examples:
+          - deload-v1
+      required:
+      - recommended
+      - kind
+      - training_weeks
+      - signals
+      - algo_version
