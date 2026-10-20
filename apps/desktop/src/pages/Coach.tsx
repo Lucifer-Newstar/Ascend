@@ -1,5 +1,5 @@
 import type { CoachReply } from "@ascend/shared";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
 import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
@@ -24,6 +24,13 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const end = useRef<HTMLDivElement>(null);
+
+  // Keep the newest message in view as the conversation grows.
+  useEffect(() => {
+    end.current?.scrollIntoView?.({ block: "nearest" });
+  }, [msgs.length, busy]);
 
   async function ask(question: string) {
     setBusy(true);
@@ -74,7 +81,7 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
       </div>
 
       <div className="card flex min-h-[420px] flex-1 flex-col p-5">
-        <div className="flex-1 space-y-3 overflow-y-auto">
+        <div className="flex-1 space-y-3 overflow-y-auto" aria-live="polite" aria-label="Conversation with the coach">
           {msgs.length === 0 && (
             <div className="grid h-full place-items-center text-center">
               <div>
@@ -82,14 +89,14 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
                 <p className="mt-3 text-sm text-ink">Ask ARC about your training, recovery or food.</p>
                 <div className="mt-4 flex flex-wrap justify-center gap-2">
                   {["What should I train today?", "Am I eating enough protein?", "Why is my chest amber?"].map((x) => (
-                    <button key={x} type="button" className="chip hover:border-accent/50 hover:text-accent" onClick={() => setQ(x)}>{x}</button>
+                    <button key={x} type="button" className="chip hover:border-accent/50 hover:text-accent" onClick={() => { setQ(x); input.current?.focus(); }}>{x}</button>
                   ))}
                 </div>
               </div>
             </div>
           )}
           {msgs.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={i} className={`panel-in flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed ${m.role === "user" ? "bg-accent/15 text-ink" : "border border-line bg-panel-2 text-ink"}`}>
                 {m.text}
                 {m.failedQuestion && (
@@ -105,10 +112,20 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
               </div>
             </div>
           ))}
-          {busy && <div className="text-xs text-muted" role="status">ARC is thinking…</div>}
+          {busy && (
+            <div className="flex items-center gap-2 text-xs text-muted" role="status">
+              <span className="flex gap-1" aria-hidden="true">
+                {[0, 1, 2].map((d) => (
+                  <span key={d} className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" style={{ animationDelay: `${d * 160}ms` }} />
+                ))}
+              </span>
+              ARC is thinking…
+            </div>
+          )}
+          <div ref={end} />
         </div>
         <form onSubmit={send} className="mt-4 flex gap-2 border-t border-line pt-4">
-          <input className="input" placeholder="Ask anything about your training…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={1000} />
+          <input ref={input} className="input" aria-label="Ask the coach" placeholder="Ask anything about your training…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={1000} />
           <button className="btn-primary px-5" disabled={busy || !q.trim()}>Send</button>
         </form>
       </div>

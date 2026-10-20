@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -34,6 +34,19 @@ describe("CoachPage", () => {
     expect(api.coachAsk).toHaveBeenLastCalledWith("What should I train?");
     expect(screen.queryByText(/Couldn't answer/)).toBeNull();
     expect(screen.getAllByText("What should I train?")).toHaveLength(1);
+  });
+
+  it("puts a suggested question in the labelled box and announces the conversation", async () => {
+    vi.mocked(api.coachAsk).mockResolvedValue(reply);
+    renderPage();
+    await userEvent.click(screen.getByRole("button", { name: "What should I train today?" }));
+    const box = screen.getByRole("textbox", { name: "Ask the coach" });
+    expect(box).toHaveValue("What should I train today?");
+    expect(box).toHaveFocus();
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+    const log = screen.getByLabelText("Conversation with the coach");
+    expect(log).toHaveAttribute("aria-live", "polite");
+    expect(await within(log).findByText("Train legs today.")).toBeInTheDocument();
   });
 
   it("offers a retry when the AI status check fails", async () => {
