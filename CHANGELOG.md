@@ -4,6 +4,12 @@ All notable changes to ASCEND. Versions follow [Semantic Versioning](https://sem
 entries are grouped from Conventional Commits and written for users first.
 Formula and model versions are listed where a number you see could change.
 
+## [Unreleased]
+
+### Fixed
+- Counts of one read "1 set" and "1 rep" (History, the training session header and the
+  finish toast showed "1 sets").
+
 ## [0.3.0] - 2026-10-20
 
 Release notes: [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md).
