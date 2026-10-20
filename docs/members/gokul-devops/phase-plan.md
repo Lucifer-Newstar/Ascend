@@ -20,11 +20,11 @@
 - [x] `ci: python job (ruff, mypy, pytest) with uv cache` — existed in the skeleton; artifacts now named per OS/SHA with a coverage summary
 - [x] `ci: node job (eslint, tsc, vitest) with npm cache` — existed in the skeleton
 - [x] `ci: run both jobs on windows-latest and ubuntu-latest`
-- [ ] `build: review and harden the PyInstaller one-folder spec (services/sidecar/packaging)`
+- [x] `build: review and harden the PyInstaller one-folder spec (services/sidecar/packaging)` — dev tooling excluded, optimize=1, Windows version info; `packaging/smoke.py` checks a build
 - [ ] `ci: build sidecar on windows-latest and upload artefact`
-- [ ] `build: electron-builder NSIS per-user config with sidecar in extraResources`
-- [ ] `ci: build hello-world installer artefact on main`
-- [ ] `build: Electron fuses (RunAsNode off, ASAR integrity)`
+- [x] `build: electron-builder NSIS per-user config with sidecar in extraResources` — plus app icons; data kept on uninstall
+- [x] `ci: build hello-world installer artefact on main` — on app-touching pushes to main and on tags
+- [x] `build: Electron fuses (RunAsNode off, ASAR integrity)` — afterPack hook, verified with `electron-fuses read`
 - [ ] `chore(infra): dev container with Python 3.12 and Node LTS`
 - [x] `chore(meta): Dependabot for npm, uv and GitHub Actions`
 

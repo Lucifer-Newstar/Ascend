@@ -1,6 +1,6 @@
 # electron-builder config: produces the Windows NSIS installer.
 #   npm run dist:win            (from apps/desktop, after building the sidecar)
-# Not verified on real Windows yet; see docs/../README "Packaging".
+# Not verified on real Windows yet; see apps/desktop/README.md "Packaging".
 appId: app.ascend.desktop
 productName: ASCEND
 copyright: Copyright © 2026 The ASCEND team
@@ -18,16 +18,32 @@ extraResources:
     to: sidecar
     filter: ["**/*"]
 asar: true
+# Flip Electron fuses (RunAsNode off, ASAR integrity on, ...) on the packed exe.
+afterPack: build/fuses.cjs
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch: [x64]
+  # The sidecar must start without an admin prompt.
+  requestedExecutionLevel: asInvoker
   # Code signing: unsigned for now (SmartScreen will warn). Add a certificate via
   # CSC_LINK / CSC_KEY_PASSWORD secrets in CI when the team has one.
+# Per-user install (no admin rights): %LOCALAPPDATA%\Programs\ASCEND. The user's data
+# lives in %APPDATA%\ASCEND and is kept on uninstall; a reinstall picks it up again.
 nsis:
   oneClick: false
   perMachine: false
+  allowElevation: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: ASCEND
+  uninstallDisplayName: ASCEND ${version}
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  license: ../../LICENSE
   artifactName: ASCEND-Setup-${version}.${ext}
 publish: null
