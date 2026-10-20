@@ -5,7 +5,7 @@ this tool does the mechanical part of fixing it, so a PR that adds an endpoint
 updates its contract in the same commit:
 
     cd services/sidecar
-    uv run --with pyyaml python ../../scripts/sync_contract.py import-export /import/strong /import/hevy
+    uv run --with pyyaml python ../../scripts/sync_contract.py import-export /import/strong
 
 For each METHOD+PATH served by the code under the given paths it writes the code's
 operation (parameters, request body, responses) into the contract, keeps the

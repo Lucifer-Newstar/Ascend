@@ -2,15 +2,41 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+from typing import Any, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_bus, get_db
+from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.io import formats, importer
 from app.modules.io.schemas import ImportIn, ImportReport
+from app.modules.progress import history
 
 router = APIRouter(tags=["import-export"])
+
+
+# --- export -----------------------------------------------------------------------
+
+
+@router.get("/export/json")
+def export_json(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> dict[str, Any]:
+    """Everything as one JSON document (profile, workouts, meals, metrics)."""
+    return history.export_json(db, now)
+
+
+@router.get("/export/csv/{kind}")
+def export_csv(kind: Literal["workouts", "meals"], db: Session = Depends(get_db)) -> Response:
+    """One table as CSV, with a download filename."""
+    return Response(
+        content=history.export_csv(db, kind),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="ascend-{kind}.csv"'},
+    )
+
+
+# --- import -----------------------------------------------------------------------
 
 
 def _run(
