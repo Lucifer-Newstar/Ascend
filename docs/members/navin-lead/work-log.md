@@ -6,9 +6,4 @@
 
 | Date | What I shipped | PR / evidence | Notes (handoff, follow-up) |
 |---|---|---|---|
-|  |  |  |  |
-
-<!--
-Example row (delete when you add your first real one):
-| 2026-11-03 | Example: describe the merged change | #12 | Handed to <member> for <next step> |
--->
+| 2026-10-20 | ML pipeline: preprocessing contract, prepare (dedupe/split/test-own), MobileNetV3 training with MLflow, ONNX export + parity + manifest, evaluate (top-1/3, F1, ECE), labels.json check, DVC stages; ML CI workflow with Gokul | PR #12 (`feat/ml-pipeline`) | Runs on synthetic smoke data only; real datasets, licences and the v0 model are still open |
