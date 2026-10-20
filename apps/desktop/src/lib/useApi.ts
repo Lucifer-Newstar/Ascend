@@ -3,14 +3,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export interface ApiState<T> {
   data: T | null;
   error: string | null;
+  /** HTTP status of the last failure; 0 = the engine could not be reached. */
+  status: number | null;
   loading: boolean;
   reload: () => void;
 }
 
-/** Load data on mount (and when `deps` change); `reload()` refetches without clearing. */
+/** True when a failure means the local engine is down rather than a bad request. */
+export const isOffline = (status: number | null): boolean => status === 0 || status === 503;
+
+/**
+ * Load data on mount (and when `deps` change). `reload()` refetches without clearing,
+ * and a failed refresh keeps the last good data so screens can show it as stale.
+ */
 export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []): ApiState<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const fnRef = useRef(fn);
   fnRef.current = fn;
@@ -25,8 +34,15 @@ export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []): ApiState<
         if (!alive) return;
         setData(d);
         setError(null);
+        setStatus(null);
       })
-      .catch((e: Error) => alive && setError(e.message))
+      .catch((e: Error) => {
+        if (!alive) return;
+        setError(e.message);
+        // ApiError carries the HTTP status (duck-typed so mocked clients work too).
+        const code = (e as { status?: unknown }).status;
+        setStatus(typeof code === "number" ? code : null);
+      })
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -35,5 +51,5 @@ export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []): ApiState<
   }, [tick, ...deps]);
 
   const reload = useCallback(() => setTick((t) => t + 1), []);
-  return { data, error, loading, reload };
+  return { data, error, status, loading, reload };
 }

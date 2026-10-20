@@ -3,10 +3,11 @@ import { useMemo, useState } from "react";
 
 import { api } from "../api/client";
 import { IconMinus, IconPlus, IconSearch, IconTrash } from "../components/Icons";
-import { Empty, ErrorState, Loading } from "../components/States";
+import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
+import { Empty, ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
 import { grams, kcal, pct, portionLabel, timeLabel } from "../lib/format";
-import { useApi } from "../lib/useApi";
+import { isOffline, useApi } from "../lib/useApi";
 
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 
@@ -29,8 +30,29 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
     return (foods.data ?? []).filter((f) => !q || f.name.toLowerCase().includes(q));
   }, [foods.data, query]);
 
-  if ((foods.loading && !foods.data) || (day.loading && !day.data)) return <Loading label="Loading food table…" />;
-  if (foods.error || day.error) return <ErrorState message={(foods.error ?? day.error) as string} onRetry={() => { foods.reload(); day.reload(); }} />;
+  if ((foods.loading && !foods.data) || (day.loading && !day.data)) {
+    return (
+      <LoadingLayout label="Loading food table…">
+        <div className="grid grid-cols-12 gap-5">
+          <SkeletonCard className="col-span-12 lg:col-span-4" lines={8} />
+          <div className="col-span-12 space-y-5 lg:col-span-8">
+            <SkeletonCard lines={3} />
+            <SkeletonCard lines={4} />
+          </div>
+        </div>
+      </LoadingLayout>
+    );
+  }
+  if (!foods.data || !day.data) {
+    const failed = foods.error ? foods : day;
+    return (
+      <ErrorState
+        message={failed.error ?? "No data"}
+        offline={isOffline(failed.status)}
+        onRetry={() => { foods.reload(); day.reload(); }}
+      />
+    );
+  }
 
   const add = (food: Food) =>
     setPlate((p) => (p.some((x) => x.food.id === food.id) ? p.map((x) => (x.food.id === food.id ? { ...x, portions: x.portions + 1 } : x)) : [...p, { food, portions: 1 }]));
@@ -71,10 +93,17 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
           <h2 className="card-title mb-3">Indian food table</h2>
           <div className="relative">
             <IconSearch className="absolute left-3 top-2.5 text-faint" width={16} height={16} />
-            <input className="input pl-9" placeholder="idli, sambar, dal…" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input className="input pl-9" aria-label="Search foods" placeholder="idli, sambar, dal…" value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
         </div>
         <ul className="max-h-[calc(100vh-300px)] overflow-y-auto p-2">
+          {filtered.length === 0 && (
+            <li className="p-4 text-sm text-muted">
+              No food matches “{query}”.{" "}
+              <button type="button" className="text-accent hover:underline" onClick={() => setQuery("")}>Clear search</button>
+              <p className="mt-1 text-xs text-faint">The table has about 30 common dishes; more arrive with the full INDB import.</p>
+            </li>
+          )}
           {filtered.map((f) => (
             <li key={f.id}>
               <button type="button" onClick={() => add(f)} className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-panel-2">

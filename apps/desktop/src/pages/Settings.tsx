@@ -3,11 +3,12 @@ import type { Settings } from "@ascend/shared";
 import { api } from "../api/client";
 import { IconDownload } from "../components/Icons";
 import { Segmented } from "../components/Segmented";
-import { ErrorState, Loading } from "../components/States";
+import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
+import { ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
 import { kcal } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
-import { useApi } from "../lib/useApi";
+import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
 async function saveFile(defaultName: string, content: string): Promise<string | null> {
@@ -51,8 +52,14 @@ export function SettingsPage({ onToggleAi, onChanged }: { onToggleAi: () => void
     }
   }
 
-  if (profile.loading && !profile.data) return <Loading />;
-  if (profile.error || !profile.data) return <ErrorState message={profile.error ?? "No profile"} onRetry={profile.reload} />;
+  if (profile.loading && !profile.data) {
+    return (
+      <LoadingLayout label="Loading settings…">
+        <div className="grid max-w-5xl gap-5 lg:grid-cols-2">{[6, 3, 4, 2].map((n, i) => <SkeletonCard key={i} lines={n} />)}</div>
+      </LoadingLayout>
+    );
+  }
+  if (!profile.data) return <ErrorState message={profile.error ?? "No profile"} onRetry={profile.reload} offline={isOffline(profile.status)} />;
   const p = profile.data;
 
   return (
