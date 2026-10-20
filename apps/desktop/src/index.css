@@ -535,6 +535,9 @@ body {
     text-transform: uppercase;
     color: var(--sw);
   }
+  .sys-body {
+    flex: 1 1 auto;
+  }
   .sys-actions {
     display: flex;
     flex-wrap: wrap;
