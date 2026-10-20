@@ -11,6 +11,7 @@ repos:
       - id: check-yaml
         args: [--unsafe]   # allow custom tags in GitHub/compose files
       - id: check-json
+      - id: check-toml
       - id: check-added-large-files
         args: [--maxkb=1024]   # datasets/models belong in DVC, not git
       - id: check-merge-conflict
@@ -33,6 +34,23 @@ repos:
         entry: bash -c 'cd services/sidecar && uv run mypy app'
         language: system
         files: ^services/sidecar/app/.*\.py$
+        pass_filenames: false
+
+  # Dockerfile best practices (same rules as the CI docker job).
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        files: ^docker/.*Dockerfile$
+
+  # An endpoint change must update docs/contracts in the same commit.
+  - repo: local
+    hooks:
+      - id: contract-drift
+        name: contract drift (OpenAPI vs docs/contracts)
+        entry: bash -c 'cd services/sidecar && uv run --with pyyaml python ../../scripts/check_contract_drift.py'
+        language: system
+        files: ^(services/sidecar/app/.*\.py|docs/contracts/.*)$
         pass_filenames: false
 
   # Block committed secrets (API keys, tokens, private keys).

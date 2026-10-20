@@ -37,7 +37,7 @@
 - [ ] `ci: import-linter layering contracts`
 - [ ] `ci: docs job (markdown link check + mermaid render)`
 - [ ] `ci: gitleaks, npm audit and pip-audit on PRs`
-- [ ] `build(infra): MLflow Compose with local artefact volume` (pair: Navin)
+- [x] `build(infra): MLflow Compose with local artefact volume` (pair: Navin) — `ml` compose profile, checked with the tracking REST API
 - [ ] `ci: pin all actions by commit SHA`
 - [ ] `perf(ci): split fast ubuntu jobs from windows build jobs`
 

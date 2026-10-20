@@ -43,6 +43,32 @@ updates:
       - dependency-name: electron
         update-types: ["version-update:semver-major"]
 
+  # Base images in docker/ (python slim, uv). Monthly: base images move often and
+  # each bump rebuilds every layer.
+  - package-ecosystem: docker
+    directory: /docker
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "build(docker)"
+    groups:
+      base-images:
+        patterns: ["*"]
+
+  # ML pipeline requirements (Navin's lane). Training libraries are pinned loosely
+  # on purpose; only security and patch updates are proposed.
+  - package-ecosystem: pip
+    directory: /ml
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ml-deps)"
+    groups:
+      ml:
+        patterns: ["*"]
+        update-types: [patch]
+
   # GitHub Actions used by the workflows
   - package-ecosystem: github-actions
     directory: /
@@ -50,3 +76,6 @@ updates:
       interval: weekly
     commit-message:
       prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]

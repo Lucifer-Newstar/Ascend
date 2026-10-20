@@ -1,13 +1,29 @@
 # Docker Compose for local development and tests (not used by end users).
+# Every service sits behind a profile, so nothing starts by accident:
 #
-#   docker compose -f docker/docker-compose.yml run --rm sidecar-tests   # ruff + pytest
-#   docker compose -f docker/docker-compose.yml up sidecar               # API on http://localhost:8765/docs
+#   docker compose -f docker/docker-compose.yml --profile test run --rm sidecar-tests  # ruff + pytest
+#   docker compose -f docker/docker-compose.yml --profile dev up sidecar               # API on :8765/docs
+#   docker compose -f docker/docker-compose.yml --profile web up                       # API + renderer on :5173
+#   docker compose -f docker/docker-compose.yml --profile ml up mlflow                 # MLflow UI on :5000
 #
+# `make docker-test`, `make docker-dev`, `make docker-web` and `make docker-mlflow` wrap these.
 # Paths are relative to this file.
 name: ascend
 
+# Shared hardening for long-running services: read-only root filesystem, no Linux
+# capabilities, no privilege escalation. Only named volumes and /tmp are writable.
+x-hardened: &hardened
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+
 services:
   sidecar-tests:
+    profiles: [test]
     build:
       context: ../services/sidecar
       dockerfile: ../../docker/sidecar.Dockerfile
@@ -15,17 +31,61 @@ services:
     # Tests create their own temporary SQLite files; nothing to mount.
 
   sidecar:
+    <<: *hardened
+    profiles: [dev, web]
+    image: ascend-sidecar:dev
     build:
       context: ../services/sidecar
       dockerfile: ../../docker/sidecar.Dockerfile
       target: runtime
+      args:
+        VERSION: ${ASCEND_VERSION:-dev}
     ports:
       - "127.0.0.1:8765:8765"   # bind to localhost on the host too
     environment:
       # Reach an Ollama running on the host (Docker Desktop on Windows/macOS).
       OLLAMA_HOST: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # same name on Linux engines
     volumes:
       - sidecar-data:/data
 
+  # The React renderer in Vite dev mode, talking to the sidecar above (browser dev
+  # mode; Electron itself needs a desktop). Source is mounted, node_modules is not.
+  web:
+    profiles: [web]
+    image: node:22-bookworm-slim
+    working_dir: /repo
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev -w apps/desktop -- --host 0.0.0.0"
+    environment:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"   # the renderer does not need Electron
+      VITE_SIDECAR_URL: http://127.0.0.1:8765
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ..:/repo
+      - web-node-modules:/repo/node_modules
+      - web-desktop-modules:/repo/apps/desktop/node_modules
+    depends_on:
+      sidecar:
+        condition: service_healthy
+
+  # MLflow tracking server for Navin's pipeline: runs and artefacts in one volume.
+  mlflow:
+    <<: *hardened
+    profiles: [ml]
+    image: ghcr.io/mlflow/mlflow:v2.17.2
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+
 volumes:
   sidecar-data:
+  web-node-modules:
+  web-desktop-modules:
+  mlflow-data:
