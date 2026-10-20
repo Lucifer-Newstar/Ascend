@@ -3,7 +3,7 @@
 > **The AI section of the docs: what the AI does, what it is never allowed to do, which model
 > powers each feature and where its code lives.** Start here, then follow the index.
 > Owners: **Navin** (MLOps, food classifier, evaluation) and **Jegatheesan** (sidecar AI:
-> coach, model manager, scan pipeline). Status: v0.1 skeleton (2026-10-20). Each feature below
+> coach, model manager, scan pipeline). Status: v0.1 skeleton (2026-10-20), updated for the v6 engines (2026-10-21). Each feature below
 > is marked **implemented** (exists in the v0.1 code) or **planned** (agreed design, with
 > its phase).
 
@@ -45,6 +45,8 @@ breaks, because the models were never the source of the numbers.
 | Injury protocol | Rules + kind model wording | Rules + fixed wording |
 | Meal photo | Classifier top-3 (+ optional VLM) | Search-and-pick with the photo on screen |
 | Muscle map, XP, quests, PRs, TDEE | Engines | Engines (identical) |
+| Next-set targets, readiness and their "Why?" | Engines; one sentence phrased by `qwen3:4b`, shown only if every number passes the coach guard | Engines; the template sentence (**implemented**, v6) |
+| System notices (deload, target raised, muscle recovered) | Engines and fixed templates | Identical (**implemented**, v6) |
 | Tamil | Model reply in Tamil (beta) | English templates + human-translated fixed replies |
 
 Measured by metric R6 (the E2E journey with Ollama stopped) in
@@ -73,6 +75,10 @@ Measured by metric R6 (the E2E journey with Ollama stopped) in
 | Retraining from corrections | Classifier (training) | Docker + WSL2 + RTX 3050, offline | `ml/` | planned · Phase 5 | [mlops-lifecycle.md](mlops-lifecycle.md) |
 | Progress photos | **none** (no AI judging in v1) | — | — | decided | [features.md §4](../planning/features.md#4-cut-or-replaced) |
 | Muscle map, XP, quests, PRs, TDEE | **none** (engines) | Sidecar | `progress`, `gamification`, `workouts` | **implemented** (v0.1) | [system-architecture.md](../architecture/system-architecture.md) |
+| Recovery and readiness per muscle (`recovery-v2`, personal factors `recovery-k-v1`) | **none** (deterministic engine, pure Python) | Sidecar, CPU | `modules/intelligence` (`recovery.py`, `personal.py`) | **implemented** (v6) | [ADR-0014](../architecture/adr/0014-recovery-engine-v2.md), [evaluation.md](evaluation.md) |
+| Next-session targets, stall detection (`prog-v1`) | **none** (deterministic engine, pure Python) | Sidecar, CPU | `modules/intelligence/progression.py` | **implemented** (v6) | [ADR-0015](../architecture/adr/0015-progression-engine-prog-v1.md), [evaluation.md](evaluation.md) |
+| "Why?" sentence for a target or a muscle (`explain-v1`) | Template; optional `qwen3:4b` phrasing behind the coach guard | Sidecar; Ollama if running | `modules/intelligence/explain.py` | **implemented** (v6); real-model phrasing **unverified** | [ADR-0016](../architecture/adr/0016-explanations-and-system-voice.md) |
+| System notices for the engines | **none** (rules + templates) | Sidecar | `modules/intelligence/notices.py` | **implemented** (v6) | [ADR-0016](../architecture/adr/0016-explanations-and-system-voice.md) |
 
 ### Models at a glance
 
@@ -99,6 +105,7 @@ Measured by metric R6 (the E2E journey with Ollama stopped) in
 | [adaptive-planning-ai.md](adaptive-planning-ai.md) | Rules vs AI in planning, proposals, what the AI may suggest, weekly review, injury adaptation, readiness |
 | [data-and-privacy-for-ai.md](data-and-privacy-for-ai.md) | What each model sees, local-only enforcement, storage, consent for training photos, deletion |
 | [evaluation-ai.md](evaluation-ai.md) | Metrics and test sets, coach rubric, latency targets, the offline eval harness, CI regression gates |
+| [evaluation.md](evaluation.md) | Measured results for recovery-v2 and prog-v1 on seeded synthetic users, latency on a one-year history, and the limitations |
 | [mlops-lifecycle.md](mlops-lifecycle.md) | Walkthrough: DVC, MLflow, ONNX + INT8, registry, manifest and checksums, shipping, rollback, retraining |
 | [ai-risks.md](ai-risks.md) | AI risk register with mitigations, owners and signals |
 | [ai-roadmap.md](ai-roadmap.md) | AI tasks per phase and member, commit-sized |
@@ -124,12 +131,16 @@ Measured by metric R6 (the E2E journey with Ollama stopped) in
 | [0009](../architecture/adr/0009-offline-first-no-cloud.md) | Offline-first, no cloud |
 | [0011](../architecture/adr/0011-prompt-contracts-and-output-validation.md) | Prompts as versioned contracts; every model output validated |
 | [0012](../architecture/adr/0012-classifier-first-meal-scan.md) | Classifier-first meal scan; VLM as an optional second opinion |
+| [0014](../architecture/adr/0014-recovery-engine-v2.md) | Recovery engine v2 with personal recovery factors |
+| [0015](../architecture/adr/0015-progression-engine-prog-v1.md) | Progression engine prog-v1 |
+| [0016](../architecture/adr/0016-explanations-and-system-voice.md) | Explanations and the System's voice |
+| [0017](../architecture/adr/0017-evaluation-synthetic-users.md) | Evaluation on seeded synthetic users |
 
 ---
 
 ## 6. Honesty rules for this section
 
-- No accuracy, quality or speed number here is measured yet. Goals are labelled **target**;
+- The only measured numbers are in [evaluation.md](evaluation.md) (v6 engines, synthetic users only, latency on the build machine). Nothing else here is measured yet. Goals are labelled **target**;
   sizes and speeds not taken from a published page are labelled **estimate**; claims we have
   not checked are labelled **unverified**.
 - Model sizes are from Ollama's tag pages as recorded on 2026-10-20 and are re-checked before

@@ -30,6 +30,28 @@ without it.
 Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages · **Enter** log the set shown ·
 **Space** pause rest · arrows on the skill canvas.
 
+## The v6 intelligence layer
+
+Two deterministic engines, pure Python on the CPU. The local model is optional and only ever
+phrases what the engines computed.
+
+| What | How it works |
+|---|---|
+| **Recovery (`recovery-v2`)** | Per-muscle readiness for all 19 regions from each set's dose (muscle weight × effort from reps in reserve × volume; holds by seconds), decayed by the muscle's half-life × your personal factor, adjusted by today's check-in. Drives the muscle map, quests and the weekly review. [ADR-0014](docs/architecture/adr/0014-recovery-engine-v2.md) |
+| **Personal recovery factors** | One factor per muscle group, fitted after every workout from how your performance follows fatigue. Starts at the population value, moves only with evidence, shown with a 90 % interval and as **"you vs population"** on the muscle drill-down. |
+| **Progression (`prog-v1`)** | The logger's **suggestion card** (Use it / Keep mine / Why?): double progression in your rep zone, equipment-aware increments (never more than 10 % at once), RPE autoregulation, e1RM tracking, stall detection with a 10 % reset, hold progressions, and skill-tree criteria for calisthenics. No increase while the muscles are under 40 % recovered. [ADR-0015](docs/architecture/adr/0015-progression-engine-prog-v1.md) |
+| **"Why?" everywhere** | Every target and readiness shows its formula and inputs. With AI on, `qwen3:4b` may phrase one sentence, shown only if every number passes the coach guard; otherwise the template sentence. [ADR-0016](docs/architecture/adr/0016-explanations-and-system-voice.md) |
+| **The System speaks, rarely** | Three notices, each shown once: Deload advised, Target raised, Muscle recovered. |
+| **Evaluation** | A seeded synthetic-user simulator with baselines, in [docs/ai/evaluation.md](docs/ai/evaluation.md) ([ADR-0017](docs/architecture/adr/0017-evaluation-synthetic-users.md)). On synthetic users, prog-v1 targets were hit within 1 rep on 93.1 % of exposures (linear +2.5 kg with resets: 71.8 %) and too hard on 2.7 % (22.4 %); recovery-v2 readiness correlates with the simulated truth at Pearson r 0.907-0.946 (fixed 48 h rule: 0.520-0.579). |
+
+**Honest limitations of v6**
+
+- **Synthetic users only.** Both engines were evaluated on simulated users, not real people.
+- **Recovery r ≈ 0.9 is partly circular.** It is measured against the simulator's own ground truth, which uses the same model family as the engine. It shows the estimation works under those assumptions, not that people recover this way.
+- **Stall detection is weak:** precision 0.113, recall 0.62 on synthetic stalls. That is why a stall alone never triggers a deload.
+- **Real local-model phrasing is unverified.** No Ollama was available on the build machine; the guard is tested with a stub model. Without a model the app shows template text and is fully functional.
+- Latency was measured on the 4-CPU Linux build machine (finishing a workout: p50 394.2 ms), not on the target Windows laptop.
+
 ## What's in the MVP (v0.1.0)
 
 | Feature | Where |
@@ -37,7 +59,7 @@ Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages · **Enter** log the s
 | Onboarding: age, sex, height, weight, goal, activity → BMR/TDEE (Mifflin-St Jeor), shown as an **estimate** | `progress`, `nutrition/tdee.py` |
 | Workout logger: 41 seeded exercises with primary/secondary muscle weights, sets with kg / reps / RPE, **PR detection** (Epley e1RM), rest timer | `workouts` |
 | Gamification: XP per set and session, level curve `100 × L^1.3`, ranks E→S, rule-generated **daily quest**, streak with **freezes**; all formulas versioned | `gamification` |
-| Muscle recovery: per-muscle effective sets with recovery decay → under / optimal / recovering / over | `progress/muscle_load.py` |
+| Muscle recovery: per-muscle effective sets with recovery decay → under / optimal / recovering / over (replaced by recovery-v2 in v6) | `progress/muscle_load.py` |
 | Today (was Dashboard): three rings (quest tasks, kcal eaten, kcal burned), today's quest, XP bar, front/back muscle map | `apps/desktop/src/pages/Dashboard.tsx` |
 | Diet log: 31 approximate Indian foods (idli, dosa, sambar, chutneys, rice, chapati, dal, curd...) with katori/piece portions, daily totals | `nutrition` |
 | Coach: rule-based tips always; local Ollama `qwen3:4b` if running; **AI on/off toggle** | `coach` |
@@ -157,9 +179,10 @@ installed app, the dev Electron app or the sidecar on its own.
 
 Verified on Linux (CI-equivalent):
 
-- 355 sidecar tests pass (engine unit tests + API tests with `TestClient`); ruff and mypy clean.
+- 485 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 engines, API tests with `TestClient`); ruff and mypy clean (100 source files).
 - Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
-- tsc (renderer, Electron, shared), eslint and 168 vitest tests (37 files) pass; `vite build` succeeds.
+- tsc (renderer, Electron, shared), eslint and 276 vitest tests (45 files) pass; `vite build` succeeds.
+- The contract drift check passes (71 implemented operations match 9 contracts).
 - The renderer was driven end to end against the running sidecar in headless Chromium
   (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
 - The PyInstaller sidecar binary builds, migrates and answers `/health` (Linux build).
@@ -172,8 +195,10 @@ Not yet verified:
 
 - Electron on real Windows (paths, `uv` on PATH, window behaviour) has not been run.
 - The Windows installer (electron-builder + PyInstaller `.exe`) has not been built.
-- The Ollama path (coach and custom-exercise classifier) is tested with a mocked server only;
-  `qwen3:4b` answers are untested.
+- The Ollama path (coach, custom-exercise classifier and the v6 "Why?" phrasing) is tested with a
+  mocked server only; `qwen3:4b` answers are untested.
+- The v6 engines are evaluated on synthetic users only (docs/ai/evaluation.md); no real-user
+  validation exists yet.
 - Online research is tested against mocked wger.de and Wikipedia APIs. The live APIs were checked
   by hand on 2026-10-20 from the dev machine: "pallof press" and "nordic curl" were found on wger
   (via the Title Case variant), "Deadlift" got a Wikipedia summary only, "zercher squat" and
