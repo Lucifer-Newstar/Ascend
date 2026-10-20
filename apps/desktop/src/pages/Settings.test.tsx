@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../components/Toast";
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { expectNoAxeViolations } from "../test/axe";
+import { api } from "../api/client";
 import { SettingsPage } from "./Settings";
 
 vi.mock("../api/client", () => ({
@@ -16,6 +17,8 @@ vi.mock("../api/client", () => ({
       energy: { bmr: 1700, tdee: 2600, kcal_target: 2900, protein_target_g: 140, formula_version: "tdee-v1", is_estimate: true },
     }),
     updateSettings: vi.fn(),
+    onlineLog: vi.fn().mockResolvedValue([]),
+    clearOnlineLog: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -54,14 +57,14 @@ describe("SettingsPage", () => {
     expect(save).toHaveBeenCalledWith({ sessions_per_week: 5 });
   });
 
-  it("asks for consent before turning on the online exercise lookup", async () => {
+  it("asks for consent before turning on online research", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
-    const toggle = await screen.findByRole("checkbox", { name: /look up exercises you add on wger.de/i });
+    const toggle = await screen.findByRole("checkbox", { name: /research exercises you add on wger.de and wikipedia/i });
     expect(toggle).not.toBeChecked();
     await userEvent.click(toggle);
     expect(save).not.toHaveBeenCalled();
-    const ask = screen.getByRole("group", { name: "Allow online lookup?" });
+    const ask = screen.getByRole("group", { name: "Allow online research?" });
     expect(ask).toHaveTextContent("only the exercise name");
     await userEvent.click(within(ask).getByRole("button", { name: "Cancel" }));
     expect(toggle).not.toBeChecked();
@@ -71,6 +74,21 @@ describe("SettingsPage", () => {
     await waitFor(() => expect(toggle).toBeChecked());
     await userEvent.click(toggle);
     expect(save).toHaveBeenLastCalledWith({ online_lookup: false });
+  });
+
+  it("shows the local lookup log and clears it", async () => {
+    vi.mocked(api.onlineLog).mockResolvedValueOnce([
+      { id: 2, at: "2026-10-20T18:00:00", query: "spoto press", consent: "once", outcome: "ok",
+        sources: [{ source: "wger", url: "https://wger.de/api/v2/exercise-translation/?name=spoto+press", status: "not_found" }, { source: "wger", url: "https://wger.de/api/v2/exercise-translation/?name=Spoto+Press", status: "ok" }, { source: "wikipedia", url: "https://en.wikipedia.org/api/rest_v1/page/summary/Spoto_press", status: "not_found" }] },
+    ]).mockResolvedValueOnce([]);
+    const { container } = setup(vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p })));
+    expect(await screen.findByText("“spoto press”")).toBeInTheDocument();
+    expect(screen.getByText(/wger.de, Wikipedia/)).toBeInTheDocument();
+    expect(screen.getByText("found")).toBeInTheDocument();
+    await expectNoAxeViolations(container);
+    await userEvent.click(screen.getByRole("button", { name: "Clear log" }));
+    expect(api.clearOnlineLog).toHaveBeenCalled();
+    expect(await screen.findByText("No online lookups yet.")).toBeInTheDocument();
   });
 
   it("turns on Reduce motion and mirrors it onto <html data-motion>", async () => {
