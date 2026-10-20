@@ -64,7 +64,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
             <input type="checkbox" className="h-5 w-5 accent-accent" checked={Boolean(aiEnabled)} onChange={onToggleAi} />
           </label>
         </section>
-        <OnlineLookup enabled={Boolean(settings.online_lookup)} onChange={(on) => save({ online_lookup: on }, on ? "Online exercise lookup: on" : "Online exercise lookup: off")} />
+        <OnlineResearch enabled={Boolean(settings.online_lookup)} onChange={(on) => save({ online_lookup: on }, on ? "Online research: on" : "Online research: off")} />
         <section className="card space-y-4 p-5" aria-labelledby="appearance-title">
           <h2 id="appearance-title" className="card-title">Appearance</h2>
           <div className="flex items-center justify-between gap-4">
@@ -148,18 +148,18 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
 
 /**
  * The one feature that contacts the internet. Turning it on needs an explicit "Allow"
- * after reading what is sent; turning it off is one click.
+ * after reading what is sent; turning it off is one click. Every lookup is logged here.
  */
-function OnlineLookup({ enabled, onChange }: { enabled: boolean; onChange: (on: boolean) => void }) {
+export function OnlineResearch({ enabled, onChange }: { enabled: boolean; onChange: (on: boolean) => void }) {
   const [asking, setAsking] = useState(false);
   return (
     <section className="card p-5" aria-labelledby="online-title">
-      <h2 id="online-title" className="card-title mb-3">Online exercise lookup</h2>
+      <h2 id="online-title" className="card-title mb-3">Online research</h2>
       <label className="flex items-center justify-between gap-4">
         <span className="text-sm text-ink">
-          Look up exercises you add on wger.de
+          Research exercises you add on wger.de and Wikipedia
           <br />
-          <span className="text-xs text-muted">Off by default. Even when on, you choose per exercise.</span>
+          <span className="text-xs text-muted">Off by default. When off, ASCEND makes no internet requests at all; you can still allow a single lookup while adding an exercise.</span>
         </span>
         <input
           type="checkbox"
@@ -169,11 +169,12 @@ function OnlineLookup({ enabled, onChange }: { enabled: boolean; onChange: (on: 
         />
       </label>
       {asking && !enabled && (
-        <div className="mt-3 rounded-lg border border-line-2 bg-panel-2 p-3 text-xs text-muted" role="group" aria-label="Allow online lookup?">
-          <p className="text-ink">Allow online lookup?</p>
+        <div className="mt-3 rounded-lg border border-line-2 bg-panel-2 p-3 text-xs text-muted" role="group" aria-label="Allow online research?">
+          <p className="text-ink">Allow online research?</p>
           <p className="mt-1">
-            When you add an exercise and tick &quot;also look up on wger.de&quot;, ASCEND sends <strong className="text-ink">only the exercise name</strong> to
-            wger.de (a free, open exercise database) and shows what it found, credited to wger. Nothing else about you or your training leaves this PC.
+            When the offline details of an exercise you add are not enough (or you ask), ASCEND sends <strong className="text-ink">only the exercise name</strong> to
+            wger.de (an open exercise database) and Wikipedia, then shows a research report with a link for every value. You confirm before anything is saved.
+            Nothing else about you or your training leaves this PC.
           </p>
           <div className="mt-3 flex gap-2">
             <button type="button" className="btn btn-primary px-3 py-1.5 text-xs" onClick={() => { setAsking(false); onChange(true); }}>Allow</button>
@@ -181,6 +182,67 @@ function OnlineLookup({ enabled, onChange }: { enabled: boolean; onChange: (on: 
           </div>
         </div>
       )}
+      <LookupLog />
     </section>
+  );
+}
+
+const OUTCOME_TEXT: Record<string, string> = {
+  ok: "found", not_found: "nothing found", offline: "no connection", timeout: "timed out", rate_limited: "rate limited", error: "failed",
+};
+
+/** The local log of online lookups: when, what, where, outcome. Clearable. */
+export function LookupLog() {
+  const log = useApi(() => api.onlineLog(50), []);
+  const toast = useToast();
+  async function clear() {
+    try {
+      await api.clearOnlineLog();
+      log.reload();
+      toast("Lookup log cleared", "info");
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  }
+  const rows = log.data ?? [];
+  return (
+    <div className="mt-4 border-t border-line pt-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-xs uppercase tracking-wider text-faint">Lookup log (stored on this PC)</h3>
+        <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={clear} disabled={rows.length === 0}>Clear log</button>
+      </div>
+      {log.error && !log.data ? (
+        <p className="mt-2 text-xs text-muted">The log could not be loaded.</p>
+      ) : rows.length === 0 ? (
+        <p className="mt-2 text-xs text-muted">{log.loading ? "Loading…" : "No online lookups yet."}</p>
+      ) : (
+        <div className="mt-2 max-h-56 overflow-y-auto">
+          <table className="w-full text-left text-xs">
+            <caption className="sr-only">Online lookups, newest first</caption>
+            <thead className="text-faint">
+              <tr>
+                <th scope="col" className="py-1 pr-3 font-normal">When</th>
+                <th scope="col" className="py-1 pr-3 font-normal">Looked up</th>
+                <th scope="col" className="py-1 pr-3 font-normal">Sources</th>
+                <th scope="col" className="py-1 font-normal">Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-t border-line">
+                  <td className="py-1.5 pr-3 text-muted">{new Date(r.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</td>
+                  <td className="py-1.5 pr-3 text-ink">“{r.query}”{r.consent === "once" && <span className="text-faint"> · once</span>}</td>
+                  <td className="py-1.5 pr-3 text-muted">
+                    {[...new Set(r.sources.map((x) => (x.source === "wger" ? "wger.de" : "Wikipedia")))].join(", ")}
+                    <span className="text-faint"> · {r.sources.filter((x) => x.status !== "skipped").length} requests</span>
+                  </td>
+                  <td className="py-1.5 text-muted">{OUTCOME_TEXT[r.outcome] ?? r.outcome}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }

@@ -17,7 +17,7 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
-export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status }: {
+export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status, onlineResearch = false }: {
   page: Page;
   onNavigate: (p: Page) => void;
   aiEnabled: boolean | null;
@@ -26,6 +26,8 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
   subtitle?: string;
   /** Shown in the header beside the AI switch (the level/XP chip). */
   status?: ReactNode;
+  /** Settings -> Online research is on: the app may contact wger.de and Wikipedia. */
+  onlineResearch?: boolean;
   children: ReactNode;
 }) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -71,7 +73,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
           })}
         </nav>
         <div className="px-5 py-5 text-[11px] leading-relaxed text-faint">
-          Offline · data stays on this PC
+          {onlineResearch ? "Online research on · only exercise names leave this PC" : "Offline · data stays on this PC"}
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -81,6 +83,17 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
             <p className="text-xs text-muted">{subtitle ?? today}</p>
           </div>
           <div className="flex items-center gap-3">
+          {onlineResearch && (
+            <button type="button" onClick={() => onNavigate("settings")}
+              className="flex items-center gap-2 rounded-full border border-warn/60 px-3 py-1.5 text-xs text-warn hover:bg-warn/10"
+              title="Exercise names you add may be looked up on wger.de and Wikipedia. Click to change in Settings.">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z" />
+              </svg>
+              Online research on
+            </button>
+          )}
           {status}
           <button type="button" onClick={onToggleAi} disabled={aiEnabled === null} role="switch" aria-checked={Boolean(aiEnabled)}
             className="flex items-center gap-2.5 rounded-full border border-line-2 py-1.5 pl-3 pr-1.5 text-xs text-muted hover:border-accent/50"

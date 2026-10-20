@@ -70,8 +70,11 @@ class ExerciseAnalyzeIn(StrictIn):
     name: str = Field(min_length=2, max_length=80)
     equipment: str | None = Field(default=None, max_length=20)
     notes: str = Field(default="", max_length=300)
-    # Ask wger.de as well. Only honoured when Settings -> online lookup is on.
+    # Ask for online research (wger.de, Wikipedia). Honoured only when Settings ->
+    # "Online research" is on or allow_once is set; otherwise no request is sent.
     online: bool = False
+    # The user allowed online research for this one lookup ("Allow once").
+    allow_once: bool = False
 
 
 class ExerciseProposal(BaseModel):
@@ -100,7 +103,8 @@ class ExerciseMatch(BaseModel):
 
 class StageStatus(BaseModel):
     """What one optional stage did. local_ai: ok | off | unavailable | error | invalid.
-    online: off | not_requested | ok | not_found | error."""
+    online: off | not_requested | ok | not_found | offline | timeout | rate_limited |
+    error."""
 
     status: str
     detail: str = ""
@@ -108,11 +112,53 @@ class StageStatus(BaseModel):
     applied: list[str] = []
 
 
+class ResearchCall(BaseModel):
+    source: str  # wger | wikipedia
+    url: str
+    # ok | not_found | offline | timeout | rate_limited | error | skipped
+    status: str
+
+
+class ResearchField(BaseModel):
+    field: str
+    label: str
+    value: str
+    source: str
+    url: str
+    offline_value: str
+    offline_source: str
+    # The online value differs from the offline guess.
+    conflict: bool
+
+
+class ResearchReport(BaseModel):
+    """What online research asked, where, and which fields it would fill. Nothing is
+    saved until the user confirms the review form."""
+
+    query: str
+    # setting | once
+    consent: str
+    outcome: str
+    calls: list[ResearchCall] = []
+    fields: list[ResearchField] = []
+    summary: str = ""
+    summary_url: str = ""
+
+
 class ExerciseAnalysis(BaseModel):
     name: str
     proposal: ExerciseProposal
     # field -> library | rules | local_ai | wger
     field_sources: dict[str, str]
+    # field -> high | medium | low
+    confidence: dict[str, str] = {}
+    # Core fields the offline stages could not support; non-empty means "not enough
+    # offline data" and the client offers online research.
+    insufficient: list[str] = []
+    # The proposal before online research changed it (to compare or revert a field).
+    offline: ExerciseProposal | None = None
+    offline_sources: dict[str, str] = {}
+    research: ResearchReport | None = None
     attribution: list[AttributionOut] = []
     matches: list[ExerciseMatch] = []
     # Set when the name (or an alias) already exists: creating it would be refused.
@@ -282,3 +328,13 @@ class PROut(BaseModel):
     algo_version: str
     achieved_at: datetime
     set_id: int
+
+
+class OnlineLogEntry(BaseModel):
+    id: int
+    at: datetime
+    query: str
+    sources: list[ResearchCall] = []
+    outcome: str
+    # setting | once
+    consent: str

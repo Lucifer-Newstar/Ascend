@@ -123,7 +123,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
   const aiEnabled = settings.ai_enabled;
   return (
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
-      status={<XpChip refreshKey={refreshKey} />}>
+      onlineResearch={Boolean(settings.online_lookup)} status={<XpChip refreshKey={refreshKey} />}>
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>

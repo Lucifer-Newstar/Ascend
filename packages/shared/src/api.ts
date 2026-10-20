@@ -207,8 +207,56 @@ export interface ExerciseAnalysis {
   duplicate_of: ExerciseMatch | null;
   /** local model: ok | off | unavailable | error | invalid */
   ai: StageStatus;
-  /** wger.de: off | not_requested | ok | not_found | error */
+  /** Online research: off | not_requested | ok | not_found | offline | timeout | rate_limited | error */
   online: StageStatus;
+  /** field -> how far the proposal can be trusted. */
+  confidence: Record<string, Confidence>;
+  /** Core fields the offline stages could not support: non-empty = "not enough offline data". */
+  insufficient: string[];
+  /** The proposal before online research changed it, to compare or keep the offline guess. */
+  offline: ExerciseProposal | null;
+  offline_sources: Record<string, FieldSource>;
+  research: ResearchReport | null;
+}
+
+export type Confidence = "high" | "medium" | "low";
+
+export interface ResearchCall {
+  source: "wger" | "wikipedia" | string;
+  url: string;
+  /** ok | not_found | offline | timeout | rate_limited | error | skipped */
+  status: string;
+}
+
+export interface ResearchField {
+  field: string;
+  label: string;
+  value: string;
+  source: string;
+  url: string;
+  offline_value: string;
+  offline_source: string;
+  conflict: boolean;
+}
+
+export interface ResearchReport {
+  query: string;
+  /** How the lookup was allowed: the Settings toggle, or allow once. */
+  consent: "setting" | "once";
+  outcome: string;
+  calls: ResearchCall[];
+  fields: ResearchField[];
+  summary: string;
+  summary_url: string;
+}
+
+export interface OnlineLogEntry {
+  id: number;
+  at: string;
+  query: string;
+  sources: ResearchCall[];
+  outcome: string;
+  consent: "setting" | "once";
 }
 
 export interface CustomExerciseIn extends ExerciseProposal {

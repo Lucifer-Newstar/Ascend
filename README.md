@@ -28,7 +28,7 @@ without it.
 | History by day (workouts + meals) and export to **JSON / CSV** | `progress/history.py` |
 | **Calisthenics skill trees** (12 trees, unlock criteria from logged sets, estimates only with enough data) | `skills`, `pages/Skills.tsx` |
 | **Exercise gallery**: 873 free-exercise-db exercises + calisthenics progressions, timed holds, search and filters | `workouts/library.py`, `pages/Library.tsx` |
-| **Add your own exercise**: rules → local AI → optional wger.de, every field with its source | `workouts/custom.py`, ADR-0013 |
+| **Add your own exercise**: rules → local AI → optional online research (wger.de, Wikipedia), every field with its source and confidence, a research report to confirm, a local lookup log | `workouts/custom.py`, ADR-0013 |
 
 ## Architecture
 
@@ -158,8 +158,11 @@ Not yet verified:
 - The Windows installer (electron-builder + PyInstaller `.exe`) has not been built.
 - The Ollama path (coach and custom-exercise classifier) is tested with a mocked server only;
   `qwen3:4b` answers are untested.
-- The wger.de lookup is tested against a mocked API; the live API was checked by hand on
-  2026-10-20 (it filters by exact name only).
+- Online research is tested against mocked wger.de and Wikipedia APIs. The live APIs were checked
+  by hand on 2026-10-20 from the dev machine: "pallof press" and "nordic curl" were found on wger
+  (via the Title Case variant), "Deadlift" got a Wikipedia summary only, "zercher squat" and
+  "spoto press" found nothing. wger's name filter is exact and case-sensitive and its search
+  endpoint answers 404.
 
 ## Push to a new GitHub repo
 
@@ -200,8 +203,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules.
 - Skill-tree progressions follow the r/bodyweightfitness Recommended Routine and wiki, Steven Low's
   *Overcoming Gravity* (2nd ed.) and GMB Fitness tutorials. The thresholds are ASCEND's own choices
   (see `docs/architecture/skill-trees.md`).
-- Optional online lookup: [wger](https://wger.de) exercise data (CC-BY-SA 4.0), only when you turn it
-  on; results are credited on the exercise.
+- Optional online research: [wger](https://wger.de) exercise data (CC-BY-SA 4.0) and
+  [Wikipedia](https://en.wikipedia.org) summaries (CC BY-SA 4.0), only when you turn it on or allow a
+  single lookup; results are credited on the exercise with a link and licence.
 
 Parts of this codebase were written with AI assistance.
 

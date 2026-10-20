@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
@@ -13,7 +14,7 @@ from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.skills import service as skills
 from app.modules.workouts import custom, deload_service, service
 from app.modules.workouts.activity_seed import SECTIONS
-from app.modules.workouts.models import Exercise
+from app.modules.workouts.models import Exercise, OnlineLookupLog
 from app.modules.workouts.schemas import (
     AttributionOut,
     CustomExerciseIn,
@@ -25,8 +26,11 @@ from app.modules.workouts.schemas import (
     ExerciseProposal,
     FinishedWorkout,
     LoggedSet,
-    MuscleWeight,
+    OnlineLogEntry,
     PROut,
+    ResearchCall,
+    ResearchField,
+    ResearchReport,
     SetIn,
     SetOut,
     SetPatch,
@@ -93,13 +97,39 @@ def list_exercises(
     return [service.exercise_out(e) for e in service.list_exercises(db, f=f)]
 
 
+def _proposal_out(v: dict[str, object]) -> ExerciseProposal:
+    muscles = v.get("muscles") or {}
+    assert isinstance(muscles, dict)
+    return ExerciseProposal.model_validate(
+        {
+            "section": v["section"],
+            "equipment": v["equipment"],
+            "measure": v["measure"],
+            "pattern": v["pattern"],
+            "difficulty": v.get("difficulty"),
+            "muscles": [{"muscle": k, "weight": w} for k, w in muscles.items()],
+            "rep_low": v.get("rep_low"),
+            "rep_high": v.get("rep_high"),
+            "met": v.get("met"),
+            "instructions": v.get("instructions") or [],
+            "aliases": v.get("aliases") or [],
+        }
+    )
+
+
 @exercises_router.post("/analyze", response_model=ExerciseAnalysis)
 def analyze_exercise(
-    body: ExerciseAnalyzeIn, request: Request, db: Session = Depends(get_db)
+    body: ExerciseAnalyzeIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
 ) -> ExerciseAnalysis:
-    """Propose every field of a new exercise, each with its source: library match,
-    rules, the local model (when AI is on and installed) and, only if Settings allows
-    it and the request asks, wger.de. Nothing is saved."""
+    """Propose every field of a new exercise, each with its source and a confidence:
+    library match, rules, the local model (when AI is on and installed) and online
+    research (wger.de, Wikipedia) only when Settings -> "Online research" is on or the
+    request carries allow_once. `insufficient` lists core fields the offline stages could
+    not support. Each online lookup is written to the local lookup log. Nothing else is
+    saved."""
     from app.modules.progress import service as progress
 
     settings = request.app.state.settings
@@ -113,31 +143,38 @@ def analyze_exercise(
         model=settings.coach_model,
         online_allowed=progress.online_lookup(db),
         online_requested=body.online,
-        http=getattr(request.app.state, "wger_client", None),
+        allow_once=body.allow_once,
+        now=now,
+        http=getattr(request.app.state, "research_client", None),
     )
-    v = a.proposal.values
 
     def match(e: Exercise, score: float, via: str) -> ExerciseMatch:
         return ExerciseMatch(
             id=e.id, name=e.name, score=score, via=via, section=e.section, image=e.image
         )
 
+    research = None
+    if a.research is not None:
+        research = ResearchReport(
+            query=a.research.query,
+            consent=a.research.consent,
+            outcome=a.research.outcome,
+            calls=[
+                ResearchCall(source=x.source, url=x.url, status=x.status) for x in a.research.calls
+            ],
+            fields=[ResearchField.model_validate(f) for f in a.report],
+            summary=a.research.summary,
+            summary_url=a.research.summary_url,
+        )
     return ExerciseAnalysis(
         name=a.name,
-        proposal=ExerciseProposal(
-            section=v["section"],
-            equipment=v["equipment"],
-            measure=v["measure"],
-            pattern=v["pattern"],
-            difficulty=v.get("difficulty"),
-            muscles=[MuscleWeight(muscle=k, weight=w) for k, w in v.get("muscles", {}).items()],
-            rep_low=v.get("rep_low"),
-            rep_high=v.get("rep_high"),
-            met=v.get("met"),
-            instructions=v.get("instructions", []),
-            aliases=v.get("aliases", []),
-        ),
+        proposal=_proposal_out(a.proposal.values),
         field_sources=a.proposal.sources,
+        confidence=a.confidence,
+        insufficient=a.insufficient,
+        offline=_proposal_out(a.offline.values) if a.offline else None,
+        offline_sources=a.offline.sources if a.offline else {},
+        research=research,
         attribution=[AttributionOut(**x) for x in a.proposal.attribution],
         matches=[match(*m) for m in a.matches],
         duplicate_of=match(a.duplicate, 1.0, "exact") if a.duplicate else None,
@@ -148,6 +185,39 @@ def analyze_exercise(
             status=a.online.status, detail=a.online.detail, applied=a.online.applied
         ),
     )
+
+
+@exercises_router.get("/online-log", response_model=list[OnlineLogEntry])
+def online_log(
+    limit: int = Query(default=100, ge=1, le=500), db: Session = Depends(get_db)
+) -> list[OnlineLogEntry]:
+    """The local log of online research requests, newest first: when, what name was
+    looked up, which sources were asked (with each request's outcome) and how it was
+    allowed (the setting, or allow once). Never leaves this PC."""
+    rows = db.scalars(
+        select(OnlineLookupLog)
+        .order_by(OnlineLookupLog.at.desc(), OnlineLookupLog.id.desc())
+        .limit(limit)
+    ).all()
+    return [
+        OnlineLogEntry(
+            id=r.id,
+            at=r.at,
+            query=r.query,
+            sources=[ResearchCall.model_validate(s) for s in r.sources],
+            outcome=r.outcome,
+            consent=r.consent,
+        )
+        for r in rows
+    ]
+
+
+@exercises_router.delete("/online-log", status_code=204)
+def clear_online_log(db: Session = Depends(get_db)) -> Response:
+    """Delete every entry of the online research log."""
+    db.execute(delete(OnlineLookupLog))
+    db.flush()
+    return Response(status_code=204)
 
 
 @exercises_router.post("", response_model=ExerciseDetail, status_code=201)
