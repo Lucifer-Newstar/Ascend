@@ -10,14 +10,26 @@
 name: CI
 
 on:
+  # Every branch: feature branches get a run per push, main gets a run per merge.
   push:
-    branches: [main]
+    branches: ["**"]
+    tags-ignore: ["v*"]      # tags are built by release.yml
   pull_request:
+    branches: [main]
+  # Run by hand from the Actions tab (any branch).
+  workflow_dispatch:
+  # Nightly at 20:30 UTC = 02:00 IST, catches breakage from new dependency releases.
+  schedule:
+    - cron: "30 20 * * *"
 
-# Cancel an older run of the same branch/PR when a new commit arrives.
+# Concurrency:
+#   - pull requests and feature-branch pushes: a newer commit cancels the older run
+#     (nobody needs results for a commit that has already been replaced);
+#   - pushes to main: every commit keeps its own run (the group includes the SHA),
+#     so main's history shows a result for each merge.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || 'latest' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
