@@ -54,3 +54,13 @@ export function compact(v: number): string {
   if (Math.abs(v) >= 1000) return `${Math.round(v / 100) / 10}k`;
   return String(v);
 }
+
+/**
+ * Whether the x-axis label at index i is drawn when showing every `every`-th label.
+ * The last label is always drawn, so a regular label too close to it is skipped
+ * (otherwise "18 Oct" and "19 Oct" print on top of each other at the right edge).
+ */
+export function showLabel(i: number, count: number, every: number): boolean {
+  if (i === count - 1) return true;
+  return i % every === 0 && count - 1 - i >= every;
+}

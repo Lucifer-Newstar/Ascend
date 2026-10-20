@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { compact, extent, linePath, linearScale, niceTicks } from "./chart";
+import { compact, extent, linePath, linearScale, niceTicks, showLabel } from "./chart";
 
 describe("chart maths", () => {
   it("maps a domain onto a range", () => {
@@ -30,5 +30,14 @@ describe("chart maths", () => {
   it("pads the extent and ignores nulls", () => {
     expect(extent([70, null, 72], 0.5)).toEqual([69, 73]);
     expect(extent([null])).toBeNull();
+  });
+
+  it("never draws a regular axis label right next to the last one", () => {
+    const shown = (n: number, every: number) => [...Array(n).keys()].filter((i) => showLabel(i, n, every));
+    expect(shown(13, 3)).toEqual([0, 3, 6, 9, 12]);
+    expect(shown(12, 2)).toEqual([0, 2, 4, 6, 8, 11]); // 10 would sit next to 11
+    expect(shown(8, 3)).toEqual([0, 3, 7]); // 6 would sit next to 7
+    expect(shown(4, 1)).toEqual([0, 1, 2, 3]);
+    expect(shown(1, 1)).toEqual([0]);
   });
 });
