@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -9,12 +10,14 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.modules.coach import ollama
+from app.modules.coach import ollama, validate
 from app.modules.coach.rules import CoachContext, Tip, rule_tip
 from app.modules.gamification import service as game
 from app.modules.nutrition import service as nutrition
 from app.modules.progress import service as progress
 from app.modules.workouts.models import Workout, WorkoutSet
+
+log = logging.getLogger("ascend.coach")
 
 
 @dataclass(frozen=True)
@@ -24,6 +27,8 @@ class CoachReply:
     tip_code: str
     model: str | None
     fallback_reason: str | None
+    # Validator results for a model reply ({"numbers": "pass", ...}); None on the rules path.
+    checks: dict[str, str] | None = None
 
 
 def build_context(db: Session, now: datetime) -> CoachContext:
@@ -74,17 +79,31 @@ def reply(db: Session, settings: Settings, now: datetime, question: str | None) 
     if not ollama.is_available(settings.ollama_host, settings.coach_model):
         return CoachReply("rules", tip.text, tip.code, None, "ollama_unavailable")
     q = question or "Give me today's single most useful tip, based on the facts."
+    facts = facts_text(ctx, tip)
     try:
         text = ollama.chat(
             settings.ollama_host,
             settings.coach_model,
-            facts_text(ctx, tip),
+            facts,
             q,
             timeout=settings.coach_timeout_s,
         )
     except ollama.OllamaUnavailable as e:
         return CoachReply("rules", tip.text, tip.code, None, f"ollama_error: {e}"[:120])
-    return CoachReply("ollama", text, tip.code, settings.coach_model, None)
+    # The user never sees an unchecked model reply (coach-llm.md section 5.2).
+    checks = validate.check_reply(text, facts, question)
+    if not checks.ok:
+        failed = "numbers" if not checks.numbers.ok else "banned"
+        log.info("coach reply replaced: %s check failed (%s)", failed, checks.summary())
+        return CoachReply(
+            "rules",
+            tip.text,
+            tip.code,
+            settings.coach_model,
+            f"check_failed: {failed}",
+            checks.summary(),
+        )
+    return CoachReply("ollama", text, tip.code, settings.coach_model, None, checks.summary())
 
 
 def status(db: Session, settings: Settings) -> dict[str, object]:

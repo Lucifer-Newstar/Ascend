@@ -318,6 +318,13 @@ components:
           - type: string
           - type: 'null'
           title: Fallback Reason
+        checks:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Checks
       type: object
       required:
       - source
