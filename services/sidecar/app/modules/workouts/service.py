@@ -3,6 +3,7 @@ event handlers owned by other modules, never here."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
 
@@ -11,14 +12,19 @@ from sqlalchemy.orm import Session
 
 from app.core.events import EventBus, SetDeleted, SetLogged, SetUpdated, WorkoutLogged
 from app.modules.gamification.formulas import HARD_SET_RPE
-from app.modules.workouts import pr
+from app.modules.workouts import library, pr
 from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
-from app.modules.workouts.models import Exercise, Workout, WorkoutSet
+from app.modules.workouts.models import Exercise, ExerciseMuscle, Workout, WorkoutSet
 from app.modules.workouts.schemas import (
+    AttributionOut,
+    ExerciseDetail,
+    ExerciseOut,
+    MuscleWeight,
     PROut,
     SetIn,
     SetOut,
     SetPatch,
+    SkillLinkOut,
     WorkoutOut,
     WorkoutSummary,
 )
@@ -36,13 +42,105 @@ class Invalid(Exception):
     """The request is well-formed but wrong for this exercise (mapped to 422)."""
 
 
-def list_exercises(db: Session, q: str = "", section: str | None = None) -> list[Exercise]:
+@dataclass(frozen=True)
+class ExerciseFilter:
+    q: str = ""
+    section: str | None = None
+    muscle: str | None = None
+    equipment: str | None = None
+    difficulty: str | None = None
+    custom: bool | None = None
+    include_archived: bool = False
+
+
+def list_exercises(
+    db: Session, q: str = "", section: str | None = None, f: ExerciseFilter | None = None
+) -> list[Exercise]:
+    """Library search. `q` matches the name or an alias, ignoring case, hyphens and
+    plurals ("pullups" finds "Pull-up")."""
+    f = f or ExerciseFilter(q=q, section=section)
     stmt = select(Exercise).order_by(Exercise.name)
-    if q:
-        stmt = stmt.where(Exercise.name.ilike(f"%{q}%"))
-    if section:
-        stmt = stmt.where(Exercise.section == section)
-    return list(db.scalars(stmt).all())
+    if f.section:
+        stmt = stmt.where(Exercise.section == f.section)
+    if f.equipment:
+        stmt = stmt.where(Exercise.equipment == f.equipment)
+    if f.difficulty:
+        stmt = stmt.where(Exercise.difficulty == f.difficulty)
+    if f.custom is not None:
+        stmt = stmt.where(Exercise.is_custom.is_(f.custom))
+    if not f.include_archived:
+        stmt = stmt.where(Exercise.archived.is_(False))
+    if f.muscle:
+        stmt = stmt.where(
+            Exercise.id.in_(
+                select(ExerciseMuscle.exercise_id).where(
+                    ExerciseMuscle.muscle == f.muscle, ExerciseMuscle.weight >= 0.5
+                )
+            )
+        )
+    rows = list(db.scalars(stmt).all())
+    if f.q.strip():
+        rows = [e for e in rows if library.matches_query(f.q, e.name, e.aliases)]
+    return rows
+
+
+def exercise_out(e: Exercise) -> ExerciseOut:
+    return ExerciseOut(
+        id=e.id,
+        name=e.name,
+        equipment=e.equipment,
+        section=e.section,
+        met=e.met,
+        time_based=e.section in TIME_BASED_SECTIONS,
+        muscles=[
+            MuscleWeight(muscle=m.muscle, weight=m.weight)
+            for m in sorted(e.muscles, key=lambda m: (-m.weight, m.muscle))
+        ],
+        slug=e.slug,
+        measure=e.measure,
+        difficulty=e.difficulty,
+        pattern=e.pattern,
+        image=e.image,
+        source=e.source,
+        is_custom=e.is_custom,
+        aliases=e.aliases,
+    )
+
+
+# Skill trees register a lookup here (exercise id -> links) so this module never imports
+# the skills module; see skills/service.py.
+SkillLinker = Callable[[Session, Exercise], list[SkillLinkOut]]
+_skill_linkers: list[SkillLinker] = []
+
+
+def register_skill_linker(fn: SkillLinker) -> None:
+    if fn not in _skill_linkers:
+        _skill_linkers.append(fn)
+
+
+def exercise_detail(db: Session, exercise_id: int) -> ExerciseDetail:
+    e = db.get(Exercise, exercise_id)
+    if e is None:
+        raise NotFound(f"exercise {exercise_id} not found")
+    links: list[SkillLinkOut] = []
+    for linker in _skill_linkers:
+        links.extend(linker(db, e))
+    logged = int(
+        db.scalar(select(func.count(WorkoutSet.id)).where(WorkoutSet.exercise_id == e.id)) or 0
+    )
+    return ExerciseDetail(
+        **exercise_out(e).model_dump(),
+        instructions=e.instructions,
+        mechanic=e.mechanic,
+        rep_low=e.rep_low,
+        rep_high=e.rep_high,
+        field_sources=e.field_sources,
+        attribution=[AttributionOut(**a) for a in e.attribution],
+        source_ref=e.source_ref,
+        created_at=e.created_at,
+        skills=links,
+        sets_logged=logged,
+    )
 
 
 def set_out(s: WorkoutSet) -> SetOut:

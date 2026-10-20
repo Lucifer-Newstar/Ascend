@@ -46,7 +46,7 @@ paths:
         required: false
         schema:
           type: string
-          enum: &id001
+          enum:
           - gym
           - calisthenics
           - cardio
@@ -242,9 +242,12 @@ paths:
       x-status: implemented
   /exercises:
     get:
-      tags:
-      - workouts
       summary: List Exercises
+      description: 'The exercise library (gallery and logger). `q` matches names and aliases; the other
+
+        filters narrow by logger section, a muscle region it trains (weight >= 0.5),
+
+        equipment, difficulty, or user-added (`custom=true`). Archived exercises are hidden.'
       operationId: list_exercises_exercises_get
       parameters:
       - name: q
@@ -258,8 +261,46 @@ paths:
         in: query
         required: false
         schema:
-          type: string
-          enum: *id001
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Section
+      - name: muscle
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Muscle
+      - name: equipment
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Equipment
+      - name: difficulty
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - beginner
+            - intermediate
+            - expert
+            type: string
+          - type: 'null'
+          title: Difficulty
+      - name: custom
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Custom
       responses:
         '200':
           description: Successful Response
@@ -277,6 +318,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+      tags:
+      - workouts
   /workouts/{workout_id}/sets/{set_id}:
     patch:
       summary: Edit a logged set (re-runs PR, XP, muscle load via events)
@@ -390,7 +433,7 @@ paths:
       - workouts
       summary: Is a deload due? (planned 3+1 or 2 of 4 reactive signals)
       operationId: deload_advice
-      responses: &id002
+      responses: &id001
         '200':
           description: OK
           content:
@@ -404,8 +447,38 @@ paths:
       - workouts
       summary: 'Accept the deload: record this week as the deload week'
       operationId: start_deload
-      responses: *id002
+      responses: *id001
       x-status: implemented
+  /exercises/{exercise_id}:
+    get:
+      summary: Get Exercise
+      description: 'One exercise with its instructions, the source of each field, attribution for
+
+        anything found online, the skill trees it belongs to and how often it was logged.'
+      operationId: get_exercise_exercises__exercise_id__get
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
 components:
   securitySchemes:
     launchToken:
@@ -424,20 +497,61 @@ components:
         equipment:
           type: string
           title: Equipment
+        section:
+          type: string
+          title: Section
+          default: gym
+        met:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Met
+        time_based:
+          type: boolean
+          title: Time Based
+          default: false
         muscles:
           items:
             $ref: '#/components/schemas/MuscleWeight'
           type: array
           title: Muscles
-        section:
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+        measure:
           type: string
-          enum: *id001
-        met:
-          type:
-          - number
-          - 'null'
-        time_based:
+          title: Measure
+          default: reps
+        difficulty:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Difficulty
+        pattern:
+          type: string
+          title: Pattern
+          default: other
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+        source:
+          type: string
+          title: Source
+          default: ascend
+        is_custom:
           type: boolean
+          title: Is Custom
+          default: false
+        aliases:
+          items:
+            type: string
+          type: array
+          title: Aliases
+          default: []
       type: object
       required:
       - id
@@ -916,3 +1030,173 @@ components:
       - guidance
       - deload_week
       - algo_version
+    AttributionOut:
+      properties:
+        source:
+          type: string
+          title: Source
+        title:
+          type: string
+          title: Title
+        url:
+          type: string
+          title: Url
+        license:
+          type: string
+          title: License
+      type: object
+      required:
+      - source
+      - title
+      - url
+      - license
+      title: AttributionOut
+    ExerciseDetail:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        equipment:
+          type: string
+          title: Equipment
+        section:
+          type: string
+          title: Section
+          default: gym
+        met:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Met
+        time_based:
+          type: boolean
+          title: Time Based
+          default: false
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleWeight'
+          type: array
+          title: Muscles
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+        measure:
+          type: string
+          title: Measure
+          default: reps
+        difficulty:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Difficulty
+        pattern:
+          type: string
+          title: Pattern
+          default: other
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+        source:
+          type: string
+          title: Source
+          default: ascend
+        is_custom:
+          type: boolean
+          title: Is Custom
+          default: false
+        aliases:
+          items:
+            type: string
+          type: array
+          title: Aliases
+          default: []
+        instructions:
+          items:
+            type: string
+          type: array
+          title: Instructions
+          default: []
+        mechanic:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mechanic
+        rep_low:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep Low
+        rep_high:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep High
+        field_sources:
+          additionalProperties:
+            type: string
+          type: object
+          title: Field Sources
+          default: {}
+        attribution:
+          items:
+            $ref: '#/components/schemas/AttributionOut'
+          type: array
+          title: Attribution
+          default: []
+        source_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Ref
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Created At
+        skills:
+          items:
+            $ref: '#/components/schemas/SkillLinkOut'
+          type: array
+          title: Skills
+          default: []
+        sets_logged:
+          type: integer
+          title: Sets Logged
+          default: 0
+      type: object
+      required:
+      - id
+      - name
+      - equipment
+      - muscles
+      title: ExerciseDetail
+    SkillLinkOut:
+      properties:
+        skill_key:
+          type: string
+          title: Skill Key
+        skill_name:
+          type: string
+          title: Skill Name
+        step_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Step Name
+        role:
+          type: string
+          title: Role
+      type: object
+      required:
+      - skill_key
+      - skill_name
+      - role
+      title: SkillLinkOut

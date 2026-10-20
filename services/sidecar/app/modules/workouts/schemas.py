@@ -21,6 +21,45 @@ class ExerciseOut(BaseModel):
     met: float | None = None
     time_based: bool = False
     muscles: list[MuscleWeight]
+    slug: str | None = None
+    # reps | hold (seconds per set) | time (cardio, stretching, meditation)
+    measure: str = "reps"
+    difficulty: str | None = None
+    pattern: str = "other"
+    image: str | None = None
+    # ascend | free-exercise-db | custom
+    source: str = "ascend"
+    is_custom: bool = False
+    aliases: list[str] = []
+
+
+class SkillLinkOut(BaseModel):
+    skill_key: str
+    skill_name: str
+    step_name: str | None = None
+    # "step": the exercise is a step of the tree; "feeder": it builds strength for it
+    role: str
+
+
+class AttributionOut(BaseModel):
+    source: str
+    title: str
+    url: str
+    license: str
+
+
+class ExerciseDetail(ExerciseOut):
+    instructions: list[str] = []
+    mechanic: str | None = None
+    rep_low: int | None = None
+    rep_high: int | None = None
+    # field -> library | rules | local_ai | wger | wikipedia | user
+    field_sources: dict[str, str] = {}
+    attribution: list[AttributionOut] = []
+    source_ref: str | None = None
+    created_at: datetime | None = None
+    skills: list[SkillLinkOut] = []
+    sets_logged: int = 0
 
 
 class SetIn(StrictIn):
