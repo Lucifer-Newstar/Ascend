@@ -217,9 +217,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      x-status: planned
+      x-status: implemented
       tags:
       - coach
+      description: Computed on request for the last 7 days. `proposals` are added when the proposals table lands
+        (Phase 2).
   /coach/explain:
     post:
       summary: Explain an engine result ("why?" on a tip card, finding or number). Model text is validated; template
@@ -486,14 +488,7 @@ components:
         findings:
           type: array
           items:
-            type: object
-            properties:
-              code:
-                type: string
-              severity:
-                type: integer
-              numbers:
-                type: object
+            $ref: '#/components/schemas/Finding'
         proposals:
           type: array
           items:
@@ -505,6 +500,22 @@ components:
           enum:
           - model
           - template
+        week_end:
+          type: string
+          format: date
+        sessions_done:
+          type: integer
+        sessions_planned:
+          type: integer
+        top:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/Finding'
+        algo_version:
+          type: string
+          examples:
+          - review-v1
       required:
       - week_start
       - findings
@@ -604,3 +615,36 @@ components:
           - 'null'
       required:
       - message_id
+    Finding:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+          - ADHERENCE_LOW
+          - WEIGHT_FAST_GAIN
+          - DELOAD_DUE
+          - WEIGHT_STALL
+          - MUSCLE_UNDER
+          - MUSCLE_OVER
+          - E1RM_FLAT
+          - PROTEIN_LOW
+          - PAIN_ACTIVE
+        severity:
+          type: integer
+        title:
+          type: string
+        detail:
+          type: string
+        proposal:
+          type:
+          - string
+          - 'null'
+        numbers:
+          type: object
+      required:
+      - code
+      - severity
+      - title
+      - detail
+      - numbers

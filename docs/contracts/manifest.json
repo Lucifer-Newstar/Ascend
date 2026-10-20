@@ -1,5 +1,5 @@
 {
-  "comment": "Module \u2192 contract mapping for the contract-drift check (scripts/check_contract_drift.py). The check loads the sidecar app, takes its OpenAPI, and compares every operation tagged with the module against the contract file; operations marked x-status: planned may be missing but must match once implemented. Add a row when a module lands.",
+  "comment": "Module → contract mapping for the contract-drift check (scripts/check_contract_drift.py). The check loads the sidecar app, takes its OpenAPI, and compares every operation tagged with the module against the contract file; operations marked x-status: planned may be missing but must match once implemented. Add a row when a module lands.",
   "app": "services/sidecar/app/main.py:create_app",
   "openapi": "3.1.0",
   "modules": [
@@ -25,6 +25,7 @@
       "package": "app.modules.workouts",
       "contract": "workouts.yaml",
       "path_prefixes": [
+        "/deload",
         "/exercises",
         "/plans",
         "/prs",
@@ -86,6 +87,7 @@
         "/checkins",
         "/dashboard",
         "/history",
+        "/measurements",
         "/muscles",
         "/profile",
         "/progress",

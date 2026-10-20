@@ -15,11 +15,11 @@
 | Muscle load and recovery engine (effective sets, decay, readiness, status under / optimal / recovering / over) | **implemented** (v0.1, `progress/muscle_load.py`) |
 | XP, levels, daily quest by rules, streak with freeze, ranks | **implemented** (v0.1, `gamification/`) |
 | Rule tips (`coach-rules-v1`) that react to load and nutrition | **implemented** |
-| Planner, progression, deloads, missed-session rules | planned · Phase 1 |
+| Planner, progression, deloads, missed-session rules | deload triggers **implemented** (`deload-v1`); planner and progression planned · Phase 1 |
 | Proposals (Apply / Edit / Keep my plan) and the `propose_plan_change` tool | planned · Phase 2 |
 | Weekly review findings, diffs and summary | planned · Phase 2 |
 | Injury protocol | planned · Phase 2 |
-| Morning check-in and readiness score | planned · Phase 4 |
+| Morning check-in and readiness score | **implemented** (`readiness-v1`, `POST /checkins`) |
 
 ---
 
