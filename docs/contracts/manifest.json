@@ -127,6 +127,19 @@
         "implemented": 4,
         "planned": 0
       }
+    },
+    {
+      "id": "intelligence",
+      "package": "app.modules.intelligence",
+      "contract": "intelligence.yaml",
+      "path_prefixes": [
+        "/intelligence"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 1,
+        "planned": 0
+      }
     }
   ]
 }

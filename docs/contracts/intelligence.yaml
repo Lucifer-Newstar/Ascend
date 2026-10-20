@@ -1,0 +1,253 @@
+# ASCEND contract — intelligence
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — intelligence
+  version: 0.1.0
+  description: 'The intelligence layer: deterministic engines that decide numbers (recovery-v2, prog-v1) and return
+    every input of every number, so the app can show a Why for it. Owner: Jegatheesan (backend). The optional local
+    model only phrases explanations; see ADR-0014, ADR-0015 and ADR-0016.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: intelligence
+  description: 'The intelligence layer: deterministic engines that decide numbers (recovery-v2, prog-v1) and return
+    every input of every number, so the app can show a Why for it'
+paths:
+  /intelligence/recovery:
+    get:
+      tags:
+      - intelligence
+      summary: Recovery
+      description: 'recovery-v2 per muscle with every input of its readiness, the check-in used and the
+
+        personal factor per muscle group (population value 1 until there is evidence).'
+      operationId: recovery_intelligence_recovery_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryOut'
+      x-status: implemented
+components:
+  schemas:
+    CheckinUsed:
+      properties:
+        sleep:
+          type: integer
+          title: Sleep
+        soreness:
+          type: string
+          title: Soreness
+      type: object
+      required:
+      - sleep
+      - soreness
+      title: CheckinUsed
+    MuscleRecoveryOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        label:
+          type: string
+          title: Label
+        group:
+          type: string
+          title: Group
+        status:
+          type: string
+          title: Status
+        readiness:
+          type: number
+          title: Readiness
+        readiness_population:
+          type: number
+          title: Readiness Population
+        fatigue:
+          type: number
+          title: Fatigue
+        capacity:
+          type: number
+          title: Capacity
+        half_life_h:
+          type: number
+          title: Half Life H
+        prior_half_life_h:
+          type: number
+          title: Prior Half Life H
+        k:
+          type: number
+          title: K
+        modifier:
+          type: number
+          title: Modifier
+        es_7d:
+          type: number
+          title: Es 7D
+        ready_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ready At
+        last_trained:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Trained
+        top_sets:
+          items:
+            $ref: '#/components/schemas/TopSet'
+          type: array
+          title: Top Sets
+        why:
+          $ref: '#/components/schemas/Why'
+      type: object
+      required:
+      - key
+      - label
+      - group
+      - status
+      - readiness
+      - readiness_population
+      - fatigue
+      - capacity
+      - half_life_h
+      - prior_half_life_h
+      - k
+      - modifier
+      - es_7d
+      - ready_at
+      - last_trained
+      - top_sets
+      - why
+      title: MuscleRecoveryOut
+    RecoveryGroupOut:
+      properties:
+        group:
+          type: string
+          title: Group
+        k:
+          type: number
+          title: K
+        k_low:
+          type: number
+          title: K Low
+        k_high:
+          type: number
+          title: K High
+        n:
+          type: integer
+          title: N
+        personal:
+          type: boolean
+          title: Personal
+        alpha:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Alpha
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+      type: object
+      required:
+      - group
+      - k
+      - k_low
+      - k_high
+      - n
+      - personal
+      - alpha
+      - updated_at
+      title: RecoveryGroupOut
+    RecoveryOut:
+      properties:
+        algo_version:
+          type: string
+          title: Algo Version
+        formula:
+          type: string
+          title: Formula
+        checkin:
+          anyOf:
+          - $ref: '#/components/schemas/CheckinUsed'
+          - type: 'null'
+        groups:
+          items:
+            $ref: '#/components/schemas/RecoveryGroupOut'
+          type: array
+          title: Groups
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleRecoveryOut'
+          type: array
+          title: Muscles
+      type: object
+      required:
+      - algo_version
+      - formula
+      - checkin
+      - groups
+      - muscles
+      title: RecoveryOut
+      description: 'GET /intelligence/recovery: every muscle with its inputs, and the personal factors.'
+    TopSet:
+      properties:
+        exercise:
+          type: string
+          title: Exercise
+        dose_now:
+          type: number
+          title: Dose Now
+        hours_ago:
+          type: number
+          title: Hours Ago
+      type: object
+      required:
+      - exercise
+      - dose_now
+      - hours_ago
+      title: TopSet
+    Why:
+      properties:
+        formula:
+          type: string
+          title: Formula
+        inputs:
+          additionalProperties:
+            anyOf:
+            - type: number
+            - type: integer
+            - type: string
+            - type: 'null'
+          type: object
+          title: Inputs
+      type: object
+      required:
+      - formula
+      - inputs
+      title: Why
+      description: 'The "Why?" of one number: the formula in words and every input with its value.'
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'
