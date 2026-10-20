@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider } from "../components/Toast";
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
+import { expectNoAxeViolations } from "../test/axe";
 import { SettingsPage } from "./Settings";
 
 vi.mock("../api/client", () => ({
@@ -66,5 +67,11 @@ describe("SettingsPage", () => {
     setup(vi.fn(), open);
     await userEvent.click(await screen.findByRole("button", { name: /open import & export/i }));
     expect(open).toHaveBeenCalled();
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = setup(vi.fn());
+    await screen.findByText("Appearance & units");
+    await expectNoAxeViolations(container);
   });
 });

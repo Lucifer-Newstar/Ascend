@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { expectNoAxeViolations } from "../test/axe";
 import { Layout, type Page } from "./Layout";
 
 function renderAt(page: Page, title: string, onNavigate = vi.fn()) {
@@ -46,5 +47,10 @@ describe("Layout", () => {
   it("exposes the AI toggle as a switch", () => {
     renderAt("dashboard", "Dashboard");
     expect(screen.getByRole("switch", { name: /ai coach/i })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = renderAt("dashboard", "Dashboard");
+    await expectNoAxeViolations(container);
   });
 });
