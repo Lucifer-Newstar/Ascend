@@ -205,7 +205,7 @@ function Bar({ label, value, target, unit, color }: { label: string; value: numb
     <div>
       <div className="flex items-baseline justify-between text-xs">
         <span className="text-muted">{label}</span>
-        <span className="text-faint">{target ? `/ ${kcal(target)}` : ""}</span>
+        <span className="text-faint">{target ? `of ${kcal(target)} ${unit}` : ""}</span>
       </div>
       <div className="mt-0.5 text-lg font-semibold text-ink">{kcal(value)} <span className="text-xs font-normal text-muted">{unit}</span></div>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line">
