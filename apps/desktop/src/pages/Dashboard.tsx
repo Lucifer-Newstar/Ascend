@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { CoachReply } from "@ascend/shared";
 
 import { api } from "../api/client";
+import { CheckinCard } from "../components/CheckinCard";
 import { IconSpark } from "../components/Icons";
 import { MuscleMap } from "../components/MuscleMap";
 import { QuestList } from "../components/QuestCard";
@@ -50,6 +51,11 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
         </div>
         <p className="mt-2 text-sm leading-relaxed text-ink">{tip ? tip.text : "…"}</p>
         <button type="button" className="mt-3 self-start text-xs text-accent hover:underline" onClick={onOpenCoach}>Ask the coach →</button>
+      </section>
+
+      <section className="card col-span-12 p-5" aria-labelledby="checkin-title">
+        <h2 id="checkin-title" className="card-title mb-3">Morning check-in</h2>
+        <CheckinCard refreshKey={refreshKey} onSaved={reload} />
       </section>
 
       <section className="card col-span-12 p-5 lg:col-span-5">

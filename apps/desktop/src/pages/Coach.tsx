@@ -2,6 +2,7 @@ import type { CoachReply } from "@ascend/shared";
 import { useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
+import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { IconSpark } from "../components/Icons";
 import { useApi } from "../lib/useApi";
 
@@ -50,6 +51,11 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
           </span>
         </div>
         <span className="text-xs text-faint">All numbers come from fixed formulas; the AI only explains them.</span>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <WeeklyReviewCard refreshKey={refreshKey} />
+        <DeloadCard refreshKey={refreshKey} />
       </div>
 
       <div className="card flex min-h-[420px] flex-1 flex-col p-5">
