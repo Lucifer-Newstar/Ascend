@@ -85,7 +85,8 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
             </span>
           </button>
         </header>
-        <main id="main" className="min-h-0 flex-1 overflow-y-auto px-8 py-6">{children}</main>
+        {/* tabIndex 0: a page with no controls (e.g. a long History) must still scroll from the keyboard. */}
+        <main id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
       </div>
     </div>
   );

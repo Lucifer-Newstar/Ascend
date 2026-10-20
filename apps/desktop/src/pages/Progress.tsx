@@ -49,7 +49,7 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
         {metrics.loading && !metrics.data ? <ChartSkeleton /> : !metrics.data ? <ErrorState message={metrics.error ?? "No data"} onRetry={metrics.reload} offline={isOffline(metrics.status)} /> : (
           <WeightChart metrics={metrics.data ?? []} units={units} />
         )}
-        <WeighInForm units={units} onSaved={reload} />
+        <WeighInForm units={units} lastKg={metrics.data?.at(-1)?.weight_kg} onSaved={reload} />
       </section>
 
       <section className="card col-span-12 p-5 xl:col-span-4" aria-labelledby="eta-title">
@@ -95,7 +95,7 @@ function WeightChart({ metrics, units }: { metrics: BodyMetric[]; units: Units }
   );
 }
 
-function WeighInForm({ units, onSaved }: { units: Units; onSaved: () => void }) {
+function WeighInForm({ units, lastKg, onSaved }: { units: Units; lastKg?: number; onSaved: () => void }) {
   const [weight, setWeight] = useState("");
   const [busy, setBusy] = useState(false);
   const toast = useToast();
@@ -121,7 +121,7 @@ function WeighInForm({ units, onSaved }: { units: Units; onSaved: () => void }) 
     <form onSubmit={save} className="mt-4 flex items-end gap-3 border-t border-line pt-4">
       <label className="block">
         <span className="mb-1.5 block text-xs text-muted">Today's weight ({weightUnit(units)})</span>
-        <input className="input w-36" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={units === "imperial" ? "165.0" : "75.0"} />
+        <input className="input w-36" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={lastKg ? toDisplayWeight(lastKg, units).toFixed(1) : units === "imperial" ? "165.0" : "75.0"} />
       </label>
       <button type="submit" className="btn-primary" disabled={busy}>Log weigh-in</button>
       <span className="pb-2 text-[11px] text-faint">Same time each morning gives the cleanest trend.</span>

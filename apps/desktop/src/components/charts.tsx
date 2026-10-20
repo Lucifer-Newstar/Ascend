@@ -2,7 +2,7 @@
  * Minimal SVG charts that follow the theme tokens: a line chart (one or two
  * series, optional dots) and a bar chart. Both carry an accessible summary.
  */
-import { compact, extent, linePath, linearScale, niceTicks } from "../lib/chart";
+import { compact, extent, linePath, linearScale, niceTicks, showLabel } from "../lib/chart";
 
 const W = 560;
 const PAD = { top: 12, right: 20, bottom: 24, left: 52 };
@@ -79,7 +79,7 @@ export function LineChart({ labels, series, height = 200, unit = "", summary, ta
             <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" className="fill-faint text-[10px]">{compact(t)}{unit}</text>
           </g>
         ))}
-        {labels.map((l, i) => (i % every === 0 || i === labels.length - 1) && (
+        {labels.map((l, i) => showLabel(i, labels.length, every) && (
           <text key={`${l}-${i}`} x={x(i)} y={height - 6} textAnchor={i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"} className="fill-faint text-[10px]">{l}</text>
         ))}
         {series.map((s) => (
@@ -148,7 +148,7 @@ export function BarChart({ labels, values, height = 160, width = W, unit = "", s
             <rect x={cx - bw / 2} y={y(v)} width={bw} height={Math.max(0, y(0) - y(v))} rx={3} className={className}>
               <title>{`${labels[i]}: ${v}${unit}`}</title>
             </rect>
-            {(i % every === 0 || i === values.length - 1) && (
+            {showLabel(i, values.length, every) && (
               <text x={cx} y={height - 6} textAnchor="middle" className="fill-faint text-[10px]">{labels[i]}</text>
             )}
           </g>

@@ -149,7 +149,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               <button type="button" onClick={() => setSelected(e)}
                 className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"}`}>
                 <div className={`text-sm ${selected?.id === e.id ? "text-accent" : "text-ink"}`}>{e.name}</div>
-                <div className="mt-0.5 truncate text-xs text-faint">
+                <div className={`mt-0.5 truncate text-xs ${selected?.id === e.id ? "text-muted" : "text-faint"}`}>
                   {e.equipment}
                   {e.muscles.some((m) => m.weight >= 1) && ` · ${e.muscles.filter((m) => m.weight >= 1).map((m) => MUSCLE_LABEL[m.muscle] ?? m.muscle).join(", ")}`}
                   {e.time_based && e.met ? ` · MET ${e.met}` : ""}
@@ -274,12 +274,12 @@ function SetTable({ sets, units, onEdit, onDelete, busy }: {
           {timed ? (
             <>
               <th className="w-14 py-1 font-medium">#</th><th className="font-medium">Time</th><th className="font-medium">Distance</th>
-              <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th className="w-24 font-medium" /><th><span className="sr-only">Actions</span></th>
+              <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th><span className="sr-only">Actions</span></th>
             </>
           ) : (
             <>
               <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">{weightUnit(units)}</th><th className="font-medium">Reps</th>
-              <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium" /><th><span className="sr-only">Actions</span></th>
+              <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium"><span className="sr-only">Personal record</span></th><th><span className="sr-only">Actions</span></th>
             </>
           )}
         </tr>
@@ -298,7 +298,6 @@ function SetTable({ sets, units, onEdit, onDelete, busy }: {
                 <td className="text-ink">{s.distance_m ? formatDistance(s.distance_m, units) : "–"}</td>
                 <td className="text-muted">{s.avg_hr ?? "–"}</td>
                 <td className="text-muted">{s.rpe ?? "–"}</td>
-                <td />
               </>
             ) : (
               <>
@@ -316,7 +315,7 @@ function SetTable({ sets, units, onEdit, onDelete, busy }: {
                   <button type="button" className="text-muted hover:text-ink" onClick={() => setConfirming(null)}>No</button>
                 </span>
               ) : (
-                <span className="inline-flex gap-3 text-xs opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                <span className="inline-flex gap-3 text-xs">
                   <button type="button" className="text-muted hover:text-accent" aria-label={`Edit set ${i + 1}`} onClick={() => setEditing(s.id)}>Edit</button>
                   <button type="button" className="text-muted hover:text-bad" aria-label={`Delete set ${i + 1}`} onClick={() => setConfirming(s.id)}>Delete</button>
                 </span>
@@ -360,7 +359,10 @@ function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
     <tr className="border-t border-line/70 bg-panel-2/60">
       <td className="py-1.5 text-muted">{index + 1}</td>
       {timed ? (
-        <td colSpan={3}><input aria-label="Edit duration" className="input h-8 w-28" value={duration} onChange={(e) => setDuration(e.target.value)} /></td>
+        <td colSpan={3}>
+          <input aria-label="Edit duration" className="input h-8 w-28" value={duration} onChange={(e) => setDuration(e.target.value)} />
+          {error && <span className="ml-2 text-xs text-bad">{error}</span>}
+        </td>
       ) : (
         <>
           <td><input aria-label="Edit weight" className="input h-8 w-20" value={weight} onChange={(e) => setWeight(e.target.value)} inputMode="decimal" /></td>
@@ -373,8 +375,7 @@ function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
           {RPE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       </td>
-      {!timed && <td className="text-xs text-bad">{error}</td>}
-      {timed && <td className="text-xs text-bad">{error}</td>}
+      {!timed && <td colSpan={2} className="text-xs text-bad">{error}</td>}
       <td className="text-right">
         <span className="inline-flex gap-3 text-xs">
           <button type="button" className="text-accent hover:underline" disabled={busy} onClick={save}>Save</button>

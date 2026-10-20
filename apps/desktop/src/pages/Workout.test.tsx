@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";
 import { ToastProvider } from "../components/Toast";
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
+import { expectNoAxeViolations } from "../test/axe";
 import { WorkoutPage } from "./Workout";
 
 vi.mock("../api/client", () => ({
@@ -76,6 +77,28 @@ describe("Training page", () => {
     expect(vi.mocked(api.logSet).mock.calls[0][1]).toMatchObject({ exercise_id: 50, duration_s: 1800, rpe: 7 });
     expect(await screen.findByText("30:00")).toBeInTheDocument();
     expect(await screen.findByText(/\+15 XP/)).toBeInTheDocument();
+  });
+
+  it("has no axe violations with a logged lift and a logged run", async () => {
+    const lift = {
+      id: 4, exercise_id: 1, exercise_name: "Barbell Bench Press", weight_kg: 60, reps: 8, rpe: 8, duration_s: null,
+      distance_m: null, avg_hr: null, e1rm: 76, is_pr: true, performed_at: "2026-10-20T07:10:00",
+    };
+    const runSet = {
+      id: 5, exercise_id: 50, exercise_name: "Running", weight_kg: 0, reps: 1, rpe: 6, duration_s: 1500,
+      distance_m: 4000, avg_hr: 150, e1rm: null, is_pr: false, performed_at: "2026-10-20T07:40:00",
+    };
+    vi.mocked(api.activeWorkout).mockResolvedValue({ ...session([lift, runSet]), section: "gym" });
+    const { container } = renderPage();
+    await screen.findAllByRole("button", { name: "Edit set 1" });
+    for (const table of container.querySelectorAll("table")) {
+      const header = table.querySelectorAll("thead th").length;
+      for (const row of table.querySelectorAll("tbody tr")) {
+        const cells = [...row.children].reduce((n, c) => n + Number(c.getAttribute("colspan") ?? 1), 0);
+        expect(cells).toBe(header);
+      }
+    }
+    await expectNoAxeViolations(container);
   });
 
   it("deletes a set after confirming", async () => {

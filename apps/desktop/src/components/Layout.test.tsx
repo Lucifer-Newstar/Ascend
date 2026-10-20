@@ -35,6 +35,14 @@ describe("Layout", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Diet" })).toHaveFocus();
   });
 
+  it("lets the keyboard reach the scrollable main area on pages without controls", async () => {
+    renderAt("history", "History");
+    const main = screen.getByRole("main");
+    expect(main).toHaveAttribute("tabindex", "0");
+    main.focus();
+    expect(main).toHaveFocus();
+  });
+
   it("has a skip link that jumps to the page heading", async () => {
     renderAt("progress", "Progress");
     await userEvent.tab();

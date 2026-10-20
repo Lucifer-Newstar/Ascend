@@ -66,6 +66,12 @@ describe("ProgressPage", () => {
     expect(screen.getByText("No goal weight set.")).toBeInTheDocument();
   });
 
+  it("suggests the last weigh-in as the placeholder for today's weight", async () => {
+    renderPage();
+    await screen.findByText("74.3 kg");
+    expect(screen.getByLabelText("Today's weight (kg)")).toHaveAttribute("placeholder", "73.8");
+  });
+
   it("sets a goal weight on the profile", async () => {
     vi.mocked(api.saveProfile).mockResolvedValue({ ...profile, target_weight_kg: 70 });
     renderPage();

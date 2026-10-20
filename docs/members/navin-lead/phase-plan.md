@@ -64,7 +64,7 @@
 
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
-- [x] `docs: CHANGELOG for v0.1–v1.0` — 0.1.0 and 0.2.0 written; continues per release
+- [x] `docs: CHANGELOG for v0.1–v1.0` — 0.1.0, 0.2.0 and 0.3.0 written; continues per release
 - [ ] `docs(operations): v1.0 evaluation report (R/M/E metrics)`
 - [ ] `docs(operations): rollback drill report` (pair: Gokul)
 - [ ] `chore(release): v1.0.0-beta.1`
