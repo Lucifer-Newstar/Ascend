@@ -4,6 +4,10 @@ Calisthenics progressions computed from the sets you log. Code: `services/sideca
 (`catalog.py` holds the data, `engine.py` the pure progress maths, `service.py` storage and events).
 This page is generated from the catalog's contents; when the two differ, the code wins.
 
+## Exercises behind the trees
+
+The trees use 64 calisthenics progression exercises from `workouts/calisthenics_seed.py`, added to the library by migration 0010. (The commit that added them said 62; 64 is the correct count.) Feeders can also be library lifts. A test checks that every exercise named in the catalog exists.
+
 ## How progress is computed
 
 Everything is deterministic: the same sets and the same clock give the same answer (`engine.py`, version `skills-v1`).

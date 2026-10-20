@@ -26,6 +26,9 @@ without it.
 | Diet log: 31 approximate Indian foods (idli, dosa, sambar, chutneys, rice, chapati, dal, curd...) with katori/piece portions, daily totals | `nutrition` |
 | Coach: rule-based tips always; local Ollama `qwen3:4b` if running; **AI on/off toggle** | `coach` |
 | History by day (workouts + meals) and export to **JSON / CSV** | `progress/history.py` |
+| **Calisthenics skill trees** (12 trees, unlock criteria from logged sets, estimates only with enough data) | `skills`, `pages/Skills.tsx` |
+| **Exercise gallery**: 873 free-exercise-db exercises + calisthenics progressions, timed holds, search and filters | `workouts/library.py`, `pages/Library.tsx` |
+| **Add your own exercise**: rules → local AI → optional wger.de, every field with its source | `workouts/custom.py`, ADR-0013 |
 
 ## Architecture
 
@@ -138,9 +141,9 @@ installed app, the dev Electron app or the sidecar on its own.
 
 Verified on Linux (CI-equivalent):
 
-- 95 sidecar tests pass (engine unit tests + API tests with `TestClient`); ruff and mypy clean.
+- 355 sidecar tests pass (engine unit tests + API tests with `TestClient`); ruff and mypy clean.
 - Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
-- tsc (renderer, Electron, shared), eslint and 12 vitest tests pass; `vite build` succeeds.
+- tsc (renderer, Electron, shared), eslint and 168 vitest tests (37 files) pass; `vite build` succeeds.
 - The renderer was driven end to end against the running sidecar in headless Chromium
   (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
 - The PyInstaller sidecar binary builds, migrates and answers `/health` (Linux build).
@@ -153,7 +156,10 @@ Not yet verified:
 
 - Electron on real Windows (paths, `uv` on PATH, window behaviour) has not been run.
 - The Windows installer (electron-builder + PyInstaller `.exe`) has not been built.
-- The Ollama path is tested with a mocked server only; `qwen3:4b` answers are untested.
+- The Ollama path (coach and custom-exercise classifier) is tested with a mocked server only;
+  `qwen3:4b` answers are untested.
+- The wger.de lookup is tested against a mocked API; the live API was checked by hand on
+  2026-10-20 (it filters by exact name only).
 
 ## Push to a new GitHub repo
 
@@ -189,6 +195,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules.
   Indian Nutrient Databank (INDB). Not a substitute for a dietitian.
 - Formulas: Mifflin-St Jeor (BMR), Epley (e1RM), MET method (calorie burn) are standard
   estimation formulas; results are estimates.
+- Exercise library and thumbnails: [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+  (yuhonas), **Unlicense** (public domain).
+- Skill-tree progressions follow the r/bodyweightfitness Recommended Routine and wiki, Steven Low's
+  *Overcoming Gravity* (2nd ed.) and GMB Fitness tutorials. The thresholds are ASCEND's own choices
+  (see `docs/architecture/skill-trees.md`).
+- Optional online lookup: [wger](https://wger.de) exercise data (CC-BY-SA 4.0), only when you turn it
+  on; results are credited on the exercise.
 
 Parts of this codebase were written with AI assistance.
 

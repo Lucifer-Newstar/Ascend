@@ -7,6 +7,42 @@ Formula and model versions are listed where a number you see could change.
 ## [Unreleased]
 
 ### Added
+- **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,
+  plank to V-sit, headstand to handstand push-up, pistol squat, front lever, back lever, planche,
+  human flag, nordic curl and dragon flag. Each step has unlock criteria such as "3×8 Pull-up" or
+  "3×20 s Tuck L-sit".
+  - Progress is computed from your logged sets (`skills-v1`): a step unlocks after two qualifying
+    sessions within 42 days.
+  - Each tree shows the current step and the % to the next, best values, feeder exercises and its
+    sources. Steps with uncertain thresholds are marked as such.
+  - A time to unlock is shown only once there is enough data (3+ sessions over a week with an
+    upward trend), and it is labelled as an estimate.
+  - "Train this skill" adds today's work for the tree to your quest, at most 4 items a day.
+  - Unlocking a step gives XP and a **Skill acquired** moment. With Reduce motion on, it appears
+    without the animation.
+  - See `docs/architecture/skill-trees.md`.
+- **Timed holds are first-class sets.** Planks, L-sits, levers and handstands are logged in seconds,
+  with optional added load. The logger has presets and a stopwatch, the PR for a hold is the longest
+  one, and imports from Strong/Hevy keep the seconds.
+- **Exercise gallery** (Exercises page): 873 exercises from free-exercise-db (Unlicense), plus
+  ASCEND's own calisthenics progressions.
+  - Each exercise has a thumbnail and is mapped to the 19 muscle regions.
+  - Search covers names and aliases; filters cover type, muscle, equipment, difficulty and
+    "added by me".
+  - The detail view shows instructions, muscles, the skill trees the exercise belongs to and a
+    "Log it" button.
+- **Add your own exercise.** ASCEND suggests every field and shows where each value came from:
+  a similar library exercise, keyword rules, the local AI (qwen3:4b, if installed) or wger.de.
+  - You review the suggestions and confirm. Any field you change is marked as yours.
+  - Duplicates of library exercises are caught.
+  - Custom exercises count in muscle load, quests and stats, and can be removed (their sets stay).
+  - The wger.de lookup is **off by default**. Settings → "Online exercise lookup" turns it on after
+    a consent step; even then it runs only when you ask for it on an exercise, and it sends only the
+    exercise name. See ADR-0013.
+- The demo seed (`app.devtools.seed_demo`) now logs morning calisthenics, so the skill trees show
+  progress partway through.
+
+### Added (earlier in this cycle)
 - **A livelier muscle map.** One body on a small 3D card: it tilts a few degrees towards
   the mouse, flips front/back, shades each muscle softly, glows fatigued muscles and
   lets recovered ones (trained this week, ready again) breathe. Hovering a muscle lifts
@@ -38,6 +74,24 @@ Formula and model versions are listed where a number you see could change.
   buttons name the food or meal for screen readers.
 
 ### Fixed
+- **XP farming closed (`xp-v3`)**: deleting a set takes its XP back; editing can remove a PR's XP
+  but never add it; set XP stops after 10 sets of one exercise or 40 in a day; PR XP is paid once per
+  exercise per day (3 a day) and not for a jump of more than 25% (likely a typo); the session bonus
+  needs 3 sets or 10 timed minutes, counts at most 10 minutes per set and is paid twice a day at
+  most. Corrections appear in the XP history as their own rows. Full list:
+  `docs/operations/loophole-sweep.md`.
+- Sets logged after midnight count toward the new day's quest.
+- Holds over an hour are refused (a minutes/seconds typo); sessions keep their order if the clock
+  jumps back.
+- Imports skip future-dated sessions and sessions already logged in ASCEND.
+- Bodyweight exercises start at 0 kg added load instead of the barbell default of 40 kg.
+- "Log it" from the gallery opens the logger on that exercise.
+- Muscle map: the "Ready to train" key now matches the pulse on the figure.
+- Deload card: "No key lift has dropped 3% or more in e1RM" replaces "…on: no key lift".
+- The Dashboard no longer flashes its loading skeleton on reload.
+- Quest suggestions come from ASCEND's core exercises, your own and those you have logged.
+
+### Fixed (earlier in this cycle)
 - A level-up counted the XP number down from the old level and slid the bar backwards;
   a new level now starts from zero.
 - Deleting a meal that fails now shows an error instead of failing silently.
