@@ -10,6 +10,8 @@ interface Msg {
   role: "user" | "coach";
   text: string;
   reply?: CoachReply;
+  /** Set on a failed answer: the question to resend with Retry. */
+  failedQuestion?: string;
 }
 
 const FALLBACK_LABEL: Record<string, string> = {
@@ -23,21 +25,30 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
 
+  async function ask(question: string) {
+    setBusy(true);
+    try {
+      const reply = await api.coachAsk(question);
+      setMsgs((m) => [...m, { role: "coach", text: reply.text, reply }]);
+    } catch (err) {
+      setMsgs((m) => [...m, { role: "coach", text: `Couldn't answer: ${(err as Error).message}`, failedQuestion: question }]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function send(e: FormEvent) {
     e.preventDefault();
     const question = q.trim();
     if (!question) return;
     setMsgs((m) => [...m, { role: "user", text: question }]);
     setQ("");
-    setBusy(true);
-    try {
-      const reply = await api.coachAsk(question);
-      setMsgs((m) => [...m, { role: "coach", text: reply.text, reply }]);
-    } catch (err) {
-      setMsgs((m) => [...m, { role: "coach", text: `Couldn't answer: ${(err as Error).message}` }]);
-    } finally {
-      setBusy(false);
-    }
+    await ask(question);
+  }
+
+  function retry(index: number, question: string) {
+    setMsgs((m) => m.filter((_, i) => i !== index)); // drop the failed answer, keep the question
+    void ask(question);
   }
 
   const s = status.data;
@@ -47,10 +58,14 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
         <div className="flex items-center gap-3">
           <span className={`h-2.5 w-2.5 rounded-full ${s?.ai_enabled && s.ollama_available ? "bg-good" : s?.ai_enabled ? "bg-warn" : "bg-faint"}`} />
           <span className="text-ink">
-            {!s ? "Checking local AI…" : !s.ai_enabled ? "AI off · rule-based coach" : s.ollama_available ? `Local AI ready · ${s.model}` : `AI on, but ${s.model} isn't running locally`}
+            {status.error && !s ? "Couldn't check the local AI" : !s ? "Checking local AI…" : !s.ai_enabled ? "AI off · rule-based coach" : s.ollama_available ? `Local AI ready · ${s.model}` : `AI on, but ${s.model} isn't running locally`}
           </span>
         </div>
-        <span className="text-xs text-faint">All numbers come from fixed formulas; the AI only explains them.</span>
+        {status.error && !s ? (
+          <button type="button" className="text-xs text-accent hover:underline" onClick={status.reload}>Retry</button>
+        ) : (
+          <span className="text-xs text-faint">All numbers come from fixed formulas; the AI only explains them.</span>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -77,6 +92,11 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed ${m.role === "user" ? "bg-accent/15 text-ink" : "border border-line bg-panel-2 text-ink"}`}>
                 {m.text}
+                {m.failedQuestion && (
+                  <button type="button" className="mt-1.5 block text-xs text-accent hover:underline" disabled={busy} aria-label="Ask this question again" onClick={() => retry(i, m.failedQuestion!)}>
+                    Retry
+                  </button>
+                )}
                 {m.reply && (
                   <div className="mt-1.5 text-[11px] text-faint">
                     {m.reply.source === "ollama" ? `Local AI · ${m.reply.model}` : FALLBACK_LABEL[m.reply.fallback_reason ?? ""] ?? "Rule-based tip (AI didn't answer in time)."}
@@ -85,7 +105,7 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
               </div>
             </div>
           ))}
-          {busy && <div className="text-xs text-muted">ARC is thinking…</div>}
+          {busy && <div className="text-xs text-muted" role="status">ARC is thinking…</div>}
         </div>
         <form onSubmit={send} className="mt-4 flex gap-2 border-t border-line pt-4">
           <input className="input" placeholder="Ask anything about your training…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={1000} />
