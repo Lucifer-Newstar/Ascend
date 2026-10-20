@@ -7,6 +7,9 @@ prepare:
   seed: 42
 train:
   backbone: mobilenet_v3_small
+  pretrained: false   # true downloads ImageNet weights (use it for real data runs)
   epochs: 15
   batch_size: 32
-  lr: 0.0005
+  lr: 0.002
+  weight_decay: 0.01
+  label_smoothing: 0.05
