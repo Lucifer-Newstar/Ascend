@@ -1,0 +1,99 @@
+"""Profile, settings and muscle-state queries + the SetLogged -> muscle load handler."""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.core.events import EventBus, SetLogged
+from app.modules.nutrition import tdee as tdee_engine
+from app.modules.progress import muscle_load
+from app.modules.progress.models import MuscleLoadEvent, Profile, Setting
+from app.modules.progress.schemas import EnergyTargets, ProfileIn
+from app.modules.workouts.models import Exercise
+
+PROFILE_ID = 1
+
+
+def get_profile(db: Session) -> Profile | None:
+    return db.get(Profile, PROFILE_ID)
+
+
+def upsert_profile(db: Session, data: ProfileIn) -> Profile:
+    profile = get_profile(db)
+    if profile is None:
+        profile = Profile(id=PROFILE_ID, **data.model_dump())
+        db.add(profile)
+    else:
+        for k, v in data.model_dump().items():
+            setattr(profile, k, v)
+    db.flush()
+    return profile
+
+
+def energy_for(profile: Profile) -> EnergyTargets:
+    bmr = tdee_engine.bmr_mifflin_st_jeor(
+        profile.sex, profile.weight_kg, profile.height_cm, profile.age  # type: ignore[arg-type]
+    )
+    total = tdee_engine.tdee(bmr, profile.activity)  # type: ignore[arg-type]
+    return EnergyTargets(
+        bmr=round(bmr),
+        tdee=round(total),
+        kcal_target=tdee_engine.calorie_target(total, profile.goal),  # type: ignore[arg-type]
+        protein_target_g=tdee_engine.protein_target_g(profile.weight_kg, profile.goal),  # type: ignore[arg-type]
+        formula_version=tdee_engine.FORMULA_VERSION,
+    )
+
+
+# --- settings --------------------------------------------------------------
+
+
+def get_setting(db: Session, key: str, default: str) -> str:
+    row = db.get(Setting, key)
+    return row.value if row else default
+
+
+def set_setting(db: Session, key: str, value: str) -> None:
+    row = db.get(Setting, key)
+    if row is None:
+        db.add(Setting(key=key, value=value))
+    else:
+        row.value = value
+
+
+def ai_enabled(db: Session) -> bool:
+    return get_setting(db, "ai_enabled", "true") == "true"
+
+
+# --- muscle load ------------------------------------------------------------
+
+
+def muscle_states(db: Session, now: datetime) -> list[muscle_load.MuscleState]:
+    since = now - timedelta(days=28)
+    rows = db.scalars(select(MuscleLoadEvent).where(MuscleLoadEvent.at >= since)).all()
+    contribs = [muscle_load.Contribution(r.muscle, r.es, r.at) for r in rows]
+    return muscle_load.compute_states(contribs, now)
+
+
+def on_set_logged(db: Session, event: SetLogged) -> None:
+    """Event handler: turn one logged set into per-muscle effective-set rows."""
+    exercise = db.get(Exercise, event.exercise_id)
+    if exercise is None:
+        return
+    eff = muscle_load.effort(event.rpe)
+    for link in exercise.muscles:
+        db.add(
+            MuscleLoadEvent(
+                set_id=event.set_id,
+                muscle=link.muscle,
+                es=round(link.weight * eff, 3),
+                at=event.performed_at,
+                formula_version=muscle_load.FORMULA_VERSION,
+            )
+        )
+
+
+def register(bus: EventBus) -> None:
+    bus.subscribe(SetLogged, on_set_logged)
