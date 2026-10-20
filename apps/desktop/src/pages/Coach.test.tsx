@@ -59,7 +59,7 @@ describe("CoachPage", () => {
 
   it("shows a recommended deload as a System warning window, and a plain card otherwise", async () => {
     vi.mocked(api.deload).mockResolvedValue({
-      recommended: true, kind: "planned", training_weeks: 5, guidance: null, deload_week: null, algo_version: "deload-v1",
+      recommended: true, kind: "planned", training_weeks: 5, guidance: null, deload_week: null, algo_version: "deload-v2",
       signals: [{ code: "weeks", active: true, detail: "5 hard weeks in a row" }],
     });
     renderPage();

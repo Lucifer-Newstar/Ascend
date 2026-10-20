@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.modules.intelligence import progression_service
 from app.modules.progress import checkins
 from app.modules.progress import service as progress
 from app.modules.workouts import deload
@@ -102,6 +103,7 @@ def advice(db: Session, now: datetime) -> DeloadOut:
         lifts=_lift_trends(db, datetime.combine(today, time.max).replace(microsecond=0)),
         strained_muscles=strained,
         in_deload_week=last == deload.week_start(today),
+        stalled_lifts=[e.name for e, _ in progression_service.stalled_lifts(db, now)],
     )
     a = deload.advise(inputs)
     return DeloadOut(

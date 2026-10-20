@@ -19,8 +19,8 @@ def _week_of_sessions(client, clock, ex, sessions):
 def test_no_deload_for_a_new_user(client, profile):
     d = client.get("/deload").json()
     assert d["recommended"] is False and d["kind"] == "none"
-    assert len(d["signals"]) == 4 and not any(s["active"] for s in d["signals"])
-    assert d["algo_version"] == "deload-v1"
+    assert len(d["signals"]) == 5 and not any(s["active"] for s in d["signals"])
+    assert d["algo_version"] == "deload-v2"
 
 
 def test_planned_deload_after_three_training_weeks_then_accept(client, profile, clock):
