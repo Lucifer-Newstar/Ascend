@@ -86,3 +86,13 @@ def test_timed_sets_award_minute_based_xp(client, profile):
     )
     assert r1.json()["xp_awarded"] == 15
     assert r2.json()["xp_awarded"] == 10
+
+
+def test_run_counts_towards_the_burn_ring(client, profile, clock):
+    run = ex(client, "Running")
+    w = client.post("/workouts").json()
+    client.post(f"/workouts/{w['id']}/sets", json={"exercise_id": run["id"], "duration_s": 1800})
+    clock.now += timedelta(minutes=32)
+    client.post(f"/workouts/{w['id']}/finish")
+    ring = client.get("/dashboard").json()["rings"]["kcal_out"]
+    assert ring["value"] == round(9.8 * 70 * 0.5)  # profile weighs 70 kg
