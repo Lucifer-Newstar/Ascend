@@ -1,6 +1,7 @@
 # Windows installer build.
 #
-# Runs on a version tag (v0.1.0, ...) or manually from the Actions tab.
+# Runs on a version tag (v0.1.0, ...), on every push to main that touches the app
+# (so main always has an installable artefact), or manually from the Actions tab.
 # Steps: build the sidecar with PyInstaller on Windows, build the renderer +
 # Electron code, then electron-builder packs both into an NSIS installer.
 #
@@ -11,7 +12,18 @@ name: Release (Windows installer)
 on:
   push:
     tags: ["v*"]
+    branches: [main]
+    paths:
+      - "apps/desktop/**"
+      - "services/sidecar/**"
+      - "packages/shared/**"
+      - "package-lock.json"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
+
+concurrency:
+  group: installer-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 permissions:
   contents: read
@@ -38,15 +50,7 @@ jobs:
 
       - name: Smoke test sidecar.exe
         working-directory: services/sidecar
-        shell: pwsh
-        run: |
-          $env:ASCEND_PORT = "8799"; $env:ASCEND_TOKEN = "ci-token"; $env:ASCEND_DATA_DIR = "$env:RUNNER_TEMP\data"
-          $p = Start-Process -FilePath .\dist\ascend-sidecar\ascend-sidecar.exe -PassThru -NoNewWindow
-          for ($i = 0; $i -lt 30; $i++) {
-            try { Invoke-RestMethod http://127.0.0.1:8799/health; Stop-Process $p.Id; exit 0 } catch { Start-Sleep 1 }
-          }
-          Stop-Process $p.Id -ErrorAction SilentlyContinue
-          throw "sidecar.exe did not become healthy"
+        run: uv run python packaging/smoke.py
 
       - uses: actions/setup-node@v4
         with:
@@ -66,6 +70,7 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: ascend-windows-installer
+          name: ascend-windows-installer-${{ github.ref_name }}-${{ github.sha }}
           path: apps/desktop/release/*.exe
           if-no-files-found: error
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 90 || 14 }}
