@@ -69,6 +69,8 @@ def workout_out(w: Workout) -> WorkoutOut:
         started_at=w.started_at,
         finished_at=w.finished_at,
         sets=[set_out(s) for s in w.sets],
+        source=w.source,
+        title=w.notes if w.source != "app" else "",
     )
 
 
@@ -194,6 +196,8 @@ def list_workouts(
                 sets=len(w.sets),
                 volume_kg=round(sum(s.weight_kg * s.reps for s in w.sets), 1),
                 xp=xp,
+                source=w.source,
+                title=w.notes if w.source != "app" else "",
             )
         )
     return out

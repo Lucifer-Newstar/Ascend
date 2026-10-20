@@ -115,3 +115,13 @@ def test_bad_files_get_a_readable_422(client, profile, path, text, message):
     r = client.post(path, json={"csv": body})
     assert r.status_code == 422
     assert message in r.json()["detail"]
+
+
+def test_imported_workouts_say_where_they_came_from(client, profile):
+    client.post("/import/hevy", json={"csv": csv("hevy.csv"), "dry_run": False})
+    newest = client.get("/workouts").json()[0]
+    assert newest["source"] == "hevy" and newest["title"] == "Cardio"
+    detail = client.get(f"/workouts/{newest['id']}").json()
+    assert detail["source"] == "hevy"
+    logged = client.post("/workouts").json()
+    assert logged["source"] == "app" and logged["title"] == ""
