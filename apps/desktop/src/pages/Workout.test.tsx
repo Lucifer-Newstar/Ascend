@@ -19,6 +19,8 @@ vi.mock("../api/client", () => ({
     deleteSet: vi.fn(),
     finishWorkout: vi.fn(),
     updateSettings: vi.fn(),
+    previousSession: vi.fn(),
+    exercise: vi.fn(),
   },
 }));
 
@@ -49,6 +51,8 @@ describe("Training page", () => {
   beforeEach(() => {
     vi.mocked(api.exercises).mockImplementation(async (...args) => (args[1] === "cardio" ? [run] : [bench]));
     vi.mocked(api.activeWorkout).mockResolvedValue(null);
+    vi.mocked(api.previousSession).mockResolvedValue(null);
+    vi.mocked(api.exercise).mockRejectedValue(new Error("not needed"));
   });
 
   it("switches section tabs and loads that library", async () => {
@@ -192,7 +196,7 @@ describe("Training page", () => {
     vi.mocked(api.activeWorkout).mockResolvedValue({ ...session([held]), section: "calisthenics" });
     await userEvent.click(screen.getByRole("button", { name: "Log hold" }));
     expect(api.logSet).toHaveBeenCalledWith(9, { exercise_id: 39, duration_s: 45, weight_kg: 0, reps: 1, rpe: 8 });
-    const table = await screen.findByRole("table");
+    const table = await screen.findByRole("table", { name: "Plank: logged sets" });
     expect(within(table).getByRole("columnheader", { name: "Hold" })).toBeInTheDocument();
     expect(within(table).getByText("45 s")).toBeInTheDocument();
     expect(await screen.findByText(/New best hold! Plank 45 s/)).toBeInTheDocument();
@@ -225,5 +229,58 @@ describe("Training page", () => {
     expect(dialog).toHaveTextContent("Skill acquired");
     await userEvent.click(within(dialog).getByRole("button", { name: "Continue" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("shows last session in grey and logs 5 sets keyboard-only with 5 Enters (≤15 keystrokes)", async () => {
+    const mk = (id: number, reps: number, extra: Partial<Workout["sets"][number]> = {}) => ({
+      id, exercise_id: 1, exercise_name: "Barbell Bench Press", weight_kg: 60, reps, rpe: 8, duration_s: null,
+      distance_m: null, avg_hr: null, e1rm: 76, is_pr: false, performed_at: "2026-10-18T07:00:00", measure: "reps" as const, ...extra,
+    });
+    vi.mocked(api.logSet).mockReset();
+    const last = [mk(101, 8), mk(102, 8), mk(103, 7), mk(104, 6), mk(105, 6)];
+    vi.mocked(api.previousSession).mockResolvedValue({ workout_id: 3, day: "2026-10-18", source: "app", sets: last });
+    const today: Workout["sets"] = [];
+    vi.mocked(api.activeWorkout).mockImplementation(async () => ({ ...session([...today]), section: "gym" }));
+    vi.mocked(api.startWorkout).mockResolvedValue({ ...session([]), section: "gym" });
+    vi.mocked(api.logSet).mockImplementation(async (_w, body) => {
+      const s = mk(200 + today.length, body.reps ?? 0, { weight_kg: body.weight_kg ?? 0, rpe: body.rpe ?? null, performed_at: "2026-10-20T07:00:00" });
+      today.push(s);
+      return { set: s, xp_awarded: 10, previous_best_e1rm: null };
+    });
+    renderPage();
+    await userEvent.click(await screen.findByText("Barbell Bench Press"));
+    // Ghost values: every set of last time, in grey, next to today's column.
+    const grid = await screen.findByRole("table", { name: "Sets: last time and today" });
+    await waitFor(() => expect(within(grid).getAllByTestId("ghost").map((c) => c.textContent)).toEqual(
+      ["60 kg × 8 @8", "60 kg × 8 @8", "60 kg × 7 @8", "60 kg × 6 @8", "60 kg × 6 @8"],
+    ));
+    expect(screen.getByText(/Target:/)).toHaveTextContent("Target: 60 kg × 8 @8 (last time");
+    const reps = screen.getByRole("spinbutton", { name: "Reps" });
+    await waitFor(() => expect(reps).toHaveValue(8));
+    reps.focus();
+    let keystrokes = 0;
+    for (let i = 0; i < 5; i += 1) {
+      await userEvent.keyboard("{Enter}");
+      keystrokes += 1;
+      await waitFor(() => expect(api.logSet).toHaveBeenCalledTimes(i + 1));
+      await waitFor(() => expect(screen.getAllByText(/^60 kg × \d @8$/).length).toBeGreaterThan(5 + i));
+    }
+    expect(keystrokes).toBeLessThanOrEqual(15);
+    // Each set repeated last time's set n, in order.
+    expect(vi.mocked(api.logSet).mock.calls.map(([, b]) => [b.weight_kg, b.reps])).toEqual([[60, 8], [60, 8], [60, 7], [60, 6], [60, 6]]);
+    expect(reps).toHaveFocus();
+  });
+
+  it("pre-fills a hold with last time's seconds", async () => {
+    const plank = { id: 30, name: "Plank", equipment: "body only", section: "calisthenics", met: null, time_based: false, measure: "hold", muscles: [{ muscle: "abs", weight: 1 }] } as Exercise;
+    vi.mocked(api.exercises).mockResolvedValue([plank]);
+    vi.mocked(api.previousSession).mockResolvedValue({
+      workout_id: 3, day: "2026-10-18", source: "app",
+      sets: [{ id: 1, exercise_id: 30, exercise_name: "Plank", weight_kg: 0, reps: 1, rpe: null, duration_s: 50, distance_m: null, avg_hr: null, e1rm: null, is_pr: false, performed_at: "2026-10-18T07:00:00", measure: "hold" }],
+    });
+    renderPage();
+    await userEvent.click(await screen.findByText("Plank"));
+    await waitFor(() => expect(screen.getByRole("spinbutton", { name: "Hold (seconds)" })).toHaveValue(50));
+    expect(screen.getByTestId("ghost")).toHaveTextContent("50 s");
   });
 });

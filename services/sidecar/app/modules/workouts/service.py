@@ -20,6 +20,7 @@ from app.modules.workouts.schemas import (
     ExerciseDetail,
     ExerciseOut,
     MuscleWeight,
+    PreviousSession,
     PROut,
     SetIn,
     SetOut,
@@ -457,3 +458,28 @@ def personal_records(db: Session, exercise_id: int | None = None) -> list[PROut]
         )
         for s in rows
     ]
+
+
+def previous_session(db: Session, exercise_id: int) -> PreviousSession | None:
+    """The most recent earlier session's sets of one exercise (the logger's grey "last
+    time" values). The session being logged right now (unfinished) is skipped, so the
+    ghost values never echo the sets you just did. Imported sessions count."""
+    if db.get(Exercise, exercise_id) is None:
+        raise NotFound(f"exercise {exercise_id} not found")
+    workout_id = db.scalar(
+        select(Workout.id)
+        .join(WorkoutSet, WorkoutSet.workout_id == Workout.id)
+        .where(WorkoutSet.exercise_id == exercise_id, Workout.finished_at.is_not(None))
+        .order_by(Workout.started_at.desc(), Workout.id.desc())
+        .limit(1)
+    )
+    if workout_id is None:
+        return None
+    w = db.get(Workout, workout_id)
+    assert w is not None
+    sets = sorted(
+        (s for s in w.sets if s.exercise_id == exercise_id), key=lambda s: (s.performed_at, s.id)
+    )
+    return PreviousSession(
+        workout_id=w.id, day=w.day, source=w.source, sets=[set_out(s) for s in sets]
+    )

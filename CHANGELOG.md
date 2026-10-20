@@ -40,6 +40,20 @@ Formula and model versions are listed where a number you see could change.
   is a 0-100 score from your own logs (skill-tree steps, best e1RM vs body weight, cardio
   minutes, check-ins, meals and quests), never allocated by hand, and each has a "Why?" that
   lists its formula and the numbers used. See `docs/architecture/hunter-stats.md`.
+- **Train is a keyboard-first, three-pane logger** (UI-3). Left: this session's exercises and
+  the library. Middle: the active exercise with **last session's sets in grey** next to
+  today's, a target line ("Target: 60 kg × 8 @8, last time, Sat 18 Oct"), the input row and a
+  thin rest bar that shrinks under the active set. Right: muscles hit, the full "last time"
+  list, the skills the exercise feeds and the session's muscle load.
+  - The inputs fill in from last time's matching set, so **Enter alone logs it** and the next
+    set fills in; five sets of an exercise you have done before take five keystrokes. Works
+    for reps, holds (seconds pre-filled) and timed sets (duration pre-filled).
+  - Tab moves reps → load → RPE. A saved set flashes the accent for 150 ms. Space pauses or
+    resumes the rest timer when you are not typing.
+  - New `GET /exercises/{id}/previous` (the last finished session's sets of one exercise; the
+    session you are logging is never its own "last time").
+  - Targets repeat last session for now; suggestions that add load or reps belong to the
+    progression engine, which is not part of this release.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

@@ -158,6 +158,14 @@ export interface Workout {
   title: string;
 }
 
+/** GET /exercises/{id}/previous: the last finished session's sets (the logger's grey "last time"). */
+export interface PreviousSession {
+  workout_id: number;
+  day: string;
+  source: WorkoutSource;
+  sets: WorkoutSet[];
+}
+
 export interface LoggedSet {
   set: WorkoutSet;
   xp_awarded: number;

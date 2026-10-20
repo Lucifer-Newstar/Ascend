@@ -252,6 +252,15 @@ class SetOut(BaseModel):
     measure: str = "reps"
 
 
+class PreviousSession(BaseModel):
+    """GET /exercises/{id}/previous: the last finished session's sets of one exercise."""
+
+    workout_id: int
+    day: date
+    source: str
+    sets: list[SetOut]
+
+
 class UnlockedStep(BaseModel):
     """A skill-tree step this set unlocked (mirrors skills.schemas.SkillUnlockOut)."""
 

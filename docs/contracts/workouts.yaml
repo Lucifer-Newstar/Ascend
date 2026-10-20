@@ -611,6 +611,39 @@ paths:
       x-status: implemented
       tags:
       - workouts
+  /exercises/{exercise_id}/previous:
+    get:
+      summary: Previous Session
+      description: 'The last finished session''s sets of this exercise (the logger shows them in grey
+
+        as "last time"), or null when it was never logged before.'
+      operationId: previous_session_exercises__exercise_id__previous_get
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/PreviousSession'
+                - type: 'null'
+                title: Response Previous Session Exercises  Exercise Id  Previous Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
 components:
   securitySchemes:
     launchToken:
@@ -1861,3 +1894,28 @@ components:
       - outcome
       - consent
       title: OnlineLogEntry
+    PreviousSession:
+      properties:
+        workout_id:
+          type: integer
+          title: Workout Id
+        day:
+          type: string
+          format: date
+          title: Day
+        source:
+          type: string
+          title: Source
+        sets:
+          items:
+            $ref: '#/components/schemas/SetOut'
+          type: array
+          title: Sets
+      type: object
+      required:
+      - workout_id
+      - day
+      - source
+      - sets
+      title: PreviousSession
+      description: 'GET /exercises/{id}/previous: the last finished session''s sets of one exercise.'
