@@ -145,7 +145,14 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
               ))}
               {ready.length > 0 && (
                 <li className="flex items-center gap-2 text-muted">
-                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-good motion-reduce:animate-none" /> Ready to train
+                  {/* The figure pulses a ready muscle in its own status colour, so the key shows
+                      the pulse itself (a neutral ring) rather than a colour of its own. */}
+                  <span
+                    className="h-2.5 w-2.5 rounded-full border-2 border-ink/70 motion-reduce:animate-none"
+                    style={{ animation: "asc-muscle-pulse 2.8s ease-in-out infinite" }}
+                    data-testid="legend-ready"
+                  />{" "}
+                  Ready to train (pulsing)
                 </li>
               )}
             </ul>

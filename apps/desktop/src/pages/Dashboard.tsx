@@ -10,7 +10,7 @@ import { IconSpark } from "../components/Icons";
 import { MuscleMap } from "../components/MuscleMap";
 import { QuestList } from "../components/QuestCard";
 import { Rings } from "../components/Rings";
-import { LoadingLayout, Skeleton, SkeletonCard } from "../components/Skeleton";
+import { Delayed, LoadingLayout, Skeleton, SkeletonCard } from "../components/Skeleton";
 import { ErrorState, StaleNotice } from "../components/States";
 import { useToast } from "../components/Toast";
 import { XpBar } from "../components/XpBar";
@@ -24,7 +24,7 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
   onChanged?: () => void;
   onNavigate?: (p: Page) => void;
 }) {
-  const { data, error, status, loading, reload } = useApi(api.dashboard, [refreshKey]);
+  const { data, error, status, loading, reload } = useApi(api.dashboard, [refreshKey], { cacheKey: "dashboard" });
   const [tip, setTip] = useState<CoachReply | null>(null);
   const toast = useToast();
 
@@ -32,7 +32,8 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
     api.coachTip().then(setTip).catch(() => setTip(null));
   }, [refreshKey]);
 
-  if (loading && !data) return <DashboardSkeleton />;
+  // Cached data paints at once on return; a first load only shows the skeleton if it is slow.
+  if (loading && !data) return <Delayed><DashboardSkeleton /></Delayed>;
   if (!data) return <ErrorState message={error ?? "No data"} onRetry={reload} offline={isOffline(status)} />;
 
   async function complete(id: number) {

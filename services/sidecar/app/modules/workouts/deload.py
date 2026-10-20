@@ -103,11 +103,15 @@ def reactive_signals(i: DeloadInputs) -> list[Signal]:
             f"{len(i.readiness_7d)} check-ins, average readiness "
             + (f"{avg:.0f}" if avg is not None else "n/a"),
         ),
-        Signal("HEAVY_SORENESS", sore >= SORE_DAYS, f"very sore on {sore} of the last 7 check-ins"),
+        Signal("HEAVY_SORENESS", sore >= SORE_DAYS, f"Very sore on {sore} of the last 7 check-ins"),
         Signal(
             "PERFORMANCE_DROP",
             len(dropped) >= DROPPED_LIFTS,
-            "e1RM down 3% or more on: " + (", ".join(dropped) if dropped else "no key lift"),
+            (
+                "e1RM down 3% or more on " + ", ".join(dropped)
+                if dropped
+                else "No key lift has dropped 3% or more in e1RM"
+            ),
         ),
         Signal(
             "FATIGUE_BUILDUP",
