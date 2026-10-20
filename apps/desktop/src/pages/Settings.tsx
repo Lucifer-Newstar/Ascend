@@ -120,7 +120,7 @@ export function SettingsPage({ onToggleAi, onChanged }: { onToggleAi: () => void
         </section>
         <section className="card p-5 text-xs leading-relaxed text-muted">
           <h2 className="card-title mb-2">About</h2>
-          ASCEND 0.1.0 · MIT licence · © the ASCEND team.<br />
+          ASCEND {__APP_VERSION__} · MIT licence · © the ASCEND team.<br />
           Muscle map artwork: react-muscle-highlighter (MIT).<br />
           Food values: approximate, IFCT 2017 / INDB-style.<br />
           TDEE (Mifflin-St Jeor), e1RM (Epley) and burn (MET) are estimates.
