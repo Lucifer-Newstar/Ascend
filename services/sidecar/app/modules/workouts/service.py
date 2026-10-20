@@ -205,6 +205,11 @@ def best_e1rm(db: Session, exercise_id: int) -> float | None:
     return db.scalar(select(func.max(WorkoutSet.e1rm)).where(WorkoutSet.exercise_id == exercise_id))
 
 
+# Longest believable isometric hold, in seconds (records for planks exceed this, but a
+# logged hold this long is almost always a minutes/seconds typo).
+MAX_HOLD_S = 3600
+
+
 def log_set(
     db: Session, bus: EventBus, workout_id: int, data: SetIn, now: datetime
 ) -> tuple[WorkoutSet, float | None]:
@@ -220,10 +225,19 @@ def log_set(
         raise Invalid(f"{exercise.name} is logged by time: send duration_s")
     if hold and not data.duration_s:
         raise Invalid(f"{exercise.name} is a hold: send duration_s (seconds held)")
+    if hold and (data.duration_s or 0) > MAX_HOLD_S:
+        raise Invalid(
+            f"a hold longer than {MAX_HOLD_S // 60} minutes is not plausible: check the seconds"
+        )
     if not workout.sets and workout.section != exercise.section:
         # A session takes the section of its first set (a run started from Gym is cardio).
         workout.section = exercise.section
 
+    # Sets stay in order inside a session even if the wall clock jumps back (a time-zone
+    # change, a clock correction): a set is never earlier than the one before it.
+    latest = max((s.performed_at for s in workout.sets), default=None)
+    if latest is not None and now < latest:
+        now = latest
     # e1RM/PR only make sense for loaded lifts; a hold's PR is its longest time.
     e1rm = None if time_based or hold else pr.e1rm_or_none(data.weight_kg, data.reps)
     previous = best_e1rm(db, data.exercise_id)
@@ -380,6 +394,11 @@ def update_set(
 ) -> WorkoutSet:
     row = _get_set(db, workout_id, set_id)
     changes = patch.model_dump(exclude_unset=True)
+    hold = row.exercise.measure == "hold" and row.exercise.section not in TIME_BASED_SECTIONS
+    if hold:
+        changes.pop("reps", None)  # a hold is one effort per set
+        if (changes.get("duration_s") or 0) > MAX_HOLD_S:
+            raise Invalid(f"a hold longer than {MAX_HOLD_S // 60} minutes is not plausible")
     for key, value in changes.items():
         if key in ("weight_kg", "reps") and value is None:
             continue  # cannot null a required field; ignore
