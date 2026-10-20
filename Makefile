@@ -4,8 +4,9 @@ SIDECAR := services/sidecar
 DESKTOP := apps/desktop
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev-sidecar dev-web dev-electron seed lint format typecheck test \
-        test-sidecar test-desktop migrate build build-sidecar dist-win docker-test clean
+.PHONY: help install hooks dev-sidecar dev-web dev-electron seed lint format typecheck test \
+        test-sidecar test-desktop coverage migrate migrate-fresh check build build-sidecar \
+        dist-win docker-test clean
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-14s %s\n", $$1, $$2}'
@@ -13,6 +14,9 @@ help: ## List targets
 install: ## Install Python (uv) and Node dependencies
 	cd $(SIDECAR) && uv sync
 	npm install
+
+hooks: ## Install the pre-commit and commit-msg git hooks (needs pre-commit on PATH)
+	pre-commit install --hook-type pre-commit --hook-type commit-msg
 
 dev-sidecar: ## Run the API on 127.0.0.1:8765 with token "dev" (docs at /docs)
 	cd $(SIDECAR) && uv run python -m app --dev
@@ -28,6 +32,11 @@ seed: ## Fill the dev database with 2 weeks of demo data (wipes user data!)
 
 migrate: ## Apply Alembic migrations to the configured database
 	cd $(SIDECAR) && uv run alembic upgrade head
+
+migrate-fresh: ## Apply every migration to a throwaway database (what CI checks)
+	cd $(SIDECAR) && rm -f .migrate-check.db && \
+	  ASCEND_DB_URL=sqlite:///.migrate-check.db uv run alembic upgrade head && \
+	  ASCEND_DB_URL=sqlite:///.migrate-check.db uv run alembic current && rm -f .migrate-check.db
 
 lint: ## ruff + eslint
 	cd $(SIDECAR) && uv run ruff check . && uv run ruff format --check .
@@ -47,6 +56,11 @@ test-sidecar: ## pytest
 
 test-desktop: ## vitest
 	npm test
+
+coverage: ## pytest with an HTML coverage report in services/sidecar/htmlcov/
+	cd $(SIDECAR) && uv run pytest --cov=app --cov-report=term-missing --cov-report=html
+
+check: lint typecheck test migrate-fresh build ## Everything CI runs, in one go (run before a PR)
 
 build: ## Build renderer + Electron main/preload
 	npm run build -w $(DESKTOP)
