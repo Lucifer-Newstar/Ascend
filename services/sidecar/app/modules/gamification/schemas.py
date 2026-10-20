@@ -40,7 +40,16 @@ class XpOut(BaseModel):
     formula_version: str
 
 
+class CalmStreakOut(BaseModel):
+    """Days in a row with at least one meditation sit (same freeze rules)."""
+
+    current: int
+    best: int
+    active_today: bool
+
+
 class GameSummary(BaseModel):
     xp: XpOut
     streak: StreakOut
+    calm: CalmStreakOut = CalmStreakOut(current=0, best=0, active_today=False)
     quest: list[QuestItemOut]
