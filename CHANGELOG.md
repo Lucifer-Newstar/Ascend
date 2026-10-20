@@ -6,6 +6,23 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Added
+- **A livelier muscle map.** One body on a small 3D card: it tilts a few degrees towards
+  the mouse, flips front/back, shades each muscle softly, glows fatigued muscles and
+  lets recovered ones (trained this week, ready again) breathe. Hovering a muscle lifts
+  it and shows sets, volume and when it was last trained; clicking opens the drill-down,
+  which now slides open and closed.
+- **Volume view** on the muscle map: colour by sets over the last 1, 7 or 30 days, with
+  the colours blending as you switch. Backed by a new `GET /muscles/activity?days=`.
+- **Level and XP in the header** on every page: logging a set or finishing a quest
+  slides the bar forward with a "+N XP"; a level-up gets a short confetti burst.
+- Dashboard XP bar animates from where you left it, numbers count up, rings draw in,
+  the streak flame flickers, cards highlight on hover, a logged set slides into the
+  table with a check, loading skeletons shimmer and pages fade in.
+- **Settings → Reduce motion** (stored as `reduce_motion`). With it on, or with Windows
+  animation effects off, nothing tilts, flips, counts or bursts; level-ups are still
+  announced to screen readers. See `docs/development/motion.md`.
+
 ### Fixed
 - Counts of one read "1 set" and "1 rep" (History, the training session header and the
   finish toast showed "1 sets").

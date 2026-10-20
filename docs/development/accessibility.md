@@ -11,7 +11,7 @@
 | **Keyboard** | Every action is a real `<button>`, link or form control. Forms submit on Enter (the set logger too). `Ctrl+1`…`Ctrl+8` open pages in sidebar order; `Alt+←/→` go back/forward; `Esc` closes the muscle drill-down. The list is in Settings → Keyboard shortcuts. |
 | **Focus** | Visible `:focus-visible` ring everywhere. The first `Tab` shows **Skip to content**. Changing page moves focus to the page `<h1>`; opening a detail panel moves focus into it. |
 | **Screen readers** | Page title follows the page (`Progress · ASCEND`). Toasts use two live regions: errors are `role="alert"` (assertive, 7 s, dismissable), the rest `role="status"`. Charts are `role="img"` with a summary plus a **Show the numbers** table. The muscle-map artwork is `aria-hidden`; the lists beside it (Needs attention, All muscles) carry the same information and open the drill-down. |
-| **Motion** | `prefers-reduced-motion: reduce` stops ring/XP fills, spinners and skeleton pulses. |
+| **Motion** | `prefers-reduced-motion: reduce` **or** Settings → *Reduce motion* (`<html data-motion="reduce">`) stops ring/XP fills, count-ups, spinners, the skeleton shimmer, page transitions, the muscle map tilt, flip and pulse, and hides celebrations (confetti, flash, "+XP" floats). Level-ups are still announced through a status region. See [motion.md](motion.md). |
 | **Forms** | Every input has a visible `<label>` (or `legend` for radio groups such as `Segmented`). Errors are shown as text next to the form with `role="alert"`, not only by colour. |
 
 ## How it is checked
