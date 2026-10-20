@@ -10,6 +10,7 @@ import Body, { type ExtendedBodyPart, type Slug } from "react-muscle-highlighter
 
 import { readyAtLabel } from "../lib/format";
 import { cssVar } from "../lib/theme";
+import { MuscleDrilldown } from "./MuscleDrilldown";
 import { STATUS_COLORS, STATUS_LABELS, regionsForSlug, statusBySlug } from "../lib/muscleMap";
 
 const LEGEND: MuscleStatus[] = ["under", "optimal", "recovering", "over", "no_data"];
@@ -21,6 +22,7 @@ function statusColor(status: MuscleStatus): string {
 
 export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; scale?: number }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [detail, setDetail] = useState<string | null>(null);
   const bySlug = useMemo(() => statusBySlug(muscles), [muscles]);
   const data: ExtendedBodyPart[] = useMemo(
     () => [...bySlug.entries()].map(([slug, status]) => ({ slug: slug as Slug, color: statusColor(status) })),
@@ -42,6 +44,7 @@ export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; s
   };
 
   return (
+    <div className="space-y-4">
     <div className="flex gap-5">
       <div className="flex shrink-0 gap-2" aria-label="Muscle map, front and back">
         <div className="text-center">
@@ -68,7 +71,7 @@ export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; s
               <span className="text-xs font-semibold uppercase tracking-wider text-accent">{selected}</span>
               <button type="button" className="text-xs text-faint hover:text-ink" onClick={() => setSelected(null)}>close</button>
             </div>
-            {regions.map((r) => <RegionRow key={r.key} m={r} />)}
+            {regions.map((r) => <RegionRow key={r.key} m={r} onOpen={setDetail} />)}
           </div>
         ) : (
           <div>
@@ -76,19 +79,26 @@ export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; s
             {attention.length === 0 ? (
               <p className="text-xs text-faint">Log a workout to see per-muscle load. Click a muscle for details.</p>
             ) : (
-              attention.map((m) => <RegionRow key={m.key} m={m} />)
+              attention.map((m) => <RegionRow key={m.key} m={m} onOpen={setDetail} />)
             )}
           </div>
         )}
       </div>
     </div>
+    {detail && <MuscleDrilldown key={detail} code={detail} onClose={() => setDetail(null)} />}
+    </div>
   );
 }
 
-function RegionRow({ m }: { m: MuscleState }) {
+function RegionRow({ m, onOpen }: { m: MuscleState; onOpen: (code: string) => void }) {
   const band = `${m.weekly_low}–${m.weekly_high}`;
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-line/60 py-1.5 text-xs last:border-0">
+    <button
+      type="button"
+      onClick={() => onOpen(m.key)}
+      aria-label={`${m.label} details`}
+      className="flex w-full items-center justify-between gap-2 border-b border-line/60 py-1.5 text-left text-xs last:border-0 hover:bg-panel/60"
+    >
       <span className="flex min-w-0 items-center gap-2">
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_COLORS[m.status] }} />
         <span className="truncate text-ink">{m.label}</span>
@@ -96,6 +106,6 @@ function RegionRow({ m }: { m: MuscleState }) {
       <span className="shrink-0 text-right text-muted" title="Effective sets in the last 7 days vs the weekly target band (estimate)">
         {m.es_7d} / {band} sets · {Math.round(m.readiness * 100)}%{m.status === "recovering" ? ` · ${readyAtLabel(m.ready_at)}` : ""}
       </span>
-    </div>
+    </button>
   );
 }

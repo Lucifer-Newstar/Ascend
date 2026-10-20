@@ -72,27 +72,29 @@ export function LineChart({ labels, series, height = 200, unit = "", summary }: 
   );
 }
 
-export function BarChart({ labels, values, height = 160, unit = "", summary, className = "fill-accent" }: {
+export function BarChart({ labels, values, height = 160, width = W, unit = "", summary, className = "fill-accent" }: {
   labels: string[];
   values: number[];
   height?: number;
+  width?: number; // viewBox width: match the rendered width so text keeps its size
   unit?: string;
   summary: string;
   className?: string;
 }) {
   if (!values.length) return null;
+  const every = Math.max(1, Math.ceil(values.length / Math.floor(width / 70)));
   const max = Math.max(...values, 0);
   const ticks = niceTicks(0, max || 1, 3);
   const top = ticks[ticks.length - 1] || 1;
   const y = linearScale([0, top], [height - PAD.bottom, PAD.top]);
-  const band = (W - PAD.left - PAD.right) / values.length;
+  const band = (width - PAD.left - PAD.right) / values.length;
   const bw = Math.min(36, band * 0.6);
 
   return (
-    <svg viewBox={`0 0 ${W} ${height}`} className="w-full" role="img" aria-label={summary}>
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={summary}>
       {ticks.map((t) => (
         <g key={t}>
-          <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} className="stroke-line" strokeWidth={1} />
+          <line x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} className="stroke-line" strokeWidth={1} />
           <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" className="fill-faint text-[10px]">{compact(t)}{unit}</text>
         </g>
       ))}
@@ -103,7 +105,9 @@ export function BarChart({ labels, values, height = 160, unit = "", summary, cla
             <rect x={cx - bw / 2} y={y(v)} width={bw} height={Math.max(0, y(0) - y(v))} rx={3} className={className}>
               <title>{`${labels[i]}: ${v}${unit}`}</title>
             </rect>
-            <text x={cx} y={height - 6} textAnchor="middle" className="fill-faint text-[10px]">{labels[i]}</text>
+            {(i % every === 0 || i === values.length - 1) && (
+              <text x={cx} y={height - 6} textAnchor="middle" className="fill-faint text-[10px]">{labels[i]}</text>
+            )}
           </g>
         );
       })}
