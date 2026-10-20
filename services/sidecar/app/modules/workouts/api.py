@@ -9,13 +9,14 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
+from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.workouts import deload_service, service
-from app.modules.workouts.activity_seed import SECTIONS, TIME_BASED_SECTIONS
+from app.modules.workouts.activity_seed import SECTIONS
 from app.modules.workouts.schemas import (
+    ExerciseDetail,
     ExerciseOut,
     FinishedWorkout,
     LoggedSet,
-    MuscleWeight,
     PROut,
     SetIn,
     SetOut,
@@ -55,25 +56,40 @@ def list_prs(exercise_id: int | None = None, db: Session = Depends(get_db)) -> l
 
 @exercises_router.get("", response_model=list[ExerciseOut])
 def list_exercises(
-    q: str = "", section: str | None = None, db: Session = Depends(get_db)
+    q: str = "",
+    section: str | None = None,
+    muscle: str | None = None,
+    equipment: str | None = None,
+    difficulty: Literal["beginner", "intermediate", "expert"] | None = None,
+    custom: bool | None = None,
+    db: Session = Depends(get_db),
 ) -> list[ExerciseOut]:
+    """The exercise library (gallery and logger). `q` matches names and aliases; the other
+    filters narrow by logger section, a muscle region it trains (weight >= 0.5),
+    equipment, difficulty, or user-added (`custom=true`). Archived exercises are hidden."""
     if section is not None and section not in SECTIONS:
         raise HTTPException(422, f"unknown section '{section}'")
-    return [
-        ExerciseOut(
-            id=e.id,
-            name=e.name,
-            equipment=e.equipment,
-            section=e.section,
-            met=e.met,
-            time_based=e.section in TIME_BASED_SECTIONS,
-            muscles=[
-                MuscleWeight(muscle=m.muscle, weight=m.weight)
-                for m in sorted(e.muscles, key=lambda m: -m.weight)
-            ],
-        )
-        for e in service.list_exercises(db, q, section)
-    ]
+    if muscle is not None and muscle not in MUSCLE_BY_KEY:
+        raise HTTPException(422, f"unknown muscle '{muscle}'")
+    f = service.ExerciseFilter(
+        q=q,
+        section=section,
+        muscle=muscle,
+        equipment=equipment,
+        difficulty=difficulty,
+        custom=custom,
+    )
+    return [service.exercise_out(e) for e in service.list_exercises(db, f=f)]
+
+
+@exercises_router.get("/{exercise_id}", response_model=ExerciseDetail)
+def get_exercise(exercise_id: int, db: Session = Depends(get_db)) -> ExerciseDetail:
+    """One exercise with its instructions, the source of each field, attribution for
+    anything found online, the skill trees it belongs to and how often it was logged."""
+    try:
+        return service.exercise_detail(db, exercise_id)
+    except service.NotFound as e:
+        raise HTTPException(404, str(e)) from e
 
 
 @router.post("", response_model=WorkoutOut, status_code=201)

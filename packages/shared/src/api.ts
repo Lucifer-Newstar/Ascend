@@ -60,6 +60,12 @@ export interface MuscleActivity {
 
 export type Section = "gym" | "calisthenics" | "cardio" | "martial_arts" | "flexibility" | "meditation";
 
+/** How a set of this exercise is measured: reps, seconds per isometric hold, or time. */
+export type Measure = "reps" | "hold" | "time";
+export type Difficulty = "beginner" | "intermediate" | "expert";
+/** Where an exercise (or one of its fields) came from. */
+export type FieldSource = "library" | "rules" | "local_ai" | "wger" | "wikipedia" | "user";
+
 export interface Exercise {
   id: number;
   name: string;
@@ -68,6 +74,43 @@ export interface Exercise {
   met: number | null;
   time_based: boolean;
   muscles: { muscle: string; weight: number }[];
+  slug?: string | null;
+  measure?: Measure;
+  difficulty?: Difficulty | null;
+  pattern?: string;
+  /** Thumbnail path relative to index.html, e.g. "exercises/pullups.webp". */
+  image?: string | null;
+  source?: "ascend" | "free-exercise-db" | "custom";
+  is_custom?: boolean;
+  aliases?: string[];
+}
+
+export interface SkillLink {
+  skill_key: string;
+  skill_name: string;
+  step_name: string | null;
+  /** "step": part of the tree itself; "feeder": builds strength for it. */
+  role: "step" | "feeder";
+}
+
+export interface Attribution {
+  source: string;
+  title: string;
+  url: string;
+  license: string;
+}
+
+export interface ExerciseDetail extends Exercise {
+  instructions: string[];
+  mechanic: string | null;
+  rep_low: number | null;
+  rep_high: number | null;
+  field_sources: Record<string, FieldSource>;
+  attribution: Attribution[];
+  source_ref: string | null;
+  created_at: string | null;
+  skills: SkillLink[];
+  sets_logged: number;
 }
 
 export interface WorkoutSet {

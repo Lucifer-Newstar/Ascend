@@ -41,7 +41,7 @@ def test_activity_lists_every_muscle_and_validates_days(client):
 
 
 def test_timed_sets_load_muscles_without_volume(client, profile):
-    plank = exercise_id(client, "Plank (60 s = 1 set)")
+    plank = exercise_id(client, "Plank")
     w = client.post("/workouts").json()["id"]
     r = client.post(
         f"/workouts/{w}/sets",

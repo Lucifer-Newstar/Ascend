@@ -60,7 +60,15 @@ a = Analysis(
     [str(ROOT / "packaging" / "entry.py")],
     pathex=[str(ROOT)],
     # Alembic reads migrations as source files at runtime, so ship them as data.
-    datas=[(str(ROOT / "alembic.ini"), "."), (str(ROOT / "alembic"), "alembic")],
+    datas=[
+        (str(ROOT / "alembic.ini"), "."),
+        (str(ROOT / "alembic"), "alembic"),
+        # Bundled exercise library (free-exercise-db), read by migration 0010.
+        (
+            str(ROOT / "app" / "modules" / "workouts" / "library_data"),
+            "app/modules/workouts/library_data",
+        ),
+    ],
     hiddenimports=hiddenimports,
     # Dev and test tooling never runs inside the app; keeping it out shrinks the
     # install and the attack surface.

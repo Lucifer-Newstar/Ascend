@@ -2,8 +2,8 @@ import { useEffect } from "react";
 
 import type { Page } from "../components/Layout";
 
-/** Ctrl+1 … Ctrl+8 open the pages in sidebar order (the same keys browsers use for tabs). */
-export const PAGE_KEYS: Page[] = ["dashboard", "workout", "progress", "diet", "coach", "history", "data", "settings"];
+/** Ctrl+1 … Ctrl+9 open the pages in sidebar order (the same keys browsers use for tabs). */
+export const PAGE_KEYS: Page[] = ["dashboard", "workout", "library", "progress", "diet", "coach", "history", "data", "settings"];
 
 export function pageForKey(e: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey">): Page | null {
   if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return null;

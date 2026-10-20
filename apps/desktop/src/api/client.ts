@@ -31,6 +31,7 @@ import type {
   Dashboard,
   DayLog,
   Exercise,
+  ExerciseDetail,
   FinishedWorkout,
   Food,
   GameSummary,
@@ -120,6 +121,7 @@ export const api = {
 
   exercises: (q = "", section?: Section) =>
     call<Exercise[]>("GET", `/exercises?q=${encodeURIComponent(q)}${section ? `&section=${section}` : ""}`),
+  exercise: (id: number) => call<ExerciseDetail>("GET", `/exercises/${id}`),
   activeWorkout: () => call<Workout | null>("GET", "/workouts/active"),
   startWorkout: (section: Section = "gym") => call<Workout>("POST", `/workouts?section=${section}`),
   workouts: (limit = 20, before?: string) =>

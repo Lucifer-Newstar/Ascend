@@ -11,6 +11,7 @@ import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
 import { count } from "../lib/format";
 import { sessionLoad } from "../lib/load";
+import { takePendingExercise } from "../lib/pending";
 import { useReducedMotion } from "../lib/motion";
 import { MUSCLE_LABEL } from "../lib/muscles";
 import { usePrefs } from "../lib/prefs";
@@ -20,7 +21,9 @@ import { useApi } from "../lib/useApi";
 const REST_SECONDS = 90;
 
 export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
-  const [section, setSection] = useState<Section>("gym");
+  // "Log it" from the gallery (or "Train" on a skill) hands over an exercise to open.
+  const [pending] = useState(takePendingExercise);
+  const [section, setSection] = useState<Section>(pending?.section ?? "gym");
   const exercises = useApi(() => api.exercises("", section), [section]);
   const active = useApi(api.activeWorkout, []);
   const { settings } = usePrefs();
@@ -40,6 +43,14 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   useEffect(() => {
     if (active.data !== undefined) setWorkout(active.data);
   }, [active.data]);
+
+  const [pendingDone, setPendingDone] = useState(false);
+  useEffect(() => {
+    if (!pending || pendingDone || !exercises.data) return;
+    const match = exercises.data.find((e) => e.id === pending.id);
+    if (match) setSelected(match);
+    setPendingDone(true);
+  }, [pending, pendingDone, exercises.data]);
 
   useEffect(() => {
     if (restLeft <= 0) return;
