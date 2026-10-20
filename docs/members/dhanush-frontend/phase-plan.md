@@ -32,14 +32,14 @@
 - [ ] `feat(ui): API client hooks with TanStack Query over window.ascend.request`
 - [ ] `feat(ui): exercise picker with search (Ctrl+K)`
 - [x] `feat(ui): set table with weight/reps/RPE inputs and inline validation` — plus inline edit and delete per set
-- [ ] `feat(ui): keyboard flow (Enter completes set, Space rest, Ctrl+Z undo)`
+- [ ] `feat(ui): keyboard flow (Enter completes set, Space rest, Ctrl+Z undo)` — Enter logs a set (PR #24); Space/Ctrl+Z open
 - [ ] `feat(ui): rest timer with toast when window unfocused`
 - [ ] `feat(ui): PR toast and PR flag on the set row`
 - [ ] `feat(ui): muscle map SVG regions from react-muscle-highlighter paths`
 - [ ] `feat(ui): split chest/delts/rhomboids into the 19 ASCEND regions`
 - [ ] `feat(ui): heat colours, opacity by intensity, hatching for over`
 - [ ] `feat(ui): muscle tooltip (status chip, ES vs target, readiness)`
-- [ ] `feat(ui): keyboard navigation and screen-reader labels for regions`
+- [x] `feat(ui): keyboard navigation and screen-reader labels for regions` — artwork hidden from AT; Needs attention + All muscles lists open the drill-down by keyboard
 - [ ] `feat(ui): three rings with 900 ms completion animation (reduce-motion aware)`
 - [ ] `feat(ui): daily quest card with XP and progress`
 - [ ] `feat(ui): history timeline with filters and calendar heatmap`
