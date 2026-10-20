@@ -13,7 +13,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-OPEN_PATHS = {"/health"}
+# /health is polled before the token is in use; the API docs expose schema only, never data.
+OPEN_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "testserver"}
 
 
