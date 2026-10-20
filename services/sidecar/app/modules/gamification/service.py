@@ -244,7 +244,11 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
 
 def make_handlers(bus: EventBus) -> None:
     def on_set_logged(db: Session, e: SetLogged) -> None:
-        award(db, e.performed_at, "set", e.set_id, f.set_xp(e.rpe))
+        if e.duration_s and e.section in ("cardio", "martial_arts", "flexibility", "meditation"):
+            amount = f.timed_set_xp(e.duration_s, e.section)
+        else:
+            amount = f.set_xp(e.rpe)
+        award(db, e.performed_at, "set", e.set_id, amount)
         if e.is_pr:
             award(db, e.performed_at, "pr", e.set_id, f.PR_XP, note="new e1RM PR")
         refresh_quest(db, bus, e.performed_at)

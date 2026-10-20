@@ -72,3 +72,17 @@ def test_run_loads_calves_and_stretch_loads_nothing(client, profile):
     )
     calves = next(m for m in client.get("/muscles").json() if m["key"] == "calves")
     assert calves["es_7d"] == 3.0  # weight 1.0 x min(3, 30/10) x effort 1.0
+
+
+def test_timed_sets_award_minute_based_xp(client, profile):
+    run = ex(client, "Running")
+    sit = ex(client, "Box Breathing")
+    w = client.post("/workouts").json()
+    r1 = client.post(
+        f"/workouts/{w['id']}/sets", json={"exercise_id": run["id"], "duration_s": 1800}
+    )
+    r2 = client.post(
+        f"/workouts/{w['id']}/sets", json={"exercise_id": sit["id"], "duration_s": 600}
+    )
+    assert r1.json()["xp_awarded"] == 15
+    assert r2.json()["xp_awarded"] == 10
