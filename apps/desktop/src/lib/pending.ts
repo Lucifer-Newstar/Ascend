@@ -20,15 +20,32 @@ export function setPendingExercise(p: PendingExercise): void {
   }
 }
 
-/** Read and clear the pending exercise (one use). */
-export function takePendingExercise(): PendingExercise | null {
+/**
+ * Read the pending exercise without clearing it. Safe in a useState initializer,
+ * which React may call twice in development; clear it from an effect once used.
+ */
+export function peekPendingExercise(): PendingExercise | null {
   try {
     const raw = sessionStorage.getItem(KEY);
-    sessionStorage.removeItem(KEY);
     if (!raw) return null;
     const p = JSON.parse(raw) as Partial<PendingExercise>;
     return typeof p.id === "number" && typeof p.section === "string" ? (p as PendingExercise) : null;
   } catch {
     return null;
   }
+}
+
+export function clearPendingExercise(): void {
+  try {
+    sessionStorage.removeItem(KEY);
+  } catch {
+    /* nothing to clear */
+  }
+}
+
+/** Read and clear the pending exercise (one use). */
+export function takePendingExercise(): PendingExercise | null {
+  const p = peekPendingExercise();
+  clearPendingExercise();
+  return p;
 }
