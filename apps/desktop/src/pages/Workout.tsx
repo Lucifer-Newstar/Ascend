@@ -1,4 +1,4 @@
-import type { Exercise, Section, SetIn, SetPatch, Workout, WorkoutSet } from "@ascend/shared";
+import type { Exercise, Section, SetIn, SetPatch, SkillUnlock, Workout, WorkoutSet } from "@ascend/shared";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
@@ -9,10 +9,11 @@ import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
 import { HoldSetForm } from "../components/logger/HoldSetForm";
 import { TimedSetForm } from "../components/logger/TimedSetForm";
 import { Empty, ErrorState, Loading } from "../components/States";
+import { SkillAcquired } from "../components/SkillAcquired";
 import { useToast } from "../components/Toast";
 import { count } from "../lib/format";
 import { sessionLoad } from "../lib/load";
-import { takePendingExercise } from "../lib/pending";
+import { clearPendingExercise, peekPendingExercise } from "../lib/pending";
 import { useReducedMotion } from "../lib/motion";
 import { MUSCLE_LABEL } from "../lib/muscles";
 import { usePrefs } from "../lib/prefs";
@@ -21,9 +22,14 @@ import { useApi } from "../lib/useApi";
 
 const REST_SECONDS = 90;
 
+export const isBodyweight = (e: Pick<Exercise, "equipment" | "section">): boolean =>
+  e.section === "calisthenics" || /body ?weight|none/i.test(e.equipment);
+
 export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   // "Log it" from the gallery (or "Train" on a skill) hands over an exercise to open.
-  const [pending] = useState(takePendingExercise);
+  // Peeked, not taken: React may run this initializer twice in development.
+  const [pending] = useState(peekPendingExercise);
+  useEffect(clearPendingExercise, []);
   const [section, setSection] = useState<Section>(pending?.section ?? "gym");
   const exercises = useApi(() => api.exercises("", section), [section]);
   const active = useApi(api.activeWorkout, []);
@@ -40,10 +46,19 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   // The set just logged: its row slides in with a check, and "+N XP" floats off the button.
   const [logged, setLogged] = useState<{ id: number; xp: number; n: number } | null>(null);
   const toast = useToast();
+  // Skill-tree steps the last set unlocked: shown as the "Skill acquired" moment.
+  const [acquired, setAcquired] = useState<SkillUnlock[]>([]);
 
   useEffect(() => {
     if (active.data !== undefined) setWorkout(active.data);
   }, [active.data]);
+
+  // Bodyweight moves start at no added load (a pull-up logged at the 40 kg default
+  // would be a weighted pull-up); barbell/dumbbell work keeps the last weight used.
+  const bodyweight = selected ? isBodyweight(selected) : false;
+  useEffect(() => {
+    if (selected && isBodyweight(selected)) setWeight(0);
+  }, [selected]);
 
   const [pendingDone, setPendingDone] = useState(false);
   useEffect(() => {
@@ -89,6 +104,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
       else if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
       else if (isHold) toast(`${res.set.duration_s} s hold logged · +${res.xp_awarded} XP`, "xp");
       else toast(`${selected.time_based ? formatDuration(res.set.duration_s ?? 0) + " logged" : "Set logged"} · +${res.xp_awarded} XP`, "xp");
+      if (res.unlocks?.length) setAcquired(res.unlocks);
       onChanged();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -153,6 +169,13 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
 
   return (
     <div className="space-y-5">
+    {acquired.length > 0 && (
+      <SkillAcquired
+        unlocks={acquired}
+        onClose={() => setAcquired([])}
+        onView={(key) => { setAcquired([]); window.location.hash = `skills/${key}`; }}
+      />
+    )}
     <SectionTabs value={section} onChange={changeSection} />
     <div className="grid h-full grid-cols-12 gap-5">
       <section className="card col-span-12 flex min-h-0 flex-col lg:col-span-4">
@@ -222,7 +245,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                     aria-label={`Log a set of ${selected.name}`}
                     onSubmit={(e) => { e.preventDefault(); if (!busy) void logSet(); }}
                   >
-                    <NumberField label={`Weight (${weightUnit(units)})`} value={weight} step={units === "imperial" ? 5 : 2.5} onChange={setWeight} />
+                    <NumberField label={bodyweight ? `Added load (${weightUnit(units)})` : `Weight (${weightUnit(units)})`} value={weight} step={units === "imperial" ? 5 : 2.5} onChange={setWeight} />
                     <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
                     <RpeSelect value={rpe} onChange={setRpe} />
                     <span className="relative">

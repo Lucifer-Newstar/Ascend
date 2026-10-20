@@ -197,4 +197,33 @@ describe("Training page", () => {
     expect(within(table).getByText("45 s")).toBeInTheDocument();
     expect(await screen.findByText(/New best hold! Plank 45 s/)).toBeInTheDocument();
   });
+
+  it("bodyweight moves start at no added load, and an unlocking set shows the Skill acquired moment", async () => {
+    const pullup: Exercise = {
+      id: 3, name: "Pull-up", equipment: "bodyweight", section: "calisthenics", met: null, time_based: false,
+      muscles: [{ muscle: "lats", weight: 1 }], measure: "reps",
+    };
+    vi.mocked(api.exercises).mockResolvedValue([pullup]);
+    sessionStorage.setItem("ascend.pendingExercise", JSON.stringify({ id: 3, section: "calisthenics" }));
+    vi.mocked(api.startWorkout).mockResolvedValue({ ...session([]), section: "calisthenics" });
+    const set = {
+      id: 5, exercise_id: 3, exercise_name: "Pull-up", weight_kg: 0, reps: 8, rpe: 8, duration_s: null,
+      distance_m: null, avg_hr: null, e1rm: null, is_pr: false, performed_at: "2026-10-20T07:30:00", measure: "reps" as const,
+    };
+    vi.mocked(api.logSet).mockResolvedValue({
+      set, xp_awarded: 3, previous_best_e1rm: null,
+      unlocks: [{ id: 1, skill_key: "muscle_up", skill_name: "Muscle-up", step_key: "c2b", step_name: "Chest-to-bar pull-up",
+        unlocked_at: "2026-10-20T07:30:00", xp: 80, final: false, next_step_name: "Muscle-up negative", source: "log" }],
+    });
+    vi.mocked(api.activeWorkout).mockResolvedValue(null);
+    renderPage();
+    const load = await screen.findByRole("spinbutton", { name: "Added load (kg)" });
+    expect(load).toHaveValue(0);
+    await userEvent.click(screen.getByRole("button", { name: "Log set" }));
+    expect(vi.mocked(api.logSet).mock.calls.at(-1)?.[1]).toMatchObject({ exercise_id: 3, weight_kg: 0 });
+    const dialog = await screen.findByRole("dialog", { name: "Chest-to-bar pull-up" });
+    expect(dialog).toHaveTextContent("Skill acquired");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Continue" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
 });

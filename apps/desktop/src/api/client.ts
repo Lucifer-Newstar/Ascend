@@ -32,6 +32,10 @@ import type {
   DayLog,
   Exercise,
   ExerciseDetail,
+  SkillDetail,
+  SkillSummary,
+  SkillTrainResult,
+  SkillUnlock,
   FinishedWorkout,
   Food,
   GameSummary,
@@ -122,6 +126,10 @@ export const api = {
   exercises: (q = "", section?: Section) =>
     call<Exercise[]>("GET", `/exercises?q=${encodeURIComponent(q)}${section ? `&section=${section}` : ""}`),
   exercise: (id: number) => call<ExerciseDetail>("GET", `/exercises/${id}`),
+  skills: () => call<SkillSummary[]>("GET", "/skills"),
+  skill: (key: string) => call<SkillDetail>("GET", `/skills/${encodeURIComponent(key)}`),
+  skillUnlocks: (limit = 10) => call<SkillUnlock[]>("GET", `/skills/unlocks?limit=${limit}`),
+  trainSkill: (key: string) => call<SkillTrainResult>("POST", `/skills/${encodeURIComponent(key)}/train`),
   activeWorkout: () => call<Workout | null>("GET", "/workouts/active"),
   startWorkout: (section: Section = "gym") => call<Workout>("POST", `/workouts?section=${section}`),
   workouts: (limit = 20, before?: string) =>

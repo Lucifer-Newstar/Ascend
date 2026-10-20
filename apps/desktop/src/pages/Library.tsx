@@ -232,13 +232,13 @@ export function ExerciseDetailView({ id, onBack, onNavigate }: { id: number; onB
     <div className="max-w-5xl space-y-4">
       <button type="button" className="btn-ghost" onClick={onBack}>← All exercises</button>
       {d.loading && !d.data ? <Loading label="Loading exercise…" /> : d.error && !d.data ? <ErrorState message={d.error} onRetry={d.reload} /> : d.data && (
-        <ExerciseDetailBody e={d.data} onLog={() => logIt(d.data!)} onOpenSkill={() => onNavigate("skills" as Page)} />
+        <ExerciseDetailBody e={d.data} onLog={() => logIt(d.data!)} onOpenSkill={(key) => { window.location.hash = `skills/${key}`; }} />
       )}
     </div>
   );
 }
 
-function ExerciseDetailBody({ e, onLog, onOpenSkill }: { e: ExerciseDetail; onLog: () => void; onOpenSkill: () => void }) {
+function ExerciseDetailBody({ e, onLog, onOpenSkill }: { e: ExerciseDetail; onLog: () => void; onOpenSkill: (skillKey: string) => void }) {
   const fs = e.field_sources;
   const range = e.rep_low && e.rep_high ? (e.measure === "hold" ? `${e.rep_low}–${e.rep_high} s per hold` : `${e.rep_low}–${e.rep_high} reps`) : null;
   return (
@@ -284,7 +284,7 @@ function ExerciseDetailBody({ e, onLog, onOpenSkill }: { e: ExerciseDetail; onLo
             <ul className="mt-2 flex flex-wrap gap-2">
               {e.skills.map((s) => (
                 <li key={`${s.skill_key}-${s.role}`}>
-                  <button type="button" className="chip border-accent/40 text-accent hover:bg-accent/10" onClick={onOpenSkill}>
+                  <button type="button" className="chip border-accent/40 text-accent hover:bg-accent/10" onClick={() => onOpenSkill(s.skill_key)}>
                     {s.skill_name}{s.role === "step" ? ` · step: ${s.step_name}` : " · feeder"}
                   </button>
                 </li>

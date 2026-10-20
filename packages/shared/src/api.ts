@@ -162,6 +162,98 @@ export interface LoggedSet {
   set: WorkoutSet;
   xp_awarded: number;
   previous_best_e1rm: number | null;
+  /** Skill-tree steps this set unlocked ("Skill acquired" moments); usually empty. */
+  unlocks?: SkillUnlock[];
+}
+
+// ---- skill trees ------------------------------------------------------------
+
+export type SkillFamily = "pull" | "push" | "core" | "balance" | "legs" | "levers";
+export type StepStatus = "unlocked" | "next" | "locked";
+
+export interface SkillCriterion {
+  text: string;
+  exercise: string;
+  exercise_id: number | null;
+  sets: number;
+  target: number;
+  unit: "reps" | "s";
+  added_kg: number;
+  per_side: boolean;
+  best_value: number | null;
+  best_score: number;
+  sessions_met: number;
+  sessions_needed: number;
+  pct: number;
+  met: boolean;
+  /** Holds beyond the plausibility limit, not counted. */
+  ignored_sets: number;
+}
+
+export interface SkillStep {
+  key: string;
+  name: string;
+  exercise: string;
+  exercise_id: number | null;
+  measure: Measure;
+  status: StepStatus;
+  pct: number;
+  unlocked_at: string | null;
+  criteria: SkillCriterion[];
+  requires: string[];
+  xp: number;
+  uncertain: boolean;
+  note: string;
+}
+
+export interface SkillSummary {
+  key: string;
+  name: string;
+  family: SkillFamily;
+  summary: string;
+  stretch: boolean;
+  current_step: string | null;
+  current_step_name: string | null;
+  next_step: string | null;
+  next_step_name: string | null;
+  pct_to_next: number | null;
+  steps_unlocked: number;
+  steps_total: number;
+  acquired: boolean;
+  last_trained: string | null;
+  sessions_28d: number;
+  rusty: boolean;
+}
+
+export interface SkillDetail extends SkillSummary {
+  steps: SkillStep[];
+  feeders: { exercise_id: number | null; name: string; measure: Measure; sets_28d: number }[];
+  /** Always an estimate; days is null when there is not enough data (reason says why). */
+  eta: { days: number | null; date: string | null; reason: string; is_estimate: boolean };
+  sources: { key: string; title: string; url: string }[];
+  engine_version: string;
+}
+
+export interface SkillUnlock {
+  id: number;
+  skill_key: string;
+  skill_name: string;
+  step_key: string;
+  step_name: string;
+  unlocked_at: string;
+  xp: number;
+  /** True when this completes the whole tree. */
+  final: boolean;
+  next_step_name: string | null;
+  source: string;
+}
+
+export interface SkillTrainResult {
+  skill_key: string;
+  added: number;
+  already_planned: number;
+  items: string[];
+  message: string;
 }
 
 export interface FinishedWorkout {

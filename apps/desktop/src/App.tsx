@@ -16,6 +16,7 @@ import { DashboardPage } from "./pages/Dashboard";
 const CoachPage = lazy(() => import("./pages/Coach").then((m) => ({ default: m.CoachPage })));
 const DataPage = lazy(() => import("./pages/Data").then((m) => ({ default: m.DataPage })));
 const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.DietPage })));
+const SkillsPage = lazy(() => import("./pages/Skills").then((m) => ({ default: m.SkillsPage })));
 const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default: m.LibraryPage })));
 const HistoryPage = lazy(() => import("./pages/History").then((m) => ({ default: m.HistoryPage })));
 const ProgressPage = lazy(() => import("./pages/Progress").then((m) => ({ default: m.ProgressPage })));
@@ -27,6 +28,7 @@ const TITLES: Record<Page, string> = {
   dashboard: "Dashboard",
   workout: "Training",
   library: "Exercises",
+  skills: "Skills",
   progress: "Progress",
   diet: "Diet",
   coach: "Coach",
@@ -53,7 +55,8 @@ async function waitForEngine(timeoutMs = 30_000): Promise<void> {
 }
 
 export function pageFromHash(hash: string): Page {
-  const fromHash = hash.replace("#", "") as Page;
+  // "#skills/front_lever" opens the Skills page; the page reads the rest itself.
+  const fromHash = hash.replace("#", "").split("/")[0] as Page;
   return fromHash in TITLES ? fromHash : "dashboard";
 }
 
@@ -127,6 +130,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenCoach={() => navigate("coach")} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
       {page === "library" && <LibraryPage onNavigate={navigate} refreshKey={refreshKey} />}
+      {page === "skills" && <SkillsPage onNavigate={navigate} onChanged={bump} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
