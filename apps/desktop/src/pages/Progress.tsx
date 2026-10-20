@@ -1,8 +1,8 @@
 /**
  * Progress: body weight with its trend line and an ETA to the goal weight,
- * weekly training volume and personal records.
+ * weekly training volume, personal records and tape measurements.
  */
-import type { BodyMetric, Eta, PersonalRecord, Profile, Units, WeekSummary } from "@ascend/shared";
+import type { BodyMetric, Eta, Measurement, MeasurementSite, PersonalRecord, Profile, Units, WeekSummary } from "@ascend/shared";
 import { useState } from "react";
 
 import { api } from "../api/client";
@@ -12,7 +12,7 @@ import { Segmented } from "../components/Segmented";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
 import { usePrefs } from "../lib/prefs";
-import { formatWeight, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
+import { formatLength, formatWeight, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
 import { useApi } from "../lib/useApi";
 
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -51,6 +51,7 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
 
       <WeeklyCard refreshKey={refreshKey + tick} />
       <PrCard refreshKey={refreshKey} units={units} />
+      <MeasurementsCard refreshKey={refreshKey} units={units} />
     </div>
   );
 }
@@ -233,6 +234,72 @@ function PrCard({ refreshKey, units }: { refreshKey: number; units: Units }) {
             </li>
           ))}
         </ul>
+      )}
+    </section>
+  );
+}
+
+const SITES: MeasurementSite[] = ["waist", "hips", "chest", "arm", "thigh", "calf", "neck"];
+
+function MeasurementsCard({ refreshKey, units }: { refreshKey: number; units: Units }) {
+  const [tick, setTick] = useState(0);
+  const list = useApi(api.measurements, [refreshKey, tick]);
+  const [site, setSite] = useState<MeasurementSite>("waist");
+  const [value, setValue] = useState("");
+  const toast = useToast();
+  const latest = new Map<string, Measurement>();
+  for (const m of list.data ?? []) {
+    const cur = latest.get(m.site);
+    if (!cur || cur.measured_at <= m.measured_at) latest.set(m.site, m);
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const v = Number(value);
+    if (!value || Number.isNaN(v) || v <= 0) return toast("Enter a measurement", "error");
+    try {
+      await api.logMeasurement(site, units === "imperial" ? Math.round(v * 2.54 * 10) / 10 : v);
+      setValue("");
+      setTick((t) => t + 1);
+      toast(`${site} saved`, "info");
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  }
+
+  return (
+    <section className="card col-span-12 p-5" aria-labelledby="measure-title">
+      <h2 id="measure-title" className="card-title mb-3">Measurements</h2>
+      {list.loading && !list.data ? <Loading /> : list.error ? <ErrorState message={list.error} onRetry={list.reload} /> : (
+        <div className="grid grid-cols-12 gap-5">
+          <ul className="col-span-12 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:col-span-8 lg:grid-cols-7">
+            {SITES.map((s) => {
+              const m = latest.get(s);
+              return (
+                <li key={s} className="rounded-lg border border-line bg-panel-2 p-3">
+                  <div className="text-[11px] uppercase tracking-wider text-muted">{s}</div>
+                  <div className="mt-1 text-sm font-semibold text-ink">{m ? formatLength(m.cm, units) : "–"}</div>
+                  {m?.change_cm != null && m.change_cm !== 0 && (
+                    <div className="text-[11px] text-faint">{m.change_cm > 0 ? "+" : ""}{formatLength(m.change_cm, units)}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <form onSubmit={save} className="col-span-12 flex items-end gap-2 lg:col-span-4">
+            <label className="block">
+              <span className="mb-1.5 block text-xs text-muted">Site</span>
+              <select className="input" value={site} onChange={(e) => setSite(e.target.value as MeasurementSite)}>
+                {SITES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+            <label className="block flex-1">
+              <span className="mb-1.5 block text-xs text-muted">{units === "imperial" ? "in" : "cm"}</span>
+              <input className="input" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Measurement value" />
+            </label>
+            <button type="submit" className="btn-ghost">Add</button>
+          </form>
+        </div>
       )}
     </section>
   );
