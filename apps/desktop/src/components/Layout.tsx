@@ -15,13 +15,15 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
-export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle }: {
+export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status }: {
   page: Page;
   onNavigate: (p: Page) => void;
   aiEnabled: boolean | null;
   onToggleAi: () => void;
   title: string;
   subtitle?: string;
+  /** Shown in the header beside the AI switch (the level/XP chip). */
+  status?: ReactNode;
   children: ReactNode;
 }) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -76,6 +78,8 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
             <h1 ref={heading} tabIndex={-1} className="text-lg font-semibold text-ink outline-none">{title}</h1>
             <p className="text-xs text-muted">{subtitle ?? today}</p>
           </div>
+          <div className="flex items-center gap-3">
+          {status}
           <button type="button" onClick={onToggleAi} disabled={aiEnabled === null} role="switch" aria-checked={Boolean(aiEnabled)}
             className="flex items-center gap-2.5 rounded-full border border-line-2 py-1.5 pl-3 pr-1.5 text-xs text-muted hover:border-accent/50"
             title="When off, the coach uses rule-based tips only. Everything else works the same.">
@@ -84,6 +88,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
               <span className={`h-4 w-4 rounded-full bg-white transition-transform ${aiEnabled ? "translate-x-4" : ""}`} />
             </span>
           </button>
+          </div>
         </header>
         {/* tabIndex 0: a page with no controls (e.g. a long History) must still scroll from the keyboard. */}
         <main id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
