@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/*
+ * ASCEND design tokens (dark theme). Restrained cyan accent, violet for XP,
+ * and four status colours shared by the muscle map and its legend.
+ */
+@theme {
+  --color-bg: #0a0e15;
+  --color-panel: #0f1520;
+  --color-panel-2: #141b28;
+  --color-line: #1e2736;
+  --color-line-2: #2a3446;
+  --color-ink: #e6edf7;
+  --color-muted: #7d8899;
+  --color-faint: #4f5a6b;
+  --color-accent: #22d3ee;
+  --color-accent-dim: #0e7490;
+  --color-xp: #8b7cff;
+  --color-good: #22c55e;
+  --color-warn: #f5a524;
+  --color-bad: #ef4444;
+  --color-under: #4f7bd9;
+  --color-nodata: #2a3345;
+  --color-ring-tasks: #22d3ee;
+  --color-ring-in: #34d399;
+  --color-ring-out: #fb923c;
+
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Rajdhani", "Inter", sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thin dark scrollbars (Chromium / Electron). */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line-2);
+  border-radius: 8px;
+  border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-panel;
+  }
+  .card-title {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-[#04141a] hover:bg-[#5ee3f5];
+  }
+  .btn-ghost {
+    @apply btn border border-line-2 text-ink hover:border-accent/60 hover:text-accent;
+  }
+  .input {
+    @apply w-full rounded-lg border border-line-2 bg-panel-2 px-3 py-2 text-sm text-ink placeholder:text-faint outline-none focus:border-accent/70 focus:ring-2 focus:ring-accent/20;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-md border border-line-2 px-1.5 py-0.5 text-[11px] text-muted;
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
