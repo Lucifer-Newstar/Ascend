@@ -66,7 +66,7 @@ docs/
 │   ├── security-privacy.md        ← threat model, Electron hardening, DPDP notes
 │   ├── port-register.md           ← localhost ports + IPC channel register
 │   ├── uml/                       ← 14-diagram UML set (Mermaid, PlantUML where needed)
-│   └── adr/                       ← Architecture Decision Records 0001–0012 + template
+│   └── adr/                       ← Architecture Decision Records 0001–0013 + template
 │
 ├── contracts/                     ← API CONTRACTS (contracts-first)
 │   ├── README.md                  ← conventions, mock server, drift check
@@ -141,6 +141,7 @@ docs/
 | [0010](architecture/adr/0010-import-export-formats.md) | Import/export formats (Strong/Hevy CSV, JSON, .ascendbak) |
 | [0011](architecture/adr/0011-prompt-contracts-and-output-validation.md) | Prompts as versioned contracts; every model output validated |
 | [0012](architecture/adr/0012-classifier-first-meal-scan.md) | Classifier-first meal scan; VLM as an optional second opinion |
+| [0013](architecture/adr/0013-custom-exercises.md) | Custom exercises: rules first, local model second, online lookup only on request |
 
 ## 3. Reading Order for a New Member
 

@@ -53,6 +53,7 @@
 | P-09 | `coach.readiness_note` | 1 | qwen3:4b | planned | S-NOTE |
 | P-10 | `lang.tamil_style` | 1 | qwen3:4b | planned | inherits the template it is appended to |
 | P-11 | `scan.second_opinion` | 1 | qwen3-vl:2b | planned | S-VLM |
+| P-12 | `exercise_classify` | 1 | qwen3:4b | **implemented** (`workouts/prompts/exercise_classify.v1.txt`) | JSON (schema `custom.AI_SCHEMA`: section, equipment, measure, pattern, difficulty, muscles by region and role, ≤ 5 instructions, aliases); validated field by field, invalid fields dropped, rules value kept |
 
 Fixed replies (no model; used by the safety rules and fallbacks):
 
