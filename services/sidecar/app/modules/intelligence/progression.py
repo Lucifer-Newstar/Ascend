@@ -612,8 +612,8 @@ def _reps_target(
         return make(
             "up_load",
             "top_of_range",
-            f"Every set hit {hi} reps{rated}: top of the {lo}-{hi} range, so +{_fmt(inc)} kg "
-            f"and back to {reps}.",
+            f"Every set hit {min_reps} reps{rated}: top of the {lo}-{hi} range, so "
+            f"+{_fmt(inc)} kg and back to {reps}.",
             reps,
             new,
             {"increment_kg": inc},
