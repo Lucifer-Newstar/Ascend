@@ -165,24 +165,29 @@ which is why the app works fully with AI off.
 
 ## 8. Event bus (transactional outbox)
 
-**v0.1 (today):** `core/events.py` is a small synchronous bus. `workouts` publishes
-`SetLogged` / `WorkoutLogged`, `nutrition` publishes `MealLogged`, `gamification`
-publishes `QuestCompleted`; `progress` and `gamification` subscribe. Handlers run inline
-**inside the same database transaction** as the request, so XP and muscle load cannot
-drift from the sets that caused them.
+`core/events.py` is a small synchronous bus. `workouts` publishes `SetLogged`,
+`SetUpdated`, `SetDeleted` and `WorkoutLogged`, `nutrition` publishes `MealLogged`,
+`progress` publishes `CheckinRecorded`, `gamification` publishes `QuestCompleted`.
+Fast handlers (muscle load, PR check, XP, quest progress) run inline **inside the same
+database transaction** as the request, so XP and muscle load cannot drift from the sets
+that caused them.
 
-**Phase 1 target:** once slow work (scans, reviews) exists, events must survive a crash
-between commit and side effect:
+**Outbox (v0.3, migration 0008):** every published event is also written to
+`events_outbox` (type, schema `VERSION`, JSON payload) in that same transaction
+(`core/outbox.py`), so an event exists exactly when its cause was committed.
 
-- Typed events: `SetLogged`, `SetUpdated`, `WorkoutLogged`, `MealLogged`,
-  `BodyMetricLogged`, `PRAchieved`, `QuestCompleted`, `LevelUp`, `InjuryReported`,
-  `CorrectionSaved`.
-- The event row is written to `events_outbox` **in the same transaction** as the data. A
-  dispatcher runs after commit and replays undelivered events at start-up.
-- Fast handlers (muscle load, PR check, XP, quest progress) stay inline; slow ones
-  enqueue jobs. Handlers are idempotent (`processed_events`).
+- **Dispatcher** (`outbox.dispatch_pending`, run every 2 s by `core/outbox_worker.py`
+  from the app lifespan) delivers events to async consumers registered on
+  `app.state.outbox_consumers`. Each (consumer, event) pair is claimed in
+  `processed_events`, so a retry never re-runs a consumer that already succeeded.
+  Failures back off 5 s, 10 s, 20 s… (max 1 h); after 5 attempts the event is closed
+  with its last error. Dispatched events older than 30 days are pruned hourly.
+- **SSE** `GET /events` (`core/stream.py`) streams the outbox to the UI, mapping domain
+  events to contract names (`dashboard.changed`, `quest.completed`, `pr.achieved`). The
+  outbox id is the SSE id; reconnecting with `Last-Event-ID` resumes after it.
+- Slow work (scans, reviews) will enqueue jobs from consumers; not built yet.
 - Example chain: `SetLogged` → muscle load updated → PR check → XP → quest progress →
-  SSE `dashboard.changed`.
+  outbox row → SSE `dashboard.changed` (+ `pr.achieved`).
 
 Sequence: [uml/sequence-diagram.md](uml/sequence-diagram.md).
 
