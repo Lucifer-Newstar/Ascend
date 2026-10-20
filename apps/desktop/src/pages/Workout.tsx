@@ -418,7 +418,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                 <ol className="mt-2 space-y-0.5 text-sm text-faint">
                   {prevSets.map((s, i) => <li key={s.id}><span className="inline-block w-5 text-muted">{i + 1}</span>{describeSet(s, units)}</li>)}
                 </ol>
-                <p className="mt-2 text-[11px] text-faint">Targets repeat last session. Progression suggestions (add load or reps) arrive with the progression engine.</p>
+                <p className="mt-2 text-[11px] text-faint">Today's target comes from the suggestion card. It repeats last session when there is no suggestion yet or you chose "Keep mine".</p>
               </>
             )}
           </section>
