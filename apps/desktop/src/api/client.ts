@@ -12,6 +12,7 @@ import type {
   Checkin,
   CheckinIn,
   DeloadAdvice,
+  Explanation,
   ProgressionDecision,
   ProgressionTarget,
   RecoveryReport,
@@ -164,6 +165,8 @@ export const api = {
     call<ProgressionDecision>("POST", `/intelligence/progression/${exerciseId}/decision`, { choice }),
   recovery: () => call<RecoveryReport>("GET", "/intelligence/recovery"),
   stalls: () => call<StalledLift[]>("GET", "/intelligence/stalls"),
+  progressionExplanation: (exerciseId: number) => call<Explanation>("GET", `/intelligence/progression/${exerciseId}/explanation`),
+  recoveryExplanation: (muscle: string) => call<Explanation>("GET", `/intelligence/recovery/${muscle}/explanation`),
   startDeload: () => call<DeloadAdvice>("POST", "/deload/start"),
   finishWorkout: (workoutId: number) => call<FinishedWorkout>("POST", `/workouts/${workoutId}/finish`),
 

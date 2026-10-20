@@ -3,7 +3,7 @@
  * reason, with "Use it", "Keep mine" and a "Why?" that lists the formula and every input.
  * Every number on it comes from the progression engine; the text never invents one.
  */
-import type { ProgressionTarget } from "@ascend/shared";
+import type { Explanation, ProgressionTarget } from "@ascend/shared";
 
 import type { Units } from "../../lib/units";
 import { toDisplayWeight, weightUnit } from "../../lib/units";
@@ -50,8 +50,9 @@ export function changeLabel(t: ProgressionTarget, units: Units): string {
   }
 }
 
-export function SuggestionCard({ target, units, decided, busy, onUse, onKeep }: {
+export function SuggestionCard({ target, units, decided, busy, onUse, onKeep, explain }: {
   target: ProgressionTarget;
+  explain?: () => Promise<Explanation>;
   units: Units;
   decided: "accepted" | "kept" | null;
   busy?: boolean;
@@ -103,7 +104,7 @@ export function SuggestionCard({ target, units, decided, busy, onUse, onKeep }: 
         {kept && t.kept_until && (
           <p className="text-xs text-muted">Keeping your numbers until {new Date(t.kept_until).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}.</p>
         )}
-        <WhyButton why={t.explanation} label={`Why ${first ? "no target yet" : describeTarget(t, units)}?`} />
+        <WhyButton why={t.explanation} label={`Why ${first ? "no target yet" : describeTarget(t, units)}?`} explain={explain} />
       </div>
     </section>
   );

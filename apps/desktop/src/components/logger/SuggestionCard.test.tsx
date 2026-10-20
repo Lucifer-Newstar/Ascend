@@ -28,6 +28,17 @@ describe("SuggestionCard", () => {
     await expectNoAxeViolations(container);
   });
 
+  it("shows the plain-language sentence and says who wrote it", async () => {
+    const explain = vi.fn(async () => ({
+      text: "All three sets reached 10 reps, so add 2.5 kg and start again at 6.", template: base.why, phrasing: "model" as const,
+      model: "qwen3:4b", fallback: null, checks: { numbers: "pass", banned: "pass" }, facts: "", version: "explain-v1",
+    }));
+    render(<SuggestionCard target={base} units="metric" decided={null} onUse={vi.fn()} onKeep={vi.fn()} explain={explain} />);
+    await userEvent.click(screen.getByRole("button", { name: "Why 3 × 6 @ 62.5 kg?" }));
+    expect(await screen.findByTestId("why-plain")).toHaveTextContent("add 2.5 kg and start again at 6. (phrased by the local model, numbers checked)");
+    expect(explain).toHaveBeenCalledTimes(1);
+  });
+
   it("labels holds, resets, deloads and the first time", () => {
     const hold: ProgressionTarget = { ...base, kind: "hold", reps: null, seconds: 24, weight_kg: 0, change: "up_time", reason: "add_time" };
     expect(describeTarget(hold, "metric")).toBe("3 × 24 s");
