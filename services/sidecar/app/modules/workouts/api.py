@@ -27,6 +27,7 @@ from app.modules.workouts.schemas import (
     FinishedWorkout,
     LoggedSet,
     OnlineLogEntry,
+    PreviousSession,
     PROut,
     ResearchCall,
     ResearchField,
@@ -260,6 +261,16 @@ def archive_exercise(exercise_id: int, db: Session = Depends(get_db)) -> Respons
     e.archived = True
     db.flush()
     return Response(status_code=204)
+
+
+@exercises_router.get("/{exercise_id}/previous", response_model=PreviousSession | None)
+def previous_session(exercise_id: int, db: Session = Depends(get_db)) -> PreviousSession | None:
+    """The last finished session's sets of this exercise (the logger shows them in grey
+    as "last time"), or null when it was never logged before."""
+    try:
+        return service.previous_session(db, exercise_id)
+    except service.NotFound as e:
+        raise HTTPException(404, str(e)) from e
 
 
 @exercises_router.get("/{exercise_id}", response_model=ExerciseDetail)

@@ -51,6 +51,7 @@ import type {
   MealType,
   MuscleState,
   Profile,
+  PreviousSession,
   Stats,
   ProfileIn,
   QuestItem,
@@ -130,6 +131,7 @@ export const api = {
   exercises: (q = "", section?: Section) =>
     call<Exercise[]>("GET", `/exercises?q=${encodeURIComponent(q)}${section ? `&section=${section}` : ""}`),
   exercise: (id: number) => call<ExerciseDetail>("GET", `/exercises/${id}`),
+  previousSession: (id: number) => call<PreviousSession | null>("GET", `/exercises/${id}/previous`),
   analyzeExercise: (body: { name: string; equipment?: string | null; notes?: string; online?: boolean; allow_once?: boolean }) =>
     call<ExerciseAnalysis>("POST", "/exercises/analyze", body),
   onlineLog: (limit = 100) => call<OnlineLogEntry[]>("GET", `/exercises/online-log?limit=${limit}`),
