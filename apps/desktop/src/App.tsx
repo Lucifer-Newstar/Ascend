@@ -112,6 +112,8 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
   const aiEnabled = settings.ai_enabled;
   return (
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}>
+      {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
+      <div key={page} className="page-enter">
       {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onOpenCoach={() => navigate("coach")} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
@@ -120,6 +122,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} />}
+      </div>
     </Layout>
   );
 }

@@ -15,6 +15,6 @@ describe("skeletons", () => {
     expect(status).toHaveTextContent("Loading your day…");
     const card = status.querySelector(".card");
     expect(card).toHaveAttribute("aria-hidden", "true");
-    expect(card?.querySelectorAll(".animate-pulse")).toHaveLength(5); // title + 4 lines
+    expect(card?.querySelectorAll(".skeleton")).toHaveLength(5); // title + 4 lines (shimmer)
   });
 });
