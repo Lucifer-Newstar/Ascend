@@ -9,6 +9,7 @@ import { ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
 import { kcal } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
+import { play, setSoundPrefs, soundPrefs, type SoundPrefs } from "../lib/sound";
 import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
@@ -90,6 +91,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
               onChange={(e) => save({ reduce_motion: e.target.checked }, e.target.checked ? "Reduce motion: on" : "Reduce motion: off")}
             />
           </label>
+          <SoundSettings />
         </section>
         <section className="card space-y-4 p-5" aria-labelledby="units-title">
           <h2 id="units-title" className="card-title">Units & training</h2>
@@ -244,6 +246,34 @@ export function LookupLog() {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Optional sound effects: off by default, kept in this browser profile. */
+function SoundSettings() {
+  const [prefs, setPrefs] = useState<SoundPrefs>(soundPrefs);
+  const change = (p: SoundPrefs) => {
+    setPrefs(p);
+    setSoundPrefs(p);
+  };
+  return (
+    <div className="space-y-2">
+      <label className="flex items-center justify-between gap-4">
+        <span className="text-sm text-ink">
+          Sound effects
+          <br />
+          <span className="text-xs text-muted">Short tones for a logged set, a cleared quest, a level-up and a new skill. Off by default.</span>
+        </span>
+        <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={prefs.on} onChange={(e) => change({ ...prefs, on: e.target.checked })} />
+      </label>
+      <div className={`flex items-center gap-3 ${prefs.on ? "" : "opacity-50"}`}>
+        <label htmlFor="sound-volume" className="text-xs text-muted">Volume</label>
+        <input id="sound-volume" type="range" min={0} max={100} step={5} disabled={!prefs.on} className="flex-1 accent-accent"
+          value={Math.round(prefs.volume * 100)} onChange={(e) => change({ ...prefs, volume: Number(e.target.value) / 100 })} />
+        <span className="w-9 text-right text-xs tabular-nums text-muted">{Math.round(prefs.volume * 100)}%</span>
+        <button type="button" className="btn-ghost px-2.5 py-1 text-xs" disabled={!prefs.on} onClick={() => play("levelup", prefs)}>Test</button>
+      </div>
     </div>
   );
 }

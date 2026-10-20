@@ -13,6 +13,7 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 
 import { api } from "../api/client";
 import { parseCommand, PAGE_WORDS, rankExercises, type Command } from "../lib/commands";
 import { usePrefs } from "../lib/prefs";
+import { play } from "../lib/sound";
 import { formatWeight } from "../lib/units";
 import type { Page } from "./Layout";
 import { IconSearch } from "./Icons";
@@ -167,6 +168,7 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
       pr = pr || r.set.is_pr;
     }
     toast(`${ex.name} · ${what} logged · +${xp} XP`, "xp");
+    play("set");
     if (pr) toast(`New PR on ${ex.name}`, "pr");
     onChanged();
   }

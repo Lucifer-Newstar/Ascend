@@ -10,6 +10,7 @@
 import type { GameSummary } from "@ascend/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { play } from "../lib/sound";
 import { SystemWindow, type SystemVariant } from "./SystemWindow";
 
 export interface SystemEvent {
@@ -63,7 +64,10 @@ export function SystemEvents({ game }: { game: GameSummary | undefined }) {
     if (!game) return;
     const fresh = eventsBetween(last.current, game);
     last.current = snapshot(game);
-    if (fresh.length) setEvents((list) => [...list, ...fresh.map((e) => ({ ...e, id: ++seq.current }))].slice(-3));
+    if (fresh.length) {
+      setEvents((list) => [...list, ...fresh.map((e) => ({ ...e, id: ++seq.current }))].slice(-3));
+      play(fresh.some((e) => e.variant === "levelup") ? "levelup" : "quest");
+    }
   }, [game]);
 
   const dismiss = useCallback((id: number) => setEvents((list) => list.filter((e) => e.id !== id)), []);

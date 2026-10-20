@@ -4,9 +4,10 @@
  * With Reduce motion on (OS or Settings) it fades in without the glow or confetti.
  */
 import type { SkillUnlock } from "@ascend/shared";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { useReducedMotion } from "../lib/motion";
+import { play } from "../lib/sound";
 import { Confetti } from "./Celebrate";
 import { IconSkill } from "./Icons";
 import { SystemWindow } from "./SystemWindow";
@@ -19,6 +20,10 @@ export function SkillAcquired({ unlocks, onClose, onView, rank }: {
 }) {
   const reduce = useReducedMotion();
   const button = useRef<HTMLButtonElement>(null);
+  const count = unlocks.length;
+  useEffect(() => {
+    if (count > 0) play("skill");
+  }, [count]);
   if (unlocks.length === 0) return null;
   const [first, ...rest] = unlocks;
   const xp = unlocks.reduce((n, u) => n + u.xp, 0);
