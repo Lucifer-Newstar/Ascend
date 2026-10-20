@@ -48,6 +48,10 @@ Release notes: [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md).
 ### Fixed
 - History showed runs and other timed sets as "1 reps".
 - Some CSV files could not be read when picked from the file dialog.
+- Found in the release click-through: long pages without buttons (History) could not be
+  scrolled from the keyboard; the Edit/Delete links in the set table and the selected
+  exercise's details were below AA contrast; chart dates could print on top of each other
+  at the right edge; the weigh-in box suggested 75.0 kg whatever you weigh.
 
 ## [0.2.0] - 2026-10-20
 
