@@ -719,9 +719,13 @@ components:
           type: integer
       required:
       - exercise_id
-      - type
+      - exercise
       - value
+      - weight_kg
+      - reps
+      - algo_version
       - achieved_at
+      - set_id
     PlanOut:
       type: object
       properties:
@@ -830,4 +834,6 @@ components:
       - kind
       - training_weeks
       - signals
+      - guidance
+      - deload_week
       - algo_version

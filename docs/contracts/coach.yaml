@@ -489,10 +489,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Finding'
-        proposals:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProposalOut'
         summary:
           type: string
         summary_source:
@@ -518,9 +514,14 @@ components:
           - review-v1
       required:
       - week_start
+      - week_end
+      - sessions_done
+      - sessions_planned
       - findings
+      - top
       - summary
       - summary_source
+      - algo_version
     Error:
       type: object
       required:
