@@ -42,7 +42,7 @@ export interface MuscleFigureProps {
 const sel = (scope: string, slugs: string[]) => slugs.map((s) => `${scope} path[id="${s}"]`).join(",\n");
 
 export function MuscleFigure(props: MuscleFigureProps) {
-  const { parts, side, glow, pulse, interactive, hovered, onHover, onSelect, border, defaultFill, scale = 1.05, tooltip } = props;
+  const { parts, side, glow, pulse, interactive, hovered, onHover, onSelect, border, defaultFill, scale = 1.2, tooltip } = props;
   const reduce = useReducedMotion();
   const scope = `mm${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const stage = useRef<HTMLDivElement>(null);
