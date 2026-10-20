@@ -891,23 +891,66 @@ components:
       - performed_at
       title: SetOut
     SettingsIn:
-      properties:
-        ai_enabled:
-          type: boolean
-          title: Ai Enabled
       type: object
-      required:
-      - ai_enabled
       title: SettingsIn
+      description: 'Partial update: only the fields sent are changed.'
+      properties:
+        ai_enabled:
+          type:
+          - boolean
+          - 'null'
+        units:
+          type:
+          - string
+          - 'null'
+          enum:
+          - metric
+          - imperial
+          - null
+        theme:
+          type:
+          - string
+          - 'null'
+          enum:
+          - dark
+          - light
+          - system
+          - null
+        sessions_per_week:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+          maximum: 7
     SettingsOut:
+      type: object
+      title: SettingsOut
       properties:
         ai_enabled:
           type: boolean
-          title: Ai Enabled
-      type: object
+        units:
+          type: string
+          enum:
+          - metric
+          - imperial
+          default: metric
+        theme:
+          type: string
+          enum:
+          - dark
+          - light
+          - system
+          default: dark
+        sessions_per_week:
+          type: integer
+          minimum: 1
+          maximum: 7
+          default: 3
       required:
       - ai_enabled
-      title: SettingsOut
+      - units
+      - theme
+      - sessions_per_week
     StreakOut:
       properties:
         current:
