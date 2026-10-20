@@ -58,8 +58,18 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
     setActive(0);
     if (!exercises) api.exercises().then(setExercises).catch(() => setExercises([]));
     if (!skills) api.skills().then(setSkills).catch(() => setSkills([]));
-    const t = setTimeout(() => input.current?.focus(), 0);
-    return () => clearTimeout(t);
+    // The field exists by the time effects run: focus it at once, so keys typed right after
+    // Ctrl+K (including Esc) land in the bar.
+    input.current?.focus();
+    // Esc closes even if focus is somewhere else in the dialog.
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      e.preventDefault();
+      onClose();
+      returnTo.current?.focus?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 

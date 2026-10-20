@@ -117,6 +117,13 @@ describe("CommandBar", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("closes on Escape even when focus is not in the field", async () => {
+    const { onClose } = renderBar();
+    (document.activeElement as HTMLElement | null)?.blur();
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("opens on Ctrl+K or Cmd+K only", () => {
     const base = { altKey: false, shiftKey: false, metaKey: false, ctrlKey: false };
     expect(isCommandKey({ ...base, key: "k", ctrlKey: true })).toBe(true);
