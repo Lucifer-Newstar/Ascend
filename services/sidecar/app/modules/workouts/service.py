@@ -12,7 +12,7 @@ from app.core.events import EventBus, SetLogged, WorkoutLogged
 from app.modules.gamification.formulas import HARD_SET_RPE
 from app.modules.workouts import pr
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
-from app.modules.workouts.schemas import SetIn, SetOut, WorkoutOut
+from app.modules.workouts.schemas import SetIn, SetOut, WorkoutOut, WorkoutSummary
 
 
 class NotFound(Exception):
@@ -136,3 +136,32 @@ def finish_workout(
         ),
     )
     return workout, round(minutes, 1), hard
+
+
+def list_workouts(
+    db: Session, limit: int = 20, before: datetime | None = None
+) -> list[WorkoutSummary]:
+    """Finished and active workouts, newest first. `before` is the started_at of the
+    last item on the previous page (keyset pagination: stable while new rows arrive)."""
+    from app.modules.gamification import service as game
+
+    stmt = select(Workout).order_by(Workout.started_at.desc(), Workout.id.desc()).limit(limit)
+    if before is not None:
+        stmt = stmt.where(Workout.started_at < before)
+    out: list[WorkoutSummary] = []
+    for w in db.scalars(stmt).all():
+        xp = game.xp_for_refs(db, sources=("session",), ref_id=w.id) + sum(
+            game.xp_for_refs(db, sources=("set", "pr"), ref_id=s.id) for s in w.sets
+        )
+        out.append(
+            WorkoutSummary(
+                id=w.id,
+                day=w.day,
+                started_at=w.started_at,
+                finished_at=w.finished_at,
+                sets=len(w.sets),
+                volume_kg=round(sum(s.weight_kg * s.reps for s in w.sets), 1),
+                xp=xp,
+            )
+        )
+    return out

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
@@ -16,6 +16,7 @@ from app.modules.workouts.schemas import (
     MuscleWeight,
     SetIn,
     WorkoutOut,
+    WorkoutSummary,
 )
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
@@ -43,6 +44,16 @@ def start(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> Wo
     existing = service.active_workout(db)
     workout = existing or service.start_workout(db, now)
     return service.workout_out(workout)
+
+
+@router.get("", response_model=list[WorkoutSummary])
+def list_workouts(
+    limit: int = Query(default=20, ge=1, le=100),
+    before: datetime | None = None,
+    db: Session = Depends(get_db),
+) -> list[WorkoutSummary]:
+    """Newest first. Pass the last item's started_at as `before` for the next page."""
+    return service.list_workouts(db, limit=limit, before=before)
 
 
 @router.get("/active", response_model=WorkoutOut | None)
