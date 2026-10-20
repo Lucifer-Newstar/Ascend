@@ -116,6 +116,22 @@ body {
   @apply inline-flex items-center rounded-md border border-line-2 px-1.5 py-0.5 text-[11px] text-muted;
 }
 
+/*
+ * Reduced motion (Windows: Settings → Accessibility → Visual effects → Animation effects off):
+ * ring and XP bar fills, spinners and pulses stop animating. Inline transitions are covered
+ * too, hence !important.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 *:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
