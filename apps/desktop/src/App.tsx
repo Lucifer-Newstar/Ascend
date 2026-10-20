@@ -128,7 +128,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
   return (
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpChip refreshKey={refreshKey} />}>
-      <SystemEvents game={game.data} />
+      <SystemEvents game={game.data ?? undefined} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
