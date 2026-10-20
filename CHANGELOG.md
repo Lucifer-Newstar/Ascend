@@ -76,6 +76,19 @@ Formula and model versions are listed where a number you see could change.
   such as "Log body weight…", put a template in the field instead of running), **N×M sets**
   ("log 3x8 pull-up", "log 5×5 back squat at 100 kg") and **"add N <food>"** portions
   ("add 2 eggs", meal from the time of day).
+- **Awakening onboarding**: five skippable steps (name, units and body data; focus,
+  calorie goal, activity and days per week; an equipment checklist; a baseline test; and
+  "[SYSTEM] You have been selected" with rank, starting targets and the first daily quest).
+  - The **baseline test** (max push-ups, pull-ups or dead hang, plank, squats in 60 s,
+    optional weight; built-in stopwatch and 60 s countdown) is logged as one real
+    max-effort session through the normal set logger, so it seeds XP, rank, skill trees and
+    stats like any set. New `POST /profile/baseline`; the results are kept on the profile.
+  - The **equipment checklist** is saved on the profile (also editable in Settings) and
+    enforced in the daily quest's suggestion and in "Train this skill" items: a
+    dumbbell-only user is never suggested a barbell exercise. An empty checklist filters
+    nothing, so existing profiles behave as before.
+  - Profile gains `focus`, `equipment` and a read-only `baseline` (migration 0013; old
+    clients that omit the new fields keep working). See `docs/architecture/awakening.md`.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

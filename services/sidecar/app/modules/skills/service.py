@@ -44,6 +44,7 @@ from app.modules.skills.schemas import (
     StepOut,
     TrainOut,
 )
+from app.modules.workouts.equipment import allowed_for_profile, fits
 from app.modules.workouts.models import Exercise, WorkoutSet
 from app.modules.workouts.schemas import SkillLinkOut
 
@@ -399,12 +400,14 @@ def train(db: Session, bus: EventBus, key: str, now: datetime) -> TrainOut:
         raise SkillNotFound(f"unknown skill '{key}'")
     ex = exercises_by_name(db)
     res = _evaluate_one(db, skill, now, ex)
+    # Never suggest an exercise the user said they cannot do (no bar, no rings...).
+    allowed = allowed_for_profile(db)
     specs: list[game.SkillQuestSpec] = []
     target_step = res.next or next((s for s in res.steps if s.step.unlock), res.steps[-1])
     open_crits = [c for c in target_step.criteria if not c.met] or target_step.criteria
     for c in open_crits[:2]:
         e = ex.get(c.criterion.exercise)
-        if e is None:
+        if e is None or not fits(e.equipment, allowed):
             continue
         n = _threshold(c.criterion, c.best_value)
         unit = "s" if c.criterion.is_hold else " reps"
@@ -420,7 +423,7 @@ def train(db: Session, bus: EventBus, key: str, now: datetime) -> TrainOut:
     used = {s.code for s in specs}
     for name in skill.feeders:
         e = ex.get(name)
-        if e is None or f"skill:{skill.key}:{e.id}" in used:
+        if e is None or f"skill:{skill.key}:{e.id}" in used or not fits(e.equipment, allowed):
             continue
         hold = e.measure == "hold"
         n = (e.rep_low or (10 if hold else 6)) if e.measure in ("reps", "hold") else 1
@@ -435,7 +438,9 @@ def train(db: Session, bus: EventBus, key: str, now: datetime) -> TrainOut:
         )
         break
     added, already, items = game.add_skill_items(db, bus, now, specs)
-    if added:
+    if not specs:
+        msg = f"None of {skill.name}'s exercises fit the equipment in your profile."
+    elif added:
         msg = f"Added {added} {skill.name} item{'s' if added != 1 else ''} to today's quest."
     elif already:
         msg = f"{skill.name} is already in today's quest."

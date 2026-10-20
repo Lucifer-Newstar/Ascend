@@ -21,6 +21,44 @@ class ProfileIn(BaseModel):
     goal: Literal["cut", "maintain", "bulk"]
     activity: Literal["sedentary", "light", "moderate", "active", "very_active"] = "moderate"
     target_weight_kg: float | None = Field(default=None, ge=30, le=300)
+    # Onboarding answers. Equipment: an empty list means "not stated" (nothing filtered).
+    focus: Literal["strength", "muscle", "skills", "fat_loss"] | None = None
+    equipment: list[Literal["none", "pullup_bar", "rings", "dumbbells", "gym"]] = Field(
+        default_factory=list, max_length=5
+    )
+
+
+class BaselineIn(StrictIn):
+    """The Awakening baseline test. Zero or null means "not done"; at least one result."""
+
+    pushups: int | None = Field(default=None, ge=0, le=200)
+    pullups: int | None = Field(default=None, ge=0, le=60)
+    dead_hang_s: int | None = Field(default=None, ge=0, le=600)
+    plank_s: int | None = Field(default=None, ge=0, le=1800)
+    squats_60s: int | None = Field(default=None, ge=0, le=120)
+    bodyweight_kg: float | None = Field(default=None, ge=30, le=300)
+
+
+class BaselineResult(BaseModel):
+    pushups: int | None = None
+    pullups: int | None = None
+    dead_hang_s: int | None = None
+    plank_s: int | None = None
+    squats_60s: int | None = None
+    bodyweight_kg: float | None = None
+    taken_at: datetime
+
+
+class BaselineOut(BaseModel):
+    baseline: BaselineResult
+    workout_id: int
+    sets_logged: int
+    xp_awarded: int
+    level: int
+    rank: str
+    # Skill-tree steps the baseline sets unlocked ("Skill: Step"); often none, since most
+    # steps need two sessions.
+    steps_unlocked: list[str]
 
 
 class EnergyTargets(BaseModel):
@@ -35,6 +73,7 @@ class EnergyTargets(BaseModel):
 class ProfileOut(ProfileIn):
     model_config = ConfigDict(from_attributes=True)
     energy: EnergyTargets
+    baseline: BaselineResult | None = None
 
 
 class MuscleStateOut(BaseModel):

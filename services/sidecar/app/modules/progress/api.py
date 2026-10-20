@@ -14,6 +14,7 @@ from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
 from app.modules.progress import (
     activity,
+    baseline,
     body,
     checkins,
     drilldown,
@@ -23,6 +24,8 @@ from app.modules.progress import (
     weekly,
 )
 from app.modules.progress.schemas import (
+    BaselineIn,
+    BaselineOut,
     BodyMetricIn,
     BodyMetricOut,
     CheckinIn,
@@ -54,6 +57,9 @@ def _profile_out(db: Session) -> ProfileOut:
         "goal",
         "activity",
         "target_weight_kg",
+        "focus",
+        "equipment",
+        "baseline",
     )
     data = {k: getattr(p, k) for k in fields}
     return ProfileOut.model_validate({**data, "energy": service.energy_for(p)})
@@ -68,6 +74,24 @@ def get_profile(db: Session = Depends(get_db)) -> ProfileOut:
 def put_profile(body: ProfileIn, db: Session = Depends(get_db)) -> ProfileOut:
     service.upsert_profile(db, body)
     return _profile_out(db)
+
+
+@router.post("/profile/baseline", response_model=BaselineOut, status_code=201)
+def post_baseline(
+    body_in: BaselineIn,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> BaselineOut:
+    """The onboarding baseline test: each result is logged as a max-effort set in one
+    finished "Baseline test" session (so it earns XP and feeds the skill trees like any
+    set), and the results are kept on the profile."""
+    if service.get_profile(db) is None:
+        raise HTTPException(409, "save the profile first")
+    try:
+        return baseline.run_baseline(db, bus, body_in, now)
+    except baseline.BaselineEmpty as e:
+        raise HTTPException(422, str(e)) from e
 
 
 @router.get("/settings", response_model=SettingsOut)

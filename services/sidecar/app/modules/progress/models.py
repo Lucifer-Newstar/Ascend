@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 from datetime import date, datetime
+from typing import Any
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -22,10 +24,30 @@ class Profile(Base):
     weight_kg: Mapped[float] = mapped_column(Float)
     goal: Mapped[str] = mapped_column(String(10))
     activity: Mapped[str] = mapped_column(String(16), default="moderate")
+    # Onboarding ("Awakening"): training focus, the equipment checklist (JSON list; empty
+    # means not stated, so nothing is filtered) and the baseline test (JSON object).
+    focus: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    equipment_json: Mapped[str] = mapped_column(
+        "equipment", Text, default="[]", server_default="[]"
+    )
+    baseline_json: Mapped[str] = mapped_column("baseline", Text, default="{}", server_default="{}")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+    @property
+    def equipment(self) -> list[str]:
+        return list(json.loads(self.equipment_json or "[]"))
+
+    @equipment.setter
+    def equipment(self, value: list[str]) -> None:
+        self.equipment_json = json.dumps(sorted(set(value)))
+
+    @property
+    def baseline(self) -> dict[str, Any] | None:
+        data = json.loads(self.baseline_json or "{}")
+        return data or None
 
 
 class BodyMetric(Base):

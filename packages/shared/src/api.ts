@@ -19,6 +19,38 @@ export interface ProfileIn {
   goal: Goal;
   activity: Activity;
   target_weight_kg?: number | null;
+  /** Onboarding answers (optional for older clients). */
+  focus?: Focus | null;
+  /** Equipment checklist; empty = not stated (nothing is filtered). */
+  equipment?: EquipmentChoice[];
+}
+
+export type Focus = "strength" | "muscle" | "skills" | "fat_loss";
+export type EquipmentChoice = "none" | "pullup_bar" | "rings" | "dumbbells" | "gym";
+
+/** POST /profile/baseline: the Awakening baseline test. 0 or null = not done. */
+export interface BaselineIn {
+  pushups?: number | null;
+  pullups?: number | null;
+  dead_hang_s?: number | null;
+  plank_s?: number | null;
+  squats_60s?: number | null;
+  bodyweight_kg?: number | null;
+}
+
+export interface BaselineResult extends BaselineIn {
+  taken_at: string;
+}
+
+export interface BaselineOut {
+  baseline: BaselineResult;
+  workout_id: number;
+  sets_logged: number;
+  xp_awarded: number;
+  level: number;
+  rank: string;
+  /** Skill-tree steps the baseline sets unlocked ("Skill: Step"); often none. */
+  steps_unlocked: string[];
 }
 
 export interface EnergyTargets {
@@ -32,6 +64,7 @@ export interface EnergyTargets {
 
 export interface Profile extends ProfileIn {
   energy: EnergyTargets;
+  baseline?: BaselineResult | null;
 }
 
 export interface MuscleState {

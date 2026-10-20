@@ -440,6 +440,37 @@ paths:
       x-status: implemented
       tags:
       - progress
+  /profile/baseline:
+    post:
+      summary: Post Baseline
+      description: 'The onboarding baseline test: each result is logged as a max-effort set in one
+
+        finished "Baseline test" session (so it earns XP and feeds the skill trees like any
+
+        set), and the results are kept on the profile.'
+      operationId: post_baseline_profile_baseline_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaselineIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaselineOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - progress
 components:
   securitySchemes:
     launchToken:
@@ -737,11 +768,34 @@ components:
           title: Activity
           default: moderate
         target_weight_kg:
-          type:
-          - number
-          - 'null'
-          minimum: 30
-          maximum: 300
+          anyOf:
+          - type: number
+            maximum: 300.0
+            minimum: 30.0
+          - type: 'null'
+          title: Target Weight Kg
+        focus:
+          anyOf:
+          - type: string
+            enum:
+            - strength
+            - muscle
+            - skills
+            - fat_loss
+          - type: 'null'
+          title: Focus
+        equipment:
+          items:
+            type: string
+            enum:
+            - none
+            - pullup_bar
+            - rings
+            - dumbbells
+            - gym
+          type: array
+          maxItems: 5
+          title: Equipment
       type: object
       required:
       - age
@@ -795,8 +849,6 @@ components:
           - very_active
           title: Activity
           default: moderate
-        energy:
-          $ref: '#/components/schemas/EnergyTargets'
         target_weight_kg:
           anyOf:
           - type: number
@@ -804,6 +856,34 @@ components:
             minimum: 30.0
           - type: 'null'
           title: Target Weight Kg
+        focus:
+          anyOf:
+          - type: string
+            enum:
+            - strength
+            - muscle
+            - skills
+            - fat_loss
+          - type: 'null'
+          title: Focus
+        equipment:
+          items:
+            type: string
+            enum:
+            - none
+            - pullup_bar
+            - rings
+            - dumbbells
+            - gym
+          type: array
+          maxItems: 5
+          title: Equipment
+        energy:
+          $ref: '#/components/schemas/EnergyTargets'
+        baseline:
+          anyOf:
+          - $ref: '#/components/schemas/BaselineResult'
+          - type: 'null'
       type: object
       required:
       - age
@@ -1533,3 +1613,125 @@ components:
       - volume_kg
       - last_trained
       title: MuscleActivity
+    BaselineIn:
+      properties:
+        pushups:
+          anyOf:
+          - type: integer
+            maximum: 200.0
+            minimum: 0.0
+          - type: 'null'
+          title: Pushups
+        pullups:
+          anyOf:
+          - type: integer
+            maximum: 60.0
+            minimum: 0.0
+          - type: 'null'
+          title: Pullups
+        dead_hang_s:
+          anyOf:
+          - type: integer
+            maximum: 600.0
+            minimum: 0.0
+          - type: 'null'
+          title: Dead Hang S
+        plank_s:
+          anyOf:
+          - type: integer
+            maximum: 1800.0
+            minimum: 0.0
+          - type: 'null'
+          title: Plank S
+        squats_60s:
+          anyOf:
+          - type: integer
+            maximum: 120.0
+            minimum: 0.0
+          - type: 'null'
+          title: Squats 60S
+        bodyweight_kg:
+          anyOf:
+          - type: number
+            maximum: 300.0
+            minimum: 30.0
+          - type: 'null'
+          title: Bodyweight Kg
+      additionalProperties: false
+      type: object
+      title: BaselineIn
+      description: The Awakening baseline test. Zero or null means "not done"; at least one result.
+    BaselineOut:
+      properties:
+        baseline:
+          $ref: '#/components/schemas/BaselineResult'
+        workout_id:
+          type: integer
+          title: Workout Id
+        sets_logged:
+          type: integer
+          title: Sets Logged
+        xp_awarded:
+          type: integer
+          title: Xp Awarded
+        level:
+          type: integer
+          title: Level
+        rank:
+          type: string
+          title: Rank
+        steps_unlocked:
+          items:
+            type: string
+          type: array
+          title: Steps Unlocked
+      type: object
+      required:
+      - baseline
+      - workout_id
+      - sets_logged
+      - xp_awarded
+      - level
+      - rank
+      - steps_unlocked
+      title: BaselineOut
+    BaselineResult:
+      properties:
+        pushups:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pushups
+        pullups:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pullups
+        dead_hang_s:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Dead Hang S
+        plank_s:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Plank S
+        squats_60s:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Squats 60S
+        bodyweight_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Bodyweight Kg
+        taken_at:
+          type: string
+          format: date-time
+          title: Taken At
+      type: object
+      required:
+      - taken_at
+      title: BaselineResult
