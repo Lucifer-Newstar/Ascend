@@ -25,6 +25,10 @@ dev = [
 build = [
     "pyinstaller>=6.10",
 ]
+# Charts for docs/ai/evaluation.md only (eval/charts.py); the app never imports these.
+eval = [
+    "matplotlib>=3.8",
+]
 
 [tool.ruff]
 line-length = 100
