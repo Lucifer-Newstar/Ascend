@@ -7,6 +7,7 @@ reads of other modules go through their query functions.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 from sqlalchemy import func, select
@@ -18,6 +19,8 @@ from app.core.events import (
     MealLogged,
     QuestCompleted,
     SetLogged,
+    SkillStepRevoked,
+    SkillStepUnlocked,
     WorkoutLogged,
 )
 from app.modules.gamification import formulas as f
@@ -73,6 +76,28 @@ def award(
         )
         db.flush()
     return granted
+
+
+def reverse(db: Session, at: datetime, sources: Iterable[str], ref_id: int, note: str) -> int:
+    """Append a correction that cancels the XP paid for these refs (never below zero
+    overall for them). The ledger stays append-only: history shows the grant and the
+    reversal. Returns the XP taken back."""
+    paid = xp_for_refs(db, sources, ref_id)
+    if paid <= 0:
+        return 0
+    db.add(
+        XpEvent(
+            day=at.date(),
+            at=at,
+            source=next(iter(sources)),
+            ref_id=ref_id,
+            amount=-paid,
+            formula_version=f.FORMULA_VERSION,
+            note=note[:120],
+        )
+    )
+    db.flush()
+    return paid
 
 
 def xp_for_refs(db: Session, sources: Iterable[str], ref_id: int) -> int:
@@ -240,6 +265,16 @@ def _metric_value(db: Session, metric: str, day: date) -> int | None:
             )
         )
         return int(db.scalar(stmt) or 0)
+    if metric.startswith("ex:"):
+        # ex:<exercise id>:<reps|hold>:<min>: sets of one exercise today reaching the minimum.
+        _, ex_id, kind, minimum = metric.split(":")
+        value = WorkoutSet.duration_s if kind == "hold" else WorkoutSet.reps
+        stmt = select(func.count(WorkoutSet.id)).where(
+            WorkoutSet.exercise_id == int(ex_id),
+            func.date(WorkoutSet.performed_at) == day.isoformat(),
+            value >= int(minimum),
+        )
+        return int(db.scalar(stmt) or 0)
     if metric == "meals":
         return nutrition.meal_count(db, day)
     if metric == "protein_g":
@@ -278,6 +313,59 @@ def complete_manual(db: Session, bus: EventBus, item_id: int, now: datetime) -> 
         _complete(db, bus, item, now)
     db.flush()
     return item
+
+
+# --- skill training items ---------------------------------------------------------
+
+
+SKILL_QUEST_XP = 15
+MAX_SKILL_ITEMS_PER_DAY = 4
+SKILL_GENERATOR_VERSION = "skill-quest-v1"
+
+
+@dataclass(frozen=True)
+class SkillQuestSpec:
+    code: str
+    title: str
+    detail: str
+    metric: str
+    target: int
+
+
+def add_skill_items(
+    db: Session, bus: EventBus, now: datetime, specs: list[SkillQuestSpec]
+) -> tuple[int, int, list[str]]:
+    """Add "train this skill" items to today's quest. Idempotent per code, at most
+    MAX_SKILL_ITEMS_PER_DAY a day (so the button cannot be farmed for quest XP).
+    Returns (added, already planned, titles of today's skill items)."""
+    items = ensure_quest(db, now)
+    codes = {i.code for i in items}
+    skill_items = [i for i in items if i.kind == "skill"]
+    added = already = 0
+    for spec in specs:
+        if spec.code in codes:
+            already += 1
+            continue
+        if len(skill_items) >= MAX_SKILL_ITEMS_PER_DAY:
+            break
+        row = QuestItem(
+            day=now.date(),
+            kind="skill",
+            code=spec.code[:40],
+            title=spec.title[:120],
+            detail=spec.detail[:200],
+            metric=spec.metric,
+            target=spec.target,
+            xp=SKILL_QUEST_XP,
+            generator_version=SKILL_GENERATOR_VERSION,
+        )
+        db.add(row)
+        db.flush()
+        skill_items.append(row)
+        codes.add(spec.code)
+        added += 1
+    refresh_quest(db, bus, now)
+    return added, already, [i.title for i in skill_items]
 
 
 # --- summary ---------------------------------------------------------------------
@@ -358,10 +446,19 @@ def make_handlers(bus: EventBus) -> None:
     def on_checkin(db: Session, e: CheckinRecorded) -> None:
         resize_training_for_readiness(db, e.at, e.band)
 
+    def on_skill_unlocked(db: Session, e: SkillStepUnlocked) -> None:
+        if e.xp > 0:
+            award(db, e.at, "skill", e.unlock_id, e.xp, note=f"{e.skill_name}: {e.step_name}")
+
+    def on_skill_revoked(db: Session, e: SkillStepRevoked) -> None:
+        reverse(db, e.at, ("skill",), e.unlock_id, note=f"skill step revoked: {e.step_key}")
+
     bus.subscribe(SetLogged, on_set_logged)
     bus.subscribe(WorkoutLogged, on_workout_logged)
     bus.subscribe(MealLogged, on_meal_logged)
     bus.subscribe(CheckinRecorded, on_checkin)
+    bus.subscribe(SkillStepUnlocked, on_skill_unlocked)
+    bus.subscribe(SkillStepRevoked, on_skill_revoked)
 
 
 def register(bus: EventBus) -> None:

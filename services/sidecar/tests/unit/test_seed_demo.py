@@ -27,7 +27,11 @@ def test_seed_demo_fills_progress_activity_and_checkins(
         assert {m["site"] for m in c.get("/measurements").json()} == {"waist", "arm", "chest"}
         assert len(c.get("/checkins").json()) == 13  # today is left for the user
         sections = {w["section"] for w in c.get("/workouts", params={"limit": 50}).json()}
-        assert sections == {"gym", "cardio", "meditation"}
+        assert sections == {"gym", "calisthenics", "cardio", "meditation"}
+        skills = {s["key"]: s for s in c.get("/skills").json()}
+        assert skills["muscle_up"]["current_step"] == "pull_up"
+        assert skills["muscle_up"]["pct_to_next"] == 95.0  # 3x8 pull-ups once; once more unlocks
+        assert c.get("/skills/front_lever").json()["eta"]["days"] is not None
         assert c.get("/profile").json()["target_weight_kg"] == 72
         assert c.get("/settings").json()["sessions_per_week"] == 5
         assert c.get("/progress/eta").status_code == 200

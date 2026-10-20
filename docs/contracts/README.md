@@ -18,6 +18,7 @@
 | [coach.yaml](coach.yaml) | 0.1.0 | `app.modules.coach` | `/coach` | 3 | 8 |
 | [progress.yaml](progress.yaml) | 0.1.0 | `app.modules.progress` | `/body-metrics`, `/checkins`, `/dashboard`, `/history`, `/muscles`, `/profile`, `/progress`, `/settings` | 7 | 5 |
 | [import-export.yaml](import-export.yaml) | 0.1.0 | `app.modules.io` | `/backup`, `/export`, `/import`, `/restore` | 2 | 5 |
+| [skills.yaml](skills.yaml) | 0.1.0 | `app.modules.skills` | `/skills` | 4 | 0 |
 | [ipc-contract.md](ipc-contract.md) | 1 | `apps/desktop` preload ↔ main | `window.ascend.*` | — | — |
 | [manifest.json](manifest.json) | — | module → contract map for the drift check | — | — | — |
 

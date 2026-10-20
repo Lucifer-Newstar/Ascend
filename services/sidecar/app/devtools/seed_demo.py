@@ -1,6 +1,7 @@
 """Fill a database with ~2 weeks of realistic demo history.
 
-Gym sessions, Indian meals, morning weigh-ins and check-ins, tape measurements, a
+Gym sessions, morning calisthenics (so the skill trees show mid-progress states),
+Indian meals, morning weigh-ins and check-ins, tape measurements, a
 few cardio and meditation sessions, and a goal weight for the Progress ETA.
 
 Used for screenshots, UI work and demos. It goes through the real services
@@ -71,6 +72,71 @@ TIMED = {
     10: ("cardio", "Brisk Walking", 35, 3200, 112),
     6: ("cardio", "Stationary Bike", 25, None, 128),
     3: ("meditation", "Box Breathing", 10, None, None),
+}
+# Morning calisthenics: offset -> [(exercise, values)]; values are reps, or seconds for
+# holds. Chosen so the skill trees show real mid-progress states: some steps unlocked,
+# Pull-up one session short of 3x8 (logging 3x8 today unlocks the chest-to-bar step),
+# and enough rising Tuck front lever sessions for a time-to-unlock estimate.
+CALISTHENICS: dict[int, list[tuple[str, list[int]]]] = {
+    13: [
+        ("Dead Hang", [35, 35, 32]),
+        ("Plank", [60, 60, 60]),
+        ("Incline Push-up", [12, 12, 12]),
+        ("Bodyweight Squat", [20, 20, 20]),
+        ("Pike Push-up", [8, 8, 8]),
+    ],
+    11: [
+        ("Dead Hang", [38, 36, 35]),
+        ("Plank", [62, 60, 60]),
+        ("Incline Push-up", [14, 13, 12]),
+        ("Bodyweight Squat", [22, 20, 20]),
+        ("Pike Push-up", [9, 8, 8]),
+        ("Scapular Pull-up", [10, 10, 10]),
+    ],
+    9: [
+        ("Scapular Pull-up", [12, 11, 10]),
+        ("Negative Pull-up", [4, 4, 3]),
+        ("Hollow Body Hold", [30, 30, 30]),
+        ("Push-up", [10, 9, 8]),
+        ("Headstand", [15, 15, 12]),
+        ("Box Pistol Squat", [5, 5, 4]),
+        ("Tuck Front Lever", [5, 5, 4]),
+        ("Tuck L-sit", [6, 6, 5]),
+    ],
+    7: [
+        ("Negative Pull-up", [5, 5, 5]),
+        ("Hollow Body Hold", [32, 30, 30]),
+        ("Push-up", [11, 10, 10]),
+        ("Tuck L-sit", [8, 8, 6]),
+        ("Pull-up", [5, 5, 4]),
+        ("Headstand", [18, 16, 15]),
+        ("Box Pistol Squat", [6, 5, 5]),
+        ("Tuck Front Lever", [6, 6, 5]),
+    ],
+    5: [
+        ("Negative Pull-up", [6, 5, 5]),
+        ("Pull-up", [6, 6, 5]),
+        ("Tuck Front Lever", [7, 7, 6]),
+        ("Tuck L-sit", [10, 9, 8]),
+        ("Push-up", [12, 11, 10]),
+        ("Headstand", [20, 20, 18]),
+        ("Chest Dip", [8, 7, 6]),
+    ],
+    3: [
+        ("Pull-up", [7, 7, 6]),
+        ("Tuck Front Lever", [8, 8, 7]),
+        ("Tuck L-sit", [11, 10, 10]),
+        ("Push-up", [13, 12, 12]),
+        ("Box Pistol Squat", [7, 6, 6]),
+        ("Chest Dip", [9, 8, 8]),
+    ],
+    1: [
+        ("Pull-up", [8, 8, 8]),
+        ("Tuck Front Lever", [10, 9, 9]),
+        ("Tuck L-sit", [12, 12, 11]),
+        ("Push-up", [14, 13, 13]),
+        ("Headstand", [24, 22, 20]),
+    ],
 }
 # Tape measurements at the start and near the end of the fortnight: site -> (first, last) cm
 TAPE: dict[MeasurementSite, tuple[float, float]] = {
@@ -146,6 +212,7 @@ def seed(days: int, wipe: bool) -> None:
         # The demo trains a push/pull/legs split about five days a week.
         progress.update_settings(db, SettingsIn(sessions_per_week=5))
         ex = {e.name: e.id for e in db.scalars(select(Exercise)).all()}
+        holds = {e.name for e in db.scalars(select(Exercise).where(Exercise.measure == "hold"))}
         foods = {f.name: f.id for f in db.scalars(select(Food)).all()}
 
         for offset in range(days - 1, -1, -1):
@@ -205,6 +272,21 @@ def seed(days: int, wipe: bool) -> None:
                     ),
                     t,
                 )
+
+            cali = CALISTHENICS.get(offset)
+            if cali:
+                t = at(7, 30)
+                w = workouts.start_workout(db, t, section="calisthenics")
+                for name, values in cali:
+                    for set_no, value in enumerate(values):
+                        t += timedelta(minutes=2)
+                        body_ = (
+                            SetIn(exercise_id=ex[name], duration_s=value, rpe=8.0 + set_no * 0.5)
+                            if name in holds
+                            else SetIn(exercise_id=ex[name], reps=value, rpe=8.0 + set_no * 0.5)
+                        )
+                        workouts.log_set(db, bus, w.id, body_, t)
+                workouts.finish_workout(db, bus, w.id, t + timedelta(minutes=3))
 
             split = SCHEDULE.get(offset)
             if split:

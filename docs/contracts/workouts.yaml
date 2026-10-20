@@ -600,6 +600,12 @@ components:
           - type: number
           - type: 'null'
           title: Previous Best E1Rm
+        unlocks:
+          items:
+            $ref: '#/components/schemas/UnlockedStep'
+          type: array
+          title: Unlocks
+          default: []
       type: object
       required:
       - set
@@ -1204,3 +1210,51 @@ components:
       - skill_name
       - role
       title: SkillLinkOut
+    UnlockedStep:
+      properties:
+        id:
+          type: integer
+          title: Id
+        skill_key:
+          type: string
+          title: Skill Key
+        skill_name:
+          type: string
+          title: Skill Name
+        step_key:
+          type: string
+          title: Step Key
+        step_name:
+          type: string
+          title: Step Name
+        unlocked_at:
+          type: string
+          format: date-time
+          title: Unlocked At
+        xp:
+          type: integer
+          title: Xp
+        final:
+          type: boolean
+          title: Final
+        next_step_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Step Name
+        source:
+          type: string
+          title: Source
+          default: log
+      type: object
+      required:
+      - id
+      - skill_key
+      - skill_name
+      - step_key
+      - step_name
+      - unlocked_at
+      - xp
+      - final
+      title: UnlockedStep
+      description: A skill-tree step this set unlocked (mirrors skills.schemas.SkillUnlockOut).

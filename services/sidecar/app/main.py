@@ -30,6 +30,8 @@ from app.modules.io.api import router as io_router
 from app.modules.nutrition.api import router as nutrition_router
 from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
+from app.modules.skills import service as skills_service
+from app.modules.skills.api import router as skills_router
 from app.modules.workouts.api import deload_router, exercises_router, prs_router
 from app.modules.workouts.api import router as workouts_router
 
@@ -54,6 +56,7 @@ def build_bus() -> EventBus:
     bus = EventBus()
     progress_service.register(bus)
     gamification_service.register(bus)
+    skills_service.register(bus)
     return bus
 
 
@@ -209,6 +212,7 @@ def create_app(
         nutrition_router,
         game_router,
         progress_router,
+        skills_router,
         coach_router,
         io_router,
     ):

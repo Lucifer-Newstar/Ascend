@@ -93,10 +93,27 @@ class SetOut(BaseModel):
     measure: str = "reps"
 
 
+class UnlockedStep(BaseModel):
+    """A skill-tree step this set unlocked (mirrors skills.schemas.SkillUnlockOut)."""
+
+    id: int
+    skill_key: str
+    skill_name: str
+    step_key: str
+    step_name: str
+    unlocked_at: datetime
+    xp: int
+    final: bool
+    next_step_name: str | None = None
+    source: str = "log"
+
+
 class LoggedSet(BaseModel):
     set: SetOut
     xp_awarded: int
     previous_best_e1rm: float | None
+    # Skill steps unlocked by this set ("Skill acquired" moments), usually empty.
+    unlocks: list[UnlockedStep] = []
 
 
 class WorkoutOut(BaseModel):
