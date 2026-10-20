@@ -171,4 +171,30 @@ describe("Training page", () => {
     await waitFor(() => expect(api.logSet).toHaveBeenCalled());
     expect(vi.mocked(api.logSet).mock.calls.at(-1)?.[1]).toMatchObject({ exercise_id: 1 });
   });
+  it("logs a plank as a hold and shows seconds in the session, opened from the gallery", async () => {
+    const plank: Exercise = {
+      id: 39, name: "Plank", equipment: "bodyweight", section: "calisthenics", met: null, time_based: false,
+      muscles: [{ muscle: "abs", weight: 1 }], measure: "hold",
+    };
+    vi.mocked(api.exercises).mockResolvedValue([plank]);
+    sessionStorage.setItem("ascend.pendingExercise", JSON.stringify({ id: 39, section: "calisthenics" }));
+    vi.mocked(api.startWorkout).mockResolvedValue({ ...session([]), section: "calisthenics" });
+    const held = {
+      id: 4, exercise_id: 39, exercise_name: "Plank", weight_kg: 0, reps: 1, rpe: 8, duration_s: 45,
+      distance_m: null, avg_hr: null, e1rm: null, is_pr: true, performed_at: "2026-10-20T07:30:00", measure: "hold" as const,
+    };
+    vi.mocked(api.logSet).mockResolvedValue({ set: held, xp_awarded: 3, previous_best_e1rm: null });
+    renderPage();
+    // The pending exercise opens straight into the hold form.
+    expect(await screen.findByRole("button", { name: "Log hold" })).toBeInTheDocument();
+    expect(api.exercises).toHaveBeenLastCalledWith("", "calisthenics");
+    await userEvent.click(screen.getByRole("button", { name: "45 s" }));
+    vi.mocked(api.activeWorkout).mockResolvedValue({ ...session([held]), section: "calisthenics" });
+    await userEvent.click(screen.getByRole("button", { name: "Log hold" }));
+    expect(api.logSet).toHaveBeenCalledWith(9, { exercise_id: 39, duration_s: 45, weight_kg: 0, reps: 1, rpe: 8 });
+    const table = await screen.findByRole("table");
+    expect(within(table).getByRole("columnheader", { name: "Hold" })).toBeInTheDocument();
+    expect(within(table).getByText("45 s")).toBeInTheDocument();
+    expect(await screen.findByText(/New best hold! Plank 45 s/)).toBeInTheDocument();
+  });
 });
