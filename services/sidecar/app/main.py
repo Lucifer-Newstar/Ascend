@@ -10,6 +10,7 @@ import signal
 import threading
 from collections.abc import AsyncIterator, Callable
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -79,6 +80,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 await task
 
 
+def _backup_before_migrating(settings: Settings, db_url: str, now: datetime) -> None:
+    """An app update that migrates the schema first saves the old database (ADR-0010)."""
+    from app.modules.io import backup
+
+    if not db_url.startswith("sqlite:///"):
+        return
+    db_file = Path(db_url.removeprefix("sqlite:///"))
+    try:
+        info = backup.backup_if_behind(db_file, backup.backups_dir(settings.data_dir), now)
+    except (OSError, backup.BackupError) as err:  # never block start-up on the safety copy
+        log.warning("pre-migration backup failed: %s", err)
+        return
+    if info is not None:
+        log.info("pre-migration backup written to %s (schema %s)", info.path, info.schema)
+
+
 def create_app(
     settings: Settings | None = None,
     clock: Callable[[], datetime] | None = None,
@@ -88,6 +105,7 @@ def create_app(
     settings = settings or load_settings()
     db_url = settings.resolved_db_url
     if migrate:
+        _backup_before_migrating(settings, db_url, (clock or datetime.now)())
         run_migrations(db_url)
 
     app = FastAPI(

@@ -199,3 +199,19 @@ def restore_backup(path: Path, db_file: Path, db_url: str) -> BackupInfo:
             src.close()
     run_migrations(db_url)
     return info
+
+
+def backup_if_behind(db_file: Path, out_dir: Path, now: datetime) -> BackupInfo | None:
+    """Before migrating an existing database to a newer schema, keep a copy of it.
+
+    Called at start-up. Returns None for a fresh install (nothing to protect) and for a
+    database already at head. Old automatic backups beyond KEEP_AUTOMATIC are pruned.
+    """
+    if not db_file.exists() or db_file.stat().st_size == 0:
+        return None
+    current = _schema_of(db_file)
+    if current in ("none", head_revision()):
+        return None
+    info = create_backup(db_file, out_dir, now, reason="pre-migration")
+    prune_automatic(out_dir)
+    return info
