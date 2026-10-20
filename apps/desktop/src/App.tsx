@@ -45,10 +45,12 @@ async function waitForEngine(timeoutMs = 30_000): Promise<void> {
   throw new Error("The local engine took too long to start.");
 }
 
-function initialPage(): Page {
-  const fromHash = window.location.hash.replace("#", "") as Page;
+export function pageFromHash(hash: string): Page {
+  const fromHash = hash.replace("#", "") as Page;
   return fromHash in TITLES ? fromHash : "dashboard";
 }
+
+const initialPage = (): Page => pageFromHash(window.location.hash);
 
 export default function App() {
   const [page, setPage] = useState<Page>(initialPage);
@@ -70,6 +72,13 @@ export default function App() {
   }, []);
 
   useEffect(boot, [boot]);
+
+  // Follow the hash, so Back/Forward (mouse buttons, Alt+Left/Right) and #links switch pages too.
+  useEffect(() => {
+    const onHash = () => setPage(pageFromHash(window.location.hash));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   const navigate = (p: Page) => {
     window.location.hash = p;
