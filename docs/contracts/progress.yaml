@@ -965,6 +965,10 @@ components:
           - 'null'
           minimum: 1
           maximum: 7
+        reduce_motion:
+          type:
+          - boolean
+          - 'null'
     SettingsOut:
       type: object
       title: SettingsOut
@@ -989,6 +993,9 @@ components:
           minimum: 1
           maximum: 7
           default: 3
+        reduce_motion:
+          type: boolean
+          default: false
       required:
       - ai_enabled
     StreakOut:

@@ -273,6 +273,8 @@ export interface Settings {
   units: Units;
   theme: ThemePref;
   sessions_per_week: number;
+  /** Calm the interface: no tilt, flips, count-ups or celebrations (the OS setting is honoured as well). */
+  reduce_motion: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------

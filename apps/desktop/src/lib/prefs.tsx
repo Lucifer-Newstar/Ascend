@@ -16,7 +16,7 @@ interface PrefsValue {
 
 const PrefsContext = createContext<PrefsValue | null>(null);
 
-export const DEFAULT_SETTINGS: Settings = { ai_enabled: true, units: "metric", theme: "dark", sessions_per_week: 3 };
+export const DEFAULT_SETTINGS: Settings = { ai_enabled: true, units: "metric", theme: "dark", sessions_per_week: 3, reduce_motion: false };
 
 export function PrefsProvider({
   initial,

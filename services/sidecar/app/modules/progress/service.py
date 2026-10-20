@@ -84,6 +84,7 @@ def read_settings(db: Session) -> SettingsOut:
         units=cast(Units, get_setting(db, "units", "metric")),
         theme=cast(Theme, get_setting(db, "theme", "dark")),
         sessions_per_week=int(get_setting(db, "sessions_per_week", "3")),
+        reduce_motion=get_setting(db, "reduce_motion", "false") == "true",
     )
 
 

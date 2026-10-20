@@ -59,6 +59,7 @@ class SettingsOut(BaseModel):
     units: Units = "metric"
     theme: Theme = "dark"
     sessions_per_week: int = 3
+    reduce_motion: bool = False
 
 
 class SettingsIn(StrictIn):
@@ -68,6 +69,7 @@ class SettingsIn(StrictIn):
     units: Units | None = None
     theme: Theme | None = None
     sessions_per_week: int | None = Field(default=None, ge=1, le=7)
+    reduce_motion: bool | None = None
 
 
 class BodyMetricIn(StrictIn):
