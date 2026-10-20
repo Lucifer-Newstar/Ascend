@@ -54,6 +54,15 @@ Formula and model versions are listed where a number you see could change.
     session you are logging is never its own "last time").
   - Targets repeat last session for now; suggestions that add load or reps belong to the
     progression engine, which is not part of this release.
+- **Skill-tree canvas** (Skills page, the new default "Tree" view; "Cards" keeps the old
+  grid). Every tree of a family is drawn as nodes and edges: mastered steps with a check,
+  the current step with a % ring and a soft glow, locked steps dimmed with a lock, and each
+  state also in words for screen readers. Wheel zooms, dragging pans, "Centre on current"
+  and −/+ buttons; one family is fitted into the window (down to 50%), "All" fits the width
+  and pans. Arrow keys move along the edges and between trees, Home jumps to the current
+  step, Enter selects. A drawer shows the selected step's criteria with progress, the
+  time-to-unlock estimate (only with enough data), feeders, "Train this skill", "Log" and a
+  link to the full tree page.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,
