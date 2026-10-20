@@ -143,11 +143,19 @@ def calm_streak(db: Session, today: date) -> StreakState:
 
 
 def _exercise_refs(db: Session) -> list[ExerciseRef]:
-    from app.modules.workouts.models import Exercise
+    """Exercises a quest may suggest: ASCEND's core list, the user's own (custom)
+    exercises and any other library exercise they have actually logged; never archived
+    ones. (Suggesting one of 873 imported library entries at random reads as noise.)"""
+    from app.modules.workouts.models import Exercise, WorkoutSet
 
+    logged = select(WorkoutSet.exercise_id).distinct()
+    stmt = select(Exercise).where(
+        Exercise.archived.is_(False),
+        (Exercise.source.in_(("ascend", "custom"))) | (Exercise.id.in_(logged)),
+    )
     return [
         ExerciseRef(e.id, e.name, {m.muscle: m.weight for m in e.muscles})
-        for e in db.scalars(select(Exercise)).all()
+        for e in db.scalars(stmt).all()
     ]
 
 

@@ -166,6 +166,57 @@ export interface LoggedSet {
   unlocks?: SkillUnlock[];
 }
 
+// ---- custom exercises --------------------------------------------------------
+
+export interface ExerciseProposal {
+  section: Section;
+  equipment: string;
+  measure: Measure;
+  pattern: string;
+  difficulty: Difficulty | null;
+  muscles: { muscle: string; weight: number }[];
+  rep_low: number | null;
+  rep_high: number | null;
+  met: number | null;
+  instructions: string[];
+  aliases: string[];
+}
+
+export interface ExerciseMatch {
+  id: number;
+  name: string;
+  score: number;
+  via: "exact" | "alias" | "fuzzy";
+  section: Section;
+  image: string | null;
+}
+
+export interface StageStatus {
+  status: string;
+  detail: string;
+  model: string | null;
+  applied: string[];
+}
+
+export interface ExerciseAnalysis {
+  name: string;
+  proposal: ExerciseProposal;
+  field_sources: Record<string, FieldSource>;
+  attribution: Attribution[];
+  matches: ExerciseMatch[];
+  duplicate_of: ExerciseMatch | null;
+  /** local model: ok | off | unavailable | error | invalid */
+  ai: StageStatus;
+  /** wger.de: off | not_requested | ok | not_found | error */
+  online: StageStatus;
+}
+
+export interface CustomExerciseIn extends ExerciseProposal {
+  name: string;
+  field_sources: Record<string, FieldSource>;
+  attribution: Attribution[];
+}
+
 // ---- skill trees ------------------------------------------------------------
 
 export type SkillFamily = "pull" | "push" | "core" | "balance" | "legs" | "levers";
@@ -412,6 +463,8 @@ export interface Settings {
   sessions_per_week: number;
   /** Calm the interface: no tilt, flips, count-ups or celebrations (the OS setting is honoured as well). */
   reduce_motion: boolean;
+  /** Allow "Add your own exercise" to look names up on wger.de when asked. Off by default. */
+  online_lookup?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------

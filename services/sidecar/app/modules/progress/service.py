@@ -78,6 +78,10 @@ def ai_enabled(db: Session) -> bool:
     return get_setting(db, "ai_enabled", "true") == "true"
 
 
+def online_lookup(db: Session) -> bool:
+    return get_setting(db, "online_lookup", "false") == "true"
+
+
 def read_settings(db: Session) -> SettingsOut:
     return SettingsOut(
         ai_enabled=ai_enabled(db),
@@ -85,6 +89,7 @@ def read_settings(db: Session) -> SettingsOut:
         theme=cast(Theme, get_setting(db, "theme", "dark")),
         sessions_per_week=int(get_setting(db, "sessions_per_week", "3")),
         reduce_motion=get_setting(db, "reduce_motion", "false") == "true",
+        online_lookup=online_lookup(db),
     )
 
 

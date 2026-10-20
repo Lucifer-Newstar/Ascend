@@ -1,0 +1,12 @@
+You classify a gym or bodyweight exercise for a fitness app. Reply with JSON only, matching the given schema.
+
+Exercise name: {{name}}
+User notes: {{notes}}
+
+Rules:
+- section: gym (weights/machines), calisthenics (bodyweight strength), cardio, martial_arts, flexibility or meditation.
+- measure: "reps" for repetitions, "hold" for isometric holds in seconds, "time" for cardio, stretching or meditation.
+- muscles: 1 to 6 regions from the allowed list; "primary" for the main movers, "secondary" for helpers.
+- instructions: up to 5 short, safe, general steps. No medical advice. If unsure, return an empty list.
+- aliases: other common names for the same exercise, if any.
+- Never invent numbers.

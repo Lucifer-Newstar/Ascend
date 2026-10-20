@@ -320,6 +320,34 @@ paths:
       x-status: implemented
       tags:
       - workouts
+    post:
+      summary: Create Exercise
+      description: 'Save a reviewed custom exercise and publish ExerciseAdded. 409 when the name or
+
+        an alias already exists (use that exercise instead).'
+      operationId: create_exercise_exercises_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomExerciseIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
   /workouts/{workout_id}/sets/{set_id}:
     patch:
       summary: Edit a logged set (re-runs PR, XP, muscle load via events)
@@ -470,6 +498,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExerciseDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
+    delete:
+      summary: Archive Exercise
+      description: 'Archive one of your own exercises: hidden from the library and pickers, its
+
+        logged sets and stats stay. Library exercises cannot be removed (409).'
+      operationId: archive_exercise_exercises__exercise_id__delete
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
+  /exercises/analyze:
+    post:
+      summary: Analyze Exercise
+      description: 'Propose every field of a new exercise, each with its source: library match,
+
+        rules, the local model (when AI is on and installed) and, only if Settings allows
+
+        it and the request asks, wger.de. Nothing is saved.'
+      operationId: analyze_exercise_exercises_analyze_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseAnalyzeIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseAnalysis'
         '422':
           description: Validation Error
           content:
@@ -1258,3 +1342,316 @@ components:
       - final
       title: UnlockedStep
       description: A skill-tree step this set unlocked (mirrors skills.schemas.SkillUnlockOut).
+    CustomExerciseIn:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          minLength: 2
+          title: Name
+        section:
+          type: string
+          enum:
+          - gym
+          - calisthenics
+          - cardio
+          - martial_arts
+          - flexibility
+          - meditation
+          title: Section
+        equipment:
+          type: string
+          maxLength: 20
+          minLength: 2
+          pattern: ^[a-z_]+$
+          title: Equipment
+        measure:
+          type: string
+          enum:
+          - reps
+          - hold
+          - time
+          title: Measure
+        pattern:
+          type: string
+          enum:
+          - push
+          - pull
+          - squat
+          - hinge
+          - lunge
+          - core
+          - isometric
+          - carry
+          - olympic
+          - locomotion
+          - mobility
+          - other
+          title: Pattern
+        difficulty:
+          anyOf:
+          - type: string
+            enum:
+            - beginner
+            - intermediate
+            - expert
+          - type: 'null'
+          title: Difficulty
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleWeight'
+          type: array
+          maxItems: 8
+          title: Muscles
+          default: []
+        rep_low:
+          anyOf:
+          - type: integer
+            maximum: 600.0
+            minimum: 1.0
+          - type: 'null'
+          title: Rep Low
+        rep_high:
+          anyOf:
+          - type: integer
+            maximum: 600.0
+            minimum: 1.0
+          - type: 'null'
+          title: Rep High
+        met:
+          anyOf:
+          - type: number
+            maximum: 23.0
+            minimum: 1.0
+          - type: 'null'
+          title: Met
+        instructions:
+          items:
+            type: string
+            maxLength: 300
+          type: array
+          maxItems: 12
+          title: Instructions
+          default: []
+        aliases:
+          items:
+            type: string
+            maxLength: 60
+          type: array
+          maxItems: 10
+          title: Aliases
+          default: []
+        field_sources:
+          additionalProperties:
+            type: string
+            enum:
+            - library
+            - rules
+            - local_ai
+            - wger
+            - user
+          type: object
+          title: Field Sources
+          default: {}
+        attribution:
+          items:
+            $ref: '#/components/schemas/AttributionOut'
+          type: array
+          maxItems: 3
+          title: Attribution
+          default: []
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - section
+      - equipment
+      - measure
+      - pattern
+      title: CustomExerciseIn
+      description: 'A reviewed custom exercise. field_sources says where each field came from; the
+
+        client marks fields the user changed as "user".'
+    ExerciseAnalysis:
+      properties:
+        name:
+          type: string
+          title: Name
+        proposal:
+          $ref: '#/components/schemas/ExerciseProposal'
+        field_sources:
+          additionalProperties:
+            type: string
+          type: object
+          title: Field Sources
+        attribution:
+          items:
+            $ref: '#/components/schemas/AttributionOut'
+          type: array
+          title: Attribution
+          default: []
+        matches:
+          items:
+            $ref: '#/components/schemas/ExerciseMatch'
+          type: array
+          title: Matches
+          default: []
+        duplicate_of:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseMatch'
+          - type: 'null'
+        ai:
+          $ref: '#/components/schemas/StageStatus'
+        online:
+          $ref: '#/components/schemas/StageStatus'
+      type: object
+      required:
+      - name
+      - proposal
+      - field_sources
+      - ai
+      - online
+      title: ExerciseAnalysis
+    ExerciseAnalyzeIn:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          minLength: 2
+          title: Name
+        equipment:
+          anyOf:
+          - type: string
+            maxLength: 20
+          - type: 'null'
+          title: Equipment
+        notes:
+          type: string
+          maxLength: 300
+          title: Notes
+          default: ''
+        online:
+          type: boolean
+          title: Online
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: ExerciseAnalyzeIn
+    ExerciseMatch:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        score:
+          type: number
+          title: Score
+        via:
+          type: string
+          title: Via
+        section:
+          type: string
+          title: Section
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+      type: object
+      required:
+      - id
+      - name
+      - score
+      - via
+      - section
+      title: ExerciseMatch
+    ExerciseProposal:
+      properties:
+        section:
+          type: string
+          title: Section
+        equipment:
+          type: string
+          title: Equipment
+        measure:
+          type: string
+          title: Measure
+        pattern:
+          type: string
+          title: Pattern
+        difficulty:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Difficulty
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleWeight'
+          type: array
+          title: Muscles
+          default: []
+        rep_low:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep Low
+        rep_high:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep High
+        met:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Met
+        instructions:
+          items:
+            type: string
+          type: array
+          title: Instructions
+          default: []
+        aliases:
+          items:
+            type: string
+          type: array
+          title: Aliases
+          default: []
+      type: object
+      required:
+      - section
+      - equipment
+      - measure
+      - pattern
+      title: ExerciseProposal
+    StageStatus:
+      properties:
+        status:
+          type: string
+          title: Status
+        detail:
+          type: string
+          title: Detail
+          default: ''
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model
+        applied:
+          items:
+            type: string
+          type: array
+          title: Applied
+          default: []
+      type: object
+      required:
+      - status
+      title: StageStatus
+      description: 'What one optional stage did. local_ai: ok | off | unavailable | error | invalid.
+
+        online: off | not_requested | ok | not_found | error.'

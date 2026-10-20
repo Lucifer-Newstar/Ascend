@@ -44,7 +44,9 @@
 
 1. **No account, no cloud, no telemetry.** Data lives in `%APPDATA%\ASCEND`.
 2. **Network egress is limited** to: model downloads (opt-in, per model), update check
-   (can be disabled). A CI test runs the packaged app's E2E journey with outbound
+   (can be disabled), and the wger.de exercise lookup. That lookup is off by default, is enabled
+   only behind a consent dialog in Settings, and is asked again per exercise in "Add your own
+   exercise". It runs from the sidecar and sends only the exercise name (ADR-0013). A CI test runs the packaged app's E2E journey with outbound
    network blocked except `127.0.0.1` and fails on any other connection attempt.
 3. **EXIF stripped** from every photo on import (location, device).
 4. **Delete everything:** typed confirmation, then the database, photos, backups and

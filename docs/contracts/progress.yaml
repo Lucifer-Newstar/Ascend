@@ -934,52 +934,61 @@ components:
       - performed_at
       title: SetOut
     SettingsIn:
+      properties:
+        ai_enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Ai Enabled
+        units:
+          anyOf:
+          - type: string
+            enum:
+            - metric
+            - imperial
+          - type: 'null'
+          title: Units
+        theme:
+          anyOf:
+          - type: string
+            enum:
+            - dark
+            - light
+            - system
+          - type: 'null'
+          title: Theme
+        sessions_per_week:
+          anyOf:
+          - type: integer
+            maximum: 7.0
+            minimum: 1.0
+          - type: 'null'
+          title: Sessions Per Week
+        reduce_motion:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Reduce Motion
+        online_lookup:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Online Lookup
+      additionalProperties: false
       type: object
       title: SettingsIn
       description: 'Partial update: only the fields sent are changed.'
-      properties:
-        ai_enabled:
-          type:
-          - boolean
-          - 'null'
-        units:
-          type:
-          - string
-          - 'null'
-          enum:
-          - metric
-          - imperial
-          - null
-        theme:
-          type:
-          - string
-          - 'null'
-          enum:
-          - dark
-          - light
-          - system
-          - null
-        sessions_per_week:
-          type:
-          - integer
-          - 'null'
-          minimum: 1
-          maximum: 7
-        reduce_motion:
-          type:
-          - boolean
-          - 'null'
     SettingsOut:
-      type: object
-      title: SettingsOut
       properties:
         ai_enabled:
           type: boolean
+          title: Ai Enabled
         units:
           type: string
           enum:
           - metric
           - imperial
+          title: Units
           default: metric
         theme:
           type: string
@@ -987,17 +996,24 @@ components:
           - dark
           - light
           - system
+          title: Theme
           default: dark
         sessions_per_week:
           type: integer
-          minimum: 1
-          maximum: 7
+          title: Sessions Per Week
           default: 3
         reduce_motion:
           type: boolean
+          title: Reduce Motion
           default: false
+        online_lookup:
+          type: boolean
+          title: Online Lookup
+          default: false
+      type: object
       required:
       - ai_enabled
+      title: SettingsOut
     StreakOut:
       properties:
         current:

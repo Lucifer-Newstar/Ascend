@@ -60,6 +60,9 @@ class SettingsOut(BaseModel):
     theme: Theme = "dark"
     sessions_per_week: int = 3
     reduce_motion: bool = False
+    # Off by default: when on, "Add your own exercise" may ask wger.de (the only
+    # feature that contacts the internet, and only when the user asks per exercise).
+    online_lookup: bool = False
 
 
 class SettingsIn(StrictIn):
@@ -70,6 +73,7 @@ class SettingsIn(StrictIn):
     theme: Theme | None = None
     sessions_per_week: int | None = Field(default=None, ge=1, le=7)
     reduce_motion: bool | None = None
+    online_lookup: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

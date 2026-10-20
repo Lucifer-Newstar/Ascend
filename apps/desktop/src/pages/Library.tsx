@@ -5,11 +5,13 @@
  * and a "Log it" button that opens it in the logger.
  */
 import type { Difficulty, Exercise, ExerciseDetail, FieldSource, Section } from "@ascend/shared";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 
 import { api } from "../api/client";
 import type { Page } from "../components/Layout";
-import { IconSearch } from "../components/Icons";
+import { IconPlus, IconSearch } from "../components/Icons";
+import { useToast } from "../components/Toast";
+import { AddExerciseView } from "./AddExercise";
 import { Segmented } from "../components/Segmented";
 import { SkeletonCard } from "../components/Skeleton";
 import { ErrorState, Loading } from "../components/States";
@@ -86,8 +88,10 @@ export function filterExercises(list: Exercise[], f: LibraryFilters): Exercise[]
   });
 }
 
-export function LibraryPage({ onNavigate, refreshKey, onAdd }: { onNavigate: (p: Page) => void; refreshKey: number; onAdd?: ReactNode }) {
-  const list = useApi(() => api.exercises(""), [refreshKey]);
+export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) => void; refreshKey: number }) {
+  const [version, setVersion] = useState(0);
+  const list = useApi(() => api.exercises(""), [refreshKey, version]);
+  const [adding, setAdding] = useState(false);
   const [filters, setFilters] = useState<LibraryFilters>(EMPTY_FILTERS);
   const [shown, setShown] = useState(PAGE_SIZE);
   const [openId, setOpenId] = useState<number | null>(null);
@@ -100,8 +104,17 @@ export function LibraryPage({ onNavigate, refreshKey, onAdd }: { onNavigate: (p:
     setShown(PAGE_SIZE);
   };
 
+  if (adding) {
+    return (
+      <AddExerciseView
+        onBack={() => setAdding(false)}
+        onCreated={(id) => { setAdding(false); setVersion((v) => v + 1); setOpenId(id); }}
+        onOpenExisting={(id) => { setAdding(false); setOpenId(id); }}
+      />
+    );
+  }
   if (openId !== null) {
-    return <ExerciseDetailView id={openId} onBack={() => setOpenId(null)} onNavigate={onNavigate} />;
+    return <ExerciseDetailView id={openId} onBack={() => setOpenId(null)} onNavigate={onNavigate} onRemoved={() => { setOpenId(null); setVersion((v) => v + 1); }} />;
   }
   if (list.error && !list.data) return <ErrorState message={list.error} onRetry={list.reload} />;
 
@@ -114,7 +127,9 @@ export function LibraryPage({ onNavigate, refreshKey, onAdd }: { onNavigate: (p:
             <input className="input pl-9" type="search" aria-label="Search exercises" placeholder="Search name or alias, e.g. pullups, L-sit…"
               value={filters.q} onChange={(e) => set("q", e.target.value)} />
           </div>
-          {onAdd}
+          <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
+            <IconPlus width={16} className="mr-1 inline align-[-3px]" />Add your own
+          </button>
         </div>
         <div className="mt-3 overflow-x-auto">
           <Segmented label="Exercise type" value={filters.type} options={TYPE_OPTIONS} onChange={(v) => set("type", v)} />
@@ -222,8 +237,19 @@ function SourceTag({ source }: { source: FieldSource | undefined }) {
   return <span className="ml-2 rounded border border-line-2 px-1.5 py-px text-[10px] font-normal uppercase tracking-wide text-faint">{SOURCE_LABEL[source] ?? source}</span>;
 }
 
-export function ExerciseDetailView({ id, onBack, onNavigate }: { id: number; onBack: () => void; onNavigate: (p: Page) => void }) {
+export function ExerciseDetailView({ id, onBack, onNavigate, onRemoved }: { id: number; onBack: () => void; onNavigate: (p: Page) => void; onRemoved?: () => void }) {
   const d = useApi(() => api.exercise(id), [id]);
+  const toast = useToast();
+  const [confirming, setConfirming] = useState(false);
+  const remove = async (e: ExerciseDetail) => {
+    try {
+      await api.archiveExercise(e.id);
+      toast(`Removed ${e.name}. Its logged sets stay in your history.`, "info");
+      onRemoved?.();
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  };
   const logIt = (e: ExerciseDetail) => {
     setPendingExercise({ id: e.id, section: e.section });
     onNavigate("workout");
@@ -232,7 +258,22 @@ export function ExerciseDetailView({ id, onBack, onNavigate }: { id: number; onB
     <div className="max-w-5xl space-y-4">
       <button type="button" className="btn-ghost" onClick={onBack}>← All exercises</button>
       {d.loading && !d.data ? <Loading label="Loading exercise…" /> : d.error && !d.data ? <ErrorState message={d.error} onRetry={d.reload} /> : d.data && (
-        <ExerciseDetailBody e={d.data} onLog={() => logIt(d.data!)} onOpenSkill={(key) => { window.location.hash = `skills/${key}`; }} />
+        <>
+          <ExerciseDetailBody e={d.data} onLog={() => logIt(d.data!)} onOpenSkill={(key) => { window.location.hash = `skills/${key}`; }} />
+          {d.data.is_custom && (
+            <section className="card flex flex-wrap items-center gap-3 p-4">
+              <p className="mr-auto text-xs text-muted">You added this exercise. Removing it hides it from the library and pickers; sets you logged stay.</p>
+              {confirming ? (
+                <>
+                  <button type="button" className="btn-ghost text-bad" onClick={() => remove(d.data!)}>Yes, remove it</button>
+                  <button type="button" className="btn-ghost" onClick={() => setConfirming(false)}>Keep</button>
+                </>
+              ) : (
+                <button type="button" className="btn-ghost" onClick={() => setConfirming(true)}>Remove from my library</button>
+              )}
+            </section>
+          )}
+        </>
       )}
     </div>
   );

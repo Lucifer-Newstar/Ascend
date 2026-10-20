@@ -1,4 +1,5 @@
 import type { Settings } from "@ascend/shared";
+import { useState } from "react";
 
 import { api } from "../api/client";
 import { IconDatabase } from "../components/Icons";
@@ -63,6 +64,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
             <input type="checkbox" className="h-5 w-5 accent-accent" checked={Boolean(aiEnabled)} onChange={onToggleAi} />
           </label>
         </section>
+        <OnlineLookup enabled={Boolean(settings.online_lookup)} onChange={(on) => save({ online_lookup: on }, on ? "Online exercise lookup: on" : "Online exercise lookup: off")} />
         <section className="card space-y-4 p-5" aria-labelledby="appearance-title">
           <h2 id="appearance-title" className="card-title">Appearance</h2>
           <div className="flex items-center justify-between gap-4">
@@ -141,5 +143,44 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
         </section>
       </div>
     </div>
+  );
+}
+
+/**
+ * The one feature that contacts the internet. Turning it on needs an explicit "Allow"
+ * after reading what is sent; turning it off is one click.
+ */
+function OnlineLookup({ enabled, onChange }: { enabled: boolean; onChange: (on: boolean) => void }) {
+  const [asking, setAsking] = useState(false);
+  return (
+    <section className="card p-5" aria-labelledby="online-title">
+      <h2 id="online-title" className="card-title mb-3">Online exercise lookup</h2>
+      <label className="flex items-center justify-between gap-4">
+        <span className="text-sm text-ink">
+          Look up exercises you add on wger.de
+          <br />
+          <span className="text-xs text-muted">Off by default. Even when on, you choose per exercise.</span>
+        </span>
+        <input
+          type="checkbox"
+          className="h-5 w-5 shrink-0 accent-accent"
+          checked={enabled || asking}
+          onChange={(e) => (e.target.checked ? setAsking(true) : (setAsking(false), onChange(false)))}
+        />
+      </label>
+      {asking && !enabled && (
+        <div className="mt-3 rounded-lg border border-line-2 bg-panel-2 p-3 text-xs text-muted" role="group" aria-label="Allow online lookup?">
+          <p className="text-ink">Allow online lookup?</p>
+          <p className="mt-1">
+            When you add an exercise and tick &quot;also look up on wger.de&quot;, ASCEND sends <strong className="text-ink">only the exercise name</strong> to
+            wger.de (a free, open exercise database) and shows what it found, credited to wger. Nothing else about you or your training leaves this PC.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" className="btn btn-primary px-3 py-1.5 text-xs" onClick={() => { setAsking(false); onChange(true); }}>Allow</button>
+            <button type="button" className="btn-ghost px-3 py-1.5 text-xs" onClick={() => setAsking(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

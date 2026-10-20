@@ -54,6 +54,25 @@ describe("SettingsPage", () => {
     expect(save).toHaveBeenCalledWith({ sessions_per_week: 5 });
   });
 
+  it("asks for consent before turning on the online exercise lookup", async () => {
+    const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
+    setup(save);
+    const toggle = await screen.findByRole("checkbox", { name: /look up exercises you add on wger.de/i });
+    expect(toggle).not.toBeChecked();
+    await userEvent.click(toggle);
+    expect(save).not.toHaveBeenCalled();
+    const ask = screen.getByRole("group", { name: "Allow online lookup?" });
+    expect(ask).toHaveTextContent("only the exercise name");
+    await userEvent.click(within(ask).getByRole("button", { name: "Cancel" }));
+    expect(toggle).not.toBeChecked();
+    await userEvent.click(toggle);
+    await userEvent.click(screen.getByRole("button", { name: "Allow" }));
+    expect(save).toHaveBeenCalledWith({ online_lookup: true });
+    await waitFor(() => expect(toggle).toBeChecked());
+    await userEvent.click(toggle);
+    expect(save).toHaveBeenLastCalledWith({ online_lookup: false });
+  });
+
   it("turns on Reduce motion and mirrors it onto <html data-motion>", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
