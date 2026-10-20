@@ -96,3 +96,16 @@ def test_run_counts_towards_the_burn_ring(client, profile, clock):
     client.post(f"/workouts/{w['id']}/finish")
     ring = client.get("/dashboard").json()["rings"]["kcal_out"]
     assert ring["value"] == round(9.8 * 70 * 0.5)  # profile weighs 70 kg
+
+
+def test_meditation_builds_a_calm_streak(client, profile, clock):
+    sit = ex(client, "Mindfulness Meditation")
+    for _ in range(3):
+        w = client.post("/workouts").json()
+        client.post(f"/workouts/{w['id']}/sets", json={"exercise_id": sit["id"], "duration_s": 600})
+        clock.now += timedelta(minutes=12)
+        client.post(f"/workouts/{w['id']}/finish")
+        clock.now += timedelta(days=1)
+    calm = client.get("/game/summary").json()["calm"]
+    # Three days in a row; today (day 4) has no sit yet but the streak is not broken.
+    assert calm == {"current": 3, "best": 3, "active_today": False}
