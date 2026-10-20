@@ -57,7 +57,13 @@ def _run(
     if not rows:
         raise HTTPException(422, "the file has a header but no sets")
     return importer.run_import(
-        db, bus, fmt, rows, dry_run=body.dry_run, include_warmups=body.include_warmups
+        db,
+        bus,
+        fmt,
+        rows,
+        dry_run=body.dry_run,
+        include_warmups=body.include_warmups,
+        now=bus.clock(),
     )
 
 
