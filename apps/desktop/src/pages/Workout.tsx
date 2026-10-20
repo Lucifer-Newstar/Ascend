@@ -84,6 +84,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   }
 
   const groups = groupSets(workout);
+  const load = sessionLoad(workout, exercises.data ?? []);
 
   return (
     <div className="grid h-full grid-cols-12 gap-5">
@@ -189,9 +190,48 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
             </div>
           )}
         </div>
+
+        {load.length > 0 && (
+          <div className="card p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="card-title">This session's muscle load</h2>
+              <span className="text-[11px] text-faint">effective sets = muscle weight × effort (RPE)</span>
+            </div>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2">
+              {load.map(([muscle, es]) => (
+                <li key={muscle} className="flex items-center gap-3 text-xs">
+                  <span className="w-24 shrink-0 text-muted">{MUSCLE_LABEL[muscle] ?? muscle}</span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+                    <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.min(100, (es / load[0][1]) * 100)}%` }} />
+                  </span>
+                  <span className="w-10 text-right text-ink">{es.toFixed(1)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
     </div>
   );
+}
+
+/** Same effort bands as the sidecar's load model (app/modules/progress/muscle_load.py). */
+export function effort(rpe: number | null): number {
+  if (rpe === null || rpe >= 7) return 1;
+  if (rpe >= 5) return 0.5;
+  return 0.25;
+}
+
+function sessionLoad(w: Workout | null, library: Exercise[]): [string, number][] {
+  if (!w) return [];
+  const byId = new Map(library.map((e) => [e.id, e]));
+  const totals = new Map<string, number>();
+  for (const s of w.sets) {
+    for (const m of byId.get(s.exercise_id)?.muscles ?? []) {
+      totals.set(m.muscle, (totals.get(m.muscle) ?? 0) + m.weight * effort(s.rpe));
+    }
+  }
+  return [...totals.entries()].sort((a, b) => b[1] - a[1]);
 }
 
 function groupSets(w: Workout | null): [string, Workout["sets"]][] {
