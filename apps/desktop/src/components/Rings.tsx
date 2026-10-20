@@ -33,8 +33,10 @@ export function Rings({ tasks, kcalIn, kcalOut }: { tasks: Ring; kcalIn: Ring; k
           return (
             <g key={s.key} transform={`rotate(-90 ${size / 2} ${size / 2})`}>
               <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeOpacity={0.14} strokeWidth={stroke} />
-              <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeLinecap="round"
-                strokeDasharray={`${c * p} ${c}`} style={{ transition: "stroke-dasharray 600ms ease" }} />
+              {p > 0 && (
+                <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.color} strokeWidth={stroke} strokeLinecap="round"
+                  strokeDasharray={`${c * p} ${c}`} style={{ transition: "stroke-dasharray 600ms ease" }} />
+              )}
             </g>
           );
         })}

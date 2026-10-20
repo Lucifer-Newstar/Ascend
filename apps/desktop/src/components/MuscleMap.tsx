@@ -13,7 +13,7 @@ import { STATUS_COLORS, STATUS_LABELS, regionsForSlug, statusBySlug } from "../l
 
 const LEGEND: MuscleStatus[] = ["under", "optimal", "recovering", "over", "no_data"];
 
-export function MuscleMap({ muscles, scale = 1.05 }: { muscles: MuscleState[]; scale?: number }) {
+export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; scale?: number }) {
   const [selected, setSelected] = useState<string | null>(null);
   const bySlug = useMemo(() => statusBySlug(muscles), [muscles]);
   const data: ExtendedBodyPart[] = useMemo(
@@ -47,7 +47,7 @@ export function MuscleMap({ muscles, scale = 1.05 }: { muscles: MuscleState[]; s
         </div>
       </div>
       <div className="min-w-0 flex-1 space-y-4">
-        <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+        <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
           {LEGEND.map((s) => (
             <li key={s} className="flex items-center gap-2 text-muted">
               <span className="h-2.5 w-2.5 rounded-sm" style={{ background: STATUS_COLORS[s] }} />

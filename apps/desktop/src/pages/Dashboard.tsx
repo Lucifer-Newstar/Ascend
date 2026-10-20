@@ -38,8 +38,8 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
   const n = data.nutrition;
   return (
     <div className="grid grid-cols-12 gap-5">
-      <section className="card col-span-12 p-5 xl:col-span-7"><XpBar xp={data.game.xp} streak={data.game.streak} /></section>
-      <section className="card col-span-12 flex flex-col justify-between p-5 xl:col-span-5">
+      <section className="card col-span-12 p-5 xl:col-span-8"><XpBar xp={data.game.xp} streak={data.game.streak} /></section>
+      <section className="card col-span-12 flex flex-col justify-between p-5 xl:col-span-4">
         <div className="flex items-center justify-between">
           <h2 className="card-title">Coach</h2>
           {tip && (

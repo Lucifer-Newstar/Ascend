@@ -39,7 +39,7 @@ export function HistoryPage({ refreshKey }: { refreshKey: number }) {
                   {d.meals.map((m) => (
                     <li key={m.id} className="flex justify-between gap-2">
                       <span className="truncate text-ink"><span className="capitalize text-muted">{m.meal_type}</span> · {m.items.map((i) => i.food_name).join(", ")}</span>
-                      <span className="shrink-0 text-muted">{timeLabel(m.logged_at)} · {kcal(m.kcal)}</span>
+                      <span className="shrink-0 text-muted">{timeLabel(m.logged_at)} · {kcal(m.kcal)} kcal</span>
                     </li>
                   ))}
                 </ul>
