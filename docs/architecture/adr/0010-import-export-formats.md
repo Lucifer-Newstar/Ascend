@@ -1,6 +1,6 @@
 # ADR-0010: Import/Export Formats (Strong/Hevy CSV, JSON, .ascendbak)
 
-- **Status:** Proposed (to ratify at the Phase 0 kickoff)
+- **Status:** Accepted (lead decision, 2026-10-20; revisit at the Phase 0 kickoff if the team objects)
 - **Date:** 2026-10-20
 - **Deciders:** Jegatheesan K (adapters), Gokul J (CI fixtures), Navin Jairam M (lead)
 

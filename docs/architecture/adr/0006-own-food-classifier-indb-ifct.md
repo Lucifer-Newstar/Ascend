@@ -1,6 +1,6 @@
 # ADR-0006: Own Indian-Food Classifier + INDB/IFCT Nutrient Database
 
-- **Status:** Proposed (to ratify at the Phase 0 kickoff)
+- **Status:** Accepted (lead decision, 2026-10-20; revisit at the Phase 0 kickoff if the team objects)
 - **Date:** 2026-10-20
 - **Deciders:** Navin Jairam M (lead, ML owner); Jegatheesan K (integration)
 
