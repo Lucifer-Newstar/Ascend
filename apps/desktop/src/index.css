@@ -634,6 +634,11 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+/* Programmatic focus targets (a page heading after navigation, a panel that opened) are
+   announced by screen readers; they are not controls, so they get no focus ring. */
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
 /* The command bar's field shows focus with its accent underline instead of a ring. */
 .cmd-input:focus-visible {
   outline: none;
