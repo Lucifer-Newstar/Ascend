@@ -1,4 +1,4 @@
-import type { GameSummary, QuestItem } from "@ascend/shared";
+import type { GameSummary, QuestItem, SystemNotice } from "@ascend/shared";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRef, useState } from "react";
@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { axeViolations } from "../test/axe";
-import { eventsBetween, SystemEvents } from "./SystemEvents";
+import { eventsBetween, nextNotice, SystemEvents } from "./SystemEvents";
 import { rankTint, SystemWindow, windowAccent } from "./SystemWindow";
 
 function wrap(ui: React.ReactNode, reduce = false) {
@@ -103,5 +103,31 @@ describe("System events", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Level up. Level 5 reached.");
     await act(async () => { await userEvent.keyboard("{Escape}"); });
     expect(screen.queryByRole("region", { name: "Level up" })).toBeNull();
+  });
+});
+
+describe("System notices", () => {
+  const deload: SystemNotice = { id: "deload:2026-10-19", code: "deload", title: "Deload advised", text: "The System detects stalled lifts and fatigue building up in several muscles.", at: "2026-10-20T07:00:00" };
+  const raised: SystemNotice = { id: "raised:9:1", code: "raised", title: "Target raised", text: "Barbell Bench Press: next time 3 × 6 @ 62.5 kg.", at: "2026-10-20T07:00:00" };
+
+  it("picks the first notice not shown before", () => {
+    expect(nextNotice([deload, raised], [])).toBe(deload);
+    expect(nextNotice([deload, raised], [deload.id])).toBe(raised);
+    expect(nextNotice([deload, raised], [deload.id, raised.id])).toBeNull();
+  });
+
+  it("speaks once: one notice per refresh, never the same id twice", async () => {
+    window.localStorage.clear();
+    const notices = vi.fn(async () => [deload, raised]);
+    const g = game(4, "E", [quest()]);
+    const { rerender } = render(wrap(<SystemEvents game={g} notices={notices} />));
+    expect(await screen.findByTestId("system-event-warning")).toHaveTextContent("Deload advised");
+    expect(screen.queryByTestId("system-event-notice")).toBeNull();
+    rerender(wrap(<SystemEvents game={{ ...g }} notices={notices} />));
+    expect(await screen.findByTestId("system-event-notice")).toHaveTextContent("Target raised");
+    rerender(wrap(<SystemEvents game={{ ...g }} notices={notices} />));
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.getAllByTestId(/system-event-/)).toHaveLength(2);
+    expect(JSON.parse(window.localStorage.getItem("ascend.system.notices.seen") ?? "[]")).toEqual([deload.id, raised.id]);
   });
 });

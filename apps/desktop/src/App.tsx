@@ -144,7 +144,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
       aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}>
-      <SystemEvents game={game.data ?? undefined} />
+      <SystemEvents game={game.data ?? undefined} notices={api.notices} />
       <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} onChanged={bump} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">

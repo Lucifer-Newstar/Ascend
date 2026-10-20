@@ -6,8 +6,12 @@
  * non-modal System window in the top-right corner. Nothing shows on the first load,
  * so opening the app never replays old events. Notices close with their button or Esc
  * and leave by themselves after a few seconds (not while hovered or focused).
+ *
+ * The System's voice from the intelligence layer (deload advised, target raised, muscle
+ * recovered) arrives through `notices`: each notice id shows once ever (remembered in
+ * localStorage) and at most one per refresh, so the System stays rare.
  */
-import type { GameSummary } from "@ascend/shared";
+import type { GameSummary, SystemNotice } from "@ascend/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { play } from "../lib/sound";
@@ -54,8 +58,32 @@ export function eventsBetween(prev: Snapshot | null, g: GameSummary): Omit<Syste
 }
 
 const LIFETIME_MS = 7000;
+const SEEN_KEY = "ascend.system.notices.seen";
+const NOTICE_VARIANT: Record<string, SystemVariant> = { deload: "warning", raised: "notice", recovered: "quest" };
 
-export function SystemEvents({ game }: { game: GameSummary | undefined }) {
+function seenIds(): string[] {
+  try {
+    const raw = window.localStorage.getItem(SEEN_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** The one notice to show now: the first the app has not shown before (pure). */
+export function nextNotice(notices: SystemNotice[], seen: string[]): SystemNotice | null {
+  return notices.find((n) => !seen.includes(n.id)) ?? null;
+}
+
+function markSeen(id: string): void {
+  try {
+    window.localStorage.setItem(SEEN_KEY, JSON.stringify([...seenIds(), id].slice(-200)));
+  } catch {
+    // storage unavailable: the notice may show again next launch, which is harmless
+  }
+}
+
+export function SystemEvents({ game, notices }: { game: GameSummary | undefined; notices?: () => Promise<SystemNotice[]> }) {
   const last = useRef<Snapshot | null>(null);
   const seq = useRef(0);
   const [events, setEvents] = useState<SystemEvent[]>([]);
@@ -69,6 +97,24 @@ export function SystemEvents({ game }: { game: GameSummary | undefined }) {
       play(fresh.some((e) => e.variant === "levelup") ? "levelup" : "quest");
     }
   }, [game]);
+
+  // System notices from the engines, re-read whenever the game summary refreshes.
+  useEffect(() => {
+    if (!game || !notices) return;
+    let alive = true;
+    notices()
+      .then((list) => {
+        const n = alive ? nextNotice(list, seenIds()) : null;
+        if (!n) return;
+        markSeen(n.id);
+        setEvents((all) => [...all, { id: ++seq.current, variant: NOTICE_VARIANT[n.code] ?? "notice", title: n.title, text: n.text }].slice(-3));
+        play("quest");
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [game, notices]);
 
   const dismiss = useCallback((id: number) => setEvents((list) => list.filter((e) => e.id !== id)), []);
 
