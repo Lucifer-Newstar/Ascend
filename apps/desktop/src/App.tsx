@@ -9,6 +9,7 @@ import { ToastProvider } from "./components/Toast";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { CoachPage } from "./pages/Coach";
 import { DashboardPage } from "./pages/Dashboard";
+import { DataPage } from "./pages/Data";
 import { DietPage } from "./pages/Diet";
 import { HistoryPage } from "./pages/History";
 import { ProgressPage } from "./pages/Progress";
@@ -23,6 +24,7 @@ const TITLES: Record<Page, string> = {
   diet: "Diet",
   coach: "Coach",
   history: "History",
+  data: "Import & export",
   settings: "Settings",
 };
 
@@ -43,10 +45,12 @@ async function waitForEngine(timeoutMs = 30_000): Promise<void> {
   throw new Error("The local engine took too long to start.");
 }
 
-function initialPage(): Page {
-  const fromHash = window.location.hash.replace("#", "") as Page;
+export function pageFromHash(hash: string): Page {
+  const fromHash = hash.replace("#", "") as Page;
   return fromHash in TITLES ? fromHash : "dashboard";
 }
+
+const initialPage = (): Page => pageFromHash(window.location.hash);
 
 export default function App() {
   const [page, setPage] = useState<Page>(initialPage);
@@ -68,6 +72,13 @@ export default function App() {
   }, []);
 
   useEffect(boot, [boot]);
+
+  // Follow the hash, so Back/Forward (mouse buttons, Alt+Left/Right) and #links switch pages too.
+  useEffect(() => {
+    const onHash = () => setPage(pageFromHash(window.location.hash));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   const navigate = (p: Page) => {
     window.location.hash = p;
@@ -105,7 +116,8 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
-      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} />}
+      {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
+      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} />}
     </Layout>
   );
 }

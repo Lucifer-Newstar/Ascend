@@ -1,4 +1,4 @@
-import type { Units, WorkoutSet } from "@ascend/shared";
+import type { Units, WorkoutSet, WorkoutSource } from "@ascend/shared";
 
 import { api } from "../api/client";
 import { IconTrophy } from "../components/Icons";
@@ -9,6 +9,8 @@ import { dayLabel, kcal, timeLabel } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { formatDistance, formatDuration, toDisplayWeight, weightUnit } from "../lib/units";
 import { isOffline, useApi } from "../lib/useApi";
+
+const SOURCE_LABEL: Record<WorkoutSource, string> = { app: "ASCEND", strong: "Strong", hevy: "Hevy" };
 
 export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; onNavigate: (p: Page) => void }) {
   const { data, error, status, loading, reload } = useApi(() => api.history(30), [refreshKey]);
@@ -47,14 +49,22 @@ export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; on
             <div>
               <div className="mb-1.5 text-[11px] uppercase tracking-wider text-faint">Workouts</div>
               {d.workouts.length === 0 ? <p className="text-xs text-faint">Rest day</p> : d.workouts.map((w) => (
-                <ul key={w.id} className="space-y-1 text-sm">
-                  {summarise(w.sets, settings.units).map((row) => (
-                    <li key={row.name} className="flex justify-between gap-2">
-                      <span className="text-ink">{row.name}{row.pr && <IconTrophy className="ml-1.5 inline text-warn" width={13} height={13} />}</span>
-                      <span className="text-muted">{row.sets} × {row.best}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div key={w.id} className="mb-2 last:mb-0">
+                  {w.source !== "app" && (
+                    <div className="mb-1 flex items-center gap-2 text-xs text-muted">
+                      <span className="chip">Imported from {SOURCE_LABEL[w.source]}</span>
+                      {w.title && <span className="truncate">{w.title}</span>}
+                    </div>
+                  )}
+                  <ul className="space-y-1 text-sm">
+                    {summarise(w.sets, settings.units).map((row) => (
+                      <li key={row.name} className="flex justify-between gap-2">
+                        <span className="text-ink">{row.name}{row.pr && <IconTrophy className="ml-1.5 inline text-warn" width={13} height={13} aria-label="personal record" />}</span>
+                        <span className="text-muted">{row.sets} × {row.best}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
             </div>
             <div>

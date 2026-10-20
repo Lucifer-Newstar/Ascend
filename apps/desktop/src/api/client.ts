@@ -34,6 +34,9 @@ import type {
   Food,
   GameSummary,
   HistoryDay,
+  ImportIn,
+  ImportReport,
+  ImportSource,
   HttpMethod,
   LoggedSet,
   MealType,
@@ -160,4 +163,6 @@ export const api = {
   history: (days = 30) => call<HistoryDay[]>("GET", `/history?days=${days}`),
   exportJson: () => call<unknown>("GET", "/export/json"),
   exportCsv: (kind: "workouts" | "meals") => call<string>("GET", `/export/csv/${kind}`),
+  /** Strong / Hevy CSV import. dry_run defaults to true on the sidecar: report only. */
+  importCsv: (source: ImportSource, body: ImportIn) => call<ImportReport>("POST", `/import/${source}`, body),
 };

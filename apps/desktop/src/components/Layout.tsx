@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
-import { IconBowl, IconChart, IconChat, IconDashboard, IconDumbbell, IconHistory, IconSettings } from "./Icons";
+import { IconBowl, IconChart, IconChat, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconSettings } from "./Icons";
 
-export type Page = "dashboard" | "workout" | "progress" | "diet" | "coach" | "history" | "settings";
+export type Page = "dashboard" | "workout" | "progress" | "diet" | "coach" | "history" | "data" | "settings";
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard },
@@ -11,6 +11,7 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
   { id: "diet", label: "Diet", icon: IconBowl },
   { id: "coach", label: "Coach", icon: IconChat },
   { id: "history", label: "History", icon: IconHistory },
+  { id: "data", label: "Import & export", icon: IconDatabase },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 

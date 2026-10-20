@@ -52,4 +52,23 @@ describe("HistoryPage", () => {
     );
     expect(await screen.findByRole("alert")).toHaveTextContent("The local engine isn't responding");
   });
+
+  it("marks imported sessions with where they came from", async () => {
+    vi.mocked(api.history).mockResolvedValue([
+      {
+        day: "2026-10-18", kcal_in: 0, sets: 1, xp: 0, meals: [],
+        workouts: [
+          { id: 7, day: "2026-10-18", section: "gym", started_at: "2026-10-18T18:00:00", finished_at: null,
+            sets: [set({ exercise_name: "Barbell Bench Press" })], source: "hevy", title: "Upper A" },
+        ],
+      },
+    ]);
+    render(
+      <PrefsProvider initial={DEFAULT_SETTINGS} save={vi.fn()}>
+        <HistoryPage refreshKey={0} onNavigate={vi.fn()} />
+      </PrefsProvider>,
+    );
+    expect(await screen.findByText("Imported from Hevy")).toBeInTheDocument();
+    expect(screen.getByText("Upper A")).toBeInTheDocument();
+  });
 });
