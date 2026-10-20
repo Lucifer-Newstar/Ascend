@@ -6,6 +6,43 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Added (v6 intelligence layer)
+- **Recovery engine v2** (`recovery-v2`, ADR-0014).
+  - Per-muscle readiness for all 19 regions. A set's dose counts its effort (reps in reserve from RPE, else from your e1RM), so an easy set loads a muscle less than a set to failure.
+  - Holds count by seconds: a 12 s hold is 0.4 of a set, where it used to be a whole set.
+  - Today's check-in (sleep, and soreness on muscles trained in the last 72 h) makes the same fatigue count for up to 45 % more.
+  - Your history is re-scored once by migration 0014; the downgrade restores load-v1.
+- **Personal recovery factors** (`recovery-k-v1`).
+  - One factor per muscle group, learned from how your performance follows fatigue. It starts at the population value and moves only with evidence, shown with a 90 % interval.
+  - Refitted after every finished workout.
+  - The muscle drill-down shows **your readiness next to the population's** with a "Why?".
+- **Progression engine** (`prog-v1`, ADR-0015).
+  - The logger shows a **suggested next target**: sets × reps (or seconds) @ load and RPE, what changed (+2.5 kg, +1 rep, hold, reset) and a one-line reason.
+  - **Use it** fills the inputs. **Keep mine** keeps your own numbers for 7 days (FT-1).
+  - **How it decides:** double progression in your rep zone, equipment-aware increments (never more than 10 % at once), RPE autoregulation and e1RM tracking.
+  - **When it holds back:** no increase while the trained muscles are under 40 % recovered; half the sets at RPE 7 in a deload week.
+  - Calisthenics targets follow the open skill-tree criterion they feed.
+- **Stalled lifts.** No rep record in 3 sessions is flagged, and the lift gets a 10 % reset. Two stalled lifts are a new deload signal (`deload-v2`, still two signals needed).
+- **Explanations** (ADR-0016).
+  - Every engine number has a "Why?" with the formula and every input.
+  - With AI on, the local model may phrase the reason in one sentence. That sentence is shown only if every number in it is checked against the engine's facts (the coach guard); otherwise you see the template.
+- **The System speaks, rarely.** Three notices, each shown once: **Deload advised**, **Target raised** after the session that earned it, and **Muscle recovered** when today's quest trains a muscle that is ready again.
+- **Evaluation** (ADR-0017, `docs/ai/evaluation.md`). A seeded synthetic-user simulator compares both engines with baselines. It covers calibration and correlation against simulated ground truth, hit rate and over/undershoot, stall precision and recall, and latency on a one-year history. It also states where the engines are weak: stall precision is low (0.113, recall 0.62), every result is on synthetic users only, the recovery correlation is partly circular because the simulator shares the engine's model family, and real local-model phrasing is unverified. Rerunning the recovery and progression evaluations reproduces the committed JSON exactly.
+- **API:** `GET /intelligence/recovery`, `GET /intelligence/progression/{id}`, `POST /intelligence/progression/{id}/decision`, `GET /intelligence/stalls`, `GET /intelligence/notices`, and `.../explanation` for targets and muscles (contract `intelligence.yaml`). `MuscleStateOut` gains `readiness_population` and `algo_version`.
+- **Demo data:** `seed_demo` now adds 10 earlier weeks of push/pull/legs before the detailed fortnight (`--history-weeks 0` for the old behaviour).
+
+### Changed (v6)
+- Muscle states, the drill-down, quests and the weekly review read recovery-v2 instead of load-v1.
+- The logger's target comes from the progression engine, and from last session only when there is no suggestion.
+
+### Fixed (v6)
+- prog-v1 no longer gives a bodyweight set above the top of its rep zone a lower target (22 push-ups in a 12-20 zone came back as 21); found by a property test.
+
+### Documentation (v6)
+- ADR-0014 (recovery-v2), ADR-0015 (prog-v1), ADR-0016 (explanations and the System's voice) and ADR-0017 (evaluation on synthetic users).
+- `docs/ai`: the AI feature map, AI-off table and decisions list cover the new engines; adaptive planning describes prog-v1 and deload-v2; the evaluation lists its limitations in one place.
+- README: a v6 intelligence-layer section with its honest limitations.
+
 ### Changed (v5 redesign)
 - **New "System" colour palette and type scale** (UI-1). Navy-black surfaces, System blue
   for System UI and controls, arcane violet for XP and levels, gold for PRs, and rank colours
