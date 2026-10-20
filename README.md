@@ -145,11 +145,13 @@ Verified on Linux (CI-equivalent):
   (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
 - The PyInstaller sidecar binary builds, migrates and answers `/health` (Linux build).
 - The Docker test image builds and its tests pass.
+- Electron (Linux, under a virtual display): the app window opens, spawns the sidecar with the
+  stdin token, waits for `/health`, onboarding and the dashboard work over the IPC bridge, the
+  renderer has no Node access, and the sidecar exits when the app closes.
 
 Not yet verified:
 
-- Electron itself has not been launched (no display on the build machine). The main/preload
-  code compiles and the renderer is tested in Chromium, but the first real run is on Windows.
+- Electron on real Windows (paths, `uv` on PATH, window behaviour) has not been run.
 - The Windows installer (electron-builder + PyInstaller `.exe`) has not been built.
 - The Ollama path is tested with a mocked server only; `qwen3:4b` answers are untested.
 
