@@ -1,0 +1,44 @@
+# --- Node / Electron ---
+node_modules/
+dist/
+dist-electron/
+release/
+*.tsbuildinfo
+.vite/
+coverage/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+*.spec.bak
+htmlcov/
+.coverage
+
+# --- Local data (never commit user data) ---
+*.db
+*.db-wal
+*.db-shm
+data/
+*.ascendbak
+
+# --- ML artefacts (tracked by DVC, not git) ---
+ml/data/raw/
+ml/data/processed/
+ml/models/*.onnx
+mlruns/
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+.env
+.env.*
+!.env.example
