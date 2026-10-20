@@ -21,6 +21,23 @@ const TITLES: Record<Page, string> = {
   settings: "Settings",
 };
 
+/**
+ * In Electron the window opens while the sidecar is still starting (migrations
+ * run first), so poll its status before the first API call. Browser dev mode
+ * has no bridge and skips this.
+ */
+async function waitForEngine(timeoutMs = 30_000): Promise<void> {
+  if (!window.ascend) return;
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const status = await window.ascend.sidecarStatus();
+    if (status.state === "ready") return;
+    if (status.state === "failed") throw new Error(`The local engine failed to start: ${status.lastError ?? "unknown error"}`);
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error("The local engine took too long to start.");
+}
+
 function initialPage(): Page {
   const fromHash = window.location.hash.replace("#", "") as Page;
   return fromHash in TITLES ? fromHash : "dashboard";
@@ -36,10 +53,13 @@ export default function App() {
 
   const boot = useCallback(() => {
     setBootError(null);
-    api.dashboard()
-      .then((d) => setHasProfile(d.has_profile))
+    waitForEngine()
+      .then(() => Promise.all([api.dashboard(), api.settings()]))
+      .then(([d, s]) => {
+        setHasProfile(d.has_profile);
+        setAiEnabled(s.ai_enabled);
+      })
       .catch((e: Error) => setBootError(e.message));
-    api.settings().then((s) => setAiEnabled(s.ai_enabled)).catch(() => setAiEnabled(null));
   }, []);
 
   useEffect(boot, [boot]);

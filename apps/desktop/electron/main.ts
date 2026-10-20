@@ -106,7 +106,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     registerIpc();
-    const win = createWindow();
+    createWindow(); // the renderer polls sidecarStatus until the engine is ready
     try {
       await sidecar.start();
       log("sidecar ready");
@@ -114,7 +114,6 @@ if (!app.requestSingleInstanceLock()) {
       log(`sidecar failed to start: ${(err as Error).message}`);
       dialog.showErrorBox("ASCEND", `The local engine failed to start.\n${(err as Error).message}\n\nLog: ${logFile}`);
     }
-    win.webContents.send("sidecar:changed");
   });
 
   app.on("window-all-closed", () => app.quit());
