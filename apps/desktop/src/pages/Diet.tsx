@@ -125,7 +125,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
       </section>
 
       <section className="col-span-12 space-y-5 lg:col-span-8">
-        <div className="card p-5">
+        <div className="card card-hover p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="card-title">Add a meal</h2>
             <div className="flex gap-1 rounded-lg border border-line p-0.5">
@@ -164,7 +164,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
           )}
         </div>
 
-        <div className="card p-5">
+        <div className="card card-hover p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="card-title">Today</h2>
             <span className="text-xs text-muted">target is an estimate</span>

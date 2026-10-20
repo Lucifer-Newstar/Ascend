@@ -14,7 +14,7 @@ const shortDate = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateStrin
 export function WeeklyReviewCard({ refreshKey }: { refreshKey: number }) {
   const r = useApi(api.weeklyReview, [refreshKey]);
   return (
-    <section className="card p-5" aria-labelledby="review-title">
+    <section className="card card-hover p-5" aria-labelledby="review-title">
       <div className="mb-2 flex items-center justify-between">
         <h2 id="review-title" className="card-title">Weekly review</h2>
         {r.data && <span className="text-[11px] text-faint">{shortDate(r.data.week_start)} – {shortDate(r.data.week_end)}</span>}
@@ -67,7 +67,7 @@ export function DeloadCard({ refreshKey }: { refreshKey: number }) {
   }
 
   return (
-    <section className="card p-5" aria-labelledby="deload-title">
+    <section className="card card-hover p-5" aria-labelledby="deload-title">
       <h2 id="deload-title" className="card-title mb-2">Deload check</h2>
       {d.loading && !d.data ? <Loading /> : d.error ? <ErrorState message={d.error} onRetry={d.reload} /> : d.data && (
         <>
