@@ -91,3 +91,16 @@ class SetPatch(BaseModel):
     rpe: float | None = Field(default=None, ge=1, le=10)
     duration_s: int | None = Field(default=None, ge=1, le=6 * 3600)
     distance_m: float | None = Field(default=None, ge=0, le=300_000)
+
+
+class PROut(BaseModel):
+    exercise_id: int
+    exercise: str
+    type: str = "e1rm"
+    value: float
+    weight_kg: float
+    reps: int
+    formula: str = "epley"
+    algo_version: str
+    achieved_at: datetime
+    set_id: int

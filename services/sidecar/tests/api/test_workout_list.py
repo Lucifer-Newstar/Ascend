@@ -40,3 +40,18 @@ def test_list_workouts_keyset_pagination(client, profile, clock):
 def test_list_workouts_rejects_bad_limit(client):
     assert client.get("/workouts", params={"limit": 0}).status_code == 422
     assert client.get("/workouts", params={"limit": 101}).status_code == 422
+
+
+def test_prs_list_best_e1rm_per_exercise(client, profile, clock):
+    bench = exercise_id(client, "Barbell Bench Press")
+    squat = exercise_id(client, "Back Squat")
+    w = client.post("/workouts").json()["id"]
+    for ex, kg, reps in ((bench, 60, 8), (bench, 70, 5), (squat, 100, 5), (squat, 90, 5)):
+        client.post(f"/workouts/{w}/sets", json={"exercise_id": ex, "weight_kg": kg, "reps": reps})
+        clock.now += timedelta(minutes=3)
+    prs = client.get("/prs").json()
+    assert [p["exercise"] for p in prs] == ["Back Squat", "Barbell Bench Press"]
+    assert prs[0]["value"] == round(100 * (1 + 5 / 30), 1)
+    assert prs[1]["weight_kg"] == 70 and prs[1]["reps"] == 5
+    only = client.get("/prs", params={"exercise_id": bench}).json()
+    assert len(only) == 1 and only[0]["formula"] == "epley"
