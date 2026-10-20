@@ -75,6 +75,12 @@ describe("RecoveryYou", () => {
     expect(screen.getByTestId("why-panel")).toHaveTextContent("Your recovery factor, k1.2");
   });
 
+  it("does not claim slower or faster while the interval includes the population value", () => {
+    render(<RecoveryYou m={{ ...muscle, k: 1.03, half_life_h: 49.4 }} g={{ ...group, k: 1.03, k_low: 0.7, k_high: 1.45 }} />);
+    expect(screen.getByText(/recover about like the population so far: half-life 49.4 h against 48 h/)).toBeInTheDocument();
+    expect(screen.queryByText(/recover slower/)).not.toBeInTheDocument();
+  });
+
   it("says when the population value is still in use", () => {
     render(<RecoveryYou m={{ ...muscle, k: 1, half_life_h: 48 }} g={{ ...group, k: 1, personal: false, n: 2 }} />);
     expect(screen.getByText(/Population recovery for Legs until your sessions show a clear difference \(2 usable so far\)/)).toBeInTheDocument();
