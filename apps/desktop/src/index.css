@@ -416,6 +416,21 @@ body {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
+/* Dialogs (command bar): a short rise and fade, transform and opacity only. */
+@keyframes asc-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.dialog-in {
+  animation: asc-dialog-in var(--dur-fast) var(--ease-out) both;
+}
+
 .pop-in {
   animation: asc-pop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
 }
@@ -618,6 +633,10 @@ body {
 *:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+/* The command bar's field shows focus with its accent underline instead of a ring. */
+.cmd-input:focus-visible {
+  outline: none;
 }
 
 /* Skip link: off-screen until focused with the keyboard. */
