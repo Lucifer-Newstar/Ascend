@@ -634,6 +634,21 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+/* Stepper fields have their own − / + buttons, so the browser's spin arrows are hidden. */
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spin {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+/* Programmatic focus targets (a page heading after navigation, a panel that opened) are
+   announced by screen readers; they are not controls, so they get no focus ring. */
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
 /* The command bar's field shows focus with its accent underline instead of a ring. */
 .cmd-input:focus-visible {
   outline: none;

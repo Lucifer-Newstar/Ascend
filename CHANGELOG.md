@@ -98,6 +98,11 @@ Formula and model versions are listed where a number you see could change.
   Test button in Settings → Appearance. Kept in this browser profile, so no API change.
 - **States**: a compact inline error with Retry (used by the check-in card instead of raw
   error text) and an optional action button on empty states.
+- README: the v5 interface (Today, Train, Skills, Ctrl+K, Awakening, streaks, accessibility)
+  with new screenshots; page names follow the new labels (Dashboard → Today). Design-system
+  and motion docs cover the new screens, components and effects. Programmatic focus targets
+  (the page heading after navigation) no longer show a focus ring, and stepper fields hide
+  the browser's spin arrows.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,
