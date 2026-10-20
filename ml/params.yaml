@@ -13,3 +13,5 @@ train:
   lr: 0.002
   weight_decay: 0.01
   label_smoothing: 0.05
+export:
+  version: 0.0.0-smoke   # bump per registered model (semver; -smoke = synthetic data)

@@ -34,7 +34,6 @@ ml/models/*.pt
 ml/models/models-manifest.json
 ml/reports/
 ml/metrics.json
-ml/dvc.lock
 mlruns/
 
 # --- OS / editors ---
