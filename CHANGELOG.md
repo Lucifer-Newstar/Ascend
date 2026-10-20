@@ -22,8 +22,27 @@ Formula and model versions are listed where a number you see could change.
 - **Settings → Reduce motion** (stored as `reduce_motion`). With it on, or with Windows
   animation effects off, nothing tilts, flips, counts or bursts; level-ups are still
   announced to screen readers. See `docs/development/motion.md`.
+- First run: the setup card shows "Step 1 of 2 / Step 2 of 2" and counts up your starting
+  targets, and a brand-new Dashboard opens with a welcome card (Log a set / Log a meal)
+  until your first XP.
+- Coach: replies are announced to screen readers, new messages slide in and stay in view,
+  suggested questions fill and focus the box, and "ARC is thinking" shows typing dots.
+
+### Changed
+- Settings are grouped into **Appearance** (theme, reduce motion) and **Units & training**.
+- Pages other than the Dashboard load on first open, so the main bundle is 16% smaller
+  (407.8 kB to 341.7 kB; 142.1 kB to 125.4 kB gzipped).
+- One date style everywhere ("Today · Tue 20 Oct", "Sun 18 Oct"); Diet targets carry their
+  unit ("of 2,885 kcal", "of 109 g"); deload checks write "3% or more" and "50%".
+- Diet gives the food table more room in small windows (1024 px), and its plate and meal
+  buttons name the food or meal for screen readers.
 
 ### Fixed
+- A level-up counted the XP number down from the old level and slid the bar backwards;
+  a new level now starts from zero.
+- Deleting a meal that fails now shows an error instead of failing silently.
+- The page heading no longer starts focused (and outlined) when the window first opens in
+  development mode.
 - Counts of one read "1 set" and "1 rep" (History, the training session header and the
   finish toast showed "1 sets").
 
