@@ -53,28 +53,27 @@ body {
   background: transparent;
 }
 
-@layer components {
-  .card {
-    @apply rounded-xl border border-line bg-panel;
-  }
-  .card-title {
-    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
-  }
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
-  }
-  .btn-primary {
-    @apply btn bg-accent text-[#04141a] hover:bg-[#5ee3f5];
-  }
-  .btn-ghost {
-    @apply btn border border-line-2 text-ink hover:border-accent/60 hover:text-accent;
-  }
-  .input {
-    @apply w-full rounded-lg border border-line-2 bg-panel-2 px-3 py-2 text-sm text-ink placeholder:text-faint outline-none focus:border-accent/70 focus:ring-2 focus:ring-accent/20;
-  }
-  .chip {
-    @apply inline-flex items-center rounded-md border border-line-2 px-1.5 py-0.5 text-[11px] text-muted;
-  }
+/* Reusable component classes (Tailwind v4 @utility so they can be composed with @apply). */
+@utility card {
+  @apply rounded-xl border border-line bg-panel;
+}
+@utility card-title {
+  @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+}
+@utility btn-primary {
+  @apply btn bg-accent text-[#04141a] hover:bg-[#5ee3f5];
+}
+@utility btn-ghost {
+  @apply btn border border-line-2 text-ink hover:border-accent/60 hover:text-accent;
+}
+@utility input {
+  @apply w-full rounded-lg border border-line-2 bg-panel-2 px-3 py-2 text-sm text-ink placeholder:text-faint outline-none focus:border-accent/70 focus:ring-2 focus:ring-accent/20;
+}
+@utility chip {
+  @apply inline-flex items-center rounded-md border border-line-2 px-1.5 py-0.5 text-[11px] text-muted;
 }
 
 *:focus-visible {
