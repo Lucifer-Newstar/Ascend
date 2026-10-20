@@ -4,8 +4,9 @@
 #   sidecar   -> ruff lint + format check, mypy, pytest (with coverage), Alembic upgrade check,
 #                contract drift (OpenAPI vs docs/contracts)
 #   desktop   -> eslint, tsc (renderer + Electron + shared), vitest, vite build
-#   sidecar-build -> PyInstaller build on Linux + a smoke test of the binary
-#   docker    -> builds the test image and runs the tests inside it
+#   sidecar-build -> PyInstaller build on Linux + a smoke test of the binary (packaging/smoke.py)
+#   docker    -> hadolint, compose config for every profile, tests in the test image, and the
+#                runtime image started read-only / non-root until it reports healthy
 #
 # The Windows installer lives in release.yml (it is slow, so it runs on tags / manually).
 name: CI
@@ -187,20 +188,37 @@ jobs:
           uv sync --frozen --group build
           uv run --group build pyinstaller packaging/ascend-sidecar.spec --noconfirm
 
-      # Start the binary with a token on stdin and check /health answers.
+      # Token on stdin, /health, an authenticated call, then POST /shutdown.
       - name: Smoke test
-        run: |
-          echo ci-token | ASCEND_PORT=8799 ASCEND_DATA_DIR="$RUNNER_TEMP/data" ./dist/ascend-sidecar/ascend-sidecar &
-          for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:8799/health && exit 0
-            sleep 1
-          done
-          echo "sidecar binary did not become healthy" && exit 1
+        run: uv run python packaging/smoke.py
 
   docker:
-    name: Docker test image
+    name: Docker images
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Lint the Dockerfile (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: docker/sidecar.Dockerfile
+
+      - name: Validate every compose profile
+        run: docker compose -f docker/docker-compose.yml --profile test --profile dev --profile web --profile ml config -q
+
       - name: Build and run tests in the container
-        run: docker compose -f docker/docker-compose.yml run --rm --build sidecar-tests
+        run: docker compose -f docker/docker-compose.yml --profile test run --rm --build sidecar-tests
+
+      # The runtime image must come up healthy with the same hardening compose uses.
+      - name: Runtime image starts read-only as non-root
+        run: |
+          docker build -f docker/sidecar.Dockerfile --target runtime -t ascend-sidecar:ci services/sidecar
+          docker run -d --name sidecar --read-only --tmpfs /tmp --cap-drop ALL \
+            --security-opt no-new-privileges -p 127.0.0.1:8765:8765 ascend-sidecar:ci
+          for i in $(seq 1 30); do
+            [ "$(docker inspect -f '{{.State.Health.Status}}' sidecar)" = healthy ] && break
+            sleep 2
+          done
+          docker exec sidecar id -u | grep -qx 10001
+          curl -sf -H "Authorization: Bearer dev" http://127.0.0.1:8765/exercises > /dev/null
+          docker rm -f sidecar
