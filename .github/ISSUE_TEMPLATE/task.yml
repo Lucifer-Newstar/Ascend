@@ -1,0 +1,28 @@
+name: Phase task
+description: A commit-sized task from a member's phase plan
+labels: [task]
+body:
+  - type: input
+    id: commit
+    attributes:
+      label: Planned commit line
+      placeholder: "feat(progress): body measurement endpoints"
+    validations:
+      required: true
+  - type: dropdown
+    id: owner
+    attributes:
+      label: Owner
+      options: ["@Lucifer-Newstar", "@jegatheesank", "@dhanush-07-byte", "@Gokul143-J"]
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options: ["0 · Foundations", "1 · Core loop", "2 · Local AI", "3 · Ship v1.0", "4 · Breadth", "5 · MLOps loop"]
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: The check that proves it works (test name, screen, command).
