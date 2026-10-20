@@ -10,11 +10,13 @@ import { NumberField, RpeSelect } from "./fields";
 
 const PRESETS = [10, 20, 30, 45, 60];
 
-export function HoldSetForm({ exercise, units, busy, onSubmit, children }: {
+export function HoldSetForm({ exercise, units, busy, onSubmit, children, target }: {
   exercise: Exercise;
   units: Units;
   busy: boolean;
   onSubmit: (body: SetIn) => void;
+  /** Last time's hold for the next set: pre-fills the fields, so Enter repeats it. */
+  target?: { seconds: number; added: number; rpe: number | null; key: string };
   /** Rendered next to the Log button (the "+N XP" float). */
   children?: ReactNode;
 }) {
@@ -26,6 +28,15 @@ export function HoldSetForm({ exercise, units, busy, onSubmit, children }: {
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => { if (tick.current) clearInterval(tick.current); }, []);
+
+  useEffect(() => {
+    if (!target || target.seconds < 1) return;
+    setSeconds(target.seconds);
+    setAdded(target.added);
+    if (target.rpe !== null) setRpe(target.rpe);
+    // target.key changes when the next set or the exercise changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target?.key]);
 
   const submit = (s: number) => {
     if (s < 1) return;
@@ -52,7 +63,7 @@ export function HoldSetForm({ exercise, units, busy, onSubmit, children }: {
 
   return (
     <div className="mt-5 space-y-3">
-      <form className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3" aria-label={`Log a hold of ${exercise.name}`}
+      <form className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)_auto] items-end gap-3" aria-label={`Log a hold of ${exercise.name}`}
         onSubmit={(e) => { e.preventDefault(); if (!busy) submit(seconds); }}>
         <NumberField label="Hold (seconds)" value={seconds} step={5} onChange={setSeconds} />
         <NumberField label={`Added load (${weightUnit(units)})`} value={added} step={units === "imperial" ? 5 : 2.5} onChange={setAdded} />
