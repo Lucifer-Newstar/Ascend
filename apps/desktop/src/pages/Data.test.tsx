@@ -72,7 +72,7 @@ describe("DataPage import", () => {
     });
     setup();
     await userEvent.upload(screen.getByLabelText(/drop your strong export/i), csv());
-    expect(await screen.findByRole("alert")).toHaveTextContent("Strong or Hevy");
+    expect(await screen.findByText(/not look like a Strong or Hevy export/)).toHaveAttribute("role", "alert");
   });
 
   it("asks for a fresh preview after an option changes", async () => {
