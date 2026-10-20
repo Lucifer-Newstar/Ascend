@@ -6,7 +6,7 @@ DESKTOP := apps/desktop
 .DEFAULT_GOAL := help
 .PHONY: help install hooks dev-sidecar dev-web dev-electron seed lint format typecheck test \
         test-sidecar test-desktop coverage migrate migrate-fresh contracts check build build-sidecar \
-        dist-win docker-test clean
+        dist-win smoke-sidecar docker-test docker-dev docker-web docker-mlflow docker-down clean
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-14s %s\n", $$1, $$2}'
@@ -74,8 +74,25 @@ build-sidecar: ## PyInstaller build -> services/sidecar/dist/ascend-sidecar/
 dist-win: build-sidecar ## Windows installer (run on Windows) -> apps/desktop/release/
 	npm run dist:win -w $(DESKTOP)
 
+smoke-sidecar: ## Start the PyInstaller build, check /health, stop it (after build-sidecar)
+	cd $(SIDECAR) && uv run python packaging/smoke.py
+
+COMPOSE := docker compose -f docker/docker-compose.yml
+
 docker-test: ## Lint + tests inside the Docker test image
-	docker compose -f docker/docker-compose.yml run --rm --build sidecar-tests
+	$(COMPOSE) --profile test run --rm --build sidecar-tests
+
+docker-dev: ## Sidecar API in Docker on http://localhost:8765/docs (read-only, non-root)
+	$(COMPOSE) --profile dev up --build sidecar
+
+docker-web: ## Sidecar + renderer (Vite) in Docker; open http://localhost:5173
+	$(COMPOSE) --profile web up --build
+
+docker-mlflow: ## MLflow tracking server on http://localhost:5000 (runs + artefacts in a volume)
+	$(COMPOSE) --profile ml up mlflow
+
+docker-down: ## Stop every compose service (volumes are kept)
+	$(COMPOSE) --profile test --profile dev --profile web --profile ml down
 
 clean: ## Remove build output (keeps your database)
 	rm -rf $(DESKTOP)/dist $(DESKTOP)/dist-electron $(DESKTOP)/release $(SIDECAR)/dist $(SIDECAR)/build
