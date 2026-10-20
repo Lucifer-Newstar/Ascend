@@ -54,7 +54,7 @@ export function SettingsPage({ aiEnabled, onToggleAi, onChanged }: { aiEnabled: 
           <h2 className="card-title mb-3">AI coach</h2>
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">Use local AI (Ollama · qwen3:4b)<br /><span className="text-xs text-muted">Off = rule-based tips only. Nothing leaves this PC either way.</span></span>
-            <input type="checkbox" className="h-5 w-5 accent-[#22d3ee]" checked={Boolean(aiEnabled)} onChange={onToggleAi} />
+            <input type="checkbox" className="h-5 w-5 accent-accent" checked={Boolean(aiEnabled)} onChange={onToggleAi} />
           </label>
         </section>
         <section className="card p-5">
