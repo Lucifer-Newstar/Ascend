@@ -344,3 +344,132 @@ def simulate_self_coached(user: User, rng: random.Random, days: int = 365) -> li
                 loads[ex] = round_to(loads[ex] * 0.9, increment(ex))
         sessions.append(sess)
     return sessions
+
+
+# --- closed loop: a user following a prescription policy ----------------------------------
+
+ISOLATION = {
+    "Triceps Pushdown",
+    "Face Pull",
+    "Dumbbell Curl",
+    "Leg Curl",
+    "Leg Extension",
+    "Standing Calf Raise",
+    "Lateral Raise",
+}
+PATTERN = {"Back Squat": "squat", "Romanian Deadlift": "hinge"}
+
+
+@dataclass(frozen=True)
+class Prescription:
+    load: float
+    reps: int
+    sets: int = 3
+    stalled: bool = False
+
+
+@dataclass
+class Exposure:
+    """One exercise in one session of the closed loop, with the truth beside it."""
+
+    user: int
+    exercise: str
+    start: datetime
+    index: int  # exposure number of this exercise for this user (0-based)
+    load: float
+    target_reps: int
+    achieved: list[int]
+    rpe: list[float | None]
+    possible_first: float  # true reps possible on set 1 at the prescribed load
+    ideal_load: float  # load for target reps at RIR 2 on set 1, given today's capacity
+    true_strength: float
+    true_capacity: float
+    plateau: bool  # the true strength curve is flat at this point (injected stall)
+    plateau_since: float | None  # weeks since the plateau began
+    flagged_stall: bool
+    gain_4w: float  # true strength gain over the last 28 days, as a fraction
+    rpe_log_prob: float
+
+
+def simulate_policy(
+    user: User,
+    rng: random.Random,
+    policy: object,
+    days: int = 182,
+) -> list[Exposure]:
+    """Run `policy(exercise, sessions_so_far, now, user_id) -> Prescription | None` for every
+    exercise of every session; None means "first time": the user picks a cautious load
+    (about 3 reps in reserve at 8 reps). The user does the prescribed reps when they can,
+    stopping there, and otherwise grinds out what they can (to failure or one short)."""
+    from collections.abc import Callable
+
+    pol: Callable[[str, list[Session], datetime, int], Prescription | None] = policy  # type: ignore[assignment]
+    truth = Truth(user)
+    sessions: list[Session] = []
+    exposures: list[Exposure] = []
+    counts: dict[str, int] = {}
+    for start, exercises in schedule(user, rng, days):
+        truth.prune(start)
+        sleep = daily_sleep(user, rng)
+        sess = Session(
+            start=start,
+            exercises=list(exercises),
+            sleep=sleep,
+            soreness=soreness_report(truth, start, sleep, rng),
+            checkin_logged=rng.random() < user.checkin_prob,
+        )
+        t = start
+        for ex in exercises:
+            s_true = user.strength(ex, start)
+            cap = (
+                s_true
+                * truth.capacity_factor(ex, start, sleep)
+                * math.exp(rng.gauss(0, user.noise_sd))
+            )
+            p = pol(ex, sessions, start, user.uid)
+            if p is None:
+                p = Prescription(round_to(s_true / (1 + (8 + 3) / 30), increment(ex)), 8)
+            done: list[LoggedSet] = []
+            for i in range(p.sets):
+                t += timedelta(minutes=3)
+                c = cap * (1 - 0.025 * i)
+                possible = max_reps(c, p.load)
+                if possible - p.reps >= 0:
+                    reps = p.reps
+                else:
+                    reps = max(0, int(math.floor(possible - rng.choice([0, 0, 1]))))
+                true_rir = max(0.0, possible - reps)
+                rpe: float | None = None
+                if rng.random() < user.rpe_log_prob and reps > 0:
+                    raw = 10 - true_rir + rng.gauss(0, user.rpe_sd)
+                    rpe = min(10.0, max(5.0, round(raw * 2) / 2))
+                if reps > 0:
+                    truth.add_set(ex, t, reps, true_rir)
+                done.append(LoggedSet(ex, t, p.load, reps, rpe, round(true_rir, 2), i))
+            sess.sets.extend(done)
+            pw = user.plateau_week.get(ex)
+            weeks = (start - START).total_seconds() / 604800
+            exposures.append(
+                Exposure(
+                    user=user.uid,
+                    exercise=ex,
+                    start=start,
+                    index=counts.get(ex, 0),
+                    load=p.load,
+                    target_reps=p.reps,
+                    achieved=[d.reps for d in done],
+                    rpe=[d.rpe for d in done],
+                    possible_first=max_reps(cap, p.load),
+                    ideal_load=cap / (1 + (p.reps + 2) / 30),
+                    true_strength=s_true,
+                    true_capacity=cap,
+                    plateau=pw is not None and weeks >= pw,
+                    plateau_since=(weeks - pw) if pw is not None and weeks >= pw else None,
+                    flagged_stall=p.stalled,
+                    gain_4w=s_true / user.strength(ex, start - timedelta(days=28)) - 1,
+                    rpe_log_prob=user.rpe_log_prob,
+                )
+            )
+            counts[ex] = counts.get(ex, 0) + 1
+        sessions.append(sess)
+    return exposures
