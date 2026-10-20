@@ -3,14 +3,16 @@
 Planned: after 3 consecutive training weeks (>= 2 finished sessions each)
 since the last deload, week 4 is a deload week.
 
-Reactive: a deload is recommended when at least 2 of these 4 signals hold
-(docs/ai/adaptive-planning-ai.md, "two of four reactive signals"):
+Reactive: a deload is recommended when at least 2 of these 5 signals hold
+(docs/ai/adaptive-planning-ai.md; deload-v2 added STALLED_LIFTS from prog-v1):
 
   LOW_READINESS     >= 3 check-ins in the last 7 days averaging < 50
   HEAVY_SORENESS    soreness "a lot" on >= 3 of the last 7 check-ins
   PERFORMANCE_DROP  >= 2 key lifts whose best e1RM in the last 14 days is
                     >= 3 % below their best in the 21 days before
   FATIGUE_BUILDUP   >= 3 muscles over their weekly range or under 50 % readiness
+  STALLED_LIFTS     >= 2 exercises trained in the last 14 days with no rep record in
+                    their last 3 sessions (prog-v1 stall detection, ADR-0015)
 
 Deload guidance: keep the weights, cut working sets by about half and stop
 every set at RPE 7 or below for one week. That is a common coaching rule of
@@ -24,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Literal
 
-FORMULA_VERSION = "deload-v1"
+FORMULA_VERSION = "deload-v2"
 KEY_LIFTS = ("Back Squat", "Barbell Bench Press", "Deadlift", "Overhead Press")
 TRAINING_WEEK_SESSIONS = 2
 PLANNED_AFTER_WEEKS = 3
@@ -34,6 +36,7 @@ SORE_DAYS = 3
 DROP_FRACTION = 0.03
 DROPPED_LIFTS = 2
 STRAINED_MUSCLES = 3
+STALLED_NEEDED = 2
 SIGNALS_NEEDED = 2
 
 GUIDANCE = (
@@ -57,6 +60,7 @@ class DeloadInputs:
     lifts: Sequence[LiftTrend]
     strained_muscles: int
     in_deload_week: bool = False
+    stalled_lifts: Sequence[str] = ()
 
 
 @dataclass(frozen=True)
@@ -117,6 +121,15 @@ def reactive_signals(i: DeloadInputs) -> list[Signal]:
             "FATIGUE_BUILDUP",
             i.strained_muscles >= STRAINED_MUSCLES,
             f"{i.strained_muscles} muscles over range or under 50% readiness",
+        ),
+        Signal(
+            "STALLED_LIFTS",
+            len(i.stalled_lifts) >= STALLED_NEEDED,
+            (
+                "No rep record in 3 sessions on " + ", ".join(i.stalled_lifts)
+                if i.stalled_lifts
+                else "No stalled lifts"
+            ),
         ),
     ]
 

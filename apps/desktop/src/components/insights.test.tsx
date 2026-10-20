@@ -41,7 +41,7 @@ describe("CheckinCard", () => {
 describe("DeloadCard", () => {
   const advice: DeloadAdvice = {
     recommended: true, kind: "reactive", training_weeks: 3, guidance: "Halve your sets this week.", deload_week: null,
-    algo_version: "deload-v1",
+    algo_version: "deload-v2",
     signals: [
       { code: "LOW_READINESS", active: true, detail: "3 check-ins, average readiness 38" },
       { code: "HEAVY_SORENESS", active: false, detail: "very sore on 0 of the last 7 check-ins" },

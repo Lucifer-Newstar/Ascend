@@ -792,3 +792,64 @@ export interface RecoveryReport {
   groups: RecoveryGroup[];
   muscles: MuscleRecovery[];
 }
+
+/** GET /intelligence/progression/{exercise_id}: prog-v1's next target for one exercise. */
+export interface ProgressionTarget {
+  exercise_id: number;
+  exercise: string;
+  kind: "reps" | "hold" | "none";
+  sets: number;
+  reps: number | null;
+  seconds: number | null;
+  weight_kg: number;
+  rpe: number | null;
+  /** first | up_load | up_reps | up_time | hold | down | reset | advance | none */
+  change: string;
+  reason: string;
+  why: string;
+  explanation: Why;
+  rep_range: number[] | null;
+  increment_kg: number | null;
+  e1rm: {
+    unit: "kg" | "reps" | "s";
+    current: number | null;
+    best: number | null;
+    last: number | null;
+    trend_pct_week: number | null;
+    series: { at: string; value: number }[];
+  } | null;
+  stalled: boolean;
+  stall_sessions: number;
+  skill: {
+    skill_name: string;
+    step_name: string;
+    criterion: string;
+    sessions_met: number;
+    confirm_sessions: number;
+  } | null;
+  readiness: number | null;
+  kept_until: string | null;
+  deload_week: boolean;
+  phrasing: "template" | "model";
+  algo_version: string;
+}
+
+/** POST /intelligence/progression/{exercise_id}/decision */
+export interface ProgressionDecision {
+  id: number;
+  exercise_id: number;
+  decided_at: string;
+  choice: "accepted" | "kept";
+  reason: string;
+  kept_until: string | null;
+  algo_version: string;
+}
+
+/** GET /intelligence/stalls */
+export interface StalledLift {
+  exercise_id: number;
+  exercise: string;
+  sessions_flat: number;
+  best: number | null;
+  unit: "kg" | "reps" | "s";
+}

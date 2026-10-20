@@ -21,6 +21,7 @@ def test_fresh_lifter_needs_no_deload():
         "HEAVY_SORENESS",
         "PERFORMANCE_DROP",
         "FATIGUE_BUILDUP",
+        "STALLED_LIFTS",
     ]
 
 
@@ -72,3 +73,14 @@ def test_low_readiness_needs_three_checkins():
 def test_active_deload_week_is_reported_not_re_recommended():
     a = advise(inputs(weekly_sessions=[3, 3, 3], in_deload_week=True))
     assert (a.recommended, a.kind) == (False, "active")
+
+
+def test_two_stalled_lifts_are_one_signal():
+    a = advise(inputs(stalled_lifts=["Barbell Bench Press", "Overhead Press"]))
+    stalled = next(s for s in a.signals if s.code == "STALLED_LIFTS")
+    assert stalled.active and "Overhead Press" in stalled.detail
+    assert a.kind == "none"  # one signal alone is not enough
+    both = advise(
+        inputs(stalled_lifts=["Barbell Bench Press", "Overhead Press"], strained_muscles=4)
+    )
+    assert (both.recommended, both.kind) == (True, "reactive")

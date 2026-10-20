@@ -2,23 +2,33 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
-from app.modules.intelligence import personal, recovery_service
+from app.modules.intelligence import personal, progression_service, recovery_service
+from app.modules.intelligence import progression as prog
 from app.modules.intelligence import recovery as rec
 from app.modules.intelligence.schemas import (
     CheckinUsed,
+    DecisionIn,
+    DecisionOut,
+    E1rmOut,
+    E1rmPoint,
     MuscleRecoveryOut,
     RecoveryGroupOut,
     RecoveryOut,
+    SkillGoalOut,
+    StalledLiftOut,
+    TargetOut,
     TopSet,
     Why,
 )
 from app.modules.progress.taxonomy import MUSCLE_BY_KEY
+from app.modules.workouts.models import Exercise
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 
@@ -87,3 +97,124 @@ def recovery(db: Session = Depends(get_db), now: datetime = Depends(get_now)) ->
         groups=groups,
         muscles=[_muscle_out(m) for m in states],
     )
+
+
+# --- progression -------------------------------------------------------------------------
+
+
+def _unit(e: Exercise, t: prog.Target) -> Literal["kg", "reps", "s"]:
+    if e.measure == "hold":
+        return "s"
+    series_loaded = t.inputs.get("last_load_kg")
+    return "kg" if isinstance(series_loaded, (int, float)) and series_loaded > 0 else "reps"
+
+
+def target_out(db: Session, e: Exercise, t: prog.Target, now: datetime) -> TargetOut:
+    kept = progression_service.kept_at(db, e.id, now)
+    unit = _unit(e, t)
+    inputs = dict(t.inputs)
+    readiness = t.facts.get("readiness_pct")
+    track = t.e1rm
+    return TargetOut(
+        exercise_id=e.id,
+        exercise=e.name,
+        kind=t.kind,
+        sets=t.sets,
+        reps=t.reps,
+        seconds=t.seconds,
+        weight_kg=t.weight_kg,
+        rpe=t.rpe,
+        change=t.change,
+        reason=t.reason,
+        why=t.why,
+        explanation=Why(formula=t.formula, inputs=inputs),
+        rep_range=list(t.rep_range) if t.rep_range else None,
+        increment_kg=t.increment_kg,
+        e1rm=(
+            E1rmOut(
+                unit=unit,
+                current=track.current,
+                best=track.best,
+                last=track.last,
+                trend_pct_week=track.trend_pct_week,
+                series=[E1rmPoint(at=a, value=v) for a, v in track.series],
+            )
+            if track is not None and track.series
+            else None
+        ),
+        stalled=t.stall.stalled,
+        stall_sessions=t.stall.sessions_flat,
+        skill=(
+            SkillGoalOut(
+                skill_name=t.skill.skill_name,
+                step_name=t.skill.step_name,
+                criterion=t.skill.describe(),
+                sessions_met=t.skill.sessions_met,
+                confirm_sessions=t.skill.confirm_sessions,
+            )
+            if t.skill
+            else None
+        ),
+        readiness=float(readiness) / 100 if isinstance(readiness, (int, float)) else None,
+        kept_until=kept + timedelta(days=prog.KEEP_DAYS) if kept else None,
+        deload_week=t.reason == "deload_week",
+        algo_version=t.algo_version,
+    )
+
+
+def _target(db: Session, exercise_id: int, now: datetime) -> tuple[Exercise, prog.Target]:
+    try:
+        return progression_service.next_target(db, exercise_id, now)
+    except progression_service.ExerciseMissing as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+@router.get("/progression/{exercise_id}", response_model=TargetOut)
+def progression_target(
+    exercise_id: int, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> TargetOut:
+    """prog-v1: the next session's target for one exercise, with the reason, a one-line
+    why, the formula and every input."""
+    e, t = _target(db, exercise_id, now)
+    return target_out(db, e, t, now)
+
+
+@router.post("/progression/{exercise_id}/decision", response_model=DecisionOut, status_code=201)
+def progression_decision(
+    exercise_id: int,
+    body: DecisionIn,
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> DecisionOut:
+    """Record "use it" or "keep mine" for the current target. "Keep mine" stops new
+    targets for this exercise for 7 days (FT-1)."""
+    _, t = _target(db, exercise_id, now)
+    row = progression_service.decide(db, exercise_id, body.choice, now, t)
+    return DecisionOut(
+        id=row.id,
+        exercise_id=exercise_id,
+        decided_at=row.decided_at,
+        choice=row.choice,
+        reason=row.reason,
+        kept_until=row.decided_at + timedelta(days=prog.KEEP_DAYS)
+        if row.choice == "kept"
+        else None,
+        algo_version=row.algo_version,
+    )
+
+
+@router.get("/stalls", response_model=list[StalledLiftOut])
+def stalls(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> list[StalledLiftOut]:
+    """Exercises trained in the last 14 days with no rep record in 3 sessions (prog-v1)."""
+    out = []
+    for e, t in progression_service.stalled_lifts(db, now):
+        out.append(
+            StalledLiftOut(
+                exercise_id=e.id,
+                exercise=e.name,
+                sessions_flat=t.stall.sessions_flat,
+                best=t.stall.cycle_best,
+                unit=_unit(e, t),
+            )
+        )
+    return out

@@ -1158,6 +1158,7 @@ components:
           - HEAVY_SORENESS
           - PERFORMANCE_DROP
           - FATIGUE_BUILDUP
+          - STALLED_LIFTS
         active:
           type: boolean
         detail:
@@ -1196,7 +1197,7 @@ components:
         algo_version:
           type: string
           examples:
-          - deload-v1
+          - deload-v2
       required:
       - recommended
       - kind
