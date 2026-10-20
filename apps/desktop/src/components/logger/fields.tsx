@@ -13,7 +13,7 @@ export function NumberField({ label, value, step, onChange, min = 0 }: {
       <span className="mb-1.5 block text-xs text-muted">{label}</span>
       <div className="flex">
         <button type="button" className="rounded-l-md border border-r-0 border-line-input bg-panel-2 px-2.5 text-muted transition-colors duration-150 hover:text-ink active:bg-panel-3" onClick={() => onChange(Math.max(min, +(value - step).toFixed(1)))} aria-label={`decrease ${label}`}>−</button>
-        <input className="input min-w-0 rounded-none px-1 text-center" type="number" aria-label={label} value={value} step={step} min={min} onChange={(e) => onChange(Number(e.target.value))} />
+        <input className="input no-spin min-w-0 rounded-none px-1 text-center" type="number" aria-label={label} value={value} step={step} min={min} onChange={(e) => onChange(Number(e.target.value))} />
         <button type="button" className="rounded-r-md border border-l-0 border-line-input bg-panel-2 px-2.5 text-muted transition-colors duration-150 hover:text-ink active:bg-panel-3" onClick={() => onChange(+(value + step).toFixed(1))} aria-label={`increase ${label}`}>+</button>
       </div>
     </label>
