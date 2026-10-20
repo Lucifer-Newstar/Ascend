@@ -1,21 +1,27 @@
-import type { Exercise, Workout } from "@ascend/shared";
+import type { Exercise, Section, SetIn, Workout, WorkoutSet } from "@ascend/shared";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
 import { IconSearch, IconTrophy } from "../components/Icons";
 import { NumberField, RestTimer, RpeSelect } from "../components/logger/fields";
+import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
+import { TimedSetForm } from "../components/logger/TimedSetForm";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
 import { sessionLoad } from "../lib/load";
 import { MUSCLE_LABEL } from "../lib/muscles";
+import { usePrefs } from "../lib/prefs";
+import { formatDistance, formatDuration, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
 import { useApi } from "../lib/useApi";
 
 const REST_SECONDS = 90;
 
 export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
-  // Lifts only: timed activities (runs, rounds, holds) are logged from their own tabs.
-  const exercises = useApi(() => api.exercises().then((all) => all.filter((e) => !e.time_based)), []);
+  const [section, setSection] = useState<Section>("gym");
+  const exercises = useApi(() => api.exercises("", section), [section]);
   const active = useApi(api.activeWorkout, []);
+  const { settings } = usePrefs();
+  const units = settings.units;
   const [query, setQuery] = useState("");
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [selected, setSelected] = useState<Exercise | null>(null);
@@ -42,20 +48,26 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     return q ? list.filter((e) => e.name.toLowerCase().includes(q) || e.muscles.some((m) => (MUSCLE_LABEL[m.muscle] ?? m.muscle).toLowerCase().includes(q))) : list;
   }, [exercises.data, query]);
 
-  if (exercises.loading && !exercises.data) return <Loading label="Loading exercise library…" />;
   if (exercises.error) return <ErrorState message={exercises.error} onRetry={exercises.reload} />;
 
-  async function logSet() {
+  function changeSection(s: Section) {
+    setSection(s);
+    setSelected(null);
+    setQuery("");
+  }
+
+  async function logSet(body?: SetIn) {
     if (!selected) return;
     setBusy(true);
     try {
-      const w = workout ?? (await api.startWorkout());
-      const res = await api.logSet(w.id, { exercise_id: selected.id, weight_kg: weight, reps, rpe });
+      const w = workout ?? (await api.startWorkout(section));
+      const payload = body ?? { exercise_id: selected.id, weight_kg: fromDisplayWeight(weight, units), reps, rpe };
+      const res = await api.logSet(w.id, payload);
       const fresh = await api.activeWorkout();
       setWorkout(fresh);
-      setRestLeft(REST_SECONDS);
-      if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${res.set.e1rm} kg · +${res.xp_awarded} XP`, "pr");
-      else toast(`Set logged · +${res.xp_awarded} XP`, "xp");
+      if (!selected.time_based) setRestLeft(REST_SECONDS);
+      if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
+      else toast(`${selected.time_based ? formatDuration(res.set.duration_s ?? 0) + " logged" : "Set logged"} · +${res.xp_awarded} XP`, "xp");
       onChanged();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -83,24 +95,31 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const groups = groupSets(workout);
   const load = sessionLoad(workout, exercises.data ?? []);
 
+  const sectionLabel = SECTIONS.find((s) => s.id === section)?.label ?? "Gym";
+
   return (
+    <div className="space-y-5">
+    <SectionTabs value={section} onChange={changeSection} />
     <div className="grid h-full grid-cols-12 gap-5">
       <section className="card col-span-12 flex min-h-0 flex-col lg:col-span-4">
         <div className="border-b border-line p-4">
-          <h2 className="card-title mb-3">Exercise library</h2>
+          <h2 className="card-title mb-3">{sectionLabel} library</h2>
           <div className="relative">
             <IconSearch className="absolute left-3 top-2.5 text-faint" width={16} height={16} />
-            <input className="input pl-9" placeholder="Search exercise or muscle…" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input className="input pl-9" aria-label="Search exercises" placeholder="Search exercise or muscle…" value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
         </div>
-        <ul className="max-h-[calc(100vh-260px)] min-h-0 flex-1 overflow-y-auto p-2">
+        <ul className="max-h-[calc(100vh-320px)] min-h-0 flex-1 overflow-y-auto p-2" aria-busy={exercises.loading}>
+          {exercises.loading && !exercises.data && <li><Loading label="Loading exercises…" /></li>}
           {filtered.map((e) => (
             <li key={e.id}>
               <button type="button" onClick={() => setSelected(e)}
                 className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"}`}>
                 <div className={`text-sm ${selected?.id === e.id ? "text-accent" : "text-ink"}`}>{e.name}</div>
                 <div className="mt-0.5 truncate text-xs text-faint">
-                  {e.equipment} · {e.muscles.filter((m) => m.weight >= 1).map((m) => MUSCLE_LABEL[m.muscle] ?? m.muscle).join(", ")}
+                  {e.equipment}
+                  {e.muscles.some((m) => m.weight >= 1) && ` · ${e.muscles.filter((m) => m.weight >= 1).map((m) => MUSCLE_LABEL[m.muscle] ?? m.muscle).join(", ")}`}
+                  {e.time_based && e.met ? ` · MET ${e.met}` : ""}
                 </div>
               </button>
             </li>
@@ -124,18 +143,30 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                     ))}
                   </div>
                 </div>
-                <RestTimer seconds={restLeft} onSkip={() => setRestLeft(0)} />
+                {!selected.time_based && <RestTimer seconds={restLeft} onSkip={() => setRestLeft(0)} />}
               </div>
-              <div className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
-                <NumberField label="Weight (kg)" value={weight} step={2.5} onChange={setWeight} />
-                <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
-                <RpeSelect value={rpe} onChange={setRpe} />
-                <button type="button" className="btn-primary h-[38px] px-5" onClick={logSet} disabled={busy}>Log set</button>
-              </div>
-              <p className="mt-2 text-[11px] text-faint">RPE 10 = no reps left in the tank, 8 = two left. PRs use the Epley e1RM formula (1–10 reps).</p>
+              {selected.time_based ? (
+                <div className="mt-5">
+                  <TimedSetForm key={selected.id} exercise={selected} units={units} busy={busy} onSubmit={(s) => logSet(s)} />
+                  <p className="mt-2 text-[11px] text-faint">
+                    Calories use the activity's MET value ({selected.met ?? "n/a"}) × your weight × time, an estimate.
+                    {selected.muscles.length === 0 && " Stretching and meditation add no muscle load."}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
+                    <NumberField label={`Weight (${weightUnit(units)})`} value={weight} step={units === "imperial" ? 5 : 2.5} onChange={setWeight} />
+                    <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
+                    <RpeSelect value={rpe} onChange={setRpe} />
+                    <button type="button" className="btn-primary h-[38px] px-5" onClick={() => logSet()} disabled={busy}>Log set</button>
+                  </div>
+                  <p className="mt-2 text-[11px] text-faint">RPE 10 = no reps left in the tank, 8 = two left. PRs use the Epley e1RM formula (1–10 reps).</p>
+                </>
+              )}
             </>
           ) : (
-            <Empty title="Pick an exercise from the library to start logging." hint="Sets are saved instantly. Your session starts with the first set." />
+            <Empty title={`Pick a ${sectionLabel.toLowerCase()} exercise from the library to start logging.`} hint="Sets are saved instantly. Your session starts with the first set." />
           )}
         </div>
 
@@ -156,26 +187,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               {groups.map(([name, sets]) => (
                 <div key={name}>
                   <div className="mb-1.5 text-sm font-medium text-ink">{name}</div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
-                        <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">kg</th><th className="font-medium">Reps</th>
-                        <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sets.map((s, i) => (
-                        <tr key={s.id} className="border-t border-line/70">
-                          <td className="py-1.5 text-muted">{i + 1}</td>
-                          <td className="text-ink">{s.weight_kg}</td>
-                          <td className="text-ink">{s.reps}</td>
-                          <td className="text-muted">{s.rpe ?? "–"}</td>
-                          <td className="text-muted">{s.e1rm ? `${s.e1rm} kg` : "–"}</td>
-                          <td>{s.is_pr && <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn"><IconTrophy width={12} height={12} /> PR</span>}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <SetTable sets={sets} units={units} />
                 </div>
               ))}
             </div>
@@ -203,6 +215,54 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         )}
       </section>
     </div>
+    </div>
+  );
+}
+
+function SetTable({ sets, units }: { sets: WorkoutSet[]; units: "metric" | "imperial" }) {
+  const timed = sets.some((s) => s.duration_s !== null);
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
+          {timed ? (
+            <>
+              <th className="w-14 py-1 font-medium">#</th><th className="font-medium">Time</th><th className="font-medium">Distance</th>
+              <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th className="w-24 font-medium" />
+            </>
+          ) : (
+            <>
+              <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">{weightUnit(units)}</th><th className="font-medium">Reps</th>
+              <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium" />
+            </>
+          )}
+        </tr>
+      </thead>
+      <tbody>
+        {sets.map((s, i) => (
+          <tr key={s.id} className="border-t border-line/70">
+            <td className="py-1.5 text-muted">{i + 1}</td>
+            {timed ? (
+              <>
+                <td className="text-ink">{formatDuration(s.duration_s ?? 0)}</td>
+                <td className="text-ink">{s.distance_m ? formatDistance(s.distance_m, units) : "–"}</td>
+                <td className="text-muted">{s.avg_hr ?? "–"}</td>
+                <td className="text-muted">{s.rpe ?? "–"}</td>
+                <td />
+              </>
+            ) : (
+              <>
+                <td className="text-ink">{toDisplayWeight(s.weight_kg, units)}</td>
+                <td className="text-ink">{s.reps}</td>
+                <td className="text-muted">{s.rpe ?? "–"}</td>
+                <td className="text-muted">{s.e1rm ? `${toDisplayWeight(s.e1rm, units)} ${weightUnit(units)}` : "–"}</td>
+                <td>{s.is_pr && <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn"><IconTrophy width={12} height={12} /> PR</span>}</td>
+              </>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

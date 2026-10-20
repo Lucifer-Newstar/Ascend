@@ -6,7 +6,7 @@ export type Page = "dashboard" | "workout" | "diet" | "coach" | "history" | "set
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard },
-  { id: "workout", label: "Workout", icon: IconDumbbell },
+  { id: "workout", label: "Training", icon: IconDumbbell },
   { id: "diet", label: "Diet", icon: IconBowl },
   { id: "coach", label: "Coach", icon: IconChat },
   { id: "history", label: "History", icon: IconHistory },
