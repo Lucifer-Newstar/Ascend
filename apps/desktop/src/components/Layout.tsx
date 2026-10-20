@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import { IconBowl, IconChart, IconChat, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconSettings } from "./Icons";
 
@@ -25,8 +25,25 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
   children: ReactNode;
 }) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const heading = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
+
+  // A page change moves focus to the new page's heading (screen readers announce it,
+  // keyboard users continue from the top) and updates the window title.
+  useEffect(() => {
+    document.title = `${title} · ASCEND`;
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    heading.current?.focus();
+  }, [page, title]);
+
   return (
     <div className="flex h-full">
+      <a href="#main" className="skip-link" onClick={(e) => { e.preventDefault(); heading.current?.focus(); }}>
+        Skip to content
+      </a>
       <aside className="flex w-[216px] shrink-0 flex-col border-r border-line bg-sidebar">
         <div className="flex items-center gap-2.5 px-5 pb-6 pt-6">
           <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden>
@@ -55,7 +72,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-[68px] shrink-0 items-center justify-between border-b border-line px-8">
           <div>
-            <h1 className="text-lg font-semibold text-ink">{title}</h1>
+            <h1 ref={heading} tabIndex={-1} className="text-lg font-semibold text-ink outline-none">{title}</h1>
             <p className="text-xs text-muted">{subtitle ?? today}</p>
           </div>
           <button type="button" onClick={onToggleAi} disabled={aiEnabled === null} role="switch" aria-checked={Boolean(aiEnabled)}
@@ -67,7 +84,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
             </span>
           </button>
         </header>
-        <main className="min-h-0 flex-1 overflow-y-auto px-8 py-6">{children}</main>
+        <main id="main" className="min-h-0 flex-1 overflow-y-auto px-8 py-6">{children}</main>
       </div>
     </div>
   );
