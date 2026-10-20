@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { count, dayLabel, kcal, pct, portionLabel, readyAtLabel } from "./format";
+import { count, dateLabel, dayLabel, kcal, pct, portionLabel, readyAtLabel } from "./format";
 
 describe("pct", () => {
   it("clamps to 0..1", () => {
@@ -25,6 +25,8 @@ describe("labels", () => {
     const today = new Date(2026, 9, 20);
     expect(dayLabel("2026-10-20", today)).toBe("Today");
     expect(dayLabel("2026-10-19", today)).toBe("Yesterday");
+    expect(dayLabel("2026-10-18", today)).toBe("Sun 18 Oct");
+    expect(dateLabel("2026-10-20")).toBe("Tue 20 Oct");
   });
   it("says ready now without a time", () => {
     expect(readyAtLabel(null)).toBe("ready now");
