@@ -5,11 +5,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
-from app.modules.intelligence import personal, progression_service, recovery_service
+from app.modules.intelligence import explain, personal, progression_service, recovery_service
 from app.modules.intelligence import progression as prog
 from app.modules.intelligence import recovery as rec
 from app.modules.intelligence.schemas import (
@@ -18,6 +18,7 @@ from app.modules.intelligence.schemas import (
     DecisionOut,
     E1rmOut,
     E1rmPoint,
+    ExplanationOut,
     MuscleRecoveryOut,
     RecoveryGroupOut,
     RecoveryOut,
@@ -218,3 +219,50 @@ def stalls(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> l
             )
         )
     return out
+
+
+# --- explanations (ADR-0016) -----------------------------------------------------------------
+
+
+def _explanation_out(e: explain.Explanation) -> ExplanationOut:
+    return ExplanationOut(
+        text=e.text,
+        template=e.template,
+        phrasing="model" if e.phrasing == "model" else "template",
+        model=e.model,
+        fallback=e.fallback,
+        checks=e.checks,
+        facts=e.facts,
+        version=e.version,
+    )
+
+
+@router.get("/progression/{exercise_id}/explanation", response_model=ExplanationOut)
+def progression_explanation(
+    exercise_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> ExplanationOut:
+    """The target's "why" in plain words: the local model's sentence when it passes the
+    number and phrase checks, else the template."""
+    e, t = _target(db, exercise_id, now)
+    facts = explain.target_facts(t)
+    key = ("target", str(e.id), f"{t.reason}:{t.weight_kg}:{t.reps}:{t.seconds}:{t.sets}")
+    return _explanation_out(explain.explain(db, request.app.state.settings, key, t.why, facts))
+
+
+@router.get("/recovery/{muscle}/explanation", response_model=ExplanationOut)
+def recovery_explanation(
+    muscle: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> ExplanationOut:
+    """One muscle's readiness in plain words (same guard and fallback)."""
+    m = next((s for s in recovery_service.states(db, now) if s.key == muscle), None)
+    if m is None:
+        raise HTTPException(404, f"unknown muscle '{muscle}'")
+    template, facts = explain.muscle_template(m)
+    key = ("muscle", m.key, f"{m.readiness}:{m.fatigue}:{m.k}:{m.modifier}")
+    return _explanation_out(explain.explain(db, request.app.state.settings, key, template, facts))

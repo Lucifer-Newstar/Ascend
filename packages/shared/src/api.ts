@@ -853,3 +853,16 @@ export interface StalledLift {
   best: number | null;
   unit: "kg" | "reps" | "s";
 }
+
+/** GET /intelligence/.../explanation: a plain-language sentence for one engine number.
+ * `text` is the local model's sentence only when it passed the number and phrase checks. */
+export interface Explanation {
+  text: string;
+  template: string;
+  phrasing: "model" | "template";
+  model: string | null;
+  fallback: string | null;
+  checks: Record<string, string> | null;
+  facts: string;
+  version: string;
+}

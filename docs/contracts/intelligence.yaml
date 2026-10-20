@@ -125,6 +125,64 @@ paths:
                 type: array
                 title: Response Stalls Intelligence Stalls Get
       x-status: implemented
+  /intelligence/progression/{exercise_id}/explanation:
+    get:
+      tags:
+      - intelligence
+      summary: Progression Explanation
+      description: 'The target''s "why" in plain words: the local model''s sentence when it passes the
+
+        number and phrase checks, else the template.'
+      operationId: progression_explanation_intelligence_progression__exercise_id__explanation_get
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplanationOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /intelligence/recovery/{muscle}/explanation:
+    get:
+      tags:
+      - intelligence
+      summary: Recovery Explanation
+      description: One muscle's readiness in plain words (same guard and fallback).
+      operationId: recovery_explanation_intelligence_recovery__muscle__explanation_get
+      parameters:
+      - name: muscle
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Muscle
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplanationOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
 components:
   schemas:
     CheckinUsed:
@@ -249,6 +307,57 @@ components:
       - at
       - value
       title: E1rmPoint
+    ExplanationOut:
+      properties:
+        text:
+          type: string
+          title: Text
+        template:
+          type: string
+          title: Template
+        phrasing:
+          type: string
+          enum:
+          - model
+          - template
+          title: Phrasing
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model
+        fallback:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fallback
+        checks:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Checks
+        facts:
+          type: string
+          title: Facts
+        version:
+          type: string
+          title: Version
+      type: object
+      required:
+      - text
+      - template
+      - phrasing
+      - model
+      - fallback
+      - checks
+      - facts
+      - version
+      title: ExplanationOut
+      description: 'A plain-language sentence for one engine number. `text` is the local model''s
+
+        sentence only when it passed the coach guard; otherwise it is the template.'
     HTTPValidationError:
       properties:
         detail:
