@@ -152,3 +152,56 @@ def check_numbers(reply: str, *sources: str) -> NumberCheck:
         if not any(_matches(n, a) for a in allowed):
             bad.append(f"{n.raw} {n.unit}".strip() if n.unit else n.raw)
     return NumberCheck(ok=not bad, offending=bad)
+
+
+# --- V4 banned phrases ---------------------------------------------------------------
+
+# rule id -> pattern. Only the rule id is logged, never the matched text.
+BANNED: dict[str, re.Pattern[str]] = {
+    "dose": re.compile(
+        r"\b\d+(?:\.\d+)?\s*(?:mg|mcg|iu|ml)\b|\b(?:tablets?|capsules?|dosage|dose)\b", re.I
+    ),
+    "medicine": re.compile(
+        r"\b(?:painkillers?|ibuprofen|paracetamol|steroids?|injections?)\b", re.I
+    ),
+    "diagnosis": re.compile(
+        r"\b(?:you (?:have|probably have|might have) (?:a |an )?"
+        r"(?:tear|torn|fracture|sprain|tendonitis|hernia|injury))\b|\b(?:diagnos\w*)\b",
+        re.I,
+    ),
+    "plan_changed": re.compile(
+        r"\bI(?:'ve| have)? (?:changed|updated|adjusted|modified) "
+        r"your (?:plan|program|programme)\b",
+        re.I,
+    ),
+    "shame": re.compile(r"\b(?:lazy|pathetic|disgusting|no excuses)\b", re.I),
+}
+
+
+def check_banned(reply: str) -> list[str]:
+    """V4: ids of every banned-phrase rule the reply trips (empty = pass)."""
+    return [rule for rule, pattern in BANNED.items() if pattern.search(reply)]
+
+
+@dataclass
+class ReplyChecks:
+    numbers: NumberCheck
+    banned: list[str]
+
+    @property
+    def ok(self) -> bool:
+        return self.numbers.ok and not self.banned
+
+    def summary(self) -> dict[str, str]:
+        """Stored with the reply for evaluation: {"numbers": "pass", "banned": "fail:dose"}."""
+        return {
+            "numbers": "pass" if self.numbers.ok else "fail",
+            "banned": "pass" if not self.banned else "fail:" + ",".join(self.banned),
+            "version": VALIDATOR_VERSION,
+        }
+
+
+def check_reply(reply: str, facts: str, question: str | None) -> ReplyChecks:
+    """Run V3 then V4 over a model reply."""
+    sources = [facts] + ([question] if question else [])
+    return ReplyChecks(numbers=check_numbers(reply, *sources), banned=check_banned(reply))
