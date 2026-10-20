@@ -70,7 +70,7 @@
 
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
-- [ ] `feat(ui): empty/loading/error states pass across all screens`
+- [x] `feat(ui): empty/loading/error states pass across all screens` — skeletons, offline-aware errors and stale-data notices on every screen
 - [x] `feat(ui): settings (units, reset hour, language, notifications, quiet hours)` — units, theme and training days done; reset hour, language, notifications and quiet hours open
 - [ ] `feat(ui): backup and restore screens`
 - [ ] `feat(ui): import Strong/Hevy with dry-run report`
