@@ -130,7 +130,9 @@ def log_set(
         is_pr=pr.is_new_pr(e1rm, previous),
         performed_at=now,
     )
-    db.add(row)
+    # Append through the relationship so a session that already loaded `workout.sets`
+    # sees the new set (the seeder and other multi-step callers share one session).
+    workout.sets.append(row)
     db.flush()
     bus.publish(
         db,
