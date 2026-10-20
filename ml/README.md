@@ -26,7 +26,10 @@ data/raw ──prepare──> data/processed ──train──> models/food_clf.
 Datasets, weights and run outputs are **never committed**: `data/`, `models/*.pt|*.onnx`,
 the generated manifest, `reports/`, `metrics.json` and `mlruns/` are git-ignored.
 
-## Smoke run (any machine, CPU, ~2 minutes)
+## Smoke run (any machine, CPU)
+
+Measured 2026-10-20: `dvc repro -f` took 74 s on a 4-core Linux VM, not counting the
+dependency install. Expect a different time on other machines.
 
 ```bash
 cd ml
@@ -55,4 +58,4 @@ plumbing works. They say nothing about food accuracy.
 
 Runs log to MLflow in a SQLite store under `ml/mlruns/` (the file store is deprecated).
 `mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db`, or set `MLFLOW_TRACKING_URI`
-to the compose server (`infra/compose/mlflow.yml`).
+to the compose server (`make docker-mlflow`, the `ml` profile in `docker/docker-compose.yml`).
