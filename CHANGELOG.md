@@ -23,6 +23,13 @@ Formula and model versions are listed where a number you see could change.
   **deload**. Modal windows trap focus and close on Esc; notices are announced to screen
   readers. Notice, quest and skill windows are tinted by rank (E-C blue, B-A violet, S crimson);
   data colours never change with rank (UI-7, tint part).
+- **New app shell.** The rail reads Today, Train, Exercises, Skills, Progress, Fuel, Coach,
+  History, Import & export and Settings (same order, so Ctrl+1…0 are unchanged; the shortcut
+  shows on hover). The top bar shows the page title in the display face, then your **rank
+  badge**, level, a **10-segment XP bar** that fills with a count-up (at most 600 ms, instant
+  with Reduce motion), your **streak flame**, and an **AI status dot**: green when the local
+  model is answering, amber when AI is on but the model is not running (rule-based tips),
+  grey when off. Clicking the dot still switches AI on and off.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,
