@@ -9,6 +9,7 @@ import { ToastProvider } from "./components/Toast";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { CoachPage } from "./pages/Coach";
 import { DashboardPage } from "./pages/Dashboard";
+import { DataPage } from "./pages/Data";
 import { DietPage } from "./pages/Diet";
 import { HistoryPage } from "./pages/History";
 import { ProgressPage } from "./pages/Progress";
@@ -23,6 +24,7 @@ const TITLES: Record<Page, string> = {
   diet: "Diet",
   coach: "Coach",
   history: "History",
+  data: "Import & export",
   settings: "Settings",
 };
 
@@ -105,6 +107,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
+      {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} />}
     </Layout>
   );
