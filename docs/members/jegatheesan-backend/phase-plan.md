@@ -86,11 +86,11 @@
 
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
-- [ ] `feat(io): move export endpoints into the io module (paths unchanged)`
+- [x] `feat(io): move export endpoints into the io module (paths unchanged)`
 - [ ] `feat(io): .ascendbak backup with manifest SHA-256`
 - [ ] `feat(io): restore with schema-version check`
-- [ ] `feat(io): Strong CSV adapter (both header variants)`
-- [ ] `feat(io): Hevy CSV adapter`
+- [x] `feat(io): Strong CSV adapter (both header variants)` — dry-run report, name matcher, duplicate-safe re-import (migration 0009)
+- [x] `feat(io): Hevy CSV adapter`
 - [ ] `feat(io): plan CSV import template`
 - [ ] `feat(core): automatic backup before migrations, restore on failure`
 - [ ] `feat(core): diagnostics bundle with scrub allow-list`

@@ -99,6 +99,22 @@ uv run alembic revision --autogenerate -m "add body measurements"   # then READ 
 uv run alembic upgrade head
 ```
 
+## Import and export (`app/modules/io`)
+
+- `GET /export/json` and `GET /export/csv/{workouts|meals}`: everything you logged, yours to keep.
+- `POST /import/strong` and `POST /import/hevy` take `{"csv": "<file text>", "dry_run": true}`.
+  The CSV is sent as text in JSON because the Electron bridge carries JSON only.
+  - Strong's classic export (`;`, with a "Weight Unit" column) and its 2025 export (`,`, no
+    unit column: pass `"unit": "lb"` if Strong was set to pounds) are both detected from the header.
+  - Exercise names are mapped to the library by `io/matcher.py` (aliases, then
+    "Equipment Movement", then a close fuzzy match). Unknown movements are listed in
+    `unmatched_exercises` and their sets are skipped, never guessed.
+  - Warm-ups are skipped unless `include_warmups` is true; out-of-range rows are dropped
+    with a warning. Re-importing a newer export only adds new sessions (`import_key`).
+  - Imported sets count for PRs and muscle load (`SetImported`) but earn no XP.
+
+Always call with `dry_run: true` first and show the report; then repeat with `false`.
+
 ## Coach
 
 `GET /coach/tip`, `POST /coach/ask`. The rule engine always produces a tip. If AI is enabled

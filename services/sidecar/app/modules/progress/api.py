@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
@@ -150,20 +149,6 @@ def get_history(
     days: int = 30, db: Session = Depends(get_db), now: datetime = Depends(get_now)
 ) -> list[history.HistoryDay]:
     return history.history(db, now, max(1, min(days, 365)))
-
-
-@router.get("/export/json")
-def export_json(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> dict[str, Any]:
-    return history.export_json(db, now)
-
-
-@router.get("/export/csv/{kind}")
-def export_csv(kind: Literal["workouts", "meals"], db: Session = Depends(get_db)) -> Response:
-    return Response(
-        content=history.export_csv(db, kind),
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="ascend-{kind}.csv"'},
-    )
 
 
 # --- body metrics -----------------------------------------------------------------

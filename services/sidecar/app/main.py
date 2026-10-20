@@ -25,6 +25,7 @@ from app.core.security import TokenAuthMiddleware
 from app.modules.coach.api import router as coach_router
 from app.modules.gamification import service as gamification_service
 from app.modules.gamification.api import router as game_router
+from app.modules.io.api import router as io_router
 from app.modules.nutrition.api import router as nutrition_router
 from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
@@ -191,6 +192,7 @@ def create_app(
         game_router,
         progress_router,
         coach_router,
+        io_router,
     ):
         app.include_router(router)
     return app

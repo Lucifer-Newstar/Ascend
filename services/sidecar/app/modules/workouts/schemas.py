@@ -63,6 +63,8 @@ class WorkoutOut(BaseModel):
     started_at: datetime
     finished_at: datetime | None
     sets: list[SetOut]
+    source: str = "app"
+    title: str = ""
 
 
 class FinishedWorkout(BaseModel):
@@ -81,6 +83,9 @@ class WorkoutSummary(BaseModel):
     sets: int
     volume_kg: float
     xp: int
+    # "app", or the app an imported session came from ("strong", "hevy").
+    source: str = "app"
+    title: str = ""
 
 
 class SetPatch(BaseModel):

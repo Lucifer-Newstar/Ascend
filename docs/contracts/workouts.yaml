@@ -522,6 +522,21 @@ components:
           - type: number
           - type: 'null'
           title: Rpe
+        duration_s:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Duration S
+        distance_m:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Distance M
+        avg_hr:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Avg Hr
         e1rm:
           anyOf:
           - type: number
@@ -534,18 +549,6 @@ components:
           type: string
           format: date-time
           title: Performed At
-        duration_s:
-          type:
-          - integer
-          - 'null'
-        distance_m:
-          type:
-          - number
-          - 'null'
-        avg_hr:
-          type:
-          - integer
-          - 'null'
       type: object
       required:
       - id
@@ -593,6 +596,10 @@ components:
           type: string
           format: date
           title: Day
+        section:
+          type: string
+          title: Section
+          default: gym
         started_at:
           type: string
           format: date-time
@@ -608,9 +615,14 @@ components:
             $ref: '#/components/schemas/SetOut'
           type: array
           title: Sets
-        section:
+        source:
           type: string
-          enum: *id001
+          title: Source
+          default: app
+        title:
+          type: string
+          title: Title
+          default: ''
       type: object
       required:
       - id
@@ -620,30 +632,46 @@ components:
       - sets
       title: WorkoutOut
     WorkoutSummary:
-      type: object
       properties:
         id:
           type: integer
+          title: Id
         day:
           type: string
           format: date
+          title: Day
+        section:
+          type: string
+          title: Section
+          default: gym
         started_at:
           type: string
           format: date-time
+          title: Started At
         finished_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
         sets:
           type: integer
+          title: Sets
         volume_kg:
           type: number
+          title: Volume Kg
         xp:
           type: integer
-        section:
+          title: Xp
+        source:
           type: string
-          enum: *id001
+          title: Source
+          default: app
+        title:
+          type: string
+          title: Title
+          default: ''
+      type: object
       required:
       - id
       - day
@@ -652,6 +680,7 @@ components:
       - sets
       - volume_kg
       - xp
+      title: WorkoutSummary
     SetPatch:
       type: object
       properties:

@@ -30,6 +30,21 @@ fitness apps. Imports are also an excellent target for golden-file tests in CI.
   changelog — **verify against a real export before freezing**.
 - Contract: [contracts/import-export.yaml](../../contracts/import-export.yaml).
 
+## Amendment 1 (2026-10-20): CSV travels as JSON text; one parser module
+
+Decided while reviewing PR #20.
+
+- The import endpoints take `{"csv": "<text>", "dry_run": true, ...}` as JSON instead of
+  `multipart/form-data`. The renderer reaches the sidecar only through the IPC bridge, which
+  carries JSON, and the sidecar would otherwise need an extra dependency for multipart
+  parsing. Files are capped at 20 MB of text.
+- Strong and Hevy parsers share `io/formats.py` (one `detect_format()`, one parser per
+  app) rather than one file per format; the shared row shape (`ImportedSet`) keeps them small.
+- Fixtures live in `services/sidecar/tests/fixtures/import/`. They are hand-made from the
+  documented column lists; replace them with anonymised real exports when the team has some.
+- Imported sets update PRs and muscle load but award **no XP**: history must not unlock
+  ranks or complete today's quest.
+
 ## Consequences
 
 ### Positive

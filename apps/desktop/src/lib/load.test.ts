@@ -14,7 +14,7 @@ describe("effort", () => {
 
 describe("sessionLoad", () => {
   it("sums weight x effort per muscle", () => {
-    const w: Workout = { id: 1, day: "", section: "gym", started_at: "", finished_at: null, sets: [set(8), set(6)] };
+    const w: Workout = { id: 1, day: "", section: "gym", started_at: "", finished_at: null, sets: [set(8), set(6)], source: "app", title: "" };
     expect(sessionLoad(w, [bench])).toEqual([["lower_chest", 1.5], ["triceps", 0.75]]);
   });
   it("is empty without a workout", () => {

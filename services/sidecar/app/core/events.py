@@ -74,6 +74,35 @@ class SetUpdated(Event):
 
 
 @dataclass(frozen=True)
+class SetImported(Event):
+    """A historical set written by an import (Strong, Hevy).
+
+    Progress derives muscle load from it like a logged set; gamification does not
+    subscribe, so old history never pays out XP or completes today's quest."""
+
+    set_id: int
+    workout_id: int
+    exercise_id: int
+    weight_kg: float
+    reps: int
+    rpe: float | None
+    performed_at: datetime
+    section: str = "gym"
+    duration_s: int | None = None
+
+
+@dataclass(frozen=True)
+class WorkoutsImported(Event):
+    """One import finished: lets the dashboard and history refresh once, not per set."""
+
+    source: str
+    workouts: int
+    sets: int
+    first_day: date | None
+    last_day: date | None
+
+
+@dataclass(frozen=True)
 class SetDeleted(Event):
     set_id: int
     workout_id: int

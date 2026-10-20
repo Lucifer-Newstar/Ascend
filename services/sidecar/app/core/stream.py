@@ -28,6 +28,8 @@ UI_EVENTS: dict[str, str] = {
     "MealLogged": "dashboard.changed",
     "CheckinRecorded": "dashboard.changed",
     "QuestCompleted": "quest.completed",
+    # One refresh per import; the per-set SetImported rows stay off the stream.
+    "WorkoutsImported": "dashboard.changed",
 }
 
 

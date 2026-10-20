@@ -31,6 +31,7 @@ const run: Exercise = {
 };
 const session = (sets: Workout["sets"]): Workout => ({
   id: 9, day: "2026-10-20", section: "cardio", started_at: "2026-10-20T07:00:00", finished_at: null, sets,
+  source: "app", title: "",
 });
 
 function renderPage() {

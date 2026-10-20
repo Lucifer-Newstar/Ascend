@@ -111,10 +111,9 @@
       ],
       "owner": "jegatheesan-backend",
       "operations": {
-        "implemented": 2,
-        "planned": 5
-      },
-      "note": "Export endpoints currently live in app.modules.progress; they move to app.modules.io in Phase 3 without changing paths."
+        "implemented": 4,
+        "planned": 3
+      }
     }
   ]
 }

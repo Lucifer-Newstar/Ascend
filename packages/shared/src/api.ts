@@ -96,6 +96,10 @@ export interface Workout {
   started_at: string;
   finished_at: string | null;
   sets: WorkoutSet[];
+  /** "app" for sessions logged in ASCEND, else the app it was imported from. */
+  source: WorkoutSource;
+  /** The other app's workout name (imports only). */
+  title: string;
 }
 
 export interface LoggedSet {
@@ -268,6 +272,8 @@ export interface WorkoutSummary {
   sets: number;
   volume_kg: number;
   xp: number;
+  source: WorkoutSource;
+  title: string;
 }
 
 export interface BodyMetric {
@@ -396,4 +402,32 @@ export interface WeeklyReview {
   summary: string;
   summary_source: "model" | "template";
   algo_version: string;
+}
+
+// --- import / export (docs/contracts/import-export.yaml) ---------------------------
+
+export type WorkoutSource = "app" | "strong" | "hevy";
+export type ImportSource = "strong" | "hevy";
+
+/** The CSV travels as text: IPC carries JSON only. */
+export interface ImportIn {
+  csv: string;
+  /** Default true: report only, write nothing. */
+  dry_run?: boolean;
+  /** Strong's 2025 export has no unit column. */
+  unit?: "kg" | "lb";
+  include_warmups?: boolean;
+}
+
+export interface ImportReport {
+  format: "strong_csv" | "strong_csv_2025" | "hevy_csv" | "ascend_plan_csv";
+  workouts: number;
+  sets: number;
+  unmatched_exercises: string[];
+  warnings: string[];
+  dry_run: boolean;
+  skipped_duplicates: number;
+  skipped_warmups: number;
+  /** Source exercise name -> ASCEND library name. */
+  matched_exercises: Record<string, string>;
 }
