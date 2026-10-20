@@ -563,6 +563,54 @@ paths:
       x-status: implemented
       tags:
       - workouts
+  /exercises/online-log:
+    get:
+      summary: Online Log
+      description: 'The local log of online research requests, newest first: when, what name was
+
+        looked up, which sources were asked (with each request''s outcome) and how it was
+
+        allowed (the setting, or allow once). Never leaves this PC.'
+      operationId: online_log_exercises_online_log_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OnlineLogEntry'
+                title: Response Online Log Exercises Online Log Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
+    delete:
+      summary: Clear Online Log
+      description: Delete every entry of the online research log.
+      operationId: clear_online_log_exercises_online_log_delete
+      responses:
+        '204':
+          description: Successful Response
+      x-status: implemented
+      tags:
+      - workouts
 components:
   securitySchemes:
     launchToken:
@@ -1484,6 +1532,32 @@ components:
             type: string
           type: object
           title: Field Sources
+        confidence:
+          additionalProperties:
+            type: string
+          type: object
+          title: Confidence
+          default: {}
+        insufficient:
+          items:
+            type: string
+          type: array
+          title: Insufficient
+          default: []
+        offline:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseProposal'
+          - type: 'null'
+        offline_sources:
+          additionalProperties:
+            type: string
+          type: object
+          title: Offline Sources
+          default: {}
+        research:
+          anyOf:
+          - $ref: '#/components/schemas/ResearchReport'
+          - type: 'null'
         attribution:
           items:
             $ref: '#/components/schemas/AttributionOut'
@@ -1533,6 +1607,10 @@ components:
         online:
           type: boolean
           title: Online
+          default: false
+        allow_once:
+          type: boolean
+          title: Allow Once
           default: false
       additionalProperties: false
       type: object
@@ -1654,4 +1732,132 @@ components:
       title: StageStatus
       description: 'What one optional stage did. local_ai: ok | off | unavailable | error | invalid.
 
-        online: off | not_requested | ok | not_found | error.'
+        online: off | not_requested | ok | not_found | offline | timeout | rate_limited |
+
+        error.'
+    ResearchCall:
+      properties:
+        source:
+          type: string
+          title: Source
+        url:
+          type: string
+          title: Url
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - source
+      - url
+      - status
+      title: ResearchCall
+    ResearchField:
+      properties:
+        field:
+          type: string
+          title: Field
+        label:
+          type: string
+          title: Label
+        value:
+          type: string
+          title: Value
+        source:
+          type: string
+          title: Source
+        url:
+          type: string
+          title: Url
+        offline_value:
+          type: string
+          title: Offline Value
+        offline_source:
+          type: string
+          title: Offline Source
+        conflict:
+          type: boolean
+          title: Conflict
+      type: object
+      required:
+      - field
+      - label
+      - value
+      - source
+      - url
+      - offline_value
+      - offline_source
+      - conflict
+      title: ResearchField
+    ResearchReport:
+      properties:
+        query:
+          type: string
+          title: Query
+        consent:
+          type: string
+          title: Consent
+        outcome:
+          type: string
+          title: Outcome
+        calls:
+          items:
+            $ref: '#/components/schemas/ResearchCall'
+          type: array
+          title: Calls
+          default: []
+        fields:
+          items:
+            $ref: '#/components/schemas/ResearchField'
+          type: array
+          title: Fields
+          default: []
+        summary:
+          type: string
+          title: Summary
+          default: ''
+        summary_url:
+          type: string
+          title: Summary Url
+          default: ''
+      type: object
+      required:
+      - query
+      - consent
+      - outcome
+      title: ResearchReport
+      description: 'What online research asked, where, and which fields it would fill. Nothing is
+
+        saved until the user confirms the review form.'
+    OnlineLogEntry:
+      properties:
+        id:
+          type: integer
+          title: Id
+        at:
+          type: string
+          format: date-time
+          title: At
+        query:
+          type: string
+          title: Query
+        sources:
+          items:
+            $ref: '#/components/schemas/ResearchCall'
+          type: array
+          title: Sources
+          default: []
+        outcome:
+          type: string
+          title: Outcome
+        consent:
+          type: string
+          title: Consent
+      type: object
+      required:
+      - id
+      - at
+      - query
+      - outcome
+      - consent
+      title: OnlineLogEntry
