@@ -32,30 +32,30 @@ Validating on real training logs is future work (docs/ai/ai-roadmap.md).
 
 | Cohort | Method | Pearson r | Spearman rho | MAE | ECE | r with true daily capacity |
 |---|---|---|---|---|---|---|
-| typical | fixed 48 h | 0.579 | 0.603 | 0.127 | 0.120 | 0.293 |
-| typical | recovery-v2 population | 0.907 | 0.911 | 0.040 | 0.015 | 0.453 |
-| typical | recovery-v2 personal | 0.915 | 0.917 | 0.039 | 0.019 | 0.463 |
-| frequent | fixed 48 h | 0.520 | 0.535 | 0.193 | 0.176 | 0.460 |
-| frequent | recovery-v2 population | 0.848 | 0.857 | 0.058 | 0.022 | 0.675 |
-| frequent | recovery-v2 personal | 0.946 | 0.949 | 0.055 | 0.049 | 0.845 |
+| typical | fixed 48 h | 0.579 | 0.603 | 0.127 | 0.1202 | 0.293 |
+| typical | recovery-v2 population | 0.907 | 0.911 | 0.0395 | 0.0147 | 0.453 |
+| typical | recovery-v2 personal | 0.915 | 0.917 | 0.039 | 0.0193 | 0.463 |
+| frequent | fixed 48 h | 0.520 | 0.535 | 0.1932 | 0.1765 | 0.460 |
+| frequent | recovery-v2 population | 0.848 | 0.857 | 0.058 | 0.0218 | 0.675 |
+| frequent | recovery-v2 personal | 0.946 | 0.949 | 0.0546 | 0.0485 | 0.845 |
 
 Muscle-sessions evaluated: typical 97,833, frequent 132,790.
 Exercise exposures for the capacity column: 26,790 and 37,940.
 
 **What it shows**
 
-- **recovery-v2 tracks true readiness far better than a fixed 48 h rule** in both cohorts: r about 0.85-0.95 against 0.52-0.58, and MAE 0.04-0.06 against 0.13-0.19. Dose matters: three easy sets and eight hard sets do not need the same 48 hours.
+- **recovery-v2 tracks true readiness far better than a fixed 48 h rule** in both cohorts: Pearson r 0.848-0.946 against 0.520-0.579, and MAE 0.039-0.058 against 0.127-0.1932. Dose matters: three easy sets and eight hard sets do not need the same 48 hours.
 - **Personal factors help most where they can be learned.**
-  - For frequent users, r rises from 0.848 to 0.946. The correlation with true daily capacity rises from 0.68 to 0.84.
+  - For frequent users, r rises from 0.848 to 0.946. The correlation with true daily capacity rises from 0.675 to 0.845.
   - For typical users the gain is small (0.907 to 0.915). With 2-4 day gaps, most fatigue is gone by the next session, so the data says little about recovery speed.
 - **Error in the recovery factor k** (absolute error after 365 days):
   - typical: 0.221 with the fit vs 0.235 with the population value;
   - frequent: 0.138 vs 0.211;
   - groups that left the population value: 174/240 (typical), 200/240 (frequent).
 - **Calibration is good where most predictions are, and pessimistic at the low end.**
-  - Below about 0.4 predicted readiness the engine says "more tired" than the truth. For frequent users, a prediction of 0.26 meant a true 0.41 on average.
+  - Below about 0.4 predicted readiness the engine says "more tired" than the truth. For frequent users (population factors), predictions in the 0.2-0.3 bin averaged 0.261 against a true 0.411.
   - This is the deliberate mismatch above: the engine counts a set at RIR 2 as a full set (I = 1), while the simulated truth counts it as 0.84.
-  - Personal factors improve ranking (r) but make calibration slightly worse for frequent users (ECE 0.022 to 0.049). A faster or slower `k` stretches the spread of predictions, and the intensity mismatch then shows more.
+  - Personal factors improve ranking (r) but make calibration slightly worse for frequent users (ECE 0.0218 to 0.0485). A faster or slower `k` stretches the spread of predictions, and the intensity mismatch then shows more.
   - We report this rather than tune it away, because tuning the engine to the simulator would only fit our own assumptions.
 
 ![Calibration](img/eval_recovery_calibration.png)
@@ -101,8 +101,8 @@ By RPE habit (hit within 1 rep / mean RIR error):
 
 **What it shows**
 
-- **prog-v1 is the only policy that is both reliable and not too easy.** Repeating last session always "hits" but leaves users about 8 reps in reserve, 6 more than the target. A fixed +2.5 kg every session fails almost every set within weeks. The classic linear progression with resets is the closest competitor: it is centred (mean error near 0) but too hard on 22.4% of exposures, against 2.7% for prog-v1.
-- **prog-v1 errs on the easy side**: on average 2.4 reps more in reserve than the target, and too easy on 42.9% of exposures. This is the price of never asking for more than the user showed, and it is largest when no RPE is logged (3.2 reps over the target). Without RPE the engine cannot see reserve and climbs one rep at a time. Logging RPE is the single biggest improvement a user can make.
+- **prog-v1 is the only policy that is both reliable and not too easy.** Repeating last session always "hits" but leaves users 6.09 reps more in reserve than the target (about 8 in reserve). A fixed +2.5 kg every session fails almost every set within weeks. The classic linear progression with resets is the closest competitor: it is centred (mean error near 0) but too hard on 22.4% of exposures, against 2.7% for prog-v1.
+- **prog-v1 errs on the easy side**: on average 2.43 reps more in reserve than the target, and too easy on 42.9% of exposures. This is the price of never asking for more than the user showed, and it is largest when no RPE is logged (3.21 reps over the target). Without RPE the engine cannot see reserve and climbs one rep at a time. Logging RPE is the single biggest improvement a user can make.
 - **The recovery hold did not change these numbers.** A run without recovery input gave identical results: in this simulation no primary muscle was under 40 % at a session start. In development, a 60 % threshold held so often that users who never log RPE ended up more than 10 reps above the target reserve, so 40 % was kept.
 
 **Stall detection** (event level). A true stall episode starts when the true 4-week strength gain drops under 1 %, from an injected plateau or natural saturation. It counts as detected if prog-v1 flags it within 8 exposures. A flag while true gain is 2 % or more per 4 weeks is a false alarm. Between 1 and 2 % is grey and counts neither way.
@@ -115,7 +115,7 @@ By RPE habit (hit within 1 rep / mean RIR error):
 
 - **Why:** true stalls are rare compared with progressing exposures, and "no rep record in 3 sessions" cannot separate a lifter gaining 0.5 % a month from noise.
 - **What a false alarm costs:** one 10 % reset of that lift. The deload check only uses stalls when two or more lifts stall at once.
-- **What we changed:** the first rule (median e1RM of the last 3 sessions vs the 3 before) was worse. Without RPE an e1RM from sets stopped short of failure follows the prescription and falls whenever reps reset after a load step. Switching to rep-at-load records cut false alarms from about 9 to about 5.5 per 100 exposures in the 12-user development runs. In the same runs the undershoot for users who never log RPE fell from +10.6 to +3.3 reps over the target, because fewer spurious resets happened.
+- **What we changed:** the first rule (median e1RM of the last 3 sessions vs the 3 before) was worse. Without RPE an e1RM from sets stopped short of failure follows the prescription and falls whenever reps reset after a load step. In the 12-user development runs, switching to rep-at-load records cut false alarms from about 9 to about 5.5 per 100 exposures, and the undershoot for users who never log RPE fell from +10.6 to +3.3 reps over the target, because fewer spurious resets happened. These development figures were not committed to `eval/results`; the final run's numbers are the ones in the table above (5.46 false alarms per 100 progressing exposures, +3.21 without RPE).
 
 ## 3. Explanations
 
@@ -141,8 +141,8 @@ By RPE habit (hit within 1 rep / mean RIR error):
 | finish a workout (doses, refit, skills, quests) | 394.2 | 557.2 |
 
 - Reading screens takes tens of milliseconds.
-- Finishing a workout takes about 0.4 s. That includes the doses, the personal-factor refit over 365 days (about 0.17 s), skill-tree checks, quests and XP.
-- The notices endpoint (about 0.13 s) recomputes the deload check, the latest targets and today's quest. It is called once per app refresh.
+- Finishing a workout takes p50 394.2 ms, p95 557.2 ms. That includes the doses, the personal-factor refit over 365 days (p50 166.4 ms), skill-tree checks, quests and XP.
+- The notices endpoint (p50 129.6 ms) recomputes the deload check, the latest targets and today's quest. It is called once per app refresh.
 - These are single-machine timings; a slower laptop will be slower.
 
 ## 5. Tests behind the engines
@@ -164,3 +164,12 @@ MPLBACKEND=Agg uv run --group eval python -m eval.charts   # writes docs/ai/img/
 ```
 
 On the build machine the three runs took about 3, 2 and 1 minutes.
+
+## 7. Limitations, in one place
+
+- **Synthetic users only.** No result here comes from real people. Real training logs with consent are needed before any claim about real users.
+- **Recovery r is partly circular.** recovery-v2 reaches Pearson r 0.907-0.946 against the simulator's ground truth, but the simulator uses the same model family (exponential decay, capacity per muscle). Agreement of about 0.9 shows the estimation works under those assumptions; it does not show that people recover this way. The deliberate mismatches listed at the top reduce, but do not remove, that circularity.
+- **Stall detection is weak.** Precision 0.113 and recall 0.62 on synthetic stalls (103 of 166 found, 811 false alarms). A stall flag is a hint, not a diagnosis; one false alarm costs one 10 % reset of that lift.
+- **Real local-model phrasing is unverified.** No Ollama was available on the build machine, so no qwen3:4b sentence was produced or checked. Only the guard logic is tested, with a stub model. The app shows the template text whenever the model is missing.
+- **Latency is from one machine** (the 4-CPU build machine, Linux), not the target Windows laptop.
+- **Reproducibility checked.** On 2026-10-21 the recovery and progression commands below were rerun on the current main and produced JSON identical to `eval/results/recovery.json` and `eval/results/progression.json`.
