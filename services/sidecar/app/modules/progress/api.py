@@ -13,7 +13,7 @@ from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
-from app.modules.progress import body, energy, history, service
+from app.modules.progress import body, drilldown, energy, history, service
 from app.modules.progress.schemas import (
     BodyMetricIn,
     BodyMetricOut,
@@ -217,3 +217,18 @@ def progress_eta(db: Session = Depends(get_db), now: datetime = Depends(get_now)
     """Estimated date range to reach the profile's target weight."""
     profile = service.get_profile(db)
     return body.eta_for(db, profile.target_weight_kg if profile else None, now)
+
+
+@router.get("/muscles/{code}/history", response_model=drilldown.MuscleHistory)
+def muscle_history(
+    code: str,
+    days: int = Query(default=7, ge=1, le=30),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> drilldown.MuscleHistory:
+    """Drill-down for one muscle: daily effective sets and readiness for 1-30 days,
+    the sets that loaded it, and a plain-language suggestion from the status rules."""
+    try:
+        return drilldown.muscle_history(db, code, days, now)
+    except drilldown.UnknownMuscle as e:
+        raise HTTPException(404, f"unknown muscle '{code}'") from e
