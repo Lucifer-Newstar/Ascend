@@ -50,9 +50,15 @@ def list_exercises(
 
 
 @router.post("", response_model=WorkoutOut, status_code=201)
-def start(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> WorkoutOut:
+def start(
+    section: str = "gym", db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> WorkoutOut:
+    """Start a session (or return the one already running). `section` is a hint; the
+    first logged set decides it."""
+    if section not in SECTIONS:
+        raise HTTPException(422, f"unknown section '{section}'")
     existing = service.active_workout(db)
-    workout = existing or service.start_workout(db, now)
+    workout = existing or service.start_workout(db, now, section)
     return service.workout_out(workout)
 
 
@@ -92,6 +98,8 @@ def log_set(
         row, previous = service.log_set(db, bus, workout_id, body, now)
     except service.NotFound as e:
         raise HTTPException(404, str(e)) from e
+    except service.Invalid as e:
+        raise HTTPException(422, str(e)) from e
     except service.Conflict as e:
         raise HTTPException(409, str(e)) from e
     xp = game.xp_for_refs(db, sources=("set", "pr"), ref_id=row.id)
