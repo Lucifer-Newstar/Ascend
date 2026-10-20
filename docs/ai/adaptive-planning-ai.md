@@ -29,7 +29,7 @@
 |---|---|---|
 | Plan generation | Split by days per week, weekly sets per muscle, exercise choice from equipment and injury flags, 48 h spacing (72 h for quads, hamstrings, lower back), session length cap | `P-06` explains the plan day by day |
 | Progressive overload | Double progression, RPE rule (±5% clamp), calisthenics ladders, cardio +10% per week max, stall detection | "Why?" on a progression (`P-04`) |
-| Deloads | Planned 3 + 1 blocks; reactive deload when two of four signals are true | `P-07` one-line reason on the proposal |
+| Deloads | Planned 3 + 1 blocks; reactive deload when two of four signals are true ([§5.1](#51-reactive-deload-signals-deload-v1)) | `P-07` one-line reason on the proposal |
 | Missed sessions | Move within 48 h, else drop and redistribute up to +2 sets per remaining session, never > 1.5 × planned volume | Encouraging wording in chat |
 | Weekly review | Collect, score findings, pick the top 3, turn each into a plan diff | `P-05` three-sentence summary |
 | Injury adaptation | Red-flag triage, blocked patterns, substitutions, duration, return-to-load, escalation | `P-08` kind wording and one follow-up question |
@@ -143,6 +143,30 @@ Findings: `MUSCLE_UNDER` (chest, 6 and 7 effective sets vs target 10–20),
 | Template (AI off) | "This week: 4 of 4 sessions done. Main finding: chest is below its weekly target (6 effective sets; target 10–20). Proposed: more chest sets, a calorie increase and a new bench variation; review each below." |
 
 Every number in both versions is present in the findings or facts.
+
+### 5.1 Reactive deload signals (deload-v1)
+
+Implemented in `services/sidecar/app/modules/workouts/deload.py` and served by `GET /deload`.
+A reactive deload is recommended when **two or more** hold:
+
+| Signal | Condition |
+|---|---|
+| `LOW_READINESS` | ≥ 3 check-ins in the last 7 days with an average readiness < 50 |
+| `HEAVY_SORENESS` | Soreness "a lot" on ≥ 3 of the last 7 check-ins |
+| `PERFORMANCE_DROP` | ≥ 2 key lifts (squat, bench, deadlift, overhead press) whose best e1RM in the last 14 days is ≥ 3 % below their best in the 21 days before |
+| `FATIGUE_BUILDUP` | ≥ 3 muscles over their weekly range or under 50 % readiness |
+
+The planned deload is due after 3 consecutive training weeks (≥ 2 finished sessions each) since
+the last accepted deload (`POST /deload/start`). The thresholds are coaching rules of thumb
+chosen for the MVP, not validated cut-offs; tune them with beta data and bump `deload-v1`.
+
+### 5.2 Implementation status
+
+`review-v1` (`app/modules/coach/weekly_review.py`, `GET /coach/weekly-review/latest`) implements
+every finding in the table above except `PAIN_ACTIVE`, which waits for the injury module.
+Planned sessions come from the `sessions_per_week` setting (default 3). Adherence is only judged
+once there are two full weeks of history. The summary is the template; the `P-05` model rewrite
+plugs in behind the number-fidelity check.
 
 ---
 
