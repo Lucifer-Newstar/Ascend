@@ -20,4 +20,10 @@ export default tseslint.config(
     files: ["electron/**/*.ts"],
     languageOptions: { globals: globals.node },
   },
+  {
+    // electron-builder hooks are plain CommonJS run by Node.
+    files: ["build/**/*.cjs"],
+    languageOptions: { globals: globals.node, sourceType: "commonjs" },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 );

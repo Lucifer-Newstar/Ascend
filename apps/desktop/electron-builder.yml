@@ -18,6 +18,8 @@ extraResources:
     to: sidecar
     filter: ["**/*"]
 asar: true
+# Flip Electron fuses (RunAsNode off, ASAR integrity on, ...) on the packed exe.
+afterPack: build/fuses.cjs
 win:
   icon: build/icon.ico
   target:
