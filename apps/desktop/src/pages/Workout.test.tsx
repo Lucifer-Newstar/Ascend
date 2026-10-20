@@ -45,7 +45,7 @@ function renderPage() {
 
 describe("Training page", () => {
   beforeEach(() => {
-    vi.mocked(api.exercises).mockImplementation(async (_q = "", section) => (section === "cardio" ? [run] : [bench]));
+    vi.mocked(api.exercises).mockImplementation(async (...args) => (args[1] === "cardio" ? [run] : [bench]));
     vi.mocked(api.activeWorkout).mockResolvedValue(null);
   });
 
