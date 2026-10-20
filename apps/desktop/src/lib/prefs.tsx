@@ -54,6 +54,12 @@ export function PrefsProvider({
   return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>;
 }
 
+/** The resolved theme ("dark" | "light"), for components that need literal colours. */
+export function usePrefsTheme(): "dark" | "light" {
+  const prefs = useContext(PrefsContext);
+  return resolveTheme(prefs?.settings.theme ?? "dark", systemPrefersLight());
+}
+
 /** Prefs when inside <PrefsProvider>, else null (for components that also render standalone). */
 export function useOptionalPrefs(): PrefsValue | null {
   return useContext(PrefsContext);

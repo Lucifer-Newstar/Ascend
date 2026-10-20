@@ -79,9 +79,9 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged }: { onOpenCo
       <section className="card col-span-12 p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="card-title">Muscle recovery</h2>
-          <span className="text-[11px] text-faint">7-day effective sets vs target band · recovery decay (estimates)</span>
+          <span className="text-[11px] text-faint">Hover a muscle for sets, volume and last trained · click for details (estimates)</span>
         </div>
-        <MuscleMap muscles={data.muscles} />
+        <MuscleMap muscles={data.muscles} refreshKey={refreshKey} />
       </section>
     </div>
   );
