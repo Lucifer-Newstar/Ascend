@@ -34,8 +34,8 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
     return (
       <LoadingLayout label="Loading food table…">
         <div className="grid grid-cols-12 gap-5">
-          <SkeletonCard className="col-span-12 lg:col-span-4" lines={8} />
-          <div className="col-span-12 space-y-5 lg:col-span-8">
+          <SkeletonCard className="col-span-12 lg:col-span-5 xl:col-span-4" lines={8} />
+          <div className="col-span-12 space-y-5 lg:col-span-7 xl:col-span-8">
             <SkeletonCard lines={3} />
             <SkeletonCard lines={4} />
           </div>
@@ -77,10 +77,15 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
     }
   }
 
-  async function del(id: number) {
-    await api.deleteMeal(id);
-    day.reload();
-    onChanged();
+  async function del(id: number, mealName: string) {
+    try {
+      await api.deleteMeal(id);
+      toast(`${mealName[0].toUpperCase() + mealName.slice(1)} deleted`, "info");
+      day.reload();
+      onChanged();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
   }
 
   const d = day.data!;
@@ -88,7 +93,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
   const proteinTarget = d.protein_target_g ?? 0;
   return (
     <div className="grid grid-cols-12 gap-5">
-      <section className="card col-span-12 flex flex-col lg:col-span-4">
+      <section className="card col-span-12 flex flex-col lg:col-span-5 xl:col-span-4">
         <div className="border-b border-line p-4">
           <h2 className="card-title mb-3">Indian food table</h2>
           <div className="relative">
@@ -124,13 +129,13 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
         </p>
       </section>
 
-      <section className="col-span-12 space-y-5 lg:col-span-8">
+      <section className="col-span-12 space-y-5 lg:col-span-7 xl:col-span-8">
         <div className="card card-hover p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="card-title">Add a meal</h2>
             <div className="flex gap-1 rounded-lg border border-line p-0.5">
               {MEAL_TYPES.map((t) => (
-                <button key={t} type="button" onClick={() => setMealType(t)}
+                <button key={t} type="button" aria-pressed={mealType === t} onClick={() => setMealType(t)}
                   className={`rounded-md px-3 py-1 text-xs capitalize ${mealType === t ? "bg-accent/15 text-accent" : "text-muted hover:text-ink"}`}>{t}</button>
               ))}
             </div>
@@ -147,12 +152,12 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
                       <div className="text-xs text-faint">{portionLabel(x.portions, x.food.portion_label)}</div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button type="button" className="grid h-7 w-7 place-items-center rounded-md border border-line-2 text-muted hover:text-ink" onClick={() => change(x.food.id, -0.5)} aria-label="less"><IconMinus width={14} height={14} /></button>
+                      <button type="button" className="grid h-7 w-7 place-items-center rounded-md border border-line-2 text-muted hover:text-ink" onClick={() => change(x.food.id, -0.5)} aria-label={`Less ${x.food.name}`}><IconMinus width={14} height={14} /></button>
                       <span className="w-10 text-center text-sm text-ink">{x.portions}</span>
-                      <button type="button" className="grid h-7 w-7 place-items-center rounded-md border border-line-2 text-muted hover:text-ink" onClick={() => change(x.food.id, 0.5)} aria-label="more"><IconPlus width={14} height={14} /></button>
+                      <button type="button" className="grid h-7 w-7 place-items-center rounded-md border border-line-2 text-muted hover:text-ink" onClick={() => change(x.food.id, 0.5)} aria-label={`More ${x.food.name}`}><IconPlus width={14} height={14} /></button>
                     </div>
                     <span className="w-20 text-right text-sm text-muted">{Math.round(x.food.kcal * x.portions)} kcal</span>
-                    <button type="button" className="text-faint hover:text-bad" onClick={() => remove(x.food.id)} aria-label="remove"><IconTrash width={16} height={16} /></button>
+                    <button type="button" className="text-faint hover:text-bad" onClick={() => remove(x.food.id)} aria-label={`Remove ${x.food.name}`}><IconTrash width={16} height={16} /></button>
                   </li>
                 ))}
               </ul>
@@ -185,11 +190,11 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
                     <div className="text-sm capitalize text-ink">{m.meal_type}</div>
                     <div className="text-xs text-faint">{timeLabel(m.logged_at)}</div>
                   </div>
-                  <div className="min-w-0 flex-1 truncate text-sm text-muted">
+                  <div className="min-w-0 flex-1 truncate text-sm text-muted" title={m.items.map((i) => i.food_name).join(", ")}>
                     {m.items.map((i) => `${i.food_name}${i.portions !== 1 ? ` ×${i.portions}` : ""}`).join(", ")}
                   </div>
                   <span className="shrink-0 text-sm font-medium text-ink">{kcal(m.kcal)} kcal</span>
-                  <button type="button" className="text-faint hover:text-bad" onClick={() => del(m.id)} aria-label="delete meal"><IconTrash width={16} height={16} /></button>
+                  <button type="button" className="text-faint hover:text-bad" onClick={() => del(m.id, m.meal_type)} aria-label={`Delete ${m.meal_type} at ${timeLabel(m.logged_at)}`}><IconTrash width={16} height={16} /></button>
                 </li>
               ))}
             </ul>
