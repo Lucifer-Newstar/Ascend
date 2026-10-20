@@ -67,7 +67,7 @@
 - [ ] `feat(coach): proposals table and apply/keep endpoints`
 - [ ] `feat(coach): chat endpoint streaming over SSE`
 - [x] `feat(coach): weekly review findings and top-3 diffs`
-- [ ] `feat(coach): number-fidelity check with template fallback`
+- [x] `feat(coach): number-fidelity check with template fallback` — V3 + V4 in `coach/validate.py`, rules tip on failure, `checks` in the reply
 - [ ] `feat(nutrition): ONNX classifier top-3 via onnx_runtime` (pair: Navin)
 - [ ] `feat(nutrition): confidence thresholds and corrections table`
 - [ ] `bench(ai): tokens/s and VRAM for candidate models` (pair: Navin)
