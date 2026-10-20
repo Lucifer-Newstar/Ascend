@@ -24,7 +24,7 @@ security:
 - launchToken: []
 tags:
 - name: gamification
-  description: Humane game layer — XP is never taken away for missing a day; only a correction (a skill step whose proof was deleted) reverses its own grant
+  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own grant (a deleted set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
 paths:
   /game/summary:
     get:

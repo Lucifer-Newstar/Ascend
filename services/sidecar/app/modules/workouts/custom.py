@@ -533,7 +533,36 @@ def analyse(
         finally:
             if http is None:
                 client.close()
+    _make_consistent(p)
     return Analysis(name, p, matches, duplicate, ai, online)
+
+
+TIMED_SECTIONS = ("cardio", "martial_arts", "flexibility", "meditation")
+
+
+def _make_consistent(p: Proposal) -> None:
+    """The stages can disagree (a model saying 'cardio' and 'reps'); fix the proposal so
+    it passes the same checks as create: measure follows section, at most 3 primaries."""
+    v = p.values
+    timed = v.get("section") in TIMED_SECTIONS
+    if timed and v.get("measure") != "time":
+        p.put("measure", "time", "rules")
+    elif not timed and v.get("measure") == "time":
+        p.put("measure", "reps", "rules")
+    if v["measure"] == "time":
+        for key in ("rep_low", "rep_high"):
+            v.pop(key, None)
+            p.sources.pop(key, None)
+    elif v.get("rep_low") is None:
+        low, high = lib.default_range(v["measure"])
+        p.put("rep_low", low, "rules")
+        p.put("rep_high", high, "rules")
+    muscles = dict(v.get("muscles") or {})
+    primaries = [k for k, w in muscles.items() if w >= 1.0]
+    if len(primaries) > 3:
+        for k in primaries[3:]:
+            muscles[k] = 0.5
+        v["muscles"] = muscles
 
 
 def unique_slug(db: Session, name: str) -> str:
@@ -558,6 +587,10 @@ def create(
     dup = find_duplicate(db, name)
     if dup is not None:
         raise Duplicate(dup)
+    for alias in values.get("aliases") or []:
+        clash = find_duplicate(db, alias)
+        if clash is not None:
+            raise Duplicate(clash)
     measure = values["measure"]
     e = Exercise(
         name=name,

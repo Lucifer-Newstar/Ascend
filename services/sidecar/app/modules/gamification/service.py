@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -18,7 +19,9 @@ from app.core.events import (
     EventBus,
     MealLogged,
     QuestCompleted,
+    SetDeleted,
     SetLogged,
+    SetUpdated,
     SkillStepRevoked,
     SkillStepUnlocked,
     WorkoutLogged,
@@ -266,7 +269,9 @@ def _metric_value(db: Session, metric: str, day: date) -> int | None:
             .join(Workout, Workout.id == WorkoutSet.workout_id)
             .join(ExerciseMuscle, ExerciseMuscle.exercise_id == WorkoutSet.exercise_id)
             .where(
-                Workout.day == day,
+                # By when the set was done, not the session's start day: a set logged
+                # after midnight counts toward the new day's quest.
+                func.date(WorkoutSet.performed_at) == day.isoformat(),
                 ExerciseMuscle.muscle == muscle,
                 ExerciseMuscle.weight >= 1.0,
                 (WorkoutSet.rpe.is_(None)) | (WorkoutSet.rpe >= f.HARD_SET_RPE),
@@ -413,22 +418,126 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
 # --- event handlers ------------------------------------------------------------------
 
 
+# --- anti-farming helpers (xp-v3) --------------------------------------------
+
+
+def _sets_before(db: Session, set_id: int, exercise_id: int, day: date) -> tuple[int, int]:
+    """(sets of this exercise, sets in total) logged earlier on the same calendar day."""
+    from app.modules.workouts.models import WorkoutSet
+
+    same_day = (func.date(WorkoutSet.performed_at) == day.isoformat()) & (WorkoutSet.id < set_id)
+    total = db.scalar(select(func.count(WorkoutSet.id)).where(same_day)) or 0
+    of_ex = (
+        db.scalar(
+            select(func.count(WorkoutSet.id)).where(same_day, WorkoutSet.exercise_id == exercise_id)
+        )
+        or 0
+    )
+    return int(of_ex), int(total)
+
+
+def _pr_values(db: Session, row: Any) -> tuple[float | None, float | None]:
+    """The PR set's value (e1RM, or seconds for a hold) and the best before it."""
+    from app.modules.workouts.models import WorkoutSet
+
+    hold = row.exercise.measure == "hold" and row.e1rm is None
+    column = WorkoutSet.duration_s if hold else WorkoutSet.e1rm
+    value = float(row.duration_s or 0) if hold else row.e1rm
+    previous = db.scalar(
+        select(func.max(column)).where(
+            WorkoutSet.exercise_id == row.exercise_id, WorkoutSet.id != row.id
+        )
+    )
+    return value, (float(previous) if previous is not None else None)
+
+
+def _net_refs(db: Session, source: str, day: date) -> list[int]:
+    rows = db.execute(
+        select(XpEvent.ref_id, func.sum(XpEvent.amount))
+        .where(XpEvent.source == source, XpEvent.day == day, XpEvent.ref_id.is_not(None))
+        .group_by(XpEvent.ref_id)
+    ).all()
+    return [int(ref) for ref, total in rows if ref is not None and (total or 0) > 0]
+
+
+def _prs_today(db: Session, exercise_id: int, day: date) -> tuple[int, int]:
+    from app.modules.workouts.models import WorkoutSet
+
+    refs = _net_refs(db, "pr", day)
+    if not refs:
+        return 0, 0
+    of_ex = db.scalar(
+        select(func.count(WorkoutSet.id)).where(
+            WorkoutSet.id.in_(refs), WorkoutSet.exercise_id == exercise_id
+        )
+    )
+    return int(of_ex or 0), len(refs)
+
+
+def _paid_today(db: Session, source: str, day: date) -> int:
+    return len(_net_refs(db, source, day))
+
+
+def _session_work(sets: list[Any]) -> tuple[int, float]:
+    """(working sets, timed minutes) of a session, from its sets."""
+    timed = sum(
+        (s.duration_s or 0) / 60
+        for s in sets
+        if s.exercise.section in ("cardio", "martial_arts", "flexibility", "meditation")
+    )
+    return len(sets), timed
+
+
 def make_handlers(bus: EventBus) -> None:
     def on_set_logged(db: Session, e: SetLogged) -> None:
+        from app.modules.workouts.models import WorkoutSet
+
+        day = e.performed_at.date()
+        before = _sets_before(db, e.set_id, e.exercise_id, day)
         if e.duration_s and e.section in ("cardio", "martial_arts", "flexibility", "meditation"):
             amount = f.timed_set_xp(e.duration_s, e.section)
         else:
             amount = f.set_xp(e.rpe)
-        award(db, e.performed_at, "set", e.set_id, amount)
+        if not f.set_xp_allowed(*before):
+            amount = 0  # diminishing returns: logging the 41st set of the day pays nothing
+        if amount:
+            award(db, e.performed_at, "set", e.set_id, amount)
         if e.is_pr:
-            award(db, e.performed_at, "pr", e.set_id, f.PR_XP, note="new e1RM PR")
+            row = db.get(WorkoutSet, e.set_id)
+            value, previous = _pr_values(db, row) if row else (None, None)
+            prs_ex, prs_day = _prs_today(db, e.exercise_id, day)
+            if f.pr_xp_allowed(value, previous, prs_ex, prs_day):
+                award(db, e.performed_at, "pr", e.set_id, f.PR_XP, note="new PR")
         refresh_quest(db, bus, e.performed_at)
+
+    def on_set_updated(db: Session, e: SetUpdated) -> None:
+        from app.modules.workouts.models import WorkoutSet
+
+        row = db.get(WorkoutSet, e.set_id)
+        # An edit can take PR XP away (the PR was a typo) but never pays it.
+        if row is not None and not row.is_pr:
+            reverse(db, bus.clock(), ("pr",), e.set_id, note="set edited: no longer a PR")
+        refresh_quest(db, bus, bus.clock())
+
+    def on_set_deleted(db: Session, e: SetDeleted) -> None:
+        from app.modules.workouts.models import Workout
+
+        now = bus.clock()
+        reverse(db, now, ("set",), e.set_id, note="set deleted")
+        reverse(db, now, ("pr",), e.set_id, note="set deleted")
+        workout = db.get(Workout, e.workout_id)
+        if workout is not None and workout.finished_at is not None:
+            remaining = [s for s in workout.sets if s.id != e.set_id]
+            sets, timed = _session_work(remaining)
+            if not (sets >= f.SESSION_MIN_SETS or timed >= f.SESSION_MIN_TIMED_MINUTES):
+                reverse(db, now, ("session",), workout.id, note="session too short after a delete")
+        refresh_quest(db, bus, now)
 
     def on_workout_logged(db: Session, e: WorkoutLogged) -> None:
         from app.modules.workouts.models import Workout
 
         workout = db.get(Workout, e.workout_id)
-        at = workout.finished_at if workout and workout.finished_at else datetime.now()
+        at = workout.finished_at if workout and workout.finished_at else bus.clock()
         set_ids = [s.id for s in workout.sets] if workout else []
         already = int(
             db.scalar(
@@ -438,9 +547,12 @@ def make_handlers(bus: EventBus) -> None:
             )
             or 0
         )
-        bonus = f.session_completion_xp(e.active_minutes, already)
-        mult = f.streak_multiplier(streak(db, at.date()).current)
-        award(db, at, "session", e.workout_id, round(bonus * mult), note="session complete")
+        sets, timed = _session_work(list(workout.sets) if workout else [])
+        if f.session_qualifies(sets, timed, _paid_today(db, "session", at.date())):
+            minutes = f.session_minutes(e.active_minutes, sets, timed)
+            bonus = f.session_completion_xp(minutes, already)
+            mult = f.streak_multiplier(streak(db, at.date()).current)
+            award(db, at, "session", e.workout_id, round(bonus * mult), note="session complete")
         refresh_quest(db, bus, at)
 
     def on_meal_logged(db: Session, e: MealLogged) -> None:
@@ -462,6 +574,8 @@ def make_handlers(bus: EventBus) -> None:
         reverse(db, e.at, ("skill",), e.unlock_id, note=f"skill step revoked: {e.step_key}")
 
     bus.subscribe(SetLogged, on_set_logged)
+    bus.subscribe(SetUpdated, on_set_updated)
+    bus.subscribe(SetDeleted, on_set_deleted)
     bus.subscribe(WorkoutLogged, on_workout_logged)
     bus.subscribe(MealLogged, on_meal_logged)
     bus.subscribe(CheckinRecorded, on_checkin)

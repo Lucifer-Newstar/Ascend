@@ -303,12 +303,15 @@ def edit_set(
     db: Session = Depends(get_db),
     bus: EventBus = Depends(get_bus),
 ) -> SetOut:
-    """Fix a logged set. PRs for the exercise and the set's muscle load are re-derived;
-    XP already awarded is kept (the XP ledger is append-only)."""
+    """Fix a logged set. PRs for the exercise and the set's muscle load are re-derived.
+    If the set is no longer a PR its PR XP is reversed (a new row in the append-only
+    ledger); an edit never pays XP."""
     try:
         row = service.update_set(db, bus, workout_id, set_id, body)
     except service.NotFound as e:
         raise HTTPException(404, str(e)) from e
+    except service.Invalid as e:
+        raise HTTPException(422, str(e)) from e
     return service.set_out(row)
 
 
