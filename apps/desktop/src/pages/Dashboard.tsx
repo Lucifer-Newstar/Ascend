@@ -13,9 +13,10 @@ import { ErrorState, StaleNotice } from "../components/States";
 import { useToast } from "../components/Toast";
 import { XpBar } from "../components/XpBar";
 import { grams } from "../lib/format";
+import { CountUp } from "../lib/motion";
 import { isOffline, useApi } from "../lib/useApi";
 
-export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => void; refreshKey: number }) {
+export function DashboardPage({ onOpenCoach, refreshKey, onChanged }: { onOpenCoach: () => void; refreshKey: number; onChanged?: () => void }) {
   const { data, error, status, loading, reload } = useApi(api.dashboard, [refreshKey]);
   const [tip, setTip] = useState<CoachReply | null>(null);
   const toast = useToast();
@@ -31,7 +32,9 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
     try {
       const item = await api.completeQuest(id);
       toast(`Quest item complete · +${item.xp} XP`, "xp");
-      reload();
+      // Refreshes the whole shell, so the header XP chip animates the gain too.
+      if (onChanged) onChanged();
+      else reload();
     } catch (e) {
       toast((e as Error).message, "error");
     }
@@ -41,8 +44,8 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
   return (
     <div className="grid grid-cols-12 gap-5">
       {error && <div className="col-span-12"><StaleNotice message={error} onRetry={reload} /></div>}
-      <section className="card col-span-12 p-5 xl:col-span-8"><XpBar xp={data.game.xp} streak={data.game.streak} /></section>
-      <section className="card col-span-12 flex flex-col justify-between p-5 xl:col-span-4">
+      <section className="card card-hover col-span-12 p-5 xl:col-span-8"><XpBar xp={data.game.xp} streak={data.game.streak} /></section>
+      <section className="card card-hover card-lift col-span-12 flex flex-col justify-between p-5 xl:col-span-4">
         <div className="flex items-center justify-between">
           <h2 className="card-title">Coach</h2>
           {tip && (
@@ -55,21 +58,21 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
         <button type="button" className="mt-3 self-start text-xs text-accent hover:underline" onClick={onOpenCoach}>Ask the coach →</button>
       </section>
 
-      <section className="card col-span-12 p-5" aria-labelledby="checkin-title">
+      <section className="card card-hover col-span-12 p-5" aria-labelledby="checkin-title">
         <h2 id="checkin-title" className="card-title mb-3">Morning check-in</h2>
         <CheckinCard refreshKey={refreshKey} onSaved={reload} />
       </section>
 
-      <section className="card col-span-12 p-5 lg:col-span-5">
+      <section className="card card-hover card-lift col-span-12 p-5 lg:col-span-5">
         <h2 className="card-title mb-4">Today</h2>
         <Rings tasks={data.rings.tasks} kcalIn={data.rings.kcal_in} kcalOut={data.rings.kcal_out} />
         <div className="mt-5 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center text-xs">
-          <Macro label="Protein" value={grams(n.protein_g)} />
-          <Macro label="Carbs" value={grams(n.carbs_g)} />
-          <Macro label="Fat" value={grams(n.fat_g)} />
+          <Macro label="Protein" value={n.protein_g} />
+          <Macro label="Carbs" value={n.carbs_g} />
+          <Macro label="Fat" value={n.fat_g} />
         </div>
       </section>
-      <section className="card col-span-12 p-5 lg:col-span-7">
+      <section className="card card-hover col-span-12 p-5 lg:col-span-7">
         <QuestList items={data.game.quest} onComplete={complete} />
       </section>
 
@@ -84,11 +87,11 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
   );
 }
 
-function Macro({ label, value }: { label: string; value: string }) {
+function Macro({ label, value }: { label: string; value: number }) {
   return (
     <div>
       <div className="text-faint">{label}</div>
-      <div className="mt-0.5 font-semibold text-ink">{value}</div>
+      <div className="mt-0.5 font-semibold text-ink"><CountUp value={value} format={grams} /></div>
     </div>
   );
 }
