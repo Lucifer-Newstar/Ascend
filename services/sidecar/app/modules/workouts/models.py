@@ -14,6 +14,12 @@ class Exercise(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(80), unique=True)
     equipment: Mapped[str] = mapped_column(String(20))
+    # gym | calisthenics | cardio | martial_arts | flexibility | meditation
+    section: Mapped[str] = mapped_column(
+        String(16), default="gym", server_default="gym", index=True
+    )
+    # Metabolic equivalent for time-based activities (None for lifts: see energy.py).
+    met: Mapped[float | None] = mapped_column(Float, nullable=True)
     muscles: Mapped[list[ExerciseMuscle]] = relationship(
         back_populates="exercise", cascade="all, delete-orphan", lazy="selectin"
     )
@@ -35,6 +41,7 @@ class Workout(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     day: Mapped[date] = mapped_column(Date, index=True)
+    section: Mapped[str] = mapped_column(String(16), default="gym", server_default="gym")
     started_at: Mapped[datetime] = mapped_column(DateTime)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     notes: Mapped[str] = mapped_column(String(500), default="")
@@ -57,6 +64,10 @@ class WorkoutSet(Base):
     weight_kg: Mapped[float] = mapped_column(Float)
     reps: Mapped[int] = mapped_column(Integer)
     rpe: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Time/distance sets (cardio, martial arts rounds, stretch holds, meditation).
+    duration_s: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    distance_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    avg_hr: Mapped[int | None] = mapped_column(Integer, nullable=True)
     e1rm: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_pr: Mapped[bool] = mapped_column(Boolean, default=False)
     performed_at: Mapped[datetime] = mapped_column(DateTime)
