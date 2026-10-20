@@ -311,7 +311,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/PROut'
-      x-status: planned
+      x-status: implemented
       tags:
       - workouts
   /plans/current:
@@ -687,6 +687,14 @@ components:
         achieved_at:
           type: string
           format: date-time
+        exercise:
+          type: string
+        weight_kg:
+          type: number
+        reps:
+          type: integer
+        set_id:
+          type: integer
       required:
       - exercise_id
       - type

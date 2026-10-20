@@ -15,6 +15,7 @@ from app.modules.workouts.schemas import (
     FinishedWorkout,
     LoggedSet,
     MuscleWeight,
+    PROut,
     SetIn,
     SetOut,
     SetPatch,
@@ -24,6 +25,13 @@ from app.modules.workouts.schemas import (
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 exercises_router = APIRouter(prefix="/exercises", tags=["workouts"])
+prs_router = APIRouter(prefix="/prs", tags=["workouts"])
+
+
+@prs_router.get("", response_model=list[PROut])
+def list_prs(exercise_id: int | None = None, db: Session = Depends(get_db)) -> list[PROut]:
+    """Best Epley e1RM per exercise (sets of 1-10 reps with load), highest first."""
+    return service.personal_records(db, exercise_id)
 
 
 @exercises_router.get("", response_model=list[ExerciseOut])

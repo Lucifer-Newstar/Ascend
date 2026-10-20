@@ -9,3 +9,4 @@
 | 2026-10-20 | /health db + migration head; WAL checkpoint on /shutdown; Bearer-scheme fix; typed versioned events | PR #3 (`feat/backend-core`) | Electron still only needs the 200 from /health |
 | 2026-10-20 | GET /workouts (keyset paging); PATCH/DELETE sets with PR recompute and muscle-load rewrite | PR #3 | Dhanush: the logger can now offer edit/delete on a set row |
 | 2026-10-20 | Shared logger for cardio, martial arts, flexibility and meditation: sections, 23 seeded activities, timed sets, time-based load, minute XP (xp-v2), MET burn, calm streak | PR #4 (`feat/backend-activities`) | Dhanush: `/exercises?section=` and `duration_s` power the activity tabs |
+| 2026-10-20 | Body metrics with trend weight (trend-v1), tape measurements, ETA range, muscle drill-down (1–30 days), weekly summary, PR list | PR #5 (`feat/backend-progress`) | Dhanush: endpoints for the Progress page and the drill-down panel are live |

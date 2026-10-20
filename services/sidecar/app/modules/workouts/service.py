@@ -13,7 +13,14 @@ from app.modules.gamification.formulas import HARD_SET_RPE
 from app.modules.workouts import pr
 from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
-from app.modules.workouts.schemas import SetIn, SetOut, SetPatch, WorkoutOut, WorkoutSummary
+from app.modules.workouts.schemas import (
+    PROut,
+    SetIn,
+    SetOut,
+    SetPatch,
+    WorkoutOut,
+    WorkoutSummary,
+)
 
 
 class NotFound(Exception):
@@ -255,3 +262,29 @@ def delete_set(db: Session, bus: EventBus, workout_id: int, set_id: int) -> None
     db.delete(row)
     db.flush()
     recompute_prs(db, exercise_id)
+
+
+def personal_records(db: Session, exercise_id: int | None = None) -> list[PROut]:
+    """Current best e1RM per exercise (earliest set wins a tie), best first."""
+    stmt = select(WorkoutSet).where(WorkoutSet.e1rm.is_not(None))
+    if exercise_id is not None:
+        stmt = stmt.where(WorkoutSet.exercise_id == exercise_id)
+    best: dict[int, WorkoutSet] = {}
+    for s in db.scalars(stmt.order_by(WorkoutSet.performed_at, WorkoutSet.id)).all():
+        current = best.get(s.exercise_id)
+        if current is None or (s.e1rm or 0) > (current.e1rm or 0) + 1e-9:
+            best[s.exercise_id] = s
+    rows = sorted(best.values(), key=lambda s: -(s.e1rm or 0))
+    return [
+        PROut(
+            exercise_id=s.exercise_id,
+            exercise=s.exercise.name,
+            value=s.e1rm or 0.0,
+            weight_kg=s.weight_kg,
+            reps=s.reps,
+            algo_version=pr.FORMULA_VERSION,
+            achieved_at=s.performed_at,
+            set_id=s.id,
+        )
+        for s in rows
+    ]

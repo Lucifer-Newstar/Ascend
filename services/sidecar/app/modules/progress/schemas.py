@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,6 +14,7 @@ class ProfileIn(BaseModel):
     weight_kg: float = Field(ge=30, le=300)
     goal: Literal["cut", "maintain", "bulk"]
     activity: Literal["sedentary", "light", "moderate", "active", "very_active"] = "moderate"
+    target_weight_kg: float | None = Field(default=None, ge=30, le=300)
 
 
 class EnergyTargets(BaseModel):
@@ -49,3 +50,50 @@ class SettingsOut(BaseModel):
 
 class SettingsIn(BaseModel):
     ai_enabled: bool
+
+
+class BodyMetricIn(BaseModel):
+    measured_at: datetime | None = None
+    weight_kg: float = Field(ge=20, le=300)
+    waist_cm: float | None = Field(default=None, ge=30, le=250)
+    resting_hr: int | None = Field(default=None, ge=25, le=150)
+
+
+class BodyMetricOut(BaseModel):
+    id: int
+    measured_at: datetime
+    weight_kg: float
+    trend_kg: float
+    waist_cm: float | None
+    resting_hr: int | None
+
+
+MeasurementSite = Literal["waist", "hips", "chest", "arm", "thigh", "calf", "neck"]
+
+
+class MeasurementIn(BaseModel):
+    measured_at: datetime | None = None
+    site: MeasurementSite
+    cm: float = Field(ge=10, le=250)
+
+
+class MeasurementOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    measured_at: datetime
+    site: str
+    cm: float
+    change_cm: float | None = None
+
+
+class EtaOut(BaseModel):
+    goal_kg: float | None
+    current_trend_kg: float | None
+    rate_kg_per_week: float | None
+    eta_from: date | None
+    eta_to: date | None
+    confidence: Literal["low", "medium", "high"]
+    on_track: bool
+    reason: str | None
+    formula_version: str
+    note: Literal["Estimate, not a promise"] = "Estimate, not a promise"

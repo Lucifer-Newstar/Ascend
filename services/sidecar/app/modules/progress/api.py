@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -13,8 +13,13 @@ from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
-from app.modules.progress import energy, history, service
+from app.modules.progress import body, drilldown, energy, history, service, weekly
 from app.modules.progress.schemas import (
+    BodyMetricIn,
+    BodyMetricOut,
+    EtaOut,
+    MeasurementIn,
+    MeasurementOut,
     MuscleStateOut,
     ProfileIn,
     ProfileOut,
@@ -30,7 +35,16 @@ def _profile_out(db: Session) -> ProfileOut:
     p = service.get_profile(db)
     if p is None:
         raise HTTPException(404, "no profile yet: finish onboarding")
-    fields = ("name", "age", "sex", "height_cm", "weight_kg", "goal", "activity")
+    fields = (
+        "name",
+        "age",
+        "sex",
+        "height_cm",
+        "weight_kg",
+        "goal",
+        "activity",
+        "target_weight_kg",
+    )
     data = {k: getattr(p, k) for k in fields}
     return ProfileOut.model_validate({**data, "energy": service.energy_for(p)})
 
@@ -148,3 +162,83 @@ def export_csv(kind: Literal["workouts", "meals"], db: Session = Depends(get_db)
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="ascend-{kind}.csv"'},
     )
+
+
+# --- body metrics -----------------------------------------------------------------
+
+
+@router.get("/body-metrics", response_model=list[BodyMetricOut])
+def list_body_metrics(
+    days: int = Query(default=90, ge=1, le=3650),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> list[BodyMetricOut]:
+    """Weigh-ins in the last `days`, oldest first, each with its trend weight."""
+    return body.list_metrics(db, now, days)
+
+
+@router.post("/body-metrics", response_model=BodyMetricOut, status_code=201)
+def log_body_metric(
+    body_in: BodyMetricIn, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> BodyMetricOut:
+    """Log a weigh-in. The newest weigh-in also becomes the profile weight, so the
+    calorie estimate follows the user's real weight."""
+    out = body.log_metric(db, body_in, now)
+    profile = service.get_profile(db)
+    newest = body.list_metrics(db, now, 3650)
+    if profile is not None and newest and newest[-1].id == out.id:
+        profile.weight_kg = out.weight_kg
+    return out
+
+
+@router.delete("/body-metrics/{metric_id}", status_code=204)
+def delete_body_metric(metric_id: int, db: Session = Depends(get_db)) -> Response:
+    if not body.delete_metric(db, metric_id):
+        raise HTTPException(404, f"body metric {metric_id} not found")
+    return Response(status_code=204)
+
+
+@router.get("/measurements", response_model=list[MeasurementOut])
+def list_measurements(
+    site: str | None = None, db: Session = Depends(get_db)
+) -> list[MeasurementOut]:
+    return body.list_measurements(db, site)
+
+
+@router.post("/measurements", response_model=MeasurementOut, status_code=201)
+def log_measurement(
+    body_in: MeasurementIn, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> MeasurementOut:
+    return body.log_measurement(db, body_in, now)
+
+
+@router.get("/progress/eta", response_model=EtaOut)
+def progress_eta(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> EtaOut:
+    """Estimated date range to reach the profile's target weight."""
+    profile = service.get_profile(db)
+    return body.eta_for(db, profile.target_weight_kg if profile else None, now)
+
+
+@router.get("/muscles/{code}/history", response_model=drilldown.MuscleHistory)
+def muscle_history(
+    code: str,
+    days: int = Query(default=7, ge=1, le=30),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> drilldown.MuscleHistory:
+    """Drill-down for one muscle: daily effective sets and readiness for 1-30 days,
+    the sets that loaded it, and a plain-language suggestion from the status rules."""
+    try:
+        return drilldown.muscle_history(db, code, days, now)
+    except drilldown.UnknownMuscle as e:
+        raise HTTPException(404, f"unknown muscle '{code}'") from e
+
+
+@router.get("/progress/weekly", response_model=list[weekly.WeekSummary])
+def progress_weekly(
+    weeks: int = Query(default=8, ge=1, le=52),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> list[weekly.WeekSummary]:
+    """Per-week sessions, sets, lifting volume, minutes, XP, average intake and weight."""
+    return weekly.weekly(db, now, weeks)
