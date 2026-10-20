@@ -1,9 +1,9 @@
-import type { Exercise, Section, SetIn, Workout, WorkoutSet } from "@ascend/shared";
+import type { Exercise, Section, SetIn, SetPatch, Workout, WorkoutSet } from "@ascend/shared";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
 import { IconSearch, IconTrophy } from "../components/Icons";
-import { NumberField, RestTimer, RpeSelect } from "../components/logger/fields";
+import { NumberField, RestTimer, RPE_OPTIONS, RpeSelect } from "../components/logger/fields";
 import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
 import { TimedSetForm } from "../components/logger/TimedSetForm";
 import { Empty, ErrorState, Loading } from "../components/States";
@@ -11,7 +11,7 @@ import { useToast } from "../components/Toast";
 import { sessionLoad } from "../lib/load";
 import { MUSCLE_LABEL } from "../lib/muscles";
 import { usePrefs } from "../lib/prefs";
-import { formatDistance, formatDuration, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
+import { formatDistance, formatDuration, fromDisplayWeight, parseDuration, toDisplayWeight, weightUnit } from "../lib/units";
 import { useApi } from "../lib/useApi";
 
 const REST_SECONDS = 90;
@@ -69,6 +69,39 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
       if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
       else toast(`${selected.time_based ? formatDuration(res.set.duration_s ?? 0) + " logged" : "Set logged"} · +${res.xp_awarded} XP`, "xp");
       onChanged();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshSession() {
+    setWorkout(await api.activeWorkout());
+    onChanged();
+  }
+
+  async function editSet(s: WorkoutSet, patch: SetPatch) {
+    if (!workout) return;
+    setBusy(true);
+    try {
+      const updated = await api.editSet(workout.id, s.id, patch);
+      await refreshSession();
+      toast(updated.is_pr ? "Set updated · still a PR" : "Set updated", "info");
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteSet(s: WorkoutSet) {
+    if (!workout) return;
+    setBusy(true);
+    try {
+      await api.deleteSet(workout.id, s.id);
+      await refreshSession();
+      toast("Set deleted", "info");
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -187,7 +220,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               {groups.map(([name, sets]) => (
                 <div key={name}>
                   <div className="mb-1.5 text-sm font-medium text-ink">{name}</div>
-                  <SetTable sets={sets} units={units} />
+                  <SetTable sets={sets} units={units} onEdit={editSet} onDelete={deleteSet} busy={busy} />
                 </div>
               ))}
             </div>
@@ -219,8 +252,16 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   );
 }
 
-function SetTable({ sets, units }: { sets: WorkoutSet[]; units: "metric" | "imperial" }) {
+function SetTable({ sets, units, onEdit, onDelete, busy }: {
+  sets: WorkoutSet[];
+  units: "metric" | "imperial";
+  onEdit: (s: WorkoutSet, patch: SetPatch) => void;
+  onDelete: (s: WorkoutSet) => void;
+  busy: boolean;
+}) {
   const timed = sets.some((s) => s.duration_s !== null);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState<number | null>(null);
   return (
     <table className="w-full text-sm">
       <thead>
@@ -228,19 +269,23 @@ function SetTable({ sets, units }: { sets: WorkoutSet[]; units: "metric" | "impe
           {timed ? (
             <>
               <th className="w-14 py-1 font-medium">#</th><th className="font-medium">Time</th><th className="font-medium">Distance</th>
-              <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th className="w-24 font-medium" />
+              <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th className="w-24 font-medium" /><th><span className="sr-only">Actions</span></th>
             </>
           ) : (
             <>
               <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">{weightUnit(units)}</th><th className="font-medium">Reps</th>
-              <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium" />
+              <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium" /><th><span className="sr-only">Actions</span></th>
             </>
           )}
         </tr>
       </thead>
       <tbody>
-        {sets.map((s, i) => (
-          <tr key={s.id} className="border-t border-line/70">
+        {sets.map((s, i) => editing === s.id ? (
+          <EditRow key={s.id} index={i} set={s} timed={timed} units={units} busy={busy}
+            onCancel={() => setEditing(null)}
+            onSave={(patch) => { onEdit(s, patch); setEditing(null); }} />
+        ) : (
+          <tr key={s.id} className="group border-t border-line/70">
             <td className="py-1.5 text-muted">{i + 1}</td>
             {timed ? (
               <>
@@ -259,10 +304,79 @@ function SetTable({ sets, units }: { sets: WorkoutSet[]; units: "metric" | "impe
                 <td>{s.is_pr && <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn"><IconTrophy width={12} height={12} /> PR</span>}</td>
               </>
             )}
+            <td className="w-28 text-right">
+              {confirming === s.id ? (
+                <span className="inline-flex gap-2 text-xs">
+                  <button type="button" className="text-bad hover:underline" disabled={busy} onClick={() => { onDelete(s); setConfirming(null); }}>Delete set {i + 1}?</button>
+                  <button type="button" className="text-muted hover:text-ink" onClick={() => setConfirming(null)}>No</button>
+                </span>
+              ) : (
+                <span className="inline-flex gap-3 text-xs opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                  <button type="button" className="text-muted hover:text-accent" aria-label={`Edit set ${i + 1}`} onClick={() => setEditing(s.id)}>Edit</button>
+                  <button type="button" className="text-muted hover:text-bad" aria-label={`Delete set ${i + 1}`} onClick={() => setConfirming(s.id)}>Delete</button>
+                </span>
+              )}
+            </td>
           </tr>
         ))}
       </tbody>
     </table>
+  );
+}
+
+function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
+  index: number;
+  set: WorkoutSet;
+  timed: boolean;
+  units: "metric" | "imperial";
+  busy: boolean;
+  onSave: (patch: SetPatch) => void;
+  onCancel: () => void;
+}) {
+  const [weight, setWeight] = useState(String(toDisplayWeight(set.weight_kg, units)));
+  const [reps, setReps] = useState(String(set.reps));
+  const [duration, setDuration] = useState(formatDuration(set.duration_s ?? 0));
+  const [rpe, setRpe] = useState<number | null>(set.rpe);
+  const [error, setError] = useState<string | null>(null);
+
+  function save() {
+    if (timed) {
+      const seconds = parseDuration(duration);
+      if (!seconds) return setError("duration?");
+      return onSave({ duration_s: seconds, rpe });
+    }
+    const w = Number(weight);
+    const r = Number(reps);
+    if (Number.isNaN(w) || w < 0 || !Number.isInteger(r) || r < 1) return setError("check weight/reps");
+    onSave({ weight_kg: fromDisplayWeight(w, units), reps: r, rpe });
+  }
+
+  return (
+    <tr className="border-t border-line/70 bg-panel-2/60">
+      <td className="py-1.5 text-muted">{index + 1}</td>
+      {timed ? (
+        <td colSpan={3}><input aria-label="Edit duration" className="input h-8 w-28" value={duration} onChange={(e) => setDuration(e.target.value)} /></td>
+      ) : (
+        <>
+          <td><input aria-label="Edit weight" className="input h-8 w-20" value={weight} onChange={(e) => setWeight(e.target.value)} inputMode="decimal" /></td>
+          <td><input aria-label="Edit reps" className="input h-8 w-16" value={reps} onChange={(e) => setReps(e.target.value)} inputMode="numeric" /></td>
+        </>
+      )}
+      <td>
+        <select aria-label="Edit RPE" className="input h-8 w-20 py-0" value={rpe ?? ""} onChange={(e) => setRpe(e.target.value ? Number(e.target.value) : null)}>
+          <option value="">–</option>
+          {RPE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+      </td>
+      {!timed && <td className="text-xs text-bad">{error}</td>}
+      {timed && <td className="text-xs text-bad">{error}</td>}
+      <td className="text-right">
+        <span className="inline-flex gap-3 text-xs">
+          <button type="button" className="text-accent hover:underline" disabled={busy} onClick={save}>Save</button>
+          <button type="button" className="text-muted hover:text-ink" onClick={onCancel}>Cancel</button>
+        </span>
+      </td>
+    </tr>
   );
 }
 
