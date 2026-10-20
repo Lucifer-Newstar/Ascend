@@ -167,17 +167,16 @@ git push -u origin main
 ```
 
 If you received `ASCEND.bundle` instead of the folder: `git clone ASCEND.bundle ascend`, then
-`git remote remove origin` before step 2. Replace the placeholder handles in
-`.github/CODEOWNERS` with your teammates' GitHub usernames.
+`git remote remove origin` before step 2.
 
 ## Team
 
 | | Role | Owns |
 |---|---|---|
-| Navin | Lead · MLOps | architecture, releases, `ml/` |
-| Gokul | DevOps | CI/CD, Docker, packaging |
-| Jegatheesan | Backend | sidecar, engines, database |
-| Dhanush | Frontend | Electron + React UI, muscle map |
+| Navin ([@Lucifer-Newstar](https://github.com/Lucifer-Newstar)) | Lead · MLOps | architecture, releases, `ml/` |
+| Gokul ([@Gokul143-J](https://github.com/Gokul143-J)) | DevOps | CI/CD, Docker, packaging |
+| Jegatheesan ([@jegatheesank](https://github.com/jegatheesank)) | Backend | sidecar, engines, database |
+| Dhanush ([@dhanush-07-byte](https://github.com/dhanush-07-byte)) | Frontend | Electron + React UI, muscle map |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules.
 

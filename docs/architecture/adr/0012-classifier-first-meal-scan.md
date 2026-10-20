@@ -1,6 +1,6 @@
 # ADR-0012: Classifier-First Meal Scan; VLM as an Optional Second Opinion
 
-- **Status:** Proposed (to ratify at the Phase 0 kickoff)
+- **Status:** Accepted (lead decision, 2026-10-20; revisit at the Phase 0 kickoff if the team objects)
 - **Date:** 2026-10-20
 - **Deciders:** Navin Jairam M (lead, ML owner); Jegatheesan K (scan pipeline)
 - **Amends:** step 3 of [ADR-0006](0006-own-food-classifier-indb-ifct.md) (the pipeline order)

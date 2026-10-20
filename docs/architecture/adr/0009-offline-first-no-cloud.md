@@ -1,6 +1,6 @@
 # ADR-0009: Offline-First, No Cloud, No Accounts
 
-- **Status:** Proposed (to ratify at the Phase 0 kickoff)
+- **Status:** Accepted (lead decision, 2026-10-20; revisit at the Phase 0 kickoff if the team objects)
 - **Date:** 2026-10-20
 - **Deciders:** Navin Jairam M (lead); ratified by the team at kickoff
 

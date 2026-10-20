@@ -17,7 +17,8 @@
    ([working-rules §2](../team/working-rules.md#2-commit-conventions-conventional-commits)).
 4. **Push and open a PR early** (draft is fine) so CI runs on every push.
 5. **Request review** from the owner/reviewer in [team-structure §3](../team/team-structure.md#3-repository-ownership).
-6. **Merge** when CI is green and approvals are in (rebase-merge by default).
+6. **Merge** when CI is green and approvals are in: the lead merges with a merge commit
+   (`--no-ff`), see [branch-protection.md](branch-protection.md).
 7. **Log it** in your `work-log.md` if it is user-visible or crosses lanes.
 
 ## 2. Branching model
