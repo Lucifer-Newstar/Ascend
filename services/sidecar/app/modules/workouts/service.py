@@ -3,7 +3,8 @@ event handlers owned by other modules, never here."""
 
 from __future__ import annotations
 
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -171,8 +172,19 @@ def finish_workout(
     return workout, round(minutes, 1), hard
 
 
+@dataclass(frozen=True)
+class WorkoutFilters:
+    section: str | None = None
+    source: str | None = None
+    since: date | None = None
+    until: date | None = None
+
+
 def list_workouts(
-    db: Session, limit: int = 20, before: datetime | None = None
+    db: Session,
+    limit: int = 20,
+    before: datetime | None = None,
+    filters: WorkoutFilters | None = None,
 ) -> list[WorkoutSummary]:
     """Finished and active workouts, newest first. `before` is the started_at of the
     last item on the previous page (keyset pagination: stable while new rows arrive)."""
@@ -181,6 +193,15 @@ def list_workouts(
     stmt = select(Workout).order_by(Workout.started_at.desc(), Workout.id.desc()).limit(limit)
     if before is not None:
         stmt = stmt.where(Workout.started_at < before)
+    f = filters or WorkoutFilters()
+    if f.section is not None:
+        stmt = stmt.where(Workout.section == f.section)
+    if f.source is not None:
+        stmt = stmt.where(Workout.source == f.source)
+    if f.since is not None:
+        stmt = stmt.where(Workout.day >= f.since)
+    if f.until is not None:
+        stmt = stmt.where(Workout.day <= f.until)
     out: list[WorkoutSummary] = []
     for w in db.scalars(stmt).all():
         xp = game.xp_for_refs(db, sources=("session",), ref_id=w.id) + sum(
