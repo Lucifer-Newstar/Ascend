@@ -47,3 +47,14 @@ def test_openapi_docs_are_served(settings):
 def test_migrations_seed_reference_data(client):
     assert len(client.get("/exercises").json()) >= 40
     assert len(client.get("/foods").json()) >= 30
+
+
+def test_shutdown_checkpoints_wal_and_requests_exit(client):
+    calls: list[str] = []
+    client.app.state.request_exit = lambda: calls.append("exit")
+    # Write something so the WAL has frames to fold back in.
+    client.put("/settings", json={"ai_enabled": False})
+    r = client.post("/shutdown")
+    assert r.status_code == 200
+    assert r.json() == {"status": "stopping", "wal_checkpoint": "ok"}
+    assert calls == ["exit"]

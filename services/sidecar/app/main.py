@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.core.config import Settings, load_settings
-from app.core.db import make_engine, make_session_factory
+from app.core.db import checkpoint_wal, make_engine, make_session_factory
 from app.core.events import EventBus
 from app.core.migrate import current_revision, head_revision, run_migrations
 from app.core.security import TokenAuthMiddleware
@@ -36,6 +36,11 @@ DEV_ORIGINS = [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
 ]
+
+
+def _exit_soon() -> None:
+    """SIGTERM ourselves after the response is sent; uvicorn then exits cleanly."""
+    threading.Timer(0.2, lambda: os.kill(os.getpid(), signal.SIGTERM)).start()
 
 
 def build_bus() -> EventBus:
@@ -67,6 +72,8 @@ def create_app(
     app.state.session_factory = make_session_factory(engine)
     app.state.bus = build_bus()
     app.state.clock = clock or datetime.now
+    # Tests replace this so POST /shutdown does not stop the test process.
+    app.state.request_exit = _exit_soon
 
     app.add_middleware(TokenAuthMiddleware, token=settings.token)
     if settings.dev:
@@ -101,9 +108,13 @@ def create_app(
 
     @app.post("/shutdown", tags=["system"])
     def shutdown() -> dict[str, str]:
-        """Graceful stop requested by Electron main before it quits."""
-        threading.Timer(0.2, lambda: os.kill(os.getpid(), signal.SIGTERM)).start()
-        return {"status": "stopping"}
+        """Graceful stop requested by Electron main before it quits.
+
+        The WAL is checkpointed into the main database file first, so a copy of
+        ascend.db taken after the app closes is complete on its own."""
+        checkpoint = checkpoint_wal(engine)
+        app.state.request_exit()
+        return {"status": "stopping", "wal_checkpoint": checkpoint}
 
     for router in (
         workouts_router,
