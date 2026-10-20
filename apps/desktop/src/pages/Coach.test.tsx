@@ -56,4 +56,16 @@ describe("CoachPage", () => {
     await userEvent.click(screen.getAllByRole("button", { name: "Retry" })[0]);
     await waitFor(() => expect(screen.getByText("AI off · rule-based coach")).toBeInTheDocument());
   });
+
+  it("shows a recommended deload as a System warning window, and a plain card otherwise", async () => {
+    vi.mocked(api.deload).mockResolvedValue({
+      recommended: true, kind: "planned", training_weeks: 5, guidance: null, deload_week: null, algo_version: "deload-v1",
+      signals: [{ code: "weeks", active: true, detail: "5 hard weeks in a row" }],
+    });
+    renderPage();
+    const notice = await screen.findByRole("region", { name: "Deload notice" });
+    expect(notice).toHaveAttribute("data-variant", "warning");
+    expect(within(notice).getByText("Planned deload: 5 hard weeks in a row.")).toBeInTheDocument();
+    expect(within(notice).getByRole("button", { name: "Start deload week" })).toBeInTheDocument();
+  });
 });
