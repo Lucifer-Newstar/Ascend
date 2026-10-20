@@ -188,12 +188,17 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                 </div>
               ) : (
                 <>
-                  <div className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
+                  {/* A real form, so Enter in any field logs the set. */}
+                  <form
+                    className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3"
+                    aria-label={`Log a set of ${selected.name}`}
+                    onSubmit={(e) => { e.preventDefault(); if (!busy) void logSet(); }}
+                  >
                     <NumberField label={`Weight (${weightUnit(units)})`} value={weight} step={units === "imperial" ? 5 : 2.5} onChange={setWeight} />
                     <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
                     <RpeSelect value={rpe} onChange={setRpe} />
-                    <button type="button" className="btn-primary h-[38px] px-5" onClick={() => logSet()} disabled={busy}>Log set</button>
-                  </div>
+                    <button type="submit" className="btn-primary h-[38px] px-5" disabled={busy}>Log set</button>
+                  </form>
                   <p className="mt-2 text-[11px] text-faint">RPE 10 = no reps left in the tank, 8 = two left. PRs use the Epley e1RM formula (1–10 reps).</p>
                 </>
               )}
