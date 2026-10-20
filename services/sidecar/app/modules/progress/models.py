@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -49,6 +49,23 @@ class Measurement(Base):
     measured_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     site: Mapped[str] = mapped_column(String(16), index=True)
     cm: Mapped[float] = mapped_column(Float)
+
+
+class Checkin(Base):
+    """Morning readiness check-in; at most one per day (a re-submit replaces it)."""
+
+    __tablename__ = "checkins"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    day: Mapped[date] = mapped_column(Date, unique=True)
+    sleep: Mapped[int] = mapped_column(Integer)
+    energy: Mapped[int] = mapped_column(Integer)
+    soreness: Mapped[str] = mapped_column(String(8))
+    mood: Mapped[int] = mapped_column(Integer)
+    readiness: Mapped[int] = mapped_column(Integer)
+    band: Mapped[str] = mapped_column(String(8))
+    algo_version: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(DateTime)
 
 
 class Setting(Base):
