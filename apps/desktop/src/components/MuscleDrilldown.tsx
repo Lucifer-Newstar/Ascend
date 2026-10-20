@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import { readyAtLabel } from "../lib/format";
+import { useReducedMotion } from "../lib/motion";
 import { STATUS_LABELS } from "../lib/muscleMap";
 import { useApi } from "../lib/useApi";
 import { BarChart } from "./charts";
@@ -18,10 +19,22 @@ const dayLabel = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString
 const timeLabel = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" });
 
-export function MuscleDrilldown({ code, onClose }: { code: string; onClose: () => void }) {
+/** How long the closing animation (panel-out in index.css) plays before unmounting. */
+export const CLOSE_MS = 160;
+
+export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onClose: () => void }) {
   const [range, setRange] = useState<Range>("7");
   const h = useApi(() => api.muscleHistory(code, Number(range)), [code, range]);
   const panel = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+  const [closing, setClosing] = useState(false);
+  // Opens with a short rise/fade (panel-in) and closes with the reverse before unmounting.
+  const onClose = () => {
+    if (closing) return;
+    if (reduce) return onClosed();
+    setClosing(true);
+    setTimeout(onClosed, CLOSE_MS);
+  };
   const close = useRef(onClose);
   close.current = onClose;
 
@@ -36,7 +49,7 @@ export function MuscleDrilldown({ code, onClose }: { code: string; onClose: () =
   }, []);
 
   return (
-    <section ref={panel} tabIndex={-1} className="rounded-xl border border-accent/30 bg-panel-2 p-4 outline-none" aria-label="Muscle details" aria-live="polite">
+    <section ref={panel} tabIndex={-1} className={`origin-top rounded-xl border border-accent/30 bg-panel-2 p-4 outline-none ${closing ? "panel-out" : "panel-in"}`} aria-label="Muscle details" aria-live="polite" data-state={closing ? "closing" : "open"}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-ink">{h.data?.label ?? code}</h3>
         <div className="flex items-center gap-3">
