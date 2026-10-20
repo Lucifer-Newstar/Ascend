@@ -18,7 +18,8 @@ const REST_SECONDS = 90;
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
-  const exercises = useApi(() => api.exercises(), []);
+  // Lifts only: timed activities (runs, rounds, holds) are logged from their own tabs.
+  const exercises = useApi(() => api.exercises().then((all) => all.filter((e) => !e.time_based)), []);
   const active = useApi(api.activeWorkout, []);
   const [query, setQuery] = useState("");
   const [workout, setWorkout] = useState<Workout | null>(null);
