@@ -145,7 +145,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
           <h2 className="card-title mb-3">{sectionLabel} library</h2>
           <div className="relative">
             <IconSearch className="absolute left-3 top-2.5 text-faint" width={16} height={16} />
-            <input className="input pl-9" aria-label="Search exercises" placeholder="Search exercise or muscle…" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input className="input pl-9" aria-label="Search exercises" placeholder="Exercise or muscle…" value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
         </div>
         <ul className="max-h-[calc(100vh-320px)] min-h-0 flex-1 overflow-y-auto p-2" aria-busy={exercises.loading}>

@@ -5,7 +5,7 @@ import { IconTrophy } from "../components/Icons";
 import type { Page } from "../components/Layout";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState, StaleNotice } from "../components/States";
-import { count, dayLabel, kcal, timeLabel } from "../lib/format";
+import { count, dateLabel, dayLabel, kcal, timeLabel } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { formatDistance, formatDuration, toDisplayWeight, weightUnit } from "../lib/units";
 import { isOffline, useApi } from "../lib/useApi";
@@ -42,7 +42,10 @@ export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; on
       {data.map((d) => (
         <section key={d.day} className="card card-hover p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-sm font-semibold text-ink">{dayLabel(d.day)} <span className="ml-2 text-xs font-normal text-faint">{d.day}</span></h2>
+            <h2 className="text-sm font-semibold text-ink">
+              {dayLabel(d.day)}
+              {dayLabel(d.day) !== dateLabel(d.day) && <span className="ml-2 text-xs font-normal text-faint">{dateLabel(d.day)}</span>}
+            </h2>
             <span className="text-xs text-muted">{count(d.sets, "set")} · {kcal(d.kcal_in)} kcal eaten · <span className="text-xp">+{d.xp} XP</span></span>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -73,7 +76,7 @@ export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; on
                 <ul className="space-y-1 text-sm">
                   {d.meals.map((m) => (
                     <li key={m.id} className="flex justify-between gap-2">
-                      <span className="truncate text-ink"><span className="capitalize text-muted">{m.meal_type}</span> · {m.items.map((i) => i.food_name).join(", ")}</span>
+                      <span className="truncate text-ink" title={m.items.map((i) => i.food_name).join(", ")}><span className="capitalize text-muted">{m.meal_type}</span> · {m.items.map((i) => i.food_name).join(", ")}</span>
                       <span className="shrink-0 text-muted">{timeLabel(m.logged_at)} · {kcal(m.kcal)} kcal</span>
                     </li>
                   ))}

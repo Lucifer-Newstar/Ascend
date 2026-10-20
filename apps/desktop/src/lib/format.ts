@@ -28,7 +28,12 @@ export function dayLabel(isoDay: string, today = new Date()): string {
   const diff = Math.round((t.getTime() - d.getTime()) / 86_400_000);
   if (diff === 0) return "Today";
   if (diff === 1) return "Yesterday";
-  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  return dateLabel(isoDay);
+}
+
+/** "Tue 20 Oct": the calendar date in the app's one date style. */
+export function dateLabel(isoDay: string): string {
+  return new Date(`${isoDay}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 }
 
 export function timeLabel(iso: string): string {
