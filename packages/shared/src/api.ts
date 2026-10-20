@@ -18,6 +18,7 @@ export interface ProfileIn {
   weight_kg: number;
   goal: Goal;
   activity: Activity;
+  target_weight_kg?: number | null;
 }
 
 export interface EnergyTargets {
@@ -46,10 +47,15 @@ export interface MuscleState {
   ready_at: string | null;
 }
 
+export type Section = "gym" | "calisthenics" | "cardio" | "martial_arts" | "flexibility" | "meditation";
+
 export interface Exercise {
   id: number;
   name: string;
   equipment: string;
+  section: Section;
+  met: number | null;
+  time_based: boolean;
   muscles: { muscle: string; weight: number }[];
 }
 
@@ -60,14 +66,33 @@ export interface WorkoutSet {
   weight_kg: number;
   reps: number;
   rpe: number | null;
+  duration_s: number | null;
+  distance_m: number | null;
+  avg_hr: number | null;
   e1rm: number | null;
   is_pr: boolean;
   performed_at: string;
 }
 
+export interface SetIn {
+  exercise_id: number;
+  weight_kg?: number;
+  reps?: number;
+  rpe?: number | null;
+  duration_s?: number | null;
+  distance_m?: number | null;
+  avg_hr?: number | null;
+}
+
+export type SetPatch = Partial<Pick<SetIn, "rpe" | "duration_s" | "distance_m">> & {
+  weight_kg?: number;
+  reps?: number;
+};
+
 export interface Workout {
   id: number;
   day: string;
+  section: Section;
   started_at: string;
   finished_at: string | null;
   sets: WorkoutSet[];
@@ -168,9 +193,16 @@ export interface StreakInfo {
   active_today: boolean;
 }
 
+export interface CalmStreak {
+  current: number;
+  best: number;
+  active_today: boolean;
+}
+
 export interface GameSummary {
   xp: XpInfo;
   streak: StreakInfo;
+  calm: CalmStreak;
   quest: QuestItem[];
 }
 
@@ -211,4 +243,157 @@ export interface HistoryDay {
   kcal_in: number;
   sets: number;
   xp: number;
+}
+
+// --- settings -------------------------------------------------------------------
+
+export type Units = "metric" | "imperial";
+export type ThemePref = "dark" | "light" | "system";
+
+export interface Settings {
+  ai_enabled: boolean;
+  units: Units;
+  theme: ThemePref;
+  sessions_per_week: number;
+}
+
+// --- progress ---------------------------------------------------------------------
+
+export interface WorkoutSummary {
+  id: number;
+  day: string;
+  section: Section;
+  started_at: string;
+  finished_at: string | null;
+  sets: number;
+  volume_kg: number;
+  xp: number;
+}
+
+export interface BodyMetric {
+  id: number;
+  measured_at: string;
+  weight_kg: number;
+  trend_kg: number;
+  waist_cm: number | null;
+  resting_hr: number | null;
+}
+
+export type MeasurementSite = "waist" | "hips" | "chest" | "arm" | "thigh" | "calf" | "neck";
+
+export interface Measurement {
+  id: number;
+  measured_at: string;
+  site: MeasurementSite;
+  cm: number;
+  change_cm: number | null;
+}
+
+export interface Eta {
+  goal_kg: number | null;
+  current_trend_kg: number | null;
+  rate_kg_per_week: number | null;
+  eta_from: string | null;
+  eta_to: string | null;
+  confidence: "low" | "medium" | "high";
+  on_track: boolean;
+  reason: string | null;
+  formula_version: string;
+  note: string;
+}
+
+export interface WeekSummary {
+  week_start: string;
+  sessions: number;
+  sets: number;
+  volume_kg: number;
+  active_minutes: number;
+  xp: number;
+  avg_kcal_in: number | null;
+  avg_weight_kg: number | null;
+}
+
+export interface PersonalRecord {
+  exercise_id: number;
+  exercise: string;
+  type: string;
+  value: number;
+  weight_kg: number;
+  reps: number;
+  formula: string;
+  algo_version: string;
+  achieved_at: string;
+  set_id: number;
+}
+
+export interface MuscleDay {
+  day: string;
+  eff_sets: number;
+  readiness: number;
+}
+
+export interface MuscleHistory {
+  code: string;
+  label: string;
+  days: number;
+  status: MuscleStatus;
+  es_7d: number;
+  target_low: number;
+  target_high: number;
+  readiness: number;
+  ready_at: string | null;
+  daily: MuscleDay[];
+  contributing_sets: { set_id: number; at: string; exercise: string; weight: number; effort: number; es: number }[];
+  suggestion: string | null;
+  formula_version: string;
+}
+
+// --- readiness, deload, weekly review -------------------------------------------------
+
+export type Soreness = "none" | "some" | "a_lot";
+
+export interface CheckinIn {
+  sleep: number;
+  energy: number;
+  soreness: Soreness;
+  mood: number;
+}
+
+export interface Checkin extends CheckinIn {
+  day: string;
+  readiness: number;
+  band: "green" | "amber" | "red";
+  quest_adjustment: string;
+  algo_version: string;
+}
+
+export interface DeloadAdvice {
+  recommended: boolean;
+  kind: "planned" | "reactive" | "active" | "none";
+  training_weeks: number;
+  signals: { code: string; active: boolean; detail: string }[];
+  guidance: string | null;
+  deload_week: string | null;
+  algo_version: string;
+}
+
+export interface ReviewFinding {
+  code: string;
+  severity: number;
+  title: string;
+  detail: string;
+  proposal: string | null;
+  numbers: Record<string, unknown>;
+}
+
+export interface WeeklyReview {
+  week_start: string;
+  week_end: string;
+  sessions_done: number;
+  sessions_planned: number;
+  findings: ReviewFinding[];
+  top: ReviewFinding[];
+  summary: string;
+  summary_source: "model" | "template";
+  algo_version: string;
 }

@@ -71,7 +71,7 @@ function registerIpc(): void {
     if (!req || typeof req.path !== "string" || !req.path.startsWith("/")) {
       return { status: 400, ok: false, data: { detail: "invalid request" } };
     }
-    if (!["GET", "POST", "PUT", "DELETE"].includes(req.method)) {
+    if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
       return { status: 405, ok: false, data: { detail: "method not allowed" } };
     }
     try {

@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 /*
- * ASCEND design tokens (dark theme). Restrained cyan accent, violet for XP,
- * and four status colours shared by the muscle map and its legend.
+ * ASCEND design tokens. Dark is the default; [data-theme="light"] on <html>
+ * swaps the surface and ink tokens (see the light block below). Restrained cyan
+ * accent, violet for XP, and four status colours shared by the muscle map and
+ * its legend.
  */
 @theme {
   --color-bg: #0a0e15;
@@ -24,15 +26,52 @@
   --color-ring-tasks: #22d3ee;
   --color-ring-in: #34d399;
   --color-ring-out: #fb923c;
+  --color-sidebar: #0c111a;
+  --color-on-accent: #04141a;
+  --color-accent-hover: #5ee3f5;
+  --color-map-fill: #1a2232;
 
   --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-display: "Rajdhani", "Inter", sans-serif;
+}
+
+/*
+ * Light theme: same hues, light surfaces. Accent darkens one step so text and
+ * focus rings on white keep WCAG AA contrast (cyan-700 on white is ~5.4:1).
+ */
+:root[data-theme="light"] {
+  --color-bg: #f4f6fa;
+  --color-panel: #ffffff;
+  --color-panel-2: #eef1f6;
+  --color-line: #dde3ec;
+  --color-line-2: #c9d2df;
+  --color-ink: #0f1722;
+  --color-muted: #536173;
+  --color-faint: #8592a3;
+  --color-accent: #0e7490;
+  --color-accent-dim: #67c6dc;
+  --color-accent-hover: #0b5f76;
+  --color-on-accent: #ffffff;
+  --color-xp: #6d5ce8;
+  --color-nodata: #d5dbe5;
+  --color-sidebar: #ffffff;
+  --color-map-fill: #e3e8f0;
+  color-scheme: light;
+}
+
+:root {
+  color-scheme: dark;
 }
 
 html,
 body,
 #root {
   height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
 }
 
 body {
@@ -64,7 +103,7 @@ body {
   @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
 }
 @utility btn-primary {
-  @apply btn bg-accent text-[#04141a] hover:bg-[#5ee3f5];
+  @apply btn bg-accent text-on-accent hover:bg-accent-hover;
 }
 @utility btn-ghost {
   @apply btn border border-line-2 text-ink hover:border-accent/60 hover:text-accent;

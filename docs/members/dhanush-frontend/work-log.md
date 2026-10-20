@@ -6,9 +6,4 @@
 
 | Date | What I shipped | PR / evidence | Notes (handoff, follow-up) |
 |---|---|---|---|
-|  |  |  |  |
-
-<!--
-Example row (delete when you add your first real one):
-| 2026-11-03 | Example: describe the merged change | #12 | Handed to <member> for <next step> |
--->
+| 2026-10-20 | Component test setup (Testing Library + jsdom), light theme tokens, units helpers, preferences context, Settings: theme / units / training days | PR #8 (`feat/ui-foundation`) | Everyone: `*.test.tsx` now runs in jsdom; use `usePrefs()` for units in new screens |

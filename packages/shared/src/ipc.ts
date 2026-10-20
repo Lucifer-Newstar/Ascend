@@ -13,7 +13,7 @@ export const IPC = {
   appInfo: "app:info",
 } as const;
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface SidecarRequest {
   method: HttpMethod;

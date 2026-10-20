@@ -8,6 +8,23 @@
  */
 import type {
   AscendBridge,
+  BodyMetric,
+  Checkin,
+  CheckinIn,
+  DeloadAdvice,
+  Eta,
+  Measurement,
+  MeasurementSite,
+  MuscleHistory,
+  PersonalRecord,
+  Section,
+  SetIn,
+  SetPatch,
+  Settings,
+  WeekSummary,
+  WeeklyReview,
+  WorkoutSummary,
+  WorkoutSet,
   CoachReply,
   CoachStatus,
   Dashboard,
@@ -89,15 +106,24 @@ export const api = {
   dashboard: () => call<Dashboard>("GET", "/dashboard"),
   profile: () => call<Profile>("GET", "/profile"),
   saveProfile: (p: ProfileIn) => call<Profile>("PUT", "/profile", p),
-  settings: () => call<{ ai_enabled: boolean }>("GET", "/settings"),
-  setAi: (enabled: boolean) => call<{ ai_enabled: boolean }>("PUT", "/settings", { ai_enabled: enabled }),
+  settings: () => call<Settings>("GET", "/settings"),
+  setAi: (enabled: boolean) => call<Settings>("PUT", "/settings", { ai_enabled: enabled }),
+  updateSettings: (patch: Partial<Settings>) => call<Settings>("PUT", "/settings", patch),
   muscles: () => call<MuscleState[]>("GET", "/muscles"),
 
-  exercises: (q = "") => call<Exercise[]>("GET", `/exercises?q=${encodeURIComponent(q)}`),
+  exercises: (q = "", section?: Section) =>
+    call<Exercise[]>("GET", `/exercises?q=${encodeURIComponent(q)}${section ? `&section=${section}` : ""}`),
   activeWorkout: () => call<Workout | null>("GET", "/workouts/active"),
-  startWorkout: () => call<Workout>("POST", "/workouts"),
-  logSet: (workoutId: number, s: { exercise_id: number; weight_kg: number; reps: number; rpe: number | null }) =>
-    call<LoggedSet>("POST", `/workouts/${workoutId}/sets`, s),
+  startWorkout: (section: Section = "gym") => call<Workout>("POST", `/workouts?section=${section}`),
+  workouts: (limit = 20, before?: string) =>
+    call<WorkoutSummary[]>("GET", `/workouts?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ""}`),
+  logSet: (workoutId: number, s: SetIn) => call<LoggedSet>("POST", `/workouts/${workoutId}/sets`, s),
+  editSet: (workoutId: number, setId: number, patch: SetPatch) =>
+    call<WorkoutSet>("PATCH", `/workouts/${workoutId}/sets/${setId}`, patch),
+  deleteSet: (workoutId: number, setId: number) => call<null>("DELETE", `/workouts/${workoutId}/sets/${setId}`),
+  prs: () => call<PersonalRecord[]>("GET", "/prs"),
+  deload: () => call<DeloadAdvice>("GET", "/deload"),
+  startDeload: () => call<DeloadAdvice>("POST", "/deload/start"),
   finishWorkout: (workoutId: number) => call<FinishedWorkout>("POST", `/workouts/${workoutId}/finish`),
 
   foods: (q = "") => call<Food[]>("GET", `/foods?q=${encodeURIComponent(q)}`),
@@ -112,6 +138,21 @@ export const api = {
   coachStatus: () => call<CoachStatus>("GET", "/coach/status"),
   coachTip: () => call<CoachReply>("GET", "/coach/tip"),
   coachAsk: (question: string) => call<CoachReply>("POST", "/coach/ask", { question }),
+
+  bodyMetrics: (days = 90) => call<BodyMetric[]>("GET", `/body-metrics?days=${days}`),
+  logWeight: (weight_kg: number, waist_cm?: number | null) =>
+    call<BodyMetric>("POST", "/body-metrics", { weight_kg, waist_cm: waist_cm ?? null }),
+  deleteWeight: (id: number) => call<null>("DELETE", `/body-metrics/${id}`),
+  measurements: () => call<Measurement[]>("GET", "/measurements"),
+  logMeasurement: (site: MeasurementSite, cm: number) => call<Measurement>("POST", "/measurements", { site, cm }),
+  eta: () => call<Eta>("GET", "/progress/eta"),
+  weekly: (weeks = 8) => call<WeekSummary[]>("GET", `/progress/weekly?weeks=${weeks}`),
+  muscleHistory: (code: string, days: number) =>
+    call<MuscleHistory>("GET", `/muscles/${encodeURIComponent(code)}/history?days=${days}`),
+
+  checkinToday: () => call<Checkin | null>("GET", "/checkins/today"),
+  checkin: (c: CheckinIn) => call<Checkin>("POST", "/checkins", c),
+  weeklyReview: () => call<WeeklyReview>("GET", "/coach/weekly-review/latest"),
 
   history: (days = 30) => call<HistoryDay[]>("GET", `/history?days=${days}`),
   exportJson: () => call<unknown>("GET", "/export/json"),

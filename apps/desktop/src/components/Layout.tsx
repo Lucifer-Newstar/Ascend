@@ -25,7 +25,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   return (
     <div className="flex h-full">
-      <aside className="flex w-[216px] shrink-0 flex-col border-r border-line bg-[#0c111a]">
+      <aside className="flex w-[216px] shrink-0 flex-col border-r border-line bg-sidebar">
         <div className="flex items-center gap-2.5 px-5 pb-6 pt-6">
           <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden>
             <path d="M16 3 29 28H3L16 3Z" fill="none" stroke="var(--color-accent)" strokeWidth="2.4" strokeLinejoin="round" />

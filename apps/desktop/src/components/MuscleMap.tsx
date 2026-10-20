@@ -9,15 +9,21 @@ import { useMemo, useState } from "react";
 import Body, { type ExtendedBodyPart, type Slug } from "react-muscle-highlighter";
 
 import { readyAtLabel } from "../lib/format";
+import { cssVar } from "../lib/theme";
 import { STATUS_COLORS, STATUS_LABELS, regionsForSlug, statusBySlug } from "../lib/muscleMap";
 
 const LEGEND: MuscleStatus[] = ["under", "optimal", "recovering", "over", "no_data"];
+
+/** "No data" follows the theme (a dark blob on a light page reads as a warning). */
+function statusColor(status: MuscleStatus): string {
+  return status === "no_data" ? cssVar("--color-nodata", STATUS_COLORS.no_data) : STATUS_COLORS[status];
+}
 
 export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; scale?: number }) {
   const [selected, setSelected] = useState<string | null>(null);
   const bySlug = useMemo(() => statusBySlug(muscles), [muscles]);
   const data: ExtendedBodyPart[] = useMemo(
-    () => [...bySlug.entries()].map(([slug, status]) => ({ slug: slug as Slug, color: STATUS_COLORS[status] })),
+    () => [...bySlug.entries()].map(([slug, status]) => ({ slug: slug as Slug, color: statusColor(status) })),
     [bySlug],
   );
   const regions = selected ? regionsForSlug(muscles, selected) : [];
@@ -29,8 +35,9 @@ export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; s
   const common = {
     data,
     scale,
-    border: "#2a3446",
-    defaultFill: "#1a2232",
+    // The artwork needs literal colours, so read the current theme's tokens.
+    border: cssVar("--color-line-2", "#2a3446"),
+    defaultFill: cssVar("--color-map-fill", "#1a2232"),
     onBodyPartPress: (part: ExtendedBodyPart) => setSelected(part.slug ?? null),
   };
 
@@ -50,7 +57,7 @@ export function MuscleMap({ muscles, scale = 0.86 }: { muscles: MuscleState[]; s
         <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
           {LEGEND.map((s) => (
             <li key={s} className="flex items-center gap-2 text-muted">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ background: STATUS_COLORS[s] }} />
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ background: statusColor(s) }} />
               {STATUS_LABELS[s]}
             </li>
           ))}

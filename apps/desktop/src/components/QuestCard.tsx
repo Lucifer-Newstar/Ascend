@@ -27,7 +27,7 @@ export function QuestList({ items, onComplete }: { items: QuestItem[]; onComplet
                 aria-label={complete ? "Completed" : manual ? `Mark "${q.title}" done` : "Completes automatically"}
                 disabled={complete || !manual}
                 onClick={() => onComplete(q.id)}
-                className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border ${complete ? "border-accent bg-accent text-[#04141a]" : manual ? "border-line-2 hover:border-accent" : "border-dashed border-line-2"}`}
+                className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border ${complete ? "border-accent bg-accent text-on-accent" : manual ? "border-line-2 hover:border-accent" : "border-dashed border-line-2"}`}
               >
                 {complete && <IconCheck width={14} height={14} />}
               </button>

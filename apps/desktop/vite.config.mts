@@ -9,5 +9,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: { port: 5173, strictPort: true },
   build: { outDir: "dist", emptyOutDir: true, chunkSizeWarningLimit: 900 },
-  test: { environment: "node", include: ["src/**/*.test.ts"] },
+  test: {
+    // Pure logic tests run in node; component tests (*.test.tsx) get a DOM from jsdom.
+    environment: "node",
+    environmentMatchGlobs: [["src/**/*.test.tsx", "jsdom"]],
+    include: ["src/**/*.test.{ts,tsx}"],
+    setupFiles: ["src/test/setup.ts"],
+  },
 } as import("vite").UserConfig & { test?: unknown });

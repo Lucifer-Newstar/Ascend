@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
+import type { Settings } from "@ascend/shared";
+
 import { api } from "./api/client";
 import { Layout, type Page } from "./components/Layout";
 import { ErrorState, Loading } from "./components/States";
 import { ToastProvider } from "./components/Toast";
+import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { CoachPage } from "./pages/Coach";
 import { DashboardPage } from "./pages/Dashboard";
 import { DietPage } from "./pages/Diet";
@@ -47,7 +50,7 @@ export default function App() {
   const [page, setPage] = useState<Page>(initialPage);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [aiEnabled, setAiEnabled] = useState<boolean | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -57,7 +60,7 @@ export default function App() {
       .then(() => Promise.all([api.dashboard(), api.settings()]))
       .then(([d, s]) => {
         setHasProfile(d.has_profile);
-        setAiEnabled(s.ai_enabled);
+        setSettings(s);
       })
       .catch((e: Error) => setBootError(e.message));
   }, []);
@@ -69,30 +72,37 @@ export default function App() {
     setPage(p);
   };
 
-  const toggleAi = async () => {
-    if (aiEnabled === null) return;
-    const next = await api.setAi(!aiEnabled);
-    setAiEnabled(next.ai_enabled);
-    bump();
-  };
-
   if (bootError) return <ErrorState message={bootError} onRetry={boot} />;
-  if (hasProfile === null) return <Loading label="Starting the local engine…" />;
+  if (hasProfile === null || settings === null) return <Loading label="Starting the local engine…" />;
 
   return (
-    <ToastProvider>
-      {!hasProfile ? (
-        <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
-      ) : (
-        <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}>
-          {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onOpenCoach={() => navigate("coach")} />}
-          {page === "workout" && <WorkoutPage onChanged={bump} />}
-          {page === "diet" && <DietPage onChanged={bump} />}
-          {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
-          {page === "history" && <HistoryPage refreshKey={refreshKey} />}
-          {page === "settings" && <SettingsPage aiEnabled={aiEnabled} onToggleAi={toggleAi} onChanged={bump} />}
-        </Layout>
-      )}
-    </ToastProvider>
+    <PrefsProvider initial={settings}>
+      <ToastProvider>
+        {!hasProfile ? (
+          <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
+        ) : (
+          <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} />
+        )}
+      </ToastProvider>
+    </PrefsProvider>
+  );
+}
+
+function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void }) {
+  const { settings, update } = usePrefs();
+  const toggleAi = async () => {
+    await update({ ai_enabled: !settings.ai_enabled });
+    bump();
+  };
+  const aiEnabled = settings.ai_enabled;
+  return (
+    <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}>
+      {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onOpenCoach={() => navigate("coach")} />}
+      {page === "workout" && <WorkoutPage onChanged={bump} />}
+      {page === "diet" && <DietPage onChanged={bump} />}
+      {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
+      {page === "history" && <HistoryPage refreshKey={refreshKey} />}
+      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} />}
+    </Layout>
   );
 }
