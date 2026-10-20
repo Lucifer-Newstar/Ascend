@@ -231,7 +231,10 @@ export interface CoachReply {
   text: string;
   tip_code: string;
   model: string | null;
+  /** "ai_disabled", "ollama_unavailable", "ollama_error: …" or "check_failed: numbers|banned". */
   fallback_reason: string | null;
+  /** Validator results for a model reply, e.g. {numbers: "pass", banned: "pass"}. */
+  checks?: Record<string, string> | null;
 }
 
 export interface CoachStatus {

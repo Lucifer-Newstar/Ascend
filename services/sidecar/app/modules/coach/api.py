@@ -22,6 +22,7 @@ class CoachOut(BaseModel):
     tip_code: str
     model: str | None
     fallback_reason: str | None
+    checks: dict[str, str] | None = None
 
 
 class CoachStatus(BaseModel):

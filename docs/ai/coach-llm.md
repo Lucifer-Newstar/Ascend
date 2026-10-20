@@ -22,16 +22,20 @@
 | Numbered facts block, intent router, token budget | planned · Phase 2 | `coach/context.py`, `coach/router.py` |
 | Safety pre-filter (red flags, eating-disorder words, diagnosis/medicine questions) | planned · Phase 2 | `coach/safety.py` |
 | Prompt registry `P-01 … P-11` with JSON-schema output | planned · Phase 2 | `coach/prompts/` |
-| Output validators (schema, number fidelity, banned phrases, language, length) | planned · Phase 2 | `coach/validate.py` |
+| Output validators: number fidelity (V3) and banned phrases (V4) | **implemented** (`validate-1.0.0`) | `coach/validate.py`; results in `CoachOut.checks` |
+| Output validators: schema (V1), fact ids (V2), language (V5), length (V6) | planned · Phase 2 | `coach/validate.py` (with the JSON prompts) |
 | Streaming chat over SSE with sentence gating | planned · Phase 2 | `POST /coach/chat`, `chat.token` / `chat.done` events |
 | `propose_plan_change` tool → proposals the user approves | planned · Phase 2 | `coach/tools.py`, `coach/proposals.py` |
 | Model tiers and fallback (`qwen3:4b` → `gemma3:4b` → `qwen3:1.7b` → rules) | planned · Phase 2 | `ai/model_manager.py`, [model-manager.md](model-manager.md) |
 | Tamil / Tanglish replies (beta) | planned · Phase 4 | [multilingual-tamil.md](multilingual-tamil.md) |
 
-The **v0.1 contract is honest about the gap**: `CoachOut.source` is `rules` or `ollama`, and a
-model reply in v0.1 is not yet number-checked. The Phase 2 gate (M10, M11 in
-[evaluation.md](../operations/evaluation.md#ai-and-ml)) requires the validators before the
-coach is called "done".
+Since PR #23 every model reply goes through V3 (number fidelity) and V4 (banned phrases)
+before it is returned. A failure returns the rules tip instead, with
+`fallback_reason: "check_failed: numbers"` (or `banned`) and the validator results in
+`CoachOut.checks`; only the rule id is logged, never the reply text. The full chain (V1, V2,
+V5, V6) arrives with the JSON prompts in Phase 2, and the Phase 2 gate (M10, M11 in
+[evaluation.md](../operations/evaluation.md#ai-and-ml)) still applies before the coach is
+called "done".
 
 ### The one rule
 
