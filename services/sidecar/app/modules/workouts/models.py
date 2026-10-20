@@ -45,6 +45,12 @@ class Workout(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     notes: Mapped[str] = mapped_column(String(500), default="")
+    # "app" for sessions logged in ASCEND; "strong" / "hevy" for imported history.
+    source: Mapped[str] = mapped_column(String(16), default="app", server_default="app")
+    # Stable key of an imported workout, so importing the same file twice adds nothing.
+    import_key: Mapped[str | None] = mapped_column(
+        String(160), nullable=True, unique=True, index=True
+    )
     sets: Mapped[list[WorkoutSet]] = relationship(
         back_populates="workout",
         cascade="all, delete-orphan",
