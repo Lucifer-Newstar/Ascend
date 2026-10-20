@@ -1,7 +1,9 @@
 # Hyper-parameters read by the pipeline scripts (tracked by DVC, logged to MLflow).
 prepare:
-  image_size: 224
+  image_size: 224   # model input after the centre crop (images are stored at short side 256)
+  min_side: 64      # smaller images are dropped as unusable
   val_split: 0.15
+  test_split: 0.15  # plus every team photo (test-own), which is always test
   seed: 42
 train:
   backbone: mobilenet_v3_small
