@@ -15,6 +15,22 @@ function renderAt(page: Page, title: string, onNavigate = vi.fn()) {
 }
 
 describe("Layout", () => {
+  it("shows a visible indicator only while online research is on", async () => {
+    const nav = vi.fn();
+    const { rerender, container } = renderAt("dashboard", "Dashboard", nav);
+    expect(screen.queryByRole("button", { name: "Online research on" })).toBeNull();
+    expect(screen.getByText("Offline · data stays on this PC")).toBeInTheDocument();
+    rerender(
+      <Layout page="dashboard" onNavigate={nav} aiEnabled={false} onToggleAi={() => {}} title="Dashboard" onlineResearch>
+        <p>content</p>
+      </Layout>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Online research on" }));
+    expect(nav).toHaveBeenCalledWith("settings");
+    expect(screen.getByText(/only exercise names leave this PC/)).toBeInTheDocument();
+    await expectNoAxeViolations(container);
+  });
+
   it("marks the current page and navigates from the sidebar", async () => {
     const nav = vi.fn();
     renderAt("history", "History", nav);
