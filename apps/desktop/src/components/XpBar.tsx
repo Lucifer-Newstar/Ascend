@@ -114,7 +114,7 @@ export function XpBar({ xp, streak }: { xp: XpInfo; streak: StreakInfo }) {
             </Transient>
           </div>
           <span className="text-xs text-muted">
-            <span className="text-ink"><CountUp value={xp.xp_into_level} /></span> / {xp.xp_for_next.toLocaleString()} XP
+            <span className="text-ink"><CountUp key={xp.level} value={xp.xp_into_level} /></span> / {xp.xp_for_next.toLocaleString()} XP
           </span>
         </div>
         <XpFill fill={fill} className="mt-2 h-2" sheenKey={xpRise + (levelUpOnMount ? 1 : 0)} />

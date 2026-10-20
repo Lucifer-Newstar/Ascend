@@ -1,6 +1,6 @@
 import type { GameSummary } from "@ascend/shared";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "../api/client";
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
@@ -24,6 +24,8 @@ function renderChip(key: number, reduce = false) {
 }
 
 describe("XpChip", () => {
+  beforeEach(() => vi.mocked(api.game).mockReset());
+
   it("floats the XP gained after a refresh, without a celebration inside a level", async () => {
     vi.mocked(api.game).mockResolvedValueOnce(summary(100, 1, 100)).mockResolvedValueOnce(summary(112, 1, 112));
     const { rerender } = render(renderChip(0));
@@ -42,6 +44,23 @@ describe("XpChip", () => {
     expect(await screen.findByText("LV 2")).toBeInTheDocument();
     expect(screen.getByTestId("confetti")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("You reached level 2");
+  });
+
+  it("starts a new level's count from zero instead of counting down from the old level", async () => {
+    vi.mocked(api.game).mockResolvedValueOnce(summary(490, 1, 490)).mockResolvedValueOnce(summary(530, 2, 30));
+    vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"] });
+    const { rerender } = render(renderChip(0));
+    await screen.findByText("LV 1");
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(screen.getByTestId("count-up")).toHaveTextContent("490");
+    rerender(renderChip(1));
+    await screen.findByText("LV 2");
+    await act(async () => { vi.advanceTimersByTime(100); });
+    // Mid-animation the number is on its way up from 0, not down from 490.
+    expect(Number(screen.getByTestId("count-up").textContent)).toBeLessThan(30);
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    expect(screen.getByTestId("count-up")).toHaveTextContent("30");
+    vi.useRealTimers();
   });
 
   it("keeps the announcement but drops the confetti with reduced motion", async () => {
