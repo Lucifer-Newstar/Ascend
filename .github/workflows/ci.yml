@@ -36,8 +36,13 @@ permissions:
 
 jobs:
   sidecar:
-    name: Sidecar (lint, types, tests)
-    runs-on: ubuntu-latest
+    name: Sidecar (lint, types, tests) · ${{ matrix.os }}
+    # The app ships on Windows, so tests run there too; Linux stays the fast signal.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: services/sidecar
@@ -66,9 +71,10 @@ jobs:
         run: uv run pytest --cov=app --cov-report=term-missing --cov-report=xml
 
       - name: Migrations apply to a fresh database
-        env:
-          ASCEND_DB_URL: sqlite:///${{ runner.temp }}/ci.db
-        run: uv run alembic upgrade head && uv run alembic current
+        shell: bash
+        run: |
+          export ASCEND_DB_URL="sqlite:///$(python -c 'import pathlib,os;print(pathlib.Path(os.environ["RUNNER_TEMP"]).as_posix())')/ci.db"
+          uv run alembic upgrade head && uv run alembic current
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -77,8 +83,12 @@ jobs:
           path: services/sidecar/coverage.xml
 
   desktop:
-    name: Desktop (lint, types, tests, build)
-    runs-on: ubuntu-latest
+    name: Desktop (lint, types, tests, build) · ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     env:
       # The Electron binary isn't needed to lint/test/build the renderer.
       ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
