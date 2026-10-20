@@ -43,6 +43,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      # Empty unless the repo defines the secret; the Codecov step is skipped then.
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     defaults:
       run:
         working-directory: services/sidecar
@@ -76,11 +79,35 @@ jobs:
           export ASCEND_DB_URL="sqlite:///$(python -c 'import pathlib,os;print(pathlib.Path(os.environ["RUNNER_TEMP"]).as_posix())')/ci.db"
           uv run alembic upgrade head && uv run alembic current
 
+      # Artifact names carry the OS and short SHA so downloads from different runs
+      # and matrix legs never overwrite each other.
+      - name: Short SHA
+        id: sha
+        shell: bash
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: sidecar-coverage
+          name: sidecar-coverage-${{ matrix.os }}-${{ steps.sha.outputs.short }}
           path: services/sidecar/coverage.xml
+          retention-days: 14
+
+      # Optional: Codecov comments on PRs once the repo has a CODECOV_TOKEN secret.
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v4
+        with:
+          files: services/sidecar/coverage.xml
+          flags: sidecar
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Coverage summary
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          echo "### Sidecar coverage" >> "$GITHUB_STEP_SUMMARY"
+          uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
 
   desktop:
     name: Desktop (lint, types, tests, build) · ${{ matrix.os }}
@@ -116,10 +143,12 @@ jobs:
         run: npm run build -w apps/desktop
 
       - name: Upload renderer build
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: renderer-dist
+          name: renderer-dist-${{ github.sha }}
           path: apps/desktop/dist
+          retention-days: 7
 
   sidecar-build:
     name: Sidecar binary (PyInstaller, Linux)
