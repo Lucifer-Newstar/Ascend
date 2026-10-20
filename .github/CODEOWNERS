@@ -1,29 +1,29 @@
 # CODEOWNERS: GitHub requests a review from these people when a PR touches their area.
-# The last matching pattern wins. Replace the @placeholder handles with real usernames.
+# The last matching pattern wins.
 #
 # Navin        lead, owns everything by default   -> @Lucifer-Newstar
-# Gokul        DevOps (CI/CD, Docker, packaging)    -> @gokul-placeholder
-# Jegatheesan  Backend (FastAPI sidecar, engines)   -> @jegatheesan-placeholder
-# Dhanush      Frontend (Electron + React UI)       -> @dhanush-placeholder
+# Gokul        DevOps (CI/CD, Docker, packaging)    -> @Gokul143-J
+# Jegatheesan  Backend (FastAPI sidecar, engines)   -> @jegatheesank
+# Dhanush      Frontend (Electron + React UI)       -> @dhanush-07-byte
 
 *                         @Lucifer-Newstar
 
 # Backend: sidecar API, engines, database migrations
-/services/sidecar/        @jegatheesan-placeholder @Lucifer-Newstar
-/services/sidecar/alembic/ @jegatheesan-placeholder @Lucifer-Newstar
+/services/sidecar/        @jegatheesank @Lucifer-Newstar
+/services/sidecar/alembic/ @jegatheesank @Lucifer-Newstar
 
 # Frontend: renderer, Electron shell, shared types
-/apps/desktop/            @dhanush-placeholder @Lucifer-Newstar
-/apps/desktop/electron/   @dhanush-placeholder @gokul-placeholder
-/packages/shared/         @dhanush-placeholder @jegatheesan-placeholder
+/apps/desktop/            @dhanush-07-byte @Lucifer-Newstar
+/apps/desktop/electron/   @dhanush-07-byte @Gokul143-J
+/packages/shared/         @dhanush-07-byte @jegatheesank
 
 # DevOps: CI/CD, containers, packaging, tooling
-/.github/                 @gokul-placeholder @Lucifer-Newstar
-/docker/                  @gokul-placeholder @Lucifer-Newstar
-/services/sidecar/packaging/ @gokul-placeholder @Lucifer-Newstar
-/apps/desktop/electron-builder.yml @gokul-placeholder @Lucifer-Newstar
-/Makefile                 @gokul-placeholder
-/.pre-commit-config.yaml  @gokul-placeholder
+/.github/                 @Gokul143-J @Lucifer-Newstar
+/docker/                  @Gokul143-J @Lucifer-Newstar
+/services/sidecar/packaging/ @Gokul143-J @Lucifer-Newstar
+/apps/desktop/electron-builder.yml @Gokul143-J @Lucifer-Newstar
+/Makefile                 @Gokul143-J
+/.pre-commit-config.yaml  @Gokul143-J
 
 # MLOps: food classifier pipeline (lead-owned)
 /ml/                      @Lucifer-Newstar
