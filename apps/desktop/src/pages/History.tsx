@@ -101,7 +101,9 @@ export function summarise(sets: WorkoutSet[], units: Units) {
     const score = s.duration_s ? s.duration_s : s.weight_kg > 0 ? s.weight_kg : s.reps;
     if (score > row.top) {
       row.top = score;
-      row.best = s.duration_s
+      row.best = s.measure === "hold" && s.duration_s
+        ? `${s.duration_s} s hold${s.weight_kg > 0 ? ` +${toDisplayWeight(s.weight_kg, units)} ${weightUnit(units)}` : ""}`
+        : s.duration_s
         ? `${formatDuration(s.duration_s)}${s.distance_m ? ` · ${formatDistance(s.distance_m, units)}` : ""}`
         : s.weight_kg > 0
           ? `${toDisplayWeight(s.weight_kg, units)} ${weightUnit(units)} × ${s.reps}`
