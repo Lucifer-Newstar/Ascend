@@ -160,43 +160,77 @@ paths:
   /backup:
     post:
       summary: Create a .ascendbak (SQLite snapshot + photos + manifest)
-      operationId: create_backup
+      description: Write a .ascendbak (SQLite snapshot + manifest with SHA-256) to the backups folder.
+      operationId: create_backup_backup_post
       requestBody:
-        required: false
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BackupIn'
+              anyOf:
+              - $ref: '#/components/schemas/BackupIn'
+              - type: 'null'
+              title: Body
       responses:
         '201':
-          description: Backup written
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BackupOut'
-      x-status: planned
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
       tags:
       - import-export
   /restore:
     post:
       summary: Restore from a .ascendbak (validates manifest + schema version first)
-      operationId: restore_backup
+      description: 'Restore a .ascendbak over the current data. The current data is backed up first
+
+        (reason "pre-restore"), so a mistaken restore can itself be undone.'
+      operationId: restore_backup_restore_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/RestoreIn'
+        required: true
       responses:
         '200':
-          description: Restored; app restarts the sidecar
-        '422':
-          description: Bad manifest, checksum or newer schema
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-      x-status: planned
+                $ref: '#/components/schemas/RestoreOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - import-export
+  /backups:
+    get:
+      summary: List Backups
+      description: Backups in the backups folder, newest first (manual and pre-migration).
+      operationId: list_backups_backups_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BackupOut'
+                type: array
+                title: Response List Backups Backups Get
+      x-status: implemented
       tags:
       - import-export
 components:
@@ -294,39 +328,70 @@ components:
       - dry_run
       title: ImportReport
     BackupOut:
-      type: object
       properties:
         path:
           type: string
+          title: Path
         size_bytes:
           type: integer
+          title: Size Bytes
         sha256:
           type: string
+          title: Sha256
         created_at:
           type: string
           format: date-time
+          title: Created At
+        schema_revision:
+          type: string
+          title: Schema Revision
+        app_version:
+          type: string
+          title: App Version
+        reason:
+          anyOf:
+          - type: string
+            enum:
+            - manual
+            - pre-migration
+          - type: string
+          title: Reason
+          default: manual
+      type: object
       required:
       - path
+      - size_bytes
       - sha256
+      - created_at
+      - schema_revision
+      - app_version
+      title: BackupOut
     BackupIn:
-      type: object
       properties:
         password:
-          type:
-          - string
-          - 'null'
-          description: Optional AES-256 password; never logged
-    RestoreIn:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Password
+          description: Optional AES-256 password; not supported yet (422)
       type: object
+      title: BackupIn
+    RestoreIn:
       properties:
         path:
           type: string
+          maxLength: 1024
+          minLength: 1
+          title: Path
         password:
-          type:
-          - string
-          - 'null'
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Password
+      type: object
       required:
       - path
+      title: RestoreIn
     Error:
       type: object
       required:
@@ -366,3 +431,25 @@ components:
       - csv
       title: ImportIn
       description: 'The CSV travels as text: renderer -> IPC -> main -> sidecar carries JSON only.'
+    RestoreOut:
+      properties:
+        restored_from:
+          type: string
+          title: Restored From
+        backup_created_at:
+          type: string
+          format: date-time
+          title: Backup Created At
+        schema_revision:
+          type: string
+          title: Schema Revision
+        safety_backup:
+          type: string
+          title: Safety Backup
+      type: object
+      required:
+      - restored_from
+      - backup_created_at
+      - schema_revision
+      - safety_backup
+      title: RestoreOut

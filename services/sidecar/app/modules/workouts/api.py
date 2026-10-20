@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
@@ -92,10 +93,24 @@ def start(
 def list_workouts(
     limit: int = Query(default=20, ge=1, le=100),
     before: datetime | None = None,
+    section: str | None = None,
+    source: Literal["app", "strong", "hevy"] | None = None,
+    since: date | None = Query(default=None, description="First day to include"),
+    until: date | None = Query(default=None, description="Last day to include"),
     db: Session = Depends(get_db),
 ) -> list[WorkoutSummary]:
-    """Newest first. Pass the last item's started_at as `before` for the next page."""
-    return service.list_workouts(db, limit=limit, before=before)
+    """Newest first. Pass the last item's started_at as `before` for the next page.
+    Optional filters: section, source (app or an import) and a day range."""
+    if section is not None and section not in SECTIONS:
+        raise HTTPException(422, f"unknown section {section!r}")
+    if since and until and since > until:
+        raise HTTPException(422, "since must be on or before until")
+    return service.list_workouts(
+        db,
+        limit=limit,
+        before=before,
+        filters=service.WorkoutFilters(section=section, source=source, since=since, until=until),
+    )
 
 
 @router.get("/active", response_model=WorkoutOut | None)

@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.schemas import StrictIn
+
 MealType = Literal["breakfast", "lunch", "dinner", "snack"]
 
 
@@ -21,12 +23,12 @@ class FoodOut(BaseModel):
     source: str
 
 
-class MealItemIn(BaseModel):
+class MealItemIn(StrictIn):
     food_id: int
     portions: float = Field(gt=0, le=20)
 
 
-class MealIn(BaseModel):
+class MealIn(StrictIn):
     meal_type: MealType
     items: list[MealItemIn] = Field(min_length=1, max_length=30)
 

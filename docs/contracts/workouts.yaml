@@ -64,14 +64,61 @@ paths:
         required: false
         schema:
           type: integer
-          default: 20
           maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
       - name: before
         in: query
         required: false
         schema:
-          type: string
-          format: date-time
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Before
+      - name: section
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Section
+      - name: source
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - app
+            - strong
+            - hevy
+            type: string
+          - type: 'null'
+          title: Source
+      - name: since
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: First day to include
+          title: Since
+        description: First day to include
+      - name: until
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Last day to include
+          title: Until
+        description: Last day to include
       responses:
         '200':
           description: OK
@@ -84,6 +131,9 @@ paths:
       x-status: implemented
       tags:
       - workouts
+      description: 'Newest first. Pass the last item''s started_at as `before` for the next page.
+
+        Optional filters: section, source (app or an import) and a day range.'
   /workouts/active:
     get:
       tags:

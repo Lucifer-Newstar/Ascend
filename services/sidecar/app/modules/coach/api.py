@@ -7,12 +7,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
+from app.core.schemas import StrictIn
 from app.modules.coach import service, weekly_review
 
 router = APIRouter(prefix="/coach", tags=["coach"])
 
 
-class AskIn(BaseModel):
+class AskIn(StrictIn):
     question: str = Field(default="", max_length=1000)
 
 
