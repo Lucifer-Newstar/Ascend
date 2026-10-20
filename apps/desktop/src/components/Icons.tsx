@@ -67,3 +67,9 @@ export const IconDatabase = (p: P) => (
 export const IconLibrary = (p: P) => (
   <svg {...base} {...p}><rect x="3" y="4" width="7" height="7" rx="1.5" /><rect x="14" y="4" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M14 17.5h7M17.5 14v7" /></svg>
 );
+export const IconSkill = (p: P) => (
+  <svg {...base} {...p}><circle cx="12" cy="4.5" r="2" /><circle cx="6" cy="19.5" r="2" /><circle cx="18" cy="19.5" r="2" /><circle cx="12" cy="12" r="2" /><path d="M12 6.5v3.5M10.6 13.4l-3.2 4.4M13.4 13.4l3.2 4.4" /></svg>
+);
+export const IconLock = (p: P) => (
+  <svg {...base} {...p}><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+);

@@ -12,7 +12,7 @@ import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
 const SHORTCUTS: [string, string][] = [
-  ["Ctrl+1 … Ctrl+8", "Open a page, in sidebar order"],
+  ["Ctrl+1 … Ctrl+9, Ctrl+0", "Open a page, in sidebar order"],
   ["Tab / Shift+Tab", "Move between controls; the first Tab offers “Skip to content”"],
   ["Alt+← / Alt+→", "Back / forward between pages"],
   ["Enter", "Log the set or confirm the form you are in"],

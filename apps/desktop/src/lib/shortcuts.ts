@@ -2,14 +2,14 @@ import { useEffect } from "react";
 
 import type { Page } from "../components/Layout";
 
-/** Ctrl+1 … Ctrl+9 open the pages in sidebar order (the same keys browsers use for tabs). */
-export const PAGE_KEYS: Page[] = ["dashboard", "workout", "library", "progress", "diet", "coach", "history", "data", "settings"];
+/** Ctrl+1 … Ctrl+9, then Ctrl+0, open the pages in sidebar order (like browser tabs). */
+export const PAGE_KEYS: Page[] = ["dashboard", "workout", "library", "skills", "progress", "diet", "coach", "history", "data", "settings"];
 
 export function pageForKey(e: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey">): Page | null {
   if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return null;
-  const n = Number(e.key);
-  if (!Number.isInteger(n) || n < 1 || n > PAGE_KEYS.length) return null;
-  return PAGE_KEYS[n - 1];
+  if (!/^[0-9]$/.test(e.key)) return null;
+  const index = e.key === "0" ? 9 : Number(e.key) - 1;
+  return PAGE_KEYS[index] ?? null;
 }
 
 export function usePageShortcuts(navigate: (p: Page) => void) {
