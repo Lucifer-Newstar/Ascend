@@ -1,7 +1,6 @@
-"""Muscle drill-down (1 day to 1 month) and weekly training summaries.
+"""Muscle drill-down (1 day to 1 month).
 
-Both are read models over data other modules already wrote: muscle_load_events
-(progress), workout sets (workouts), XP (gamification) and meals (nutrition).
+A read model over muscle_load_events (progress) and workout sets (workouts).
 """
 
 from __future__ import annotations

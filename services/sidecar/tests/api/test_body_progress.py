@@ -59,3 +59,27 @@ def test_eta_needs_a_target_then_gives_a_range(client, profile, clock):
     assert eta["confidence"] in ("medium", "high")
     assert eta["eta_from"] < eta["eta_to"]
     assert eta["note"] == "Estimate, not a promise"
+
+
+def test_weekly_summary_buckets_by_monday(client, profile, clock):
+    from tests.api.test_workouts import exercise_id
+
+    bench = exercise_id(client, "Barbell Bench Press")
+    # clock starts Tue 2026-10-20; log one session this week.
+    w = client.post("/workouts").json()["id"]
+    client.post(
+        f"/workouts/{w}/sets", json={"exercise_id": bench, "weight_kg": 60, "reps": 8, "rpe": 8}
+    )
+    clock.now += timedelta(minutes=40)
+    client.post(f"/workouts/{w}/finish")
+    client.post("/body-metrics", json={"weight_kg": 70.4})
+    weeks = client.get("/progress/weekly", params={"weeks": 4}).json()
+    assert len(weeks) == 4
+    assert [w["week_start"] for w in weeks][-1] == "2026-10-19"
+    this = weeks[-1]
+    assert this["sessions"] == 1 and this["sets"] == 1
+    assert this["volume_kg"] == 480.0
+    assert this["active_minutes"] == 40.0
+    assert this["xp"] > 0
+    assert this["avg_weight_kg"] == 70.4
+    assert weeks[0]["sessions"] == 0 and weeks[0]["avg_kcal_in"] is None

@@ -13,7 +13,7 @@ from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
-from app.modules.progress import body, drilldown, energy, history, service
+from app.modules.progress import body, drilldown, energy, history, service, weekly
 from app.modules.progress.schemas import (
     BodyMetricIn,
     BodyMetricOut,
@@ -232,3 +232,13 @@ def muscle_history(
         return drilldown.muscle_history(db, code, days, now)
     except drilldown.UnknownMuscle as e:
         raise HTTPException(404, f"unknown muscle '{code}'") from e
+
+
+@router.get("/progress/weekly", response_model=list[weekly.WeekSummary])
+def progress_weekly(
+    weeks: int = Query(default=8, ge=1, le=52),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> list[weekly.WeekSummary]:
+    """Per-week sessions, sets, lifting volume, minutes, XP, average intake and weight."""
+    return weekly.weekly(db, now, weeks)
