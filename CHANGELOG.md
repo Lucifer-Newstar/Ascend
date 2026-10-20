@@ -16,6 +16,13 @@ Formula and model versions are listed where a number you see could change.
   to train" pulse now use the same token for each status; a ready muscle pulses with a green
   outline (the "ready" colour) instead of System blue or a neutral ring.
 - Only Latin and Latin Extended font files are bundled (font files 1,034 KB → 496 KB).
+- **The System window** (UI-2). One reusable "System" notice window (glass, corner brackets,
+  `[ BRACKETED ]` header, a 220 ms entrance and one scan line; a 120 ms fade with Reduce
+  motion), used only for System events: the daily quest, **level up / rank up** and **quest
+  complete** notices (new, top-right, on any page), **Skill acquired**, and a recommended
+  **deload**. Modal windows trap focus and close on Esc; notices are announced to screen
+  readers. Notice, quest and skill windows are tinted by rank (E-C blue, B-A violet, S crimson);
+  data colours never change with rank (UI-7, tint part).
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

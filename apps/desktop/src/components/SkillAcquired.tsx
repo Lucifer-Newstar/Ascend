@@ -1,49 +1,54 @@
 /**
  * The "Skill acquired" moment: shown when a logged set unlocks a skill-tree step.
- * A modal dialog (focus moves to Continue, Esc closes). With Reduce motion on (OS or
- * Settings) it appears without the pop, glow or confetti, and nothing moves.
+ * A modal System window (focus moves to Continue, Tab stays inside, Esc closes).
+ * With Reduce motion on (OS or Settings) it fades in without the glow or confetti.
  */
 import type { SkillUnlock } from "@ascend/shared";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 import { useReducedMotion } from "../lib/motion";
 import { Confetti } from "./Celebrate";
 import { IconSkill } from "./Icons";
+import { SystemWindow } from "./SystemWindow";
 
-export function SkillAcquired({ unlocks, onClose, onView }: { unlocks: SkillUnlock[]; onClose: () => void; onView: (skillKey: string) => void }) {
+export function SkillAcquired({ unlocks, onClose, onView, rank }: {
+  unlocks: SkillUnlock[];
+  onClose: () => void;
+  onView: (skillKey: string) => void;
+  rank?: string | null;
+}) {
   const reduce = useReducedMotion();
   const button = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    button.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
   if (unlocks.length === 0) return null;
   const [first, ...rest] = unlocks;
   const xp = unlocks.reduce((n, u) => n + u.xp, 0);
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" data-testid="skill-acquired">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="skill-acquired-title"
-        aria-describedby="skill-acquired-desc"
-        className="card relative w-full max-w-sm overflow-visible p-6 text-center"
-        style={reduce ? undefined : { animation: "asc-pop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both" }}
-        data-motion={reduce ? "reduced" : "full"}
+    <div data-testid="skill-acquired">
+      <SystemWindow
+        modal
+        variant="skill"
+        rank={rank}
+        title={first.final ? "Skill acquired · tree complete" : "Skill acquired"}
+        labelledBy="skill-acquired-title"
+        describedBy="skill-acquired-desc"
+        onClose={onClose}
+        initialFocus={button}
+        className="max-w-sm overflow-visible text-center"
+        actions={
+          <div className="flex w-full justify-center gap-2">
+            <button type="button" className="btn-ghost" onClick={() => onView(first.skill_key)}>View tree</button>
+            <button ref={button} type="button" className="btn btn-primary" onClick={onClose}>Continue</button>
+          </div>
+        }
       >
-        <Confetti pieces={18} spread={110} duration={1100} />
+        {!reduce && <Confetti pieces={18} spread={110} duration={1100} />}
         <div
-          className={`mx-auto grid h-14 w-14 place-items-center rounded-full border-2 border-xp text-xp ${reduce ? "" : "shadow-[0_0_28px_color-mix(in_srgb,var(--color-xp)_45%,transparent)]"}`}
+          className={`mx-auto grid h-14 w-14 place-items-center rounded-full border-2 border-[var(--sw)] text-[var(--sw)] ${reduce ? "" : "shadow-[0_0_28px_color-mix(in_srgb,var(--sw)_45%,transparent)]"}`}
           aria-hidden="true"
         >
           <IconSkill width={26} height={26} />
         </div>
-        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-xp">{first.final ? "Skill acquired · tree complete" : "Skill acquired"}</p>
-        <h2 id="skill-acquired-title" className="mt-1 font-display text-2xl font-bold text-ink">{first.step_name}</h2>
+        <p id="skill-acquired-title" className="mt-4 font-display text-[32px] font-semibold leading-9 text-ink">{first.step_name}</p>
         <p id="skill-acquired-desc" className="mt-1 text-sm text-muted">
           {first.skill_name}
           {xp > 0 ? ` · +${xp} XP` : ""}
@@ -54,11 +59,7 @@ export function SkillAcquired({ unlocks, onClose, onView }: { unlocks: SkillUnlo
             {rest.map((u) => <li key={u.id}>Also unlocked: <span className="text-ink">{u.step_name}</span> ({u.skill_name})</li>)}
           </ul>
         )}
-        <div className="mt-5 flex justify-center gap-2">
-          <button type="button" className="btn-ghost" onClick={() => onView(first.skill_key)}>View tree</button>
-          <button ref={button} type="button" className="btn btn-primary" onClick={onClose}>Continue</button>
-        </div>
-      </div>
+      </SystemWindow>
     </div>
   );
 }

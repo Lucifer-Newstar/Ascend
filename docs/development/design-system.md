@@ -61,3 +61,31 @@ Only the Latin and Latin Extended font files are bundled.
 (cards). `--shadow-panel` for cards, `--shadow-system` for System windows. Motion uses
 `--ease-out` and `--dur-fast` 150 ms / `--dur-base` 220 ms / `--dur-slow` 600 ms; see
 [motion.md](motion.md).
+
+## The System window
+
+`components/SystemWindow.tsx` is the one "Solo Leveling" surface, and it is **reserved for
+System events**:
+
+| Event | Where | Variant |
+|---|---|---|
+| Daily quest | Today | `quest` |
+| Level up / rank up | top-right notice, any page (`SystemEvents`) | `levelup` |
+| Quest complete | top-right notice, any page (`SystemEvents`) | `quest` |
+| Skill acquired | modal after the set that unlocked a step (`SkillAcquired`) | `skill` |
+| Deload recommended | Coach (and Today) | `warning` |
+
+Everything else (forms, lists, charts, settings) is a normal `card`. Scarcity keeps the
+window special.
+
+- **Look:** glass fill (`--color-system-glass`), a 1 px border in the window accent at 45%,
+  a soft inner glow, four 8 px corner brackets and a header like `[ DAILY QUEST ]`
+  (the brackets are hidden from screen readers; the accessible name is the title).
+- **Accent:** `warning` is amber, `levelup` is violet; `notice`, `quest` and `skill` follow
+  the rank: E-C System blue, B-A arcane violet, S crimson. Only System UI changes with rank.
+- **Motion:** 220 ms entrance (scale 0.98 → 1 and fade) and one 600 ms scan line. With
+  Reduce motion it is a 120 ms fade and the scan line is not rendered.
+- **Modal** windows (`modal`) trap focus, close on Esc or a backdrop click, and return focus.
+  Notices are non-modal regions announced through a polite live region, and close on Esc,
+  with their button, or by themselves after 7 seconds (not while hovered or focused).
+- **Light theme:** white glass, a firmer border, no glow and no blur.

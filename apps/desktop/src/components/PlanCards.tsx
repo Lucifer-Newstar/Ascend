@@ -7,6 +7,7 @@ import { useState } from "react";
 import { api } from "../api/client";
 import { useApi } from "../lib/useApi";
 import { ErrorState, Loading } from "./States";
+import { SystemWindow } from "./SystemWindow";
 import { useToast } from "./Toast";
 
 const shortDate = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -66,37 +67,45 @@ export function DeloadCard({ refreshKey }: { refreshKey: number }) {
     }
   }
 
+  const content = d.loading && !d.data ? <Loading /> : d.error ? <ErrorState message={d.error} onRetry={d.reload} /> : d.data && (
+    <>
+      <p className={`text-sm ${d.data.recommended ? "text-warn" : d.data.kind === "active" ? "text-accent" : "text-ink"}`}>
+        {d.data.kind === "active"
+          ? `Deload week in progress (from ${shortDate(d.data.deload_week ?? "")}).`
+          : d.data.recommended
+            ? d.data.kind === "planned"
+              ? `Planned deload: ${d.data.training_weeks} hard weeks in a row.`
+              : "Your recovery signals suggest an easier week."
+            : "No deload needed right now."}
+      </p>
+      {d.data.guidance && <p className="mt-1 text-xs text-muted">{d.data.guidance}</p>}
+      <ul className="mt-3 space-y-1.5 text-xs">
+        {d.data.signals.map((s) => (
+          <li key={s.code} className="flex items-start gap-2">
+            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${s.active ? "bg-warn" : "bg-line-2"}`} aria-hidden="true" />
+            <span className={s.active ? "text-ink" : "text-muted"}>
+              <span className="sr-only">{s.active ? "Active: " : "Not active: "}</span>
+              {s.detail}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+
+  // A recommended deload is a System event, so it gets the System window; otherwise a plain card.
+  if (d.data?.recommended && d.data.kind !== "active") {
+    return (
+      <SystemWindow variant="warning" title="Deload notice" testId="deload-notice"
+        actions={<button type="button" className="btn-primary" disabled={busy} onClick={start}>Start deload week</button>}>
+        {content}
+      </SystemWindow>
+    );
+  }
   return (
     <section className="card card-hover p-5" aria-labelledby="deload-title">
       <h2 id="deload-title" className="card-title mb-2">Deload check</h2>
-      {d.loading && !d.data ? <Loading /> : d.error ? <ErrorState message={d.error} onRetry={d.reload} /> : d.data && (
-        <>
-          <p className={`text-sm ${d.data.recommended ? "text-warn" : d.data.kind === "active" ? "text-accent" : "text-ink"}`}>
-            {d.data.kind === "active"
-              ? `Deload week in progress (from ${shortDate(d.data.deload_week ?? "")}).`
-              : d.data.recommended
-                ? d.data.kind === "planned"
-                  ? `Planned deload: ${d.data.training_weeks} hard weeks in a row.`
-                  : "Your recovery signals suggest an easier week."
-                : "No deload needed right now."}
-          </p>
-          {d.data.guidance && <p className="mt-1 text-xs text-muted">{d.data.guidance}</p>}
-          <ul className="mt-3 space-y-1.5 text-xs">
-            {d.data.signals.map((s) => (
-              <li key={s.code} className="flex items-start gap-2">
-                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${s.active ? "bg-warn" : "bg-line-2"}`} aria-hidden="true" />
-                <span className={s.active ? "text-ink" : "text-muted"}>
-                  <span className="sr-only">{s.active ? "Active: " : "Not active: "}</span>
-                  {s.detail}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {d.data.recommended && d.data.kind !== "active" && (
-            <button type="button" className="btn-primary mt-4" disabled={busy} onClick={start}>Start deload week</button>
-          )}
-        </>
-      )}
+      {content}
     </section>
   );
 }

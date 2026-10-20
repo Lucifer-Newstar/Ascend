@@ -54,3 +54,17 @@ react-muscle-highlighter (MIT, see the README credits).
 - In the running app, a sweep of the cursor across the map, a flip and a range change
   held 16.7 ms frames in headless Chromium (no frame over 50 ms). Repeat on real Windows
   hardware before a release; headless Chromium is not a GPU.
+
+## v5: the System window and micro-interactions
+
+| Piece | Full motion | Reduce motion |
+|---|---|---|
+| System window entrance | 220 ms scale 0.98 → 1 + fade, `--ease-out` | 120 ms fade |
+| System window scan line | one 600 ms band down the window (transform + opacity) | not rendered |
+| System notices (level up, quest complete) | enter like the window; leave after 7 s | same timing, fade only |
+| Buttons | press scales to 0.97 for 150 ms | instant |
+
+The 120 ms fade under Reduce motion is the one animation that survives the global
+"0.01 ms" rule: it lives in `@layer components` with `!important`, which outranks the
+unlayered global rule.
+
