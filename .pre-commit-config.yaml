@@ -25,6 +25,22 @@ repos:
       - id: ruff-format
         files: ^services/sidecar/
 
+  # Type-check the sidecar with the project's own mypy (run `uv sync` first).
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (sidecar)
+        entry: bash -c 'cd services/sidecar && uv run mypy app'
+        language: system
+        files: ^services/sidecar/app/.*\.py$
+        pass_filenames: false
+
+  # Block committed secrets (API keys, tokens, private keys).
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
   # ESLint uses the repo's own installed version (run `npm ci` first).
   - repo: local
     hooks:
