@@ -40,6 +40,7 @@ Newest at the bottom. Architecture-level decisions also get an ADR.
 | D14 | 2026-10-20 | Work lands through feature branches merged with `--no-ff`; the lead merges after CODEOWNERS review | Keeps one merge commit per PR so `main` reads as a list of reviewed changes | [branch-protection.md](../development/branch-protection.md) |
 | D15 | 2026-10-20 | Cardio, martial arts, flexibility and meditation log as timed sets in the same `workouts`/`workout_sets` tables (section + duration/distance), not a separate activities table | Implements D8: History, XP, muscle load and export work for every section without a second code path | [data-model.md](../architecture/data-model.md) |
 | D16 | 2026-10-20 | XP formula `xp-v2` adds minute-based XP for timed sets; time-based load is versioned as `load-time-v1` | Old XP rows keep their version; lifting numbers are unchanged | [gamification formulas](../../services/sidecar/app/modules/gamification/formulas.py) |
+| D17 | 2026-10-20 | Readiness (`readiness-v1`), deload (`deload-v1`) and weekly review (`review-v1`) thresholds accepted as MVP rules of thumb | Deterministic and testable now; tune with beta data and bump the versions | [adaptive-planning-ai.md §5.1](../ai/adaptive-planning-ai.md#51-reactive-deload-signals-deload-v1) |
 
 > D1–D12 were proposed on 2026-10-20 and accepted by the lead the same day (D13). Any of them
 > can still be raised at the kickoff ([kickoff.md §4](kickoff.md#4-decisions-to-ratify)).
