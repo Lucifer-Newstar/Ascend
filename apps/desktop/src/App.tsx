@@ -11,6 +11,7 @@ import { CoachPage } from "./pages/Coach";
 import { DashboardPage } from "./pages/Dashboard";
 import { DietPage } from "./pages/Diet";
 import { HistoryPage } from "./pages/History";
+import { ProgressPage } from "./pages/Progress";
 import { Onboarding } from "./pages/Onboarding";
 import { SettingsPage } from "./pages/Settings";
 import { WorkoutPage } from "./pages/Workout";
@@ -18,6 +19,7 @@ import { WorkoutPage } from "./pages/Workout";
 const TITLES: Record<Page, string> = {
   dashboard: "Dashboard",
   workout: "Training",
+  progress: "Progress",
   diet: "Diet",
   coach: "Coach",
   history: "History",
@@ -99,6 +101,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}>
       {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onOpenCoach={() => navigate("coach")} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
+      {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} />}
