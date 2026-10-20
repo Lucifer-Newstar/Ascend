@@ -181,7 +181,7 @@ Verified on Linux (CI-equivalent):
 
 - 485 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 engines, API tests with `TestClient`); ruff and mypy clean (100 source files).
 - Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
-- tsc (renderer, Electron, shared), eslint and 276 vitest tests (45 files) pass; `vite build` succeeds.
+- tsc (renderer, Electron, shared), eslint and 277 vitest tests (45 files) pass; `vite build` succeeds.
 - The contract drift check passes (71 implemented operations match 9 contracts).
 - The renderer was driven end to end against the running sidecar in headless Chromium
   (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
