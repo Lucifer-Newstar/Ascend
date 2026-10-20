@@ -267,7 +267,7 @@ function SoundSettings() {
         </span>
         <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={prefs.on} onChange={(e) => change({ ...prefs, on: e.target.checked })} />
       </label>
-      <div className={`flex items-center gap-3 ${prefs.on ? "" : "opacity-50"}`}>
+      <div className="flex items-center gap-3">
         <label htmlFor="sound-volume" className="text-xs text-muted">Volume</label>
         <input id="sound-volume" type="range" min={0} max={100} step={5} disabled={!prefs.on} className="flex-1 accent-accent"
           value={Math.round(prefs.volume * 100)} onChange={(e) => change({ ...prefs, volume: Number(e.target.value) / 100 })} />
