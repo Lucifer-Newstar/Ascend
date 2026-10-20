@@ -31,7 +31,7 @@
 - [x] `feat(workouts): edit and delete a set with SetUpdated event`
 - [ ] `feat(workouts): PR types (e1RM, rep PR, volume) with typo guard`
 - [ ] `feat(workouts): double progression and RPE load rule`
-- [ ] `feat(workouts): deload triggers (planned 3+1 and reactive)`
+- [x] `feat(workouts): deload triggers (planned 3+1 and reactive)`
 - [ ] `feat(progress): effective sets with mapping weights and effort(RPE)`
 - [ ] `feat(progress): fatigue decay and readiness per muscle`
 - [ ] `feat(progress): muscle_load_daily projection with algo_version`
@@ -66,7 +66,7 @@
 - [ ] `feat(coach): injury restrictions, substitutions and return-to-load`
 - [ ] `feat(coach): proposals table and apply/keep endpoints`
 - [ ] `feat(coach): chat endpoint streaming over SSE`
-- [ ] `feat(coach): weekly review findings and top-3 diffs`
+- [x] `feat(coach): weekly review findings and top-3 diffs`
 - [ ] `feat(coach): number-fidelity check with template fallback`
 - [ ] `feat(nutrition): ONNX classifier top-3 via onnx_runtime` (pair: Navin)
 - [ ] `feat(nutrition): confidence thresholds and corrections table`
@@ -104,7 +104,7 @@
 - [x] `feat(workouts): flexibility holds and ROM tests` — holds done; ROM tests deferred to v1.1
 - [x] `feat(workouts): meditation sessions and calm streak`
 - [ ] `feat(gamification): trials, weekly challenges and bosses`
-- [ ] `feat(progress): morning check-in and readiness score`
+- [x] `feat(progress): morning check-in and readiness score`
 - [ ] `feat(nutrition): adaptive TDEE from trend weight`
 - [x] `feat(progress): ETA range with confidence`
 - [ ] `feat(core): optional SQLCipher encryption` (pair: Gokul for packaging)
