@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
 import type { Settings } from "@ascend/shared";
 
@@ -9,15 +9,18 @@ import { ToastProvider } from "./components/Toast";
 import { XpChip } from "./components/XpChip";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { usePageShortcuts } from "./lib/shortcuts";
-import { CoachPage } from "./pages/Coach";
 import { DashboardPage } from "./pages/Dashboard";
-import { DataPage } from "./pages/Data";
-import { DietPage } from "./pages/Diet";
-import { HistoryPage } from "./pages/History";
-import { ProgressPage } from "./pages/Progress";
-import { Onboarding } from "./pages/Onboarding";
-import { SettingsPage } from "./pages/Settings";
-import { WorkoutPage } from "./pages/Workout";
+
+// The Dashboard is the first screen, so it ships in the main chunk; every other page
+// (and first-run onboarding) is its own chunk, loaded from disk the first time it opens.
+const CoachPage = lazy(() => import("./pages/Coach").then((m) => ({ default: m.CoachPage })));
+const DataPage = lazy(() => import("./pages/Data").then((m) => ({ default: m.DataPage })));
+const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.DietPage })));
+const HistoryPage = lazy(() => import("./pages/History").then((m) => ({ default: m.HistoryPage })));
+const ProgressPage = lazy(() => import("./pages/Progress").then((m) => ({ default: m.ProgressPage })));
+const Onboarding = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.Onboarding })));
+const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
+const WorkoutPage = lazy(() => import("./pages/Workout").then((m) => ({ default: m.WorkoutPage })));
 
 const TITLES: Record<Page, string> = {
   dashboard: "Dashboard",
@@ -94,7 +97,9 @@ export default function App() {
     <PrefsProvider initial={settings}>
       <ToastProvider>
         {!hasProfile ? (
-          <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
+          <Suspense fallback={<Loading label="Loading…" />}>
+            <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
+          </Suspense>
         ) : (
           <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} />
         )}
@@ -116,6 +121,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       status={<XpChip refreshKey={refreshKey} />}>
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
+      <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
       {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenCoach={() => navigate("coach")} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
@@ -124,6 +130,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} />}
+      </Suspense>
       </div>
     </Layout>
   );
