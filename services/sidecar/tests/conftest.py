@@ -40,7 +40,8 @@ def settings(tmp_path: Path) -> Settings:
 
 @pytest.fixture
 def client(settings: Settings, clock: FakeClock) -> TestClient:
-    app = create_app(settings, clock=clock)  # runs the real Alembic migrations
+    # Real Alembic migrations; the outbox worker is off so tests drive it explicitly.
+    app = create_app(settings, clock=clock, outbox_interval=0)
     with TestClient(app, headers={"Authorization": f"Bearer {TOKEN}"}) as c:
         yield c
 

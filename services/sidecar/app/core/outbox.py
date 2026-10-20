@@ -13,7 +13,7 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.events import Event
@@ -118,3 +118,18 @@ def dispatch_pending(
             stats["retrying"] += 1
     session.flush()
     return stats
+
+
+def prune(session: Session, now: datetime, keep_days: int = 30) -> int:
+    """Delete dispatched events older than `keep_days` (and their processed markers)."""
+    cutoff = now - timedelta(days=keep_days)
+    old_ids = select(OutboxEvent.id).where(
+        OutboxEvent.dispatched_at.is_not(None), OutboxEvent.created_at < cutoff
+    )
+    session.execute(delete(ProcessedEvent).where(ProcessedEvent.event_id.in_(old_ids)))
+    result = session.execute(
+        delete(OutboxEvent).where(
+            OutboxEvent.dispatched_at.is_not(None), OutboxEvent.created_at < cutoff
+        )
+    )
+    return int(getattr(result, "rowcount", 0) or 0)
