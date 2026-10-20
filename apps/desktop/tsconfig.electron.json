@@ -1,0 +1,17 @@
+{
+  // Electron main + preload: compiled to CommonJS in dist-electron/ (Electron loads it directly).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022"],
+    "outDir": "dist-electron",
+    "rootDir": "electron",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "types": ["node"]
+  },
+  "include": ["electron"]
+}
