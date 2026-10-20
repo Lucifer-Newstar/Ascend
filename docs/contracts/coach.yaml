@@ -11,7 +11,7 @@ info:
 
     Operations marked `x-status: implemented` match the v0.1 code skeleton exactly (generated from its OpenAPI on
     2026-10-20). `x-status: planned` operations are the agreed v1.0 design; they are additive and are mocked by
-    Prism until implemented.'
+    Prism until implemented. Prompt and validation design for the planned operations: docs/ai/coach-llm.md and ADR-0011.'
   license:
     name: MIT
     identifier: MIT
@@ -220,6 +220,65 @@ paths:
       x-status: planned
       tags:
       - coach
+  /coach/explain:
+    post:
+      summary: Explain an engine result ("why?" on a tip card, finding or number). Model text is validated; template
+        on failure (ADR-0011)
+      operationId: explain_result
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExplainIn'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplainOut'
+        '404':
+          description: Unknown finding or tip code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - coach
+  /coach/messages/{message_id}/feedback:
+    post:
+      summary: Local feedback on a coach reply (thumbs, "use rules answer"); stored on this PC only, used for evaluation
+      operationId: message_feedback
+      parameters:
+      - name: message_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackIn'
+      responses:
+        '200':
+          description: Recorded; when use_rules is true the rules text is returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - coach
 components:
   securitySchemes:
     launchToken:
@@ -359,6 +418,8 @@ components:
           - applied
           - edited
           - kept
+          - expired
+          description: 'expired (planned): no answer within 7 days; nothing changed'
       required:
       - id
       - kind
@@ -460,3 +521,86 @@ components:
         code:
           type: string
           description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING
+    ExplainIn:
+      type: object
+      properties:
+        subject:
+          type: string
+          enum:
+          - tip
+          - finding
+          - muscle
+          - energy
+          - quest
+          - pr
+          description: What the user tapped "why?" on
+        code:
+          type: string
+          description: Tip or finding code, or the muscle / exercise id
+          examples:
+          - MUSCLE_UNDER
+        question:
+          type: string
+          maxLength: 500
+          default: ''
+      required:
+      - subject
+      - code
+    ExplainOut:
+      type: object
+      properties:
+        answer:
+          type: string
+        source:
+          type: string
+          enum:
+          - model
+          - template
+        facts_used:
+          type: array
+          items:
+            type: string
+          description: Fact ids (F1, F2, …) shown as "data ARC used"
+        prompt_id:
+          type:
+          - string
+          - 'null'
+        prompt_version:
+          type:
+          - integer
+          - 'null'
+        fallback_reason:
+          type:
+          - string
+          - 'null'
+          description: ai_disabled, ollama_unavailable, slow, check_failed, … (docs/ai/coach-llm.md §9)
+      required:
+      - answer
+      - source
+      - facts_used
+    FeedbackIn:
+      type: object
+      properties:
+        rating:
+          type:
+          - string
+          - 'null'
+          enum:
+          - up
+          - down
+          - null
+        use_rules:
+          type: boolean
+          default: false
+      required: []
+    FeedbackOut:
+      type: object
+      properties:
+        message_id:
+          type: integer
+        rules_text:
+          type:
+          - string
+          - 'null'
+      required:
+      - message_id

@@ -3,6 +3,8 @@
 > Where two lanes meet, things break. This register lists the known seams, what can go
 > wrong, and who guards each. Maintainer: Team Lead. Review at every phase gate.
 > Severity: **H** = blocks a release · **M** = user-visible bug · **L** = annoyance.
+> AI-specific risks (hallucinated numbers, unsafe advice, VRAM, licences, Tamil quality) have
+> their own register: [docs/ai/ai-risks.md](../ai/ai-risks.md).
 
 ---
 
@@ -37,7 +39,7 @@
 
 | # | Edge case | Sev | Guard | Owner |
 |---|---|---|---|---|
-| E18 | Chat model and VLM both need the GPU (4 GB can't hold both) | H | Job queue GPU lock; unload chat (`keep_alive: 0`) before scan, reload after; classifier on CPU | Jegatheesan |
+| E18 | Chat model and VLM both need the GPU (4 GB can't hold both) | H | Job queue GPU lock; unload chat (`keep_alive: 0`) before a VLM second-opinion job, reload after; classifier on CPU, so the default scan never needs the GPU | Jegatheesan |
 | E19 | Ollama not installed / not running / old version | M | Detect at onboarding; try to start; else rules mode + banner; min version in manifest | Jegatheesan |
 | E20 | Model download interrupted or tampered | M | Resumable download, SHA-256 verify, atomic rename | Jegatheesan |
 | E21 | Classifier labels don't match the food DB ids | H | `labels.json` maps class → INDB/IFCT id; CI checks every label resolves | Navin |

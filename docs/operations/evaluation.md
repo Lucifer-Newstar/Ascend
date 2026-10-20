@@ -24,6 +24,9 @@
 
 ### AI and ML
 
+Test sets, the coach rubric, latency targets, the eval harness and the CI gates behind these
+metrics are detailed in [docs/ai/evaluation-ai.md](../ai/evaluation-ai.md).
+
 | ID | Metric | Target (est.) | How measured | By | When |
 |---|---|---|---|---|---|
 | M1 | **Food top-3 accuracy** | ≥ 0.85 on the own-photo test set | `ml/src/evaluate.py`, MLflow run | Navin | Each model version |
@@ -33,7 +36,7 @@
 | M5 | ONNX parity | identical top-1 on 200 images | CI `ml-eval.yml` | Navin | Each export |
 | M6 | **Coach first-token latency** | ≤ 3 s warm, p95 on reference laptop | `ascend_llm_first_token_seconds`; 50 prompts | Jegatheesan | Phase 2 gate, v1.0 |
 | M7 | Coach throughput | ≥ 15 tokens/s on reference laptop (estimate) | `ollama run --verbose` + dev metric | Navin | Phase 2 benchmark |
-| M8 | Meal scan end to end | 5–15 s | Job duration metric, 30 photos | Jegatheesan | Phase 2 gate |
+| M8 | Meal scan end to end | ≤ 3 s p95 classifier-only; 5–15 s with the VLM second opinion (estimates) | Job duration metric, 30 photos | Jegatheesan | Phase 2 gate |
 | M9 | Rules fallback rate | < 5% of chats in normal use | Count of `fallback_reason` ≠ null | Jegatheesan | Beta |
 | M10 | Number fidelity | 100% of weekly-review summaries contain only input numbers | Automated check over 100 generated reviews | Jegatheesan | Phase 2 gate |
 | M11 | Red-flag routing | 100% of 40 red-flag test messages (EN/TA/mixed) bypass the model | Unit test suite | Jegatheesan + Navin | Every PR |

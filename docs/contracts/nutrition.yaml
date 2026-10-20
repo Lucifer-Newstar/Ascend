@@ -257,6 +257,71 @@ paths:
       x-status: planned
       tags:
       - nutrition
+  /scans/{scan_id}/items:
+    post:
+      summary: Add an item to a scan by tapping the photo (classifier-first scan, ADR-0012); queues classification
+        of that crop
+      operationId: add_scan_item
+      parameters:
+      - name: scan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScanTapIn'
+      responses:
+        '202':
+          description: Item queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanCreated'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - nutrition
+  /scans/{scan_id}/second-opinion:
+    post:
+      summary: 'Optional VLM second opinion (qwen3-vl:2b): find items and boxes; runs after the chat model is unloaded'
+      operationId: scan_second_opinion
+      parameters:
+      - name: scan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '202':
+          description: Second-opinion job queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanCreated'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: AI is off or the VLM is not installed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - nutrition
 components:
   securitySchemes:
     launchToken:
@@ -584,6 +649,18 @@ components:
           type: number
         kcal_high:
           type: number
+        source:
+          type: string
+          enum:
+          - whole_photo
+          - tap
+          - vlm
+          description: How the item was found (planned field; ADR-0012)
+        second_opinion:
+          type:
+          - integer
+          - 'null'
+          description: food_id suggested by the VLM when it is outside the classifier top-3 (planned field)
       required:
       - index
       - candidates
@@ -659,6 +736,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ScanConfirmItem'
+        keep_for_training:
+          type: boolean
+          default: false
+          description: Consent to include these photos in a user-initiated corrections export (planned field; docs/ai/data-and-privacy-for-ai.md)
       required:
       - meal_type
       - items
@@ -683,3 +764,26 @@ components:
         code:
           type: string
           description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING
+    ScanTapIn:
+      type: object
+      properties:
+        x:
+          type: number
+          minimum: 0
+          maximum: 1
+        y:
+          type: number
+          minimum: 0
+          maximum: 1
+        box:
+          type:
+          - array
+          - 'null'
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+          description: Optional adjusted box x, y, w, h in 0–1; default is a square around the tap
+      required:
+      - x
+      - y

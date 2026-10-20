@@ -107,7 +107,7 @@ erDiagram
 | `meals` | id, uuid, eaten_at, slot (`breakfast`/`lunch`/`snack`/`dinner`), source (`search`/`scan`/`saved`), kcal_total |
 | `meal_items` | id, meal_id, food_id, unit, qty, oil_level (0/1/2), grams, kcal, protein_g, fat_g, carbs_g, kcal_low, kcal_high |
 | `scans` | id, meal_id, photo_path, model_versions (JSON), items_json, status, duration_ms |
-| `corrections` | id, scan_id, item_index, predicted_label, predicted_conf, top3 (JSON), chosen_food_id, chosen_unit, created_at — **the MLOps feedback source** |
+| `corrections` | id, scan_id, item_index, predicted_label, predicted_conf, top3 (JSON), chosen_food_id, chosen_unit, qty, oil_level, item_source (`whole_photo`/`tap`/`vlm`, as `ScanItem.source`), keep_for_training (consent), model_version, created_at — **the MLOps feedback source** ([ai/food-recognition.md §8](../ai/food-recognition.md#8-the-correction-loop)) |
 
 ### Progress
 
@@ -132,7 +132,7 @@ erDiagram
 | Table | Key columns |
 |---|---|
 | `chat_threads` | id, title, language, created_at |
-| `chat_messages` | id, thread_id, role, content, language, model, tokens, used_data (JSON), created_at |
+| `chat_messages` | id, thread_id, role, content, language, model, model_digest, source (`model`/`rules`/`safety`), fallback_reason, prompt_id, prompt_version, checks (JSON), tokens, used_data (JSON), created_at ([ai/coach-llm.md](../ai/coach-llm.md)) |
 | `proposals` | id, thread_id, kind (`plan_change`/`deload`/`kcal_target`), diff (JSON), status (`pending`/`applied`/`edited`/`kept`), created_at |
 
 ### Infrastructure tables

@@ -1,6 +1,6 @@
 # Jegatheesan · Backend Phase Plan
 
-> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged.
+> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged. AI tasks and their design docs: [ai-roadmap](../../ai/ai-roadmap.md).
 
 | Phase | I deliver | I need | Handoff / completion check |
 |---|---|---|---|
@@ -22,6 +22,8 @@
 - [ ] `docs(contracts): review module YAMLs with Dhanush, freeze core paths`
 - [ ] `chore(sidecar): npm run mock script for Prism`
 - [ ] `refactor(core): typed event classes with version field`
+- [ ] `refactor(coach): move the v0 system prompt into prompts/ with registry.yaml`
+- [ ] `test(coach): fake Ollama server fixture (normal, slow, error streams)`
 
 ### Phase 1 · Core loop (9 Nov – 13 Dec)
 
@@ -46,6 +48,9 @@
 - [ ] `feat(core): SSE /events with Last-Event-ID`
 - [ ] `test(progress): golden files for load model v1`
 - [ ] `test(workouts): Hypothesis tests for e1RM and progression`
+- [ ] `feat(coach): facts block formatters with fact ids`
+- [ ] `feat(coach): intent router keyword lists (English, Tamil, Tanglish)`
+- [ ] `feat(nutrition): portions table with a source column`
 
 ### Phase 2 · Local AI (14 Dec – 17 Jan)
 
@@ -54,7 +59,7 @@
 - [ ] `feat(ai): model manifest loader and tier selection`
 - [ ] `feat(ai): resumable download with SHA-256 verify and atomic rename`
 - [ ] `feat(ai): Ollama client with streaming and first-token timeout`
-- [ ] `feat(ai): GPU lock with keep_alive unload/reload around scans`
+- [ ] `feat(ai): GPU lock with keep_alive unload/reload around VLM jobs`
 - [ ] `feat(ai): fallbacks table (AI off, missing, slow, OOM, Ollama down)`
 - [ ] `feat(coach): planner rules (split, volumes, 48/72 h spacing)`
 - [ ] `feat(coach): red-flag routing in English, Tamil and transliteration`
@@ -63,11 +68,21 @@
 - [ ] `feat(coach): chat endpoint streaming over SSE`
 - [ ] `feat(coach): weekly review findings and top-3 diffs`
 - [ ] `feat(coach): number-fidelity check with template fallback`
-- [ ] `feat(nutrition): scan job (VLM items → crops)`
-- [ ] `feat(nutrition): ONNX classifier re-rank via onnx_runtime` (pair: Navin)
+- [ ] `feat(nutrition): ONNX classifier top-3 via onnx_runtime` (pair: Navin)
 - [ ] `feat(nutrition): confidence thresholds and corrections table`
 - [ ] `bench(ai): tokens/s and VRAM for candidate models` (pair: Navin)
 - [ ] `test(ai): Ollama client against a fake server`
+- [ ] `feat(coach): prompt registry rendered with Jinja2 StrictUndefined`
+- [ ] `feat(coach): JSON-schema output via Ollama format + jsonschema check`
+- [ ] `feat(coach): eating-disorder, diagnosis and medicine filters with fixed replies`
+- [ ] `feat(coach): sentence-gated streaming with validators`
+- [ ] `feat(coach): propose_plan_change tool without numeric arguments`
+- [ ] `feat(coach): token budget trimming + prompt_eval_count logging`
+- [ ] `feat(ai): refuse a non-loopback OLLAMA_HOST`
+- [ ] `feat(ai): /api/ps check and partial-offload status`
+- [ ] `feat(nutrition): classifier-first scan (whole photo + tapped items)`
+- [ ] `feat(nutrition): VLM second-opinion job with GPU handover`
+- [ ] `feat(nutrition): personal swaps from corrections`
 
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
@@ -80,6 +95,8 @@
 - [ ] `feat(core): automatic backup before migrations, restore on failure`
 - [ ] `feat(core): diagnostics bundle with scrub allow-list`
 - [ ] `test(io): golden fixtures for every import/export format` (pair: Gokul)
+- [ ] `feat(ai): unload loaded models on app quit (keep_alive 0)`
+- [ ] `fix(coach): tune timeouts from beta latency data`
 
 ### Phase 4 · Breadth (8 Feb – 21 Mar)
 
@@ -91,6 +108,8 @@
 - [ ] `feat(nutrition): adaptive TDEE from trend weight`
 - [ ] `feat(progress): ETA range with confidence`
 - [ ] `feat(core): optional SQLCipher encryption` (pair: Gokul for packaging)
+- [ ] `feat(ai): IndicTrans2 path B prototype on CPU (int8)`
+- [ ] `feat(coach): readiness note after the morning check-in`
 
 ### Phase 5 · MLOps loop (22 Mar – 16 May)
 
@@ -98,6 +117,8 @@
 - [ ] `feat(nutrition): corrections export (zip, consent flag)`
 - [ ] `feat(ai): shadow-mode second classifier`
 - [ ] `feat(ai): model-only update switch from manifest`
+- [ ] `feat(nutrition): crops-only option in the corrections export`
+- [ ] `feat(ai): keep the previous classifier and roll back on a failed load`
 
 ## Backend completion check (each phase)
 

@@ -126,7 +126,7 @@ See [contracts/README.md §3](../contracts/README.md#3-mock-server-frontend-deve
 
 ```powershell
 ollama pull qwen3:4b        # coach, ~2.5 GB
-ollama pull qwen3-vl:2b     # meal item finder, ~1.9 GB (Phase 2)
+ollama pull qwen3-vl:2b     # optional meal second opinion, ~1.9 GB (Phase 2)
 ollama pull qwen3:1.7b      # lite tier, ~1.4 GB
 ollama run qwen3:4b "Say hi in Tamil and English" --verbose   # shows eval rate (tokens/s)
 ollama ps                   # what is loaded and on GPU/CPU
@@ -135,7 +135,8 @@ ollama ps                   # what is loaded and on GPU/CPU
 Only one of the two big models fits in 4 GB VRAM at a time; that is expected
 ([system-architecture.md §10](../architecture/system-architecture.md#10-model-manager)).
 The sidecar reads `OLLAMA_HOST` (default `http://127.0.0.1:11434`) and
-`ASCEND_COACH_MODEL` (default `qwen3:4b`).
+`ASCEND_COACH_MODEL` (default `qwen3:4b`). VRAM budget, model tiers and what to do if
+`ollama ps` shows a CPU/GPU split: [docs/ai/model-manager.md](../ai/model-manager.md#2-vram-and-ram-budget).
 
 ## 7. Docker + WSL2 for ML and dev observability (Phase 1+)
 

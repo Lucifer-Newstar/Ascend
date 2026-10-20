@@ -63,7 +63,9 @@
 If the team falls behind, cut in this order and log it:
 
 1. Optional kind/Helm lab → 2. dev Grafana dashboards → 3. beta update channel →
-4. drill-down extras (recovery curve) → 5. Tamil beta (ship English only) →
-6. classifier coverage (fewer classes, VLM labels as fallback) → 7. trials.
+4. VLM second opinion (scan stays classifier + tapped items) → 5. drill-down extras
+(recovery curve) → 6. Tamil beta (ship English only) → 7. classifier coverage (fewer
+classes; search covers the rest) → 8. trials.
 
-**Never cut:** the release pipeline, backups before migrations, AI-off mode, red-flag triage.
+**Never cut:** the release pipeline, backups before migrations, AI-off mode, red-flag triage,
+the number-fidelity check on model replies ([ADR-0011](../architecture/adr/0011-prompt-contracts-and-output-validation.md)).

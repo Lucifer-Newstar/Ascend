@@ -2,7 +2,13 @@
 
 > How the Indian-food classifier is built, evaluated, packaged and improved — and how
 > the LLM/VLM models are chosen. Owner: **Navin** (MLOps pipeline + classifier);
-> integration in the sidecar: Jegatheesan. Decision: [ADR-0006](adr/0006-own-food-classifier-indb-ifct.md).
+> integration in the sidecar: Jegatheesan. Decisions: [ADR-0006](adr/0006-own-food-classifier-indb-ifct.md),
+> [ADR-0012](adr/0012-classifier-first-meal-scan.md) (classifier first, VLM optional).
+>
+> **The full AI section is [docs/ai/](../ai/README.md).** This page is the architecture summary;
+> the step-by-step walkthrough is [ai/mlops-lifecycle.md](../ai/mlops-lifecycle.md), the
+> classifier design is [ai/food-recognition.md](../ai/food-recognition.md) and the metrics are
+> in [ai/evaluation-ai.md](../ai/evaluation-ai.md).
 
 ---
 
@@ -34,10 +40,10 @@ flowchart LR
 
 | Tool | Use | Where |
 |---|---|---|
-| **DVC** | Version datasets and pipeline stages (`dvc.yaml`: prepare → train → evaluate → export) | `ml/`; remote on a local/external drive (no cloud) |
+| **DVC** | Version datasets and pipeline stages (`dvc.yaml`: prepare → train → export → evaluate, as in the v0.1 stub) | `ml/`; remote on a local/external drive (no cloud) |
 | **MLflow** | Experiment tracking + model registry | Docker Compose (`infra/compose/mlflow.yml`), `127.0.0.1:5000` |
 | **PyTorch + timm** | Training (EfficientNet-B0 / MobileNetV3 class backbones; final choice by benchmark) | `infra/docker/ml-train` image, CUDA on WSL2 |
-| **ONNX + ONNX Runtime** | Export and CPU inference in the app | `ml/src/export.py`; sidecar `ai/onnx_runtime.py` |
+| **ONNX + ONNX Runtime** | Export and CPU inference in the app | `ml/src/export_onnx.py` (stub exists); sidecar `ai/onnx_runtime.py` |
 | **GitHub Actions** | `ml-eval.yml`: data checks + eval gate on tagged models (CPU, small test set) | `.github/workflows/` |
 
 PyTorch never ships in the app; the sidecar depends only on ONNX Runtime.
@@ -58,7 +64,7 @@ PyTorch never ships in the app; the sidecar depends only on ONNX Runtime.
 
 | Step | Value |
 |---|---|
-| Input | RGB crop from the VLM box, padded 10% |
+| Input | RGB crop (whole photo, a user-tapped region, or a VLM box when the second opinion ran), padded 10% |
 | Resize | Shorter side 256, centre crop 224 × 224 |
 | Normalise | ImageNet mean/std |
 | Output | Softmax over N classes; app takes top-3 |
@@ -79,7 +85,7 @@ Metrics definitions and reporting: [evaluation.md](../operations/evaluation.md).
 
 ## 6. LLM / VLM selection (no training)
 
-The coach and the item finder are **off-the-shelf models served by Ollama**; we do not
+The coach and the optional item finder are **off-the-shelf models served by Ollama**; we do not
 fine-tune them. Selection is a benchmark, not a training run:
 
 1. Candidate list (qwen3:4b, gemma3:4b, qwen3:1.7b, llama3.2:3b for English-only Lite).
@@ -88,7 +94,10 @@ fine-tune them. Selection is a benchmark, not a training run:
 4. 30 own meal photos for qwen3-vl:2b item finding (did it list every item? box usable?).
 5. Results in `docs/operations/` as a dated benchmark table; decision updates ADR-0004.
 
-Tamil quality and VLM box quality are **unverified until step 3–4 runs**.
+Tamil quality and VLM box quality are **unverified until step 3–4 runs**. The VLM is an
+optional second opinion ([ADR-0012](adr/0012-classifier-first-meal-scan.md)); step 4 decides
+whether *Find items for me* ships in v1.0. Coach prompts, validation and the Tamil test plan:
+[ai/coach-llm.md](../ai/coach-llm.md), [ai/multilingual-tamil.md](../ai/multilingual-tamil.md).
 
 ## 7. MLOps loop (Phase 5)
 

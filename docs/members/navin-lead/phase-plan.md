@@ -1,6 +1,6 @@
 # Navin · Lead / MLOps / Releases Phase Plan
 
-> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged. Hours (estimate): ~135 to v1.0.
+> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged. Hours (estimate): ~135 to v1.0. AI tasks and their design docs: [ai-roadmap](../../ai/ai-roadmap.md).
 
 | Phase | I deliver | I need | Handoff / completion check |
 |---|---|---|---|
@@ -19,9 +19,10 @@
 - [ ] `chore(meta): CODEOWNERS, PR template, issue templates`
 - [ ] `chore(meta): branch protection notes + labels in CONTRIBUTING`
 - [ ] `docs(meta): README with AI-assistance line, quickstart, screenshots`
-- [ ] `docs(adr): mark ADR-0001…0010 accepted after kickoff`
+- [ ] `docs(adr): mark ADR-0001…0012 accepted after kickoff`
 - [ ] `docs(planning): kickoff minutes and decision log K1–K8`
 - [ ] `docs(planning): tracker updated for the Phase 0 gate`
+- [ ] `docs(ml): start the two-week team food diary for the class list`
 
 ### Phase 1 · Core loop (9 Nov – 13 Dec)
 
@@ -36,6 +37,9 @@
 - [ ] `feat(ml): collect and dvc add 300 team meal photos (test-own tag)`
 - [ ] `feat(ml): baseline classifier run logged to MLflow`
 - [ ] `test(ml): training refuses rows tagged test-own`
+- [ ] `docs(ml): dataset SOURCES.md with the licence of every source`
+- [ ] `feat(ml): v0 class list from the food diary and dataset coverage`
+- [ ] `feat(ml): not_food image set (dvc add)`
 
 ### Phase 2 · Local AI (14 Dec – 17 Jan)
 
@@ -49,6 +53,14 @@
 - [ ] `ci(ml): eval gate in ml-eval.yml compares with production` (pair: Gokul)
 - [ ] `feat(ml): register v0 in MLflow and write models-manifest.json`
 - [ ] `test(ml): 30 weighed reference meals for calorie MAE` (pair: Jegatheesan)
+- [ ] `feat(ml): temperature scaling and ECE in the evaluate stage`
+- [ ] `feat(ml): INT8 static quantisation with a 200-image calibration set`
+- [ ] `test(ml): INT8 vs FP32 agreement and top-3 drop check`
+- [ ] `docs(ml): model card for ascend-food-cls v0`
+- [ ] `feat(evals): coach golden set (60 prompts + frozen facts fixtures)`
+- [ ] `feat(evals): make eval-coach harness with report JSON`
+- [ ] `bench(ai): VLM item recall and box usability on 30 team plates`
+- [ ] `test(ai): Tamil 30-question rating, path A (decides the beta label)`
 
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
@@ -57,13 +69,16 @@
 - [ ] `docs(operations): rollback drill report` (pair: Gokul)
 - [ ] `chore(release): v1.0.0-beta.1`
 - [ ] `chore(release): v1.0.0`
+- [ ] `chore(ai): pin Ollama model digests in models-manifest.json`
+- [ ] `docs(ml): verify and record dataset and model licences before v1.0`
+- [ ] `docs(operations): v1.0 AI evaluation report (classifier, coach, latency)`
 
 ### Phase 4 · Breadth (8 Feb – 21 Mar)
 
-- [ ] `test(ai): Tamil 30-question rating sheet and results`
 - [ ] `docs(planning): decision on Tamil beta label (data-backed)`
 - [ ] `feat(ml): extend classes with team photos (classifier v1)`
 - [ ] `docs(operations): evaluation update for v1.1`
+- [ ] `test(ai): Tamil path A vs path B rating on 50 fresh questions`
 
 ### Phase 5 · MLOps loop (22 Mar – 16 May)
 
@@ -73,6 +88,9 @@
 - [ ] `feat(ml): shadow evaluation script (agreement with user picks)`
 - [ ] `chore(release): model-only release ascend-food-cls v1.x`
 - [ ] `docs(operations): MLOps loop report`
+- [ ] `feat(ml): ingest_corrections.py (consent flag, perceptual-hash dedupe)`
+- [ ] `feat(ml): corrections-holdout split and two-set gate`
+- [ ] `docs(ai): update mlops-lifecycle.md with the real loop numbers`
 
 ## Lead completion check (each phase)
 

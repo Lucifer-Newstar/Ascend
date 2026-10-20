@@ -1,7 +1,8 @@
 # Timing Diagram — Chat Reply Around a Meal Scan
 
 > **Diagram 13 (UML 2.5 — Behavioural).** How the single 4 GB GPU is shared over time
-> when the user starts a meal scan while chatting. Mermaid has no timing diagram, so
+> when the user asks for a VLM second opinion on a meal scan while chatting (the default
+> classifier-only scan runs on CPU and never touches the GPU; [ADR-0012](../adr/0012-classifier-first-meal-scan.md)). Mermaid has no timing diagram, so
 > this is PlantUML. Times are **illustrative estimates**, not measurements.
 
 ```plantuml
@@ -9,7 +10,7 @@
 scale 1 as 60 pixels
 concise "GPU model" as GPU
 robust "Chat job" as CHAT
-robust "Scan job" as SCAN
+robust "VLM second-opinion job" as SCAN
 binary "GPU lock" as LOCK
 
 @0
@@ -60,8 +61,8 @@ highlight 6 to 14 : scan holds the GPU
 | Interval (s, est.) | What happens |
 |---|---|
 | 1–4 | Chat reply streams (holds the GPU lock) |
-| 5 | User drops a photo; scan job queued behind chat |
+| 5 | User taps *Find items for me* on a scanned photo; the VLM job is queued behind chat |
 | 6–7 | Chat model unloaded (`keep_alive: 0`), VLM loaded |
 | 7–13 | VLM finds items; classifier runs on CPU in parallel per crop |
 | 13–14 | VLM unloaded, chat model reloaded |
-| 15 | Next chat reply starts — a few seconds later than without the scan |
+| 15 | Next chat reply starts — a few seconds later than without the second opinion |

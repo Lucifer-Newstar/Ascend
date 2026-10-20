@@ -44,6 +44,20 @@ docs/
 │   ├── gokul-devops/              ← Member 3 — CI/CD / Docker / installers (+ work-log)
 │   └── navin-lead/                ← Member 4 — lead / MLOps / classifier / releases (+ kickoff, study path)
 │
+├── ai/                            ← THE AI PART (coach, food recognition, models, MLOps)
+│   ├── README.md                  ← principle, AI-off behaviour, feature → model → module map
+│   ├── coach-llm.md               ← context, prompts, validation, safety, streaming, fallback
+│   ├── prompt-library.md          ← every prompt, versioned, with schemas
+│   ├── multilingual-tamil.md      ← Tamil / Tanglish beta: pipelines, test plan, go/no-go
+│   ├── food-recognition.md        ← classifier, portions, VLM second opinion, corrections
+│   ├── model-manager.md           ← VRAM budget, lifecycle state machine, downloads
+│   ├── adaptive-planning-ai.md    ← rules vs AI in planning, proposals, weekly review
+│   ├── data-and-privacy-for-ai.md ← what each model sees, consent, deletion
+│   ├── evaluation-ai.md           ← AI metrics, test sets, eval harness, CI gates
+│   ├── mlops-lifecycle.md         ← DVC → MLflow → ONNX → registry → release walkthrough
+│   ├── ai-risks.md                ← AI risk register
+│   └── ai-roadmap.md              ← AI tasks per phase and member
+│
 ├── architecture/                  ← SYSTEM DESIGN
 │   ├── system-architecture.md     ← processes, modules, event bus, jobs, model manager
 │   ├── data-model.md              ← SQLite schema, migrations, derived data
@@ -52,7 +66,7 @@ docs/
 │   ├── security-privacy.md        ← threat model, Electron hardening, DPDP notes
 │   ├── port-register.md           ← localhost ports + IPC channel register
 │   ├── uml/                       ← 14-diagram UML set (Mermaid, PlantUML where needed)
-│   └── adr/                       ← Architecture Decision Records 0001–0010 + template
+│   └── adr/                       ← Architecture Decision Records 0001–0012 + template
 │
 ├── contracts/                     ← API CONTRACTS (contracts-first)
 │   ├── README.md                  ← conventions, mock server, drift check
@@ -92,7 +106,13 @@ docs/
 | My phase plan | [members/](members/README.md) — your folder |
 | How the app is built (processes, modules) | [architecture/system-architecture.md](architecture/system-architecture.md) |
 | Database tables and migrations | [architecture/data-model.md](architecture/data-model.md) |
-| Food classifier + MLOps | [architecture/ml-pipeline.md](architecture/ml-pipeline.md) |
+| Food classifier + MLOps | [architecture/ml-pipeline.md](architecture/ml-pipeline.md) · walkthrough: [ai/mlops-lifecycle.md](ai/mlops-lifecycle.md) |
+| **The AI part: what it does, which model, where the code is** | [ai/README.md](ai/README.md) |
+| Coach prompts, validation and safety | [ai/coach-llm.md](ai/coach-llm.md) · [ai/prompt-library.md](ai/prompt-library.md) |
+| Tamil / Tanglish (beta) | [ai/multilingual-tamil.md](ai/multilingual-tamil.md) |
+| Meal photo recognition | [ai/food-recognition.md](ai/food-recognition.md) |
+| Local models, VRAM, downloads | [ai/model-manager.md](ai/model-manager.md) |
+| AI evaluation, risks and roadmap | [ai/evaluation-ai.md](ai/evaluation-ai.md) · [ai/ai-risks.md](ai/ai-risks.md) · [ai/ai-roadmap.md](ai/ai-roadmap.md) |
 | Logs, events, crash reports (local only) | [architecture/telemetry-model.md](architecture/telemetry-model.md) |
 | Security and privacy | [architecture/security-privacy.md](architecture/security-privacy.md) |
 | Ports and IPC channels | [architecture/port-register.md](architecture/port-register.md) |
@@ -119,6 +139,8 @@ docs/
 | [0008](architecture/adr/0008-electron-builder-pyinstaller-packaging.md) | electron-builder (NSIS) + PyInstaller packaging |
 | [0009](architecture/adr/0009-offline-first-no-cloud.md) | Offline-first, no cloud, no accounts |
 | [0010](architecture/adr/0010-import-export-formats.md) | Import/export formats (Strong/Hevy CSV, JSON, .ascendbak) |
+| [0011](architecture/adr/0011-prompt-contracts-and-output-validation.md) | Prompts as versioned contracts; every model output validated |
+| [0012](architecture/adr/0012-classifier-first-meal-scan.md) | Classifier-first meal scan; VLM as an optional second opinion |
 
 ## 3. Reading Order for a New Member
 
@@ -128,6 +150,7 @@ docs/
 4. **[planning/phases.md](planning/phases.md) + [timeline.md](planning/timeline.md)** — when things happen and what "done" means per phase.
 5. **[members/<your-folder>/](members/README.md)** — your role, your commit-sized tasks.
 6. **[architecture/system-architecture.md](architecture/system-architecture.md)** and the ADRs — read before touching any interface.
+   Working on anything AI? Then **[ai/README.md](ai/README.md)** next.
 7. **[contracts/](contracts/README.md)** — the API you build against or implement.
 8. **[development/local-setup.md](development/local-setup.md)** — set up your machine, then open your first PR.
 9. **[operations/](operations/evaluation.md)** — how the project will be judged.

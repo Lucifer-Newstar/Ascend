@@ -1,6 +1,6 @@
 # Gokul · DevOps Phase Plan
 
-> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged.
+> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged. AI tasks and their design docs: [ai-roadmap](../../ai/ai-roadmap.md).
 
 | Phase | I deliver | I need | Handoff / completion check |
 |---|---|---|---|
@@ -49,6 +49,8 @@
 - [ ] `feat(infra): Grafana dashboard JSON (latency, jobs, tokens/s)`
 - [ ] `ci: mark GPU tests and skip them on hosted runners`
 - [ ] `ci: ml-eval workflow skeleton on tagged models` (pair: Navin)
+- [ ] `ci: ai-safety job runs the 40-message safety suite on every PR`
+- [ ] `ci: ai-eval-report job checks prompt hashes, model digest and thresholds`
 
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
@@ -61,6 +63,7 @@
 - [ ] `ci: protected release environment with Navin as reviewer`
 - [ ] `chore(scripts): release.ps1 bumps versions in both manifests and tags`
 - [ ] `docs(operations): rollback drill timings` (pair: Navin)
+- [ ] `ci: bundle classifier + manifest in the installer and verify SHA-256`
 
 ### Phase 4 · Breadth (8 Feb – 21 Mar)
 
@@ -73,6 +76,7 @@
 
 - [ ] `ci: model-release workflow uploads ONNX + labels and updates manifest`
 - [ ] `ci: manifest schema validation and min_app_version check`
+- [ ] `ci: model-release workflow publishes sha256sums.txt and the manifest`
 
 ## DevOps completion check (each phase)
 

@@ -51,7 +51,8 @@
    logs are wiped.
 5. **Export everything:** CSV/JSON/`.ascendbak` at any time ([ADR-0010](adr/0010-import-export-formats.md)).
 6. **Training data consent:** corrections leave a PC only when the user exports them;
-   team photos used for testing are collected with consent.
+   team photos used for testing are collected with consent. What each model sees, the
+   consent flow and AI-specific deletion: [docs/ai/data-and-privacy-for-ai.md](../ai/data-and-privacy-for-ai.md).
 
 ## 5. India's DPDP Act — notes, not legal advice
 
@@ -87,6 +88,7 @@ plainly before the user turns it on.
 
 - ASCEND is **not a medical device**; shown at onboarding and in every injury protocol.
 - Red-flag symptoms (sharp pain, chest pain, numbness, dizziness, fainting, pain ≥ 7)
-  bypass the model and return a fixed "stop and see a doctor or physio" reply.
+  bypass the model and return a fixed "stop and see a doctor or physio" reply. Full safety
+  rules, word lists and post-checks: [docs/ai/coach-llm.md §6](../ai/coach-llm.md#6-medical-safety-rules).
 - Diet advice never goes under 1,500 kcal (men) / 1,200 kcal (women) without a warning
   (common guideline; estimate).

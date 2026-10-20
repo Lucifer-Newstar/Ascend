@@ -33,6 +33,8 @@ Newest at the bottom. Architecture-level decisions also get an ADR.
 | D8 | 2026-10-20 | One shared logger behind all six training sections | One data model → History, PRs, XP, map work everywhere | [product-vision.md](product-vision.md) |
 | D9 | 2026-10-20 | Team = AegisDeploy's four members; roles per team-structure | Same team, proven split | [team-structure.md](../team/team-structure.md) |
 | D10 | 2026-10-20 | MVP target ~7 Feb 2027 (estimate) | Placement season; v1.0 must be demo-ready | [timeline.md](timeline.md) |
+| D11 | 2026-10-20 | Prompts are versioned contracts; every model output is validated and falls back to rules on failure | Makes "the model only explains" testable | [ADR-0011](../architecture/adr/0011-prompt-contracts-and-output-validation.md) |
+| D12 | 2026-10-20 | Meal scan is classifier-first; qwen3-vl:2b only as an optional second opinion | Works without a GPU; no model swap per scan; VLM quality unverified | [ADR-0012](../architecture/adr/0012-classifier-first-meal-scan.md) |
 
 > Rows D1–D10 are **proposed** and get ratified (or changed) at the kickoff
 > ([kickoff.md §4](kickoff.md#4-decisions-to-ratify)).

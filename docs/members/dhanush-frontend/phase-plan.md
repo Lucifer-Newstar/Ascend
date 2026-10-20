@@ -1,6 +1,6 @@
 # Dhanush · Frontend Phase Plan
 
-> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged.
+> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged. AI tasks and their design docs: [ai-roadmap](../../ai/ai-roadmap.md).
 
 | Phase | I deliver | I need | Handoff / completion check |
 |---|---|---|---|
@@ -62,6 +62,11 @@
 - [ ] `feat(ui): muscle drill-down with 1–30 day slider and contributing sets`
 - [ ] `feat(ui): onboarding hardware check + model download cards`
 - [ ] `test(ui): component tests for chips and proposal diff`
+- [ ] `feat(ui): replace a chat reply in place when chat.done carries final_text`
+- [ ] `feat(ui): tap-to-add items on the scan photo`
+- [ ] `feat(ui): Use rules answer and Show in English actions under replies`
+- [ ] `feat(ui): scan consent sheet and per-photo training checkbox`
+- [ ] `test(ai): second rater for the Tamil 30-question sheet`
 
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
@@ -86,6 +91,8 @@
 - [ ] `feat(ui): quests & rank page with trials and weekly challenge`
 - [ ] `feat(ui): light theme tokens`
 - [ ] `test(ui): visual regression baselines for key screens` (pair: Gokul)
+- [ ] `feat(ui): language setting with beta badge`
+- [ ] `feat(ui): Tamil UI strings (human-translated)`
 
 ### Phase 5 · MLOps loop (22 Mar – 16 May)
 

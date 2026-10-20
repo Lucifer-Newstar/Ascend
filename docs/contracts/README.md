@@ -13,9 +13,9 @@
 |---|---|---|---|---|---|
 | [system.yaml](system.yaml) | 0.1.0 | `app.core` | `/events`, `/health`, `/jobs`, `/models`, `/shutdown` | 2 | 5 |
 | [workouts.yaml](workouts.yaml) | 0.1.0 | `app.modules.workouts` | `/exercises`, `/plans`, `/prs`, `/workouts` | 6 | 5 |
-| [nutrition.yaml](nutrition.yaml) | 0.1.0 | `app.modules.nutrition` | `/foods`, `/meals`, `/scans` | 4 | 4 |
+| [nutrition.yaml](nutrition.yaml) | 0.1.0 | `app.modules.nutrition` | `/foods`, `/meals`, `/scans` | 4 | 6 |
 | [gamification.yaml](gamification.yaml) | 0.1.0 | `app.modules.gamification` | `/game` | 2 | 4 |
-| [coach.yaml](coach.yaml) | 0.1.0 | `app.modules.coach` | `/coach` | 3 | 6 |
+| [coach.yaml](coach.yaml) | 0.1.0 | `app.modules.coach` | `/coach` | 3 | 8 |
 | [progress.yaml](progress.yaml) | 0.1.0 | `app.modules.progress` | `/body-metrics`, `/checkins`, `/dashboard`, `/history`, `/muscles`, `/profile`, `/progress`, `/settings` | 7 | 5 |
 | [import-export.yaml](import-export.yaml) | 0.1.0 | `app.modules.io` | `/backup`, `/export`, `/import`, `/restore` | 2 | 5 |
 | [ipc-contract.md](ipc-contract.md) | 1 | `apps/desktop` preload ↔ main | `window.ascend.*` | — | — |

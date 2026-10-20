@@ -26,11 +26,11 @@
 | **G2** | Daily quests, humane penalties, streak freezes | J | Generated at reset time (default 4 AM); sized by last-7-day completion; missed day → ≤10-min recovery quest, never XP loss; freezes earned/held/auto-used; sick/injury/travel/exam modes |
 | **G3** | Ranks E → C | J / D | Level bands; rank shown in header; trials are placeholders until v1.1 |
 | **N1** | Indian food search, portions, saved meals | J | INDB + IFCT + Open Food Facts India subset imported with licences; katori/ladle/cup/piece/tbsp units; oil level; thali mode; saved meals; nutrients only from DB |
-| **N2** | Meal photo scan + corrections | J (pipeline) / N (classifier) / D (UI) | qwen3-vl:2b items → ONNX classifier top-3 → portion → DB lookup; ≥0.80 pre-selected, <0.65 asks one question; every edit stored as a correction; 60 s timeout → search-and-pick fallback |
+| **N2** | Meal photo scan + corrections | J (pipeline) / N (classifier) / D (UI) | ONNX classifier first (whole photo + tapped items) → top-3 → portion → DB lookup; optional qwen3-vl:2b second opinion ([ADR-0012](../architecture/adr/0012-classifier-first-meal-scan.md)); ≥0.80 pre-selected, <0.65 asks one question; every edit stored as a correction; 60 s timeout → search-and-pick fallback; details in [ai/food-recognition.md](../ai/food-recognition.md) |
 | **C1** | Coach: plan generation | J | Rules produce the plan; the LLM explains it; works with AI off (templates) |
 | **C2** | Injury protocol | J | Red-flag triage bypasses the model; restrictions → substitutions → return-to-load steps; "not a medical device" shown |
 | **C3** | Weekly review (every 7th day) | J | Rule findings scored, top 3 → plan diffs; LLM writes a 3-sentence summary from given numbers; template with AI off |
-| **C4** | Coach chat in English, Tamil beta | J (backend) / D (UI) | Streaming over SSE; tool calls create proposals only; "Show in English" under non-English replies; Tamil marked beta until tested on 30 questions |
+| **C4** | Coach chat in English, Tamil beta | J (backend) / D (UI) | Streaming over SSE; tool calls create proposals only; "Show in English" under non-English replies; Tamil marked beta until tested on 30 questions; every reply validated ([ADR-0011](../architecture/adr/0011-prompt-contracts-and-output-validation.md)) |
 | **C5** | AI-off / rules-only mode, override, plan import | J / D | A single toggle disables all model calls; user plan via CSV template wins over the planner |
 | **C6** | Rule-based tip cards in each section | J / D | Volume spike, imbalance, missed sessions, PR stall, low protein; "why?" asks the LLM to rephrase |
 | **P1** | Body weight trend + ETA to goal | J / D | 7-day average; ETA as a range with confidence; "not on track" with reason instead of a date |

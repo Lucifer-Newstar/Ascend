@@ -202,12 +202,14 @@ Sequence: [uml/sequence-diagram.md](uml/sequence-diagram.md).
 | Model | Purpose | Runtime | Size (per Ollama tag page) |
 |---|---|---|---|
 | `qwen3:4b` | ARC coach: explanations, chat (English; Tamil **beta, unverified quality**) | Ollama, GPU | 2.5 GB |
-| `qwen3-vl:2b` | Meal photo: item list + rough boxes (JSON) | Ollama, GPU | 1.9 GB |
+| `qwen3-vl:2b` | Meal photo, optional second opinion: item list + rough boxes (JSON), only when the user asks ([ADR-0012](adr/0012-classifier-first-meal-scan.md)) | Ollama, GPU | 1.9 GB |
 | `qwen3:1.7b` | Lite tier / out-of-memory fallback | Ollama, GPU or CPU | 1.4 GB |
-| `ascend-food-cls` | Indian-food classifier, 80+ classes, re-ranks crops | ONNX Runtime, **CPU** | not trained yet; measured after Phase 2 |
+| `ascend-food-cls` | Indian-food classifier (about 45 classes in v0, target), top-3 per item; the primary scan model | ONNX Runtime, **CPU** | not trained yet; ≈ 6 MB INT8 (estimate) |
 
-- **One GPU model at a time.** Before a scan the GPU worker unloads the chat model
-  (`keep_alive: 0`), runs the VLM, then reloads chat. The classifier never uses the GPU.
+- **One GPU model at a time.** Before a VLM second-opinion job the GPU worker unloads the
+  chat model (`keep_alive: 0`), runs the VLM, unloads it, and chat reloads on next use. The
+  classifier never uses the GPU. Lifecycle, VRAM budget and health checks:
+  [docs/ai/model-manager.md](../ai/model-manager.md).
 - Models are listed in a **manifest** (name, version, URL, SHA-256, size, licence,
   min VRAM, `min_app_version`). Downloads resume, are verified, then renamed atomically.
 - The onboarding speed test picks a tier and stores tokens/s.
@@ -220,24 +222,32 @@ Sequence: [uml/sequence-diagram.md](uml/sequence-diagram.md).
 | Out of GPU memory | Retry on CPU or the lite tier |
 | Ollama not running | Try to start it; else rules mode + status banner |
 
-Pipeline and training side: [ml-pipeline.md](ml-pipeline.md). Decision: [ADR-0004](adr/0004-ollama-qwen3-local-llm.md), [ADR-0006](adr/0006-own-food-classifier-indb-ifct.md).
+Pipeline and training side: [ml-pipeline.md](ml-pipeline.md). Decisions: [ADR-0004](adr/0004-ollama-qwen3-local-llm.md), [ADR-0006](adr/0006-own-food-classifier-indb-ifct.md), [ADR-0011](adr/0011-prompt-contracts-and-output-validation.md), [ADR-0012](adr/0012-classifier-first-meal-scan.md).
+Everything about the AI side (coach prompts and validation, Tamil, food recognition, model
+manager, privacy, evaluation, MLOps, risks, roadmap) is in **[docs/ai/](../ai/README.md)**.
 
 ## 11. Meal scan data flow
 
+Classifier first; the VLM runs only when the user asks
+([ADR-0012](adr/0012-classifier-first-meal-scan.md)). Full pipeline with quality checks and
+the correction loop: [docs/ai/food-recognition.md](../ai/food-recognition.md#2-pipeline).
+
 ```mermaid
 flowchart LR
-    A[Photo] --> B[Resize 1024 px<br/>strip EXIF]
-    B --> C[qwen3-vl:2b<br/>items + boxes JSON]
+    A[Photo] --> B[Quality check<br/>strip EXIF, resize]
+    B --> C[Whole photo = item 1<br/>+ user taps more items]
+    B -. optional: Find items for me .-> V[qwen3-vl:2b<br/>items + boxes JSON<br/>after unloading the coach]
+    V -.-> D
     C --> D[Crop each item]
     D --> E[ONNX classifier<br/>top-3 per crop, CPU]
-    E --> F[Portion: unit + count<br/>from box vs plate size + oil level]
-    F --> G[INDB / IFCT lookup<br/>± range]
-    G --> H{confidence}
+    E --> H{confidence}
     H -->|≥ 0.80| I[pre-selected chip]
     H -->|0.65–0.80| J[top-3 chips]
     H -->|< 0.65| K[one question]
-    I & J & K --> L[User confirms] --> M[(meal_items + corrections)]
-    C -. timeout 60 s / AI off .-> N[Search-and-pick fallback]
+    I & J & K --> F[Portion: default unit + qty<br/>+ oil level, user adjusts]
+    F --> G[INDB / IFCT lookup<br/>± range]
+    G --> L[User confirms] --> M[(meal_items + corrections)]
+    B -. timeout 60 s / AI off .-> N[Search-and-pick fallback]
 ```
 
 Nutrients always come from the database, never from a model.
@@ -285,7 +295,7 @@ ascend/
 ├── infra/                   docker/ (devcontainer, ml-train), compose/ (mlflow, observability) (Phase 1)
 ├── build/                   electron-builder config, icons, fuses (PyInstaller spec lives in services/sidecar/packaging/) (Phase 0)
 ├── scripts/                 check_contract_drift.py, release helpers                          (Phase 1)
-├── docs/                    this folder
+├── docs/                    this folder (AI section: docs/ai/)
 └── .github/workflows/       ci.yml, release.yml, ml-eval.yml, docs.yml                         (Phase 0+)
 ```
 

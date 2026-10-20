@@ -8,40 +8,50 @@ flowchart TB
     start((start)) --> pick
     subgraph User
         pick[Pick or drop a photo]
+        tap[Optional: tap extra items<br/>or ask Find items for me]
         confirm[Confirm chips / answer one question / adjust portion + oil]
         search[Search and pick foods]
     end
     subgraph Sidecar
-        prep[Resize to 1024 px, strip EXIF, save to photos/meals]
-        aion{AI on and<br/>models ready?}
+        prep[Quality check, resize, strip EXIF, save to photos/meals]
+        aion{AI on and<br/>classifier ready?}
         enqueue[Enqueue scan job<br/>priority 2, timeout 60 s]
-        unload[GPU lock: unload chat model]
-        crops[Crop each item box]
-        portion[Estimate unit + count from box vs plate size]
+        crops[Crop: whole photo + tapped items<br/>or VLM boxes]
+        portion[Default unit + quantity<br/>from the food's portion table]
         lookup[INDB / IFCT lookup with ± range]
         conf{confidence}
         save[Save meal, meal_items, scan, corrections<br/>emit MealLogged]
-        reload[Reload chat model, release GPU lock]
+        lockv[GPU lock: unload chat model]
+        relv[Unload VLM, release GPU lock]
         fail[Explain why: dark / blurry / timeout<br/>nothing logged]
     end
     subgraph Models
-        vlm[qwen3-vl:2b → items + boxes JSON]
         cls[ONNX classifier → top-3 per crop, CPU]
+        vlm[qwen3-vl:2b → items + boxes JSON<br/>optional second opinion]
     end
 
     pick --> prep --> aion
     aion -- no --> search
-    aion -- yes --> enqueue --> unload --> vlm
-    vlm -- valid JSON --> crops --> cls --> portion --> lookup --> conf
-    vlm -- invalid / timeout --> fail
-    conf -- "≥ 0.80 pre-select" --> confirm
-    conf -- "0.65–0.80 chips" --> confirm
-    conf -- "< 0.65 one question" --> confirm
+    aion -- yes --> enqueue --> tap
+    tap -- taps or none --> crops
+    tap -- Find items for me --> lockv --> vlm
+    vlm -- valid JSON --> relv --> crops
+    vlm -- invalid / timeout --> relv
+    crops --> cls --> conf
+    prep -- too dark / blurry --> fail
+    conf -- "≥ 0.80 pre-select" --> portion
+    conf -- "0.65–0.80 chips" --> portion
+    conf -- "< 0.65 one question" --> portion
+    portion --> lookup --> confirm
     confirm --> save
     search --> save
     fail --> search
-    save --> reload --> done((end))
+    save --> done((end))
 ```
+
+Classifier first; the VLM runs only on request
+([ADR-0012](../adr/0012-classifier-first-meal-scan.md)). Full design:
+[docs/ai/food-recognition.md](../../ai/food-recognition.md).
 
 | Guard | Value | Source |
 |---|---|---|

@@ -58,9 +58,10 @@ to the main process, which supervises a **Python 3.12 FastAPI sidecar** on a ran
 localhost port with a launch token. The sidecar is a modular monolith (workouts,
 nutrition, gamification, coach, progress, ai) with a transactional-outbox event bus and
 a SQLite job queue, storing everything in **SQLite (WAL, Alembic)** plus local files.
-A model manager drives **Ollama** (qwen3:4b coach, qwen3-vl:2b meal item finder, one GPU
+A model manager drives **Ollama** (qwen3:4b coach, qwen3-vl:2b as an optional meal second opinion, one GPU
 model at a time) and **ONNX Runtime** (our Indian-food classifier, on CPU). Details:
-[system-architecture.md](../architecture/system-architecture.md).
+[system-architecture.md](../architecture/system-architecture.md); the AI part in full:
+[docs/ai/](../ai/README.md).
 
 ## 6. Team
 

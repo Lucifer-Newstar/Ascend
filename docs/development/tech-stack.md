@@ -44,7 +44,7 @@
 |---|---|---|
 | LLM/VLM runtime | Ollama (user-installed, `127.0.0.1:11434`) | Simple local API, GPU offload, model store ([ADR-0004](../architecture/adr/0004-ollama-qwen3-local-llm.md)) |
 | Coach | `qwen3:4b` (2.5 GB), thinking off | Tamil on Qwen3's language list; Apache-2.0; fits 4 GB |
-| Meal items | `qwen3-vl:2b` (1.9 GB) | Small VLM for item lists + boxes |
+| Meal items (optional second opinion) | `qwen3-vl:2b` (1.9 GB) | Small VLM for item lists + boxes, only when the user asks ([ADR-0012](../architecture/adr/0012-classifier-first-meal-scan.md)) |
 | Lite | `qwen3:1.7b` (1.4 GB) | OOM / low-end fallback |
 | Food classifier | Own CNN → ONNX | [ADR-0006](../architecture/adr/0006-own-food-classifier-indb-ifct.md) |
 | Translation fallback | IndicTrans2 distilled (~200M, MIT) | Only if Tamil tests poorly — **unverified on our hardware** |

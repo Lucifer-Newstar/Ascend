@@ -18,11 +18,13 @@ Use **Ollama** (installed by the user, `127.0.0.1:11434`) as the model runtime.
 | Role | Model | Size (Ollama tag page) | Licence |
 |---|---|---|---|
 | Coach (ARC) | `qwen3:4b`, thinking off for speed | 2.5 GB | Apache-2.0 |
-| Meal item finder | `qwen3-vl:2b` | 1.9 GB | per model card — check before release |
+| Meal item finder (optional second opinion, [ADR-0012](0012-classifier-first-meal-scan.md)) | `qwen3-vl:2b` | 1.9 GB | per model card — check before release |
 | Lite / OOM fallback | `qwen3:1.7b` | 1.4 GB | Apache-2.0 |
 
 - **One GPU model at a time:** the job queue unloads the chat model (`keep_alive: 0`)
-  before a scan and reloads it after.
+  before a VLM job and reloads it after ([docs/ai/model-manager.md](../../ai/model-manager.md)).
+- Prompts and output validation: [ADR-0011](0011-prompt-contracts-and-output-validation.md);
+  Tamil test plan and go/no-go: [docs/ai/multilingual-tamil.md](../../ai/multilingual-tamil.md).
 - **Tamil is beta.** Qwen3's announcement lists Tamil among 119 languages, but quality
   from a 4B model is **unverified**. Test with 30 real questions before v1.0; if poor,
   answer in English and translate with IndicTrans2 (MIT; distilled ~200M, CPU — size

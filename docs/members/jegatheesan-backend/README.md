@@ -18,7 +18,7 @@ with a rules fallback for every AI path.
 - **Ollama integration:** client with timeouts and streaming, model manager runtime
   (manifest, verified downloads, tiers, GPU lock), fallbacks and templates
 - Coach rules: planner, injury protocol, red-flag routing, weekly review, number-fidelity check
-- Nutrition: INDB/IFCT/Open Food Facts import, portions, scan pipeline (VLM → classifier → portion → DB)
+- Nutrition: INDB/IFCT/Open Food Facts import, portions, scan pipeline (classifier first → portion → DB; optional VLM second opinion, [ADR-0012](../../architecture/adr/0012-classifier-first-meal-scan.md))
 - Import/export adapters (Strong, Hevy, JSON, CSV, `.ascendbak`)
 - OpenAPI contracts (owner) and their implementation
 

@@ -52,7 +52,7 @@
 | Dhanush | `feat(desktop): Electron + Vite + React + TS scaffold` | `feat(desktop): secure BrowserWindow defaults + CSP` | `feat(ui): Tailwind tokens from design system` |
 | Jegatheesan | `feat(sidecar): FastAPI app factory + /health` | `feat(core): SQLite engine with WAL pragmas` | `feat(core): Alembic baseline migration` |
 | Gokul | `chore(meta): npm workspace + uv project layout` | `chore(meta): pre-commit (ruff, mypy, eslint, prettier, gitleaks)` | `ci: lint + unit tests on windows-latest and ubuntu-latest` |
-| Navin | `docs: commit docs/ folder` | `chore(meta): branch protection, CODEOWNERS, PR template` | `docs(adr): ratify ADR-0001…0010 after kickoff` |
+| Navin | `docs: commit docs/ folder` | `chore(meta): branch protection, CODEOWNERS, PR template` | `docs(adr): ratify ADR-0001…0012 after kickoff` |
 
 ## 6. Phase 0 gate (8 Nov, estimate)
 

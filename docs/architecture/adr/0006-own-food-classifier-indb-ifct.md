@@ -20,7 +20,9 @@ datasets, experiments, a registry and an evaluation gate.
    listing) with Food-101 transfer, exported to **ONNX** and run on **CPU** in the sidecar.
 3. Pipeline: VLM lists items + boxes → classifier re-ranks each crop (top-3) → portion
    units (katori, ladle, cup, piece, tbsp) + oil level → DB lookup with a ± range →
-   user confirms; every edit is stored as a correction.
+   user confirms; every edit is stored as a correction. **Amended by
+   [ADR-0012](0012-classifier-first-meal-scan.md):** the classifier runs first on the whole
+   photo and on user-tapped items; the VLM is an optional second opinion.
 4. Team photos are the **test set only**. Pipeline details: [ml-pipeline.md](../ml-pipeline.md).
 
 ## Consequences
