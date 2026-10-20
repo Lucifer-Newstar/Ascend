@@ -44,6 +44,7 @@ def test_coach_uses_ollama_when_available(client, profile, monkeypatch):
         "tip_code": r["tip_code"],
         "model": "qwen3:4b",
         "fallback_reason": None,
+        "checks": {"numbers": "pass", "banned": "pass", "version": "validate-1.0.0"},
     }
     assert "Rule-based tip" in seen["facts"]
 
