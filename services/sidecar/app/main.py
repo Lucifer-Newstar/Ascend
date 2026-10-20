@@ -24,7 +24,7 @@ from app.modules.gamification.api import router as game_router
 from app.modules.nutrition.api import router as nutrition_router
 from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
-from app.modules.workouts.api import exercises_router, prs_router
+from app.modules.workouts.api import deload_router, exercises_router, prs_router
 from app.modules.workouts.api import router as workouts_router
 
 log = logging.getLogger("ascend")
@@ -120,6 +120,7 @@ def create_app(
         workouts_router,
         exercises_router,
         prs_router,
+        deload_router,
         nutrition_router,
         game_router,
         progress_router,
