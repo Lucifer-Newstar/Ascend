@@ -107,12 +107,12 @@ def reactive_signals(i: DeloadInputs) -> list[Signal]:
         Signal(
             "PERFORMANCE_DROP",
             len(dropped) >= DROPPED_LIFTS,
-            "e1RM down 3 %+ on: " + (", ".join(dropped) if dropped else "no key lift"),
+            "e1RM down 3% or more on: " + (", ".join(dropped) if dropped else "no key lift"),
         ),
         Signal(
             "FATIGUE_BUILDUP",
             i.strained_muscles >= STRAINED_MUSCLES,
-            f"{i.strained_muscles} muscles over range or under 50 % readiness",
+            f"{i.strained_muscles} muscles over range or under 50% readiness",
         ),
     ]
 
