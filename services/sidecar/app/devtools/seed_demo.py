@@ -1,6 +1,10 @@
-"""Fill a database with ~2 weeks of realistic demo history.
+"""Fill a database with realistic demo history: ~10 weeks of earlier gym training, then
+a detailed fortnight.
 
-Gym sessions, morning calisthenics (so the skill trees show mid-progress states),
+The earlier weeks are the same push/pull/legs split with double progression up to the
+fortnight's starting loads, so the progression engine has real trends, e1RM series and
+personal recovery factors to work with. The fortnight adds the rest:
+gym sessions, morning calisthenics (so the skill trees show mid-progress states),
 Indian meals, morning weigh-ins and check-ins, tape measurements, a
 few cardio and meditation sessions, and a goal weight for the Progress ETA.
 
@@ -10,6 +14,7 @@ exactly what the app would have produced live.
 
     uv run python -m app.devtools.seed_demo            # uses ASCEND_DATA_DIR / default DB
     uv run python -m app.devtools.seed_demo --days 14 --wipe
+    uv run python -m app.devtools.seed_demo --history-weeks 0 --wipe   # fortnight only
 
 Never run this against your real data: --wipe deletes everything first.
 """
@@ -17,14 +22,17 @@ Never run this against your real data: --wipe deletes everything first.
 from __future__ import annotations
 
 import argparse
+import math
 import random
 from datetime import datetime, time, timedelta
 from typing import Literal
 
 from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 
 from app.core.config import load_settings
 from app.core.db import Base, make_engine, make_session_factory
+from app.core.events import EventBus
 from app.core.migrate import run_migrations
 from app.main import build_bus
 from app.modules.gamification import service as game
@@ -180,7 +188,72 @@ MEALS: dict[str, list[list[tuple[str, float]]]] = {
 }
 
 
-def seed(days: int, wipe: bool) -> None:
+# Load step per exercise in the earlier weeks (kg); everything else moves in 2.5 kg steps.
+HISTORY_STEP = {
+    "Back Squat": 5.0,
+    "Romanian Deadlift": 5.0,
+    "Lateral Raise": 1.0,
+    "Dumbbell Curl": 1.0,
+}
+HISTORY_BLOCK_WEEKS = 2.5  # one load step per block; reps climb by 2 within a block
+
+
+def seed_history(
+    db: Session,
+    bus: EventBus,
+    ex: dict[str, int],
+    rng: random.Random,
+    today: datetime,
+    days: int,
+    weeks: int,
+) -> int:
+    """Earlier training before the fortnight: push, pull, legs, rest, repeated, with a
+    missed session now and then. Loads rise one step per block of 2.5 weeks and reps
+    climb within a block (double progression), ending at the fortnight's starting loads.
+    Returns the number of sessions logged."""
+    order: list[str | None] = ["push", "pull", "legs", None]
+    sessions = 0
+    for i, offset in enumerate(range(days + weeks * 7 - 1, days - 1, -1)):
+        day = (today - timedelta(days=offset)).date()
+        split = order[i % len(order)]
+        if rng.random() < 0.7:
+            checkins.record(
+                db,
+                bus,
+                CheckinIn(
+                    sleep=rng.choice([2, 3, 4, 4, 5]),
+                    energy=rng.choice([3, 4, 4, 5]),
+                    soreness=rng.choice(["none", "none", "some"]),
+                    mood=rng.choice([3, 4, 5]),
+                ),
+                datetime.combine(day, time(7, 20)),
+            )
+        if split is None or rng.random() < 0.08:
+            db.commit()
+            continue
+        weeks_left = (offset - days) / 7
+        blocks = math.ceil(weeks_left / HISTORY_BLOCK_WEEKS - 1e-9)
+        phase = (weeks_left % HISTORY_BLOCK_WEEKS) / HISTORY_BLOCK_WEEKS  # 1 = block start
+        t = datetime.combine(day, time(18, 30))
+        w = workouts.start_workout(db, t)
+        for name, kg, reps in SPLIT[split]:
+            step = HISTORY_STEP.get(name, 2.5)
+            load = max(step, kg - step * blocks)
+            target = reps + round(2 * (1 - phase))
+            for set_no in range(3):
+                t += timedelta(minutes=3)
+                rpe = min(10.0, 7.5 + 0.5 * set_no + rng.choice([-0.5, 0.0, 0.0, 0.5]))
+                got = target - (1 if set_no == 2 and rng.random() < 0.3 else 0)
+                workouts.log_set(
+                    db, bus, w.id, SetIn(exercise_id=ex[name], weight_kg=load, reps=got, rpe=rpe), t
+                )
+        workouts.finish_workout(db, bus, w.id, t + timedelta(minutes=5))
+        sessions += 1
+        db.commit()
+    return sessions
+
+
+def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
     settings = load_settings()
     url = settings.resolved_db_url
     run_migrations(url)
@@ -218,6 +291,7 @@ def seed(days: int, wipe: bool) -> None:
         ex = {e.name: e.id for e in db.scalars(select(Exercise)).all()}
         holds = {e.name for e in db.scalars(select(Exercise).where(Exercise.measure == "hold"))}
         foods = {f.name: f.id for f in db.scalars(select(Food)).all()}
+        earlier = seed_history(db, bus, ex, rng, today, days, history_weeks) if history_weeks else 0
 
         for offset in range(days - 1, -1, -1):
             day = (today - timedelta(days=offset)).date()
@@ -337,7 +411,10 @@ def seed(days: int, wipe: bool) -> None:
                     if q.metric == "manual" and not q.completed_at and rng.random() < 0.75:
                         game.complete_manual(db, bus, q.id, at(21, 30))
             db.commit()
-    print(f"seeded {days} days of demo data into {url}")
+    print(
+        f"seeded {days} days of demo data (+{history_weeks} earlier weeks, {earlier} gym sessions) "
+        f"into {url}"
+    )
 
 
 def main() -> None:
@@ -345,9 +422,12 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--days", type=int, default=14)
+    parser.add_argument(
+        "--history-weeks", type=int, default=10, help="earlier PPL weeks before the fortnight"
+    )
     parser.add_argument("--wipe", action="store_true", help="delete existing user data first")
     args = parser.parse_args()
-    seed(args.days, args.wipe)
+    seed(args.days, args.wipe, args.history_weeks)
 
 
 if __name__ == "__main__":

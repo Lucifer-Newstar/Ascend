@@ -17,7 +17,7 @@ def test_seed_demo_fills_progress_activity_and_checkins(
 ) -> None:
     monkeypatch.setenv("ASCEND_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ASCEND_TOKEN", "t")
-    seed_demo.seed(days=14, wipe=True)
+    seed_demo.seed(days=14, wipe=True, history_weeks=0)
 
     app = create_app(load_settings(), outbox_interval=0)
     with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
@@ -40,8 +40,8 @@ def test_seed_demo_fills_progress_activity_and_checkins(
 def test_seed_demo_wipe_is_repeatable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ASCEND_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ASCEND_TOKEN", "t")
-    seed_demo.seed(days=7, wipe=True)
-    seed_demo.seed(days=7, wipe=True)
+    seed_demo.seed(days=7, wipe=True, history_weeks=0)
+    seed_demo.seed(days=7, wipe=True, history_weeks=0)
     app = create_app(load_settings(), outbox_interval=0)
     with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
         assert len(c.get("/checkins").json()) == 6
@@ -53,7 +53,7 @@ def test_seed_demo_wipe_removes_user_added_exercises(
 ) -> None:
     monkeypatch.setenv("ASCEND_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ASCEND_TOKEN", "t")
-    seed_demo.seed(days=3, wipe=True)
+    seed_demo.seed(days=3, wipe=True, history_weeks=0)
     app = create_app(load_settings(), outbox_interval=0)
     with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
         library = len(c.get("/exercises").json())
@@ -64,8 +64,32 @@ def test_seed_demo_wipe_removes_user_added_exercises(
             "muscles": [{"muscle": "obliques", "weight": 1}],
         }  # fmt: skip
         assert c.post("/exercises", json=body).status_code == 201
-    seed_demo.seed(days=3, wipe=True)
+    seed_demo.seed(days=3, wipe=True, history_weeks=0)
     app = create_app(load_settings(), outbox_interval=0)
     with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
         assert c.get("/exercises", params={"custom": True}).json() == []
         assert len(c.get("/exercises").json()) == library
+
+
+def test_seed_demo_history_gives_the_engines_trends(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ASCEND_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ASCEND_TOKEN", "t")
+    seed_demo.seed(days=3, wipe=True, history_weeks=4)
+    app = create_app(load_settings(), outbox_interval=0)
+    with TestClient(app, headers={"Authorization": "Bearer t"}) as c:
+        gym = c.get("/workouts", params={"limit": 100, "section": "gym"}).json()
+        assert len(gym) >= 15  # about 3 of every 4 days over 4 weeks, plus the fortnight's
+        bench = next(
+            e["id"]
+            for e in c.get("/exercises", params={"q": "Barbell Bench Press"}).json()
+            if e["name"] == "Barbell Bench Press"
+        )
+        t = c.get(f"/intelligence/progression/{bench}").json()
+        assert t["change"] != "first" and len(t["e1rm"]["series"]) >= 5
+        series = t["e1rm"]["series"]
+        assert series == sorted(series, key=lambda p: p["at"])
+        assert series[-1]["value"] > series[0]["value"]  # the earlier weeks progress
+        groups = c.get("/intelligence/recovery").json()["groups"]
+        assert all(g["updated_at"] is not None for g in groups)  # refitted after sessions
