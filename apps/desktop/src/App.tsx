@@ -7,6 +7,7 @@ import { Layout, type Page } from "./components/Layout";
 import { ErrorState, Loading } from "./components/States";
 import { ToastProvider } from "./components/Toast";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
+import { usePageShortcuts } from "./lib/shortcuts";
 import { CoachPage } from "./pages/Coach";
 import { DashboardPage } from "./pages/Dashboard";
 import { DataPage } from "./pages/Data";
@@ -80,10 +81,10 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  const navigate = (p: Page) => {
+  const navigate = useCallback((p: Page) => {
     window.location.hash = p;
     setPage(p);
-  };
+  }, []);
 
   if (bootError) return <ErrorState message={bootError} onRetry={boot} />;
   if (hasProfile === null || settings === null) return <Loading label="Starting the local engine…" />;
@@ -103,6 +104,7 @@ export default function App() {
 
 function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void }) {
   const { settings, update } = usePrefs();
+  usePageShortcuts(navigate);
   const toggleAi = async () => {
     await update({ ai_enabled: !settings.ai_enabled });
     bump();

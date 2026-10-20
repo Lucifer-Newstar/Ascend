@@ -53,10 +53,11 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
           <span className="font-display text-xl font-bold tracking-[0.2em] text-ink">ASCEND</span>
         </div>
         <nav className="flex-1 space-y-0.5 px-3" aria-label="Main">
-          {NAV.map(({ id, label, icon: Icon }) => {
+          {NAV.map(({ id, label, icon: Icon }, i) => {
             const active = page === id;
             return (
               <button key={id} type="button" onClick={() => onNavigate(id)} aria-current={active ? "page" : undefined}
+                title={`${label} (Ctrl+${i + 1})`} aria-keyshortcuts={`Control+${i + 1}`}
                 className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${active ? "bg-accent/10 text-accent" : "text-muted hover:bg-panel-2 hover:text-ink"}`}>
                 {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-accent" />}
                 <Icon width={18} />
