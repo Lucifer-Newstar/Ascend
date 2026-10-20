@@ -52,7 +52,7 @@
 
 - [ ] `feat(ui): coach chat thread view with streaming tokens`
 - [ ] `feat(ui): "data ARC used" side panel and AI status card`
-- [ ] `feat(ui): AI on/off and rules-only toggles in settings`
+- [x] `feat(ui): AI on/off and rules-only toggles in settings` — AI on/off in header and Settings; rules-only mode waits for the coach chat
 - [ ] `feat(ui): proposal diff card (Apply / Edit / Keep my plan)`
 - [ ] `feat(ui): photo picker and scan job progress`
 - [ ] `feat(ui): scan review with boxes, top-3 chips and one-question prompt`
@@ -71,7 +71,7 @@
 ### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
 
 - [ ] `feat(ui): empty/loading/error states pass across all screens`
-- [ ] `feat(ui): settings (units, reset hour, language, notifications, quiet hours)`
+- [x] `feat(ui): settings (units, reset hour, language, notifications, quiet hours)` — units, theme and training days done; reset hour, language, notifications and quiet hours open
 - [ ] `feat(ui): backup and restore screens`
 - [ ] `feat(ui): import Strong/Hevy with dry-run report`
 - [ ] `feat(ui): diagnostics page and export bundle button`
@@ -89,7 +89,7 @@
 - [ ] `feat(ui): progress photos capture with ghost overlay and compare slider`
 - [ ] `feat(ui): morning check-in dialog`
 - [ ] `feat(ui): quests & rank page with trials and weekly challenge`
-- [ ] `feat(ui): light theme tokens`
+- [x] `feat(ui): light theme tokens`
 - [ ] `test(ui): visual regression baselines for key screens` (pair: Gokul)
 - [ ] `feat(ui): language setting with beta badge`
 - [ ] `feat(ui): Tamil UI strings (human-translated)`
