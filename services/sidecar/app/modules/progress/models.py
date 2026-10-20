@@ -17,6 +17,7 @@ class Profile(Base):
     name: Mapped[str] = mapped_column(String(80), default="")
     age: Mapped[int] = mapped_column(Integer)
     sex: Mapped[str] = mapped_column(String(10))
+    target_weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
     height_cm: Mapped[float] = mapped_column(Float)
     weight_kg: Mapped[float] = mapped_column(Float)
     goal: Mapped[str] = mapped_column(String(10))
@@ -25,6 +26,29 @@ class Profile(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+
+class BodyMetric(Base):
+    """A weigh-in (plus optional waist and resting heart rate)."""
+
+    __tablename__ = "body_metrics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    measured_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    weight_kg: Mapped[float] = mapped_column(Float)
+    waist_cm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    resting_hr: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class Measurement(Base):
+    """A tape measurement at one body site."""
+
+    __tablename__ = "measurements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    measured_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    site: Mapped[str] = mapped_column(String(16), index=True)
+    cm: Mapped[float] = mapped_column(Float)
 
 
 class Setting(Base):
