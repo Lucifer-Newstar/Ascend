@@ -23,10 +23,12 @@ class Conflict(Exception):
     pass
 
 
-def list_exercises(db: Session, q: str = "") -> list[Exercise]:
+def list_exercises(db: Session, q: str = "", section: str | None = None) -> list[Exercise]:
     stmt = select(Exercise).order_by(Exercise.name)
     if q:
         stmt = stmt.where(Exercise.name.ilike(f"%{q}%"))
+    if section:
+        stmt = stmt.where(Exercise.section == section)
     return list(db.scalars(stmt).all())
 
 

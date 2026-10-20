@@ -15,6 +15,9 @@ class ExerciseOut(BaseModel):
     id: int
     name: str
     equipment: str
+    section: str = "gym"
+    met: float | None = None
+    time_based: bool = False
     muscles: list[MuscleWeight]
 
 
