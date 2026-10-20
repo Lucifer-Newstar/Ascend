@@ -1,0 +1,24 @@
+# Normalise line endings: the team develops on Windows, CI runs on Linux.
+# Text files are stored with LF in git; Git for Windows converts on checkout.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF so PowerShell and cmd read them as expected.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Lockfiles: never try to merge by hand, regenerate instead.
+package-lock.json -diff linguist-generated=true
+services/sidecar/uv.lock -diff linguist-generated=true
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.onnx binary
+*.zip binary
+*.ascendbak binary
