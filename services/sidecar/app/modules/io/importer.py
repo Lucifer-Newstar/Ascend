@@ -105,7 +105,8 @@ def run_import(
                 continue
             report.matched_exercises.setdefault(row.exercise, name)
             exercise = library[name]
-            problem = _valid(row, exercise.section in TIME_BASED_SECTIONS)
+            timed = exercise.section in TIME_BASED_SECTIONS or exercise.measure == "hold"
+            problem = _valid(row, timed)
             if problem:
                 if len(report.warnings) < MAX_WARNINGS:
                     report.warnings.append(
@@ -136,16 +137,18 @@ def run_import(
         span = max(finished - started, timedelta(minutes=1))
         for i, (row, exercise) in enumerate(keep):
             time_based = exercise.section in TIME_BASED_SECTIONS
+            # A plank or L-sit from Strong/Hevy keeps its seconds (and any added load).
+            hold = exercise.measure == "hold" and not time_based
             performed = started + span * (i / max(len(keep), 1))
             ws = WorkoutSet(
                 workout_id=workout.id,
                 exercise_id=exercise.id,
                 weight_kg=0.0 if time_based else row.weight_kg,
-                reps=1 if time_based else row.reps,
+                reps=1 if time_based or hold else row.reps,
                 rpe=row.rpe if row.rpe is None or 1 <= row.rpe <= 10 else None,
-                duration_s=row.duration_s if time_based else None,
+                duration_s=row.duration_s if time_based or hold else None,
                 distance_m=row.distance_m if time_based else None,
-                e1rm=None if time_based else pr.e1rm_or_none(row.weight_kg, row.reps),
+                e1rm=None if time_based or hold else pr.e1rm_or_none(row.weight_kg, row.reps),
                 performed_at=performed,
             )
             db.add(ws)

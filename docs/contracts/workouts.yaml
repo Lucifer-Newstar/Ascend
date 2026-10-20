@@ -713,6 +713,10 @@ components:
           type: string
           format: date-time
           title: Performed At
+        measure:
+          type: string
+          title: Measure
+          default: reps
       type: object
       required:
       - id

@@ -157,6 +157,7 @@ def set_out(s: WorkoutSet) -> SetOut:
         e1rm=s.e1rm,
         is_pr=s.is_pr,
         performed_at=s.performed_at,
+        measure=s.exercise.measure,
     )
 
 
@@ -192,6 +193,14 @@ def get_workout(db: Session, workout_id: int) -> Workout:
     return workout
 
 
+def best_hold(db: Session, exercise_id: int) -> float | None:
+    """Longest hold logged for an exercise, in seconds (None before the first)."""
+    best = db.scalar(
+        select(func.max(WorkoutSet.duration_s)).where(WorkoutSet.exercise_id == exercise_id)
+    )
+    return float(best) if best is not None else None
+
+
 def best_e1rm(db: Session, exercise_id: int) -> float | None:
     return db.scalar(select(func.max(WorkoutSet.e1rm)).where(WorkoutSet.exercise_id == exercise_id))
 
@@ -206,26 +215,34 @@ def log_set(
     if exercise is None:
         raise NotFound(f"exercise {data.exercise_id} not found")
     time_based = exercise.section in TIME_BASED_SECTIONS
+    hold = exercise.measure == "hold" and not time_based
     if time_based and not data.duration_s:
         raise Invalid(f"{exercise.name} is logged by time: send duration_s")
+    if hold and not data.duration_s:
+        raise Invalid(f"{exercise.name} is a hold: send duration_s (seconds held)")
     if not workout.sets and workout.section != exercise.section:
         # A session takes the section of its first set (a run started from Gym is cardio).
         workout.section = exercise.section
 
-    # e1RM/PR only make sense for loaded lifts.
-    e1rm = None if time_based else pr.e1rm_or_none(data.weight_kg, data.reps)
+    # e1RM/PR only make sense for loaded lifts; a hold's PR is its longest time.
+    e1rm = None if time_based or hold else pr.e1rm_or_none(data.weight_kg, data.reps)
     previous = best_e1rm(db, data.exercise_id)
+    if hold:
+        is_pr = pr.is_new_pr(float(data.duration_s or 0), best_hold(db, data.exercise_id))
+    else:
+        is_pr = pr.is_new_pr(e1rm, previous)
     row = WorkoutSet(
         workout_id=workout.id,
         exercise_id=data.exercise_id,
         weight_kg=data.weight_kg,
-        reps=data.reps,
+        # A hold is one effort per set; the time is in duration_s.
+        reps=1 if hold else data.reps,
         rpe=data.rpe,
         duration_s=data.duration_s,
         distance_m=data.distance_m,
         avg_hr=data.avg_hr,
         e1rm=e1rm,
-        is_pr=pr.is_new_pr(e1rm, previous),
+        is_pr=is_pr,
         performed_at=now,
     )
     # Append through the relationship so a session that already loaded `workout.sets`
@@ -337,17 +354,25 @@ def recompute_prs(db: Session, exercise_id: int) -> None:
     Needed after an edit or delete: fixing a typo (100 kg instead of 10 kg) must
     also clear the false PR it created and restore later PRs it masked.
     """
+    exercise = db.get(Exercise, exercise_id)
     rows = db.scalars(
         select(WorkoutSet)
         .where(WorkoutSet.exercise_id == exercise_id)
         .order_by(WorkoutSet.performed_at, WorkoutSet.id)
     ).all()
+    time_based = exercise is not None and exercise.section in TIME_BASED_SECTIONS
+    hold = exercise is not None and exercise.measure == "hold" and not time_based
     best: float | None = None
     for row in rows:
-        row.e1rm = pr.e1rm_or_none(row.weight_kg, row.reps)
-        row.is_pr = pr.is_new_pr(row.e1rm, best)
-        if row.e1rm is not None and (best is None or row.e1rm > best):
-            best = row.e1rm
+        if hold:
+            row.e1rm = None
+            value: float | None = float(row.duration_s) if row.duration_s else None
+        else:
+            row.e1rm = None if time_based else pr.e1rm_or_none(row.weight_kg, row.reps)
+            value = row.e1rm
+        row.is_pr = pr.is_new_pr(value, best)
+        if value is not None and (best is None or value > best):
+            best = value
 
 
 def update_set(

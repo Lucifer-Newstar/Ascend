@@ -4,7 +4,10 @@ from app.modules.io.matcher import ALIASES, ExerciseMatcher, normalise
 from app.modules.workouts.activity_seed import ACTIVITIES
 from app.modules.workouts.seed import EXERCISES
 
-LIBRARY = [name for name, *_ in EXERCISES] + [name for name, *_ in ACTIVITIES]
+# Migration 0010 renames the seeded plank to "Plank".
+LIBRARY = [("Plank" if name.startswith("Plank (") else name) for name, *_ in EXERCISES] + [
+    name for name, *_ in ACTIVITIES
+]
 
 
 @pytest.fixture(scope="module")

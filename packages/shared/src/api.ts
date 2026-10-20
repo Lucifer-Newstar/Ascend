@@ -126,6 +126,8 @@ export interface WorkoutSet {
   e1rm: number | null;
   is_pr: boolean;
   performed_at: string;
+  /** The exercise's measure ("hold" sets keep their seconds in duration_s). */
+  measure?: Measure;
 }
 
 export interface SetIn {

@@ -6,6 +6,7 @@ import { Transient } from "../components/Celebrate";
 import { IconCheck, IconSearch, IconTrophy } from "../components/Icons";
 import { NumberField, RestTimer, RPE_OPTIONS, RpeSelect } from "../components/logger/fields";
 import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
+import { HoldSetForm } from "../components/logger/HoldSetForm";
 import { TimedSetForm } from "../components/logger/TimedSetForm";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
@@ -83,7 +84,10 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
       setWorkout(fresh);
       setLogged((prev) => ({ id: res.set.id, xp: res.xp_awarded, n: (prev?.n ?? 0) + 1 }));
       if (!selected.time_based) setRestLeft(REST_SECONDS);
-      if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
+      const isHold = selected.measure === "hold";
+      if (res.set.is_pr && isHold) toast(`New best hold! ${selected.name} ${res.set.duration_s} s · +${res.xp_awarded} XP`, "pr");
+      else if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
+      else if (isHold) toast(`${res.set.duration_s} s hold logged · +${res.xp_awarded} XP`, "xp");
       else toast(`${selected.time_based ? formatDuration(res.set.duration_s ?? 0) + " logged" : "Set logged"} · +${res.xp_awarded} XP`, "xp");
       onChanged();
     } catch (e) {
@@ -206,6 +210,10 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                     {selected.muscles.length === 0 && " Stretching and meditation add no muscle load."}
                   </p>
                 </div>
+              ) : selected.measure === "hold" ? (
+                <HoldSetForm key={selected.id} exercise={selected} units={units} busy={busy} onSubmit={(s) => logSet(s)}>
+                  <XpGain logged={logged} className="-top-5 right-2" />
+                </HoldSetForm>
               ) : (
                 <>
                   {/* A real form, so Enter in any field logs the set. */}
@@ -301,14 +309,20 @@ function SetTable({ sets, units, onEdit, onDelete, busy, justLogged }: {
   onDelete: (s: WorkoutSet) => void;
   busy: boolean;
 }) {
-  const timed = sets.some((s) => s.duration_s !== null);
+  const hold = sets.length > 0 && sets.every((s) => s.measure === "hold");
+  const timed = !hold && sets.some((s) => s.duration_s !== null);
   const [editing, setEditing] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
   return (
     <table className="w-full text-sm">
       <thead>
         <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
-          {timed ? (
+          {hold ? (
+            <>
+              <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">Hold</th><th className="font-medium">Added {weightUnit(units)}</th>
+              <th className="font-medium">RPE</th><th className="w-24 font-medium"><span className="sr-only">Personal record</span></th><th><span className="sr-only">Actions</span></th>
+            </>
+          ) : timed ? (
             <>
               <th className="w-14 py-1 font-medium">#</th><th className="font-medium">Time</th><th className="font-medium">Distance</th>
               <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th><span className="sr-only">Actions</span></th>
@@ -323,7 +337,7 @@ function SetTable({ sets, units, onEdit, onDelete, busy, justLogged }: {
       </thead>
       <tbody>
         {sets.map((s, i) => editing === s.id ? (
-          <EditRow key={s.id} index={i} set={s} timed={timed} units={units} busy={busy}
+          <EditRow key={s.id} index={i} set={s} timed={timed} hold={hold} units={units} busy={busy}
             onCancel={() => setEditing(null)}
             onSave={(patch) => { onEdit(s, patch); setEditing(null); }} />
         ) : (
@@ -334,7 +348,14 @@ function SetTable({ sets, units, onEdit, onDelete, busy, justLogged }: {
                 {s.id === justLogged && <IconCheck width={12} height={12} className="pop-in text-good" aria-hidden="true" />}
               </span>
             </td>
-            {timed ? (
+            {hold ? (
+              <>
+                <td className="text-ink">{s.duration_s ?? 0} s</td>
+                <td className="text-ink">{s.weight_kg ? `+${toDisplayWeight(s.weight_kg, units)}` : "–"}</td>
+                <td className="text-muted">{s.rpe ?? "–"}</td>
+                <td>{s.is_pr && <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn"><IconTrophy width={12} height={12} /> Best</span>}</td>
+              </>
+            ) : timed ? (
               <>
                 <td className="text-ink">{formatDuration(s.duration_s ?? 0)}</td>
                 <td className="text-ink">{s.distance_m ? formatDistance(s.distance_m, units) : "–"}</td>
@@ -370,10 +391,11 @@ function SetTable({ sets, units, onEdit, onDelete, busy, justLogged }: {
   );
 }
 
-function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
+function EditRow({ index, set, timed, hold = false, units, busy, onSave, onCancel }: {
   index: number;
   set: WorkoutSet;
   timed: boolean;
+  hold?: boolean;
   units: "metric" | "imperial";
   busy: boolean;
   onSave: (patch: SetPatch) => void;
@@ -381,11 +403,18 @@ function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
 }) {
   const [weight, setWeight] = useState(String(toDisplayWeight(set.weight_kg, units)));
   const [reps, setReps] = useState(String(set.reps));
-  const [duration, setDuration] = useState(formatDuration(set.duration_s ?? 0));
+  const [duration, setDuration] = useState(hold ? String(set.duration_s ?? 0) : formatDuration(set.duration_s ?? 0));
   const [rpe, setRpe] = useState<number | null>(set.rpe);
   const [error, setError] = useState<string | null>(null);
 
   function save() {
+    if (hold) {
+      const seconds = Number(duration);
+      const added = Number(weight);
+      if (!Number.isInteger(seconds) || seconds < 1) return setError("seconds?");
+      if (Number.isNaN(added) || added < 0) return setError("added load?");
+      return onSave({ duration_s: seconds, weight_kg: fromDisplayWeight(added, units), rpe });
+    }
     if (timed) {
       const seconds = parseDuration(duration);
       if (!seconds) return setError("duration?");
@@ -400,7 +429,12 @@ function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
   return (
     <tr className="border-t border-line/70 bg-panel-2/60">
       <td className="py-1.5 text-muted">{index + 1}</td>
-      {timed ? (
+      {hold ? (
+        <>
+          <td><input aria-label="Edit seconds held" className="input h-8 w-20" value={duration} onChange={(e) => setDuration(e.target.value)} inputMode="numeric" /></td>
+          <td><input aria-label="Edit added load" className="input h-8 w-20" value={weight} onChange={(e) => setWeight(e.target.value)} inputMode="decimal" /></td>
+        </>
+      ) : timed ? (
         <td colSpan={3}>
           <input aria-label="Edit duration" className="input h-8 w-28" value={duration} onChange={(e) => setDuration(e.target.value)} />
           {error && <span className="ml-2 text-xs text-bad">{error}</span>}
@@ -417,7 +451,8 @@ function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
           {RPE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       </td>
-      {!timed && <td colSpan={2} className="text-xs text-bad">{error}</td>}
+      {hold && <td className="text-xs text-bad">{error}</td>}
+      {!timed && !hold && <td colSpan={2} className="text-xs text-bad">{error}</td>}
       <td className="text-right">
         <span className="inline-flex gap-3 text-xs">
           <button type="button" className="text-accent hover:underline" disabled={busy} onClick={save}>Save</button>
