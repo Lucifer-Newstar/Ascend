@@ -35,7 +35,7 @@
 - [ ] `feat(progress): effective sets with mapping weights and effort(RPE)`
 - [ ] `feat(progress): fatigue decay and readiness per muscle`
 - [ ] `feat(progress): muscle_load_daily projection with algo_version`
-- [ ] `feat(progress): muscle history endpoint for drill-down`
+- [x] `feat(progress): muscle history endpoint for drill-down`
 - [ ] `feat(gamification): level curve, streak bonus and daily cap`
 - [ ] `feat(gamification): quest generation at reset hour, sized by completion`
 - [ ] `feat(gamification): streak freezes and pause modes`
@@ -106,7 +106,7 @@
 - [ ] `feat(gamification): trials, weekly challenges and bosses`
 - [ ] `feat(progress): morning check-in and readiness score`
 - [ ] `feat(nutrition): adaptive TDEE from trend weight`
-- [ ] `feat(progress): ETA range with confidence`
+- [x] `feat(progress): ETA range with confidence`
 - [ ] `feat(core): optional SQLCipher encryption` (pair: Gokul for packaging)
 - [ ] `feat(ai): IndicTrans2 path B prototype on CPU (int8)`
 - [ ] `feat(coach): readiness note after the morning check-in`
