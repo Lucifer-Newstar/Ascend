@@ -15,6 +15,7 @@ import type {
   Eta,
   Measurement,
   MeasurementSite,
+  MuscleActivity,
   MuscleHistory,
   PersonalRecord,
   Section,
@@ -153,6 +154,7 @@ export const api = {
   logMeasurement: (site: MeasurementSite, cm: number) => call<Measurement>("POST", "/measurements", { site, cm }),
   eta: () => call<Eta>("GET", "/progress/eta"),
   weekly: (weeks = 8) => call<WeekSummary[]>("GET", `/progress/weekly?weeks=${weeks}`),
+  muscleActivity: (days: number) => call<MuscleActivity[]>("GET", `/muscles/activity?days=${days}`),
   muscleHistory: (code: string, days: number) =>
     call<MuscleHistory>("GET", `/muscles/${encodeURIComponent(code)}/history?days=${days}`),
 
