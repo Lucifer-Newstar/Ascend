@@ -40,7 +40,8 @@ def main() -> None:
     app = create_app(settings)
     # Electron watches stdout for this line in addition to polling /health.
     print(f"ASCEND_SIDECAR_READY port={settings.port}", flush=True)
-    uvicorn.run(app, host="127.0.0.1", port=settings.port, log_level="warning")
+    # Always 127.0.0.1 on desktops; the dev container sets ASCEND_HOST=0.0.0.0.
+    uvicorn.run(app, host=settings.host, port=settings.port, log_level="warning")
 
 
 if __name__ == "__main__":
