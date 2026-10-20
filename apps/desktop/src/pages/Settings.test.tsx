@@ -18,11 +18,11 @@ vi.mock("../api/client", () => ({
   },
 }));
 
-function setup(save: (p: Partial<Settings>) => Promise<Settings>) {
+function setup(save: (p: Partial<Settings>) => Promise<Settings>, onOpenData = () => {}) {
   return render(
     <PrefsProvider initial={DEFAULT_SETTINGS} save={save}>
       <ToastProvider>
-        <SettingsPage onToggleAi={() => {}} onChanged={() => {}} />
+        <SettingsPage onToggleAi={() => {}} onChanged={() => {}} onOpenData={onOpenData} />
       </ToastProvider>
     </PrefsProvider>,
   );
@@ -59,5 +59,12 @@ describe("SettingsPage", () => {
     await userEvent.click(await screen.findByLabelText("Light"));
     expect(await screen.findByText("engine offline")).toBeInTheDocument();
     expect(screen.getByLabelText("Dark")).toBeChecked();
+  });
+
+  it("links to the Import & export page", async () => {
+    const open = vi.fn();
+    setup(vi.fn(), open);
+    await userEvent.click(await screen.findByRole("button", { name: /open import & export/i }));
+    expect(open).toHaveBeenCalled();
   });
 });

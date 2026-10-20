@@ -1,18 +1,17 @@
 import type { Settings } from "@ascend/shared";
 
 import { api } from "../api/client";
-import { IconDownload } from "../components/Icons";
+import { IconDatabase } from "../components/Icons";
 import { Segmented } from "../components/Segmented";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
-import { saveFile, todayStamp } from "../lib/files";
 import { kcal } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
-export function SettingsPage({ onToggleAi, onChanged }: { onToggleAi: () => void; onChanged: () => void }) {
+export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi: () => void; onChanged: () => void; onOpenData: () => void }) {
   const profile = useApi(api.profile, []);
   const toast = useToast();
   const { settings, update } = usePrefs();
@@ -23,18 +22,6 @@ export function SettingsPage({ onToggleAi, onChanged }: { onToggleAi: () => void
       await update(patch);
       toast(message, "info");
       onChanged();
-    } catch (e) {
-      toast((e as Error).message, "error");
-    }
-  }
-
-  async function exportData(kind: "json" | "workouts" | "meals") {
-    try {
-      const stamp = todayStamp();
-      const content = kind === "json" ? JSON.stringify(await api.exportJson(), null, 2) : await api.exportCsv(kind);
-      const name = kind === "json" ? `ascend-export-${stamp}.json` : `ascend-${kind}-${stamp}.csv`;
-      const path = await saveFile(name, content);
-      if (path) toast(`Exported ${name}`, "info");
     } catch (e) {
       toast((e as Error).message, "error");
     }
@@ -106,12 +93,9 @@ export function SettingsPage({ onToggleAi, onChanged }: { onToggleAi: () => void
           </label>
         </section>
         <section className="card p-5">
-          <h2 className="card-title mb-3">Export your data</h2>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn-ghost" onClick={() => exportData("json")}><IconDownload width={16} height={16} /> Everything (JSON)</button>
-            <button type="button" className="btn-ghost" onClick={() => exportData("workouts")}><IconDownload width={16} height={16} /> Workouts (CSV)</button>
-            <button type="button" className="btn-ghost" onClick={() => exportData("meals")}><IconDownload width={16} height={16} /> Meals (CSV)</button>
-          </div>
+          <h2 className="card-title mb-2">Your data</h2>
+          <p className="mb-3 text-sm text-muted">Import history from Strong or Hevy, or export everything you logged.</p>
+          <button type="button" className="btn-ghost" onClick={onOpenData}><IconDatabase width={16} height={16} /> Open Import & export</button>
         </section>
         <section className="card p-5 text-xs leading-relaxed text-muted">
           <h2 className="card-title mb-2">About</h2>

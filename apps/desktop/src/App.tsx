@@ -108,7 +108,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
-      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} />}
+      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} />}
     </Layout>
   );
 }
