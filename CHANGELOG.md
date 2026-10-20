@@ -37,6 +37,9 @@ Formula and model versions are listed where a number you see could change.
 
 ### Fixed (v6)
 - prog-v1 no longer gives a bodyweight set above the top of its rep zone a lower target (22 push-ups in a 12-20 zone came back as 21); found by a property test.
+- The logger's Last time panel no longer says progression is still to come; the suggestion card's e1RM is labelled as smoothed, matching the Why panel's last-session e1RM.
+- "You vs population" only says your muscles recover slower or faster when the 90 % interval of your factor excludes the population value; otherwise it says "about like the population so far".
+- Choosing a bodyweight move no longer paints the 40 kg default for one frame before the added load drops to 0 (a race a test caught under load).
 
 ### Documentation (v6)
 - ADR-0014 (recovery-v2), ADR-0015 (prog-v1), ADR-0016 (explanations and the System's voice) and ADR-0017 (evaluation on synthetic users).

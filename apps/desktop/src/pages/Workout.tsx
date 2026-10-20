@@ -1,5 +1,5 @@
 import type { Exercise, ProgressionTarget, Section, SetIn, SetPatch, SkillUnlock, Workout, WorkoutSet } from "@ascend/shared";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
 import { play } from "../lib/sound";
@@ -58,8 +58,9 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
 
   // Bodyweight moves start at no added load (a pull-up logged at the 40 kg default
   // would be a weighted pull-up); barbell/dumbbell work keeps the last weight used.
+  // A layout effect, so the 40 kg default is never painted for a bodyweight move.
   const bodyweight = selected ? isBodyweight(selected) : false;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (selected && isBodyweight(selected)) setWeight(0);
   }, [selected]);
 

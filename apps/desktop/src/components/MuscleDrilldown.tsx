@@ -128,6 +128,8 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 /** "Population vs you": the same doses decayed with the population half-life and with yours. */
 export function RecoveryYou({ m, g, explain }: { m: MuscleRecovery; g: RecoveryGroup; explain?: () => Promise<Explanation> }) {
   const slower = g.k > 1;
+  // Only call it slower or faster when the 90% interval excludes the population value.
+  const clear = g.k_low > 1 || g.k_high < 1;
   return (
     <div className="rounded-lg border border-line bg-panel px-3 py-2 text-xs" data-testid="recovery-you">
       <p className="text-ink">
@@ -137,7 +139,9 @@ export function RecoveryYou({ m, g, explain }: { m: MuscleRecovery; g: RecoveryG
       </p>
       <p className="mt-1 text-muted">
         {g.personal
-          ? `Your ${g.group} muscles recover ${slower ? "slower" : "faster"} than the population: half-life ${m.half_life_h} h instead of ${m.prior_half_life_h} h (factor ${g.k}, 90% interval ${g.k_low}–${g.k_high}, from ${g.n} sessions).`
+          ? clear
+            ? `Your ${g.group} muscles recover ${slower ? "slower" : "faster"} than the population: half-life ${m.half_life_h} h instead of ${m.prior_half_life_h} h (factor ${g.k}, 90% interval ${g.k_low}–${g.k_high}, from ${g.n} sessions).`
+            : `Your ${g.group} muscles recover about like the population so far: half-life ${m.half_life_h} h against ${m.prior_half_life_h} h (factor ${g.k}, but the 90% interval ${g.k_low}–${g.k_high} still includes 1, from ${g.n} sessions).`
           : `Population recovery for ${g.group} until your sessions show a clear difference (${g.n} usable so far).`}
       </p>
       <div className="mt-1">
