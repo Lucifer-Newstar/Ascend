@@ -8,7 +8,9 @@ import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { expectNoAxeViolations } from "../test/axe";
 import { MuscleMap } from "./MuscleMap";
 
-vi.mock("../api/client", () => ({ api: { muscleActivity: vi.fn(), muscleHistory: vi.fn(), updateSettings: vi.fn() } }));
+vi.mock("../api/client", () => ({
+  api: { muscleActivity: vi.fn(), muscleHistory: vi.fn(), updateSettings: vi.fn(), recovery: vi.fn(() => Promise.reject(new Error("not needed"))) },
+}));
 
 const m = (key: string, label: string, map_slug: string, over: Partial<MuscleState> = {}): MuscleState => ({
   key, label, group: "", map_slug, status: "under", es_7d: 0, weekly_low: 10, weekly_high: 20, readiness: 1, ready_at: null, ...over,

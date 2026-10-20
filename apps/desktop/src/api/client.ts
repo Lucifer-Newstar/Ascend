@@ -12,6 +12,10 @@ import type {
   Checkin,
   CheckinIn,
   DeloadAdvice,
+  ProgressionDecision,
+  ProgressionTarget,
+  RecoveryReport,
+  StalledLift,
   Eta,
   Measurement,
   MeasurementSite,
@@ -155,6 +159,11 @@ export const api = {
   deleteSet: (workoutId: number, setId: number) => call<null>("DELETE", `/workouts/${workoutId}/sets/${setId}`),
   prs: () => call<PersonalRecord[]>("GET", "/prs"),
   deload: () => call<DeloadAdvice>("GET", "/deload"),
+  progression: (exerciseId: number) => call<ProgressionTarget>("GET", `/intelligence/progression/${exerciseId}`),
+  decideProgression: (exerciseId: number, choice: "accepted" | "kept") =>
+    call<ProgressionDecision>("POST", `/intelligence/progression/${exerciseId}/decision`, { choice }),
+  recovery: () => call<RecoveryReport>("GET", "/intelligence/recovery"),
+  stalls: () => call<StalledLift[]>("GET", "/intelligence/stalls"),
   startDeload: () => call<DeloadAdvice>("POST", "/deload/start"),
   finishWorkout: (workoutId: number) => call<FinishedWorkout>("POST", `/workouts/${workoutId}/finish`),
 

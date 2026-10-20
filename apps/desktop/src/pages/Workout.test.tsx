@@ -1,4 +1,4 @@
-import type { Exercise, Workout } from "@ascend/shared";
+import type { Exercise, ProgressionTarget, Workout } from "@ascend/shared";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,6 +21,8 @@ vi.mock("../api/client", () => ({
     updateSettings: vi.fn(),
     previousSession: vi.fn(),
     exercise: vi.fn(),
+    progression: vi.fn(),
+    decideProgression: vi.fn(),
   },
 }));
 
@@ -53,6 +55,7 @@ describe("Training page", () => {
     vi.mocked(api.activeWorkout).mockResolvedValue(null);
     vi.mocked(api.previousSession).mockResolvedValue(null);
     vi.mocked(api.exercise).mockRejectedValue(new Error("not needed"));
+    vi.mocked(api.progression).mockRejectedValue(new Error("no suggestion"));
   });
 
   it("switches section tabs and loads that library", async () => {
@@ -283,4 +286,44 @@ describe("Training page", () => {
     await waitFor(() => expect(screen.getByRole("spinbutton", { name: "Hold (seconds)" })).toHaveValue(50));
     expect(screen.getByTestId("ghost")).toHaveTextContent("50 s");
   });
+
+  it("fills the inputs from the progression suggestion, and Keep mine goes back to last time", async () => {
+    const last = [1, 2, 3].map((i) => ({
+      id: 100 + i, exercise_id: 1, exercise_name: "Barbell Bench Press", weight_kg: 60, reps: 10, rpe: 8, duration_s: null,
+      distance_m: null, avg_hr: null, e1rm: 80, is_pr: false, performed_at: "2026-10-18T07:00:00", measure: "reps" as const,
+    }));
+    vi.mocked(api.previousSession).mockResolvedValue({ workout_id: 3, day: "2026-10-18", source: "app", sets: last });
+    const up = suggestionFixture();
+    let kept = false;
+    vi.mocked(api.progression).mockImplementation(async () =>
+      kept ? { ...up, reason: "kept", change: "hold", weight_kg: 60, reps: 10, kept_until: "2026-10-27T07:00:00" } : up,
+    );
+    vi.mocked(api.decideProgression).mockImplementation(async () => {
+      kept = true;
+      return {
+        id: 1, exercise_id: 1, decided_at: "2026-10-20T07:00:00", choice: "kept", reason: "top_of_range", kept_until: "2026-10-27T07:00:00", algo_version: "prog-v1",
+      };
+    });
+    renderPage();
+    await userEvent.click(await screen.findByText("Barbell Bench Press"));
+    const card = await screen.findByTestId("suggestion-card");
+    expect(within(card).getByTestId("suggestion-target")).toHaveTextContent("3 × 6 @ 62.5 kg");
+    expect(within(card).getByTestId("suggestion-change")).toHaveTextContent("+2.5 kg");
+    await waitFor(() => expect(screen.getByRole("spinbutton", { name: "Reps" })).toHaveValue(6));
+    expect(screen.getByText(/Target:/)).toHaveTextContent("(suggested)");
+    await userEvent.click(within(card).getByRole("button", { name: "Keep mine" }));
+    expect(api.decideProgression).toHaveBeenCalledWith(1, "kept");
+    await waitFor(() => expect(screen.getByRole("spinbutton", { name: "Reps" })).toHaveValue(10));
+    expect(await screen.findByText(/Keeping your numbers until/)).toBeInTheDocument();
+  });
 });
+
+function suggestionFixture(): ProgressionTarget {
+  return {
+    exercise_id: 1, exercise: "Barbell Bench Press", kind: "reps", sets: 3, reps: 6, seconds: null, weight_kg: 62.5, rpe: 8,
+    change: "up_load", reason: "top_of_range", why: "Every set hit 10 reps at RPE 8: top of the 6-10 range, so +2.5 kg and back to 6.",
+    explanation: { formula: "Double progression in 6-10 reps at RPE 8", inputs: { last_sets: "10, 10, 10", last_load_kg: 60, increment_kg: 2.5 } },
+    rep_range: [6, 10], increment_kg: 2.5, e1rm: { unit: "kg", current: 80, best: 80, last: 80, trend_pct_week: null, series: [] },
+    stalled: false, stall_sessions: 0, skill: null, readiness: null, kept_until: null, deload_week: false, phrasing: "template", algo_version: "prog-v1",
+  };
+}

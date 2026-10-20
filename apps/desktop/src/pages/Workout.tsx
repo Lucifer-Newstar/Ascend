@@ -1,4 +1,4 @@
-import type { Exercise, Section, SetIn, SetPatch, SkillUnlock, Workout, WorkoutSet } from "@ascend/shared";
+import type { Exercise, ProgressionTarget, Section, SetIn, SetPatch, SkillUnlock, Workout, WorkoutSet } from "@ascend/shared";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
@@ -8,6 +8,7 @@ import { IconCheck, IconSearch, IconTrophy } from "../components/Icons";
 import { NumberField, RestTimer, RPE_OPTIONS, RpeSelect } from "../components/logger/fields";
 import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
 import { HoldSetForm } from "../components/logger/HoldSetForm";
+import { SuggestionCard } from "../components/logger/SuggestionCard";
 import { TimedSetForm } from "../components/logger/TimedSetForm";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { SkillAcquired } from "../components/SkillAcquired";
@@ -88,8 +89,34 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const detail = useApi(() => (selected ? api.exercise(selected.id) : Promise.resolve(null)), [selected?.id]);
   const doneSets = useMemo(() => (workout && selected ? workout.sets.filter((s) => s.exercise_id === selected.id) : []), [workout, selected]);
   const prevSets = previous.data?.sets ?? [];
-  const target = targetFor(prevSets, doneSets.length);
-  const targetKey = `${selected?.id ?? 0}:${doneSets.length}:${previous.data?.workout_id ?? 0}`;
+  // The progression engine's suggestion (prog-v1) replaces "repeat last time" as the target,
+  // unless there is none yet (first time), it is a timed activity, or you chose "Keep mine".
+  const suggestion = useApi(
+    () => (selected && !selected.time_based ? api.progression(selected.id) : Promise.resolve(null)),
+    [selected?.id, previous.data?.workout_id],
+  );
+  const [decided, setDecided] = useState<Record<number, "accepted" | "kept">>({});
+  const engine = usableSuggestion(suggestion.data ?? null);
+  const lastTarget = targetFor(prevSets, doneSets.length);
+  const target = engine && lastTarget ? fromSuggestion(lastTarget, engine) : lastTarget;
+  const targetKey = `${selected?.id ?? 0}:${doneSets.length}:${previous.data?.workout_id ?? 0}:${engine ? `${engine.reason}:${engine.weight_kg}:${engine.reps ?? engine.seconds}` : "last"}`;
+
+  async function decide(choice: "accepted" | "kept") {
+    if (!selected) return;
+    const id = selected.id;
+    try {
+      await api.decideProgression(id, choice);
+      setDecided((d) => ({ ...d, [id]: choice }));
+      if (choice === "kept") suggestion.reload();
+      else if (engine && engine.kind === "reps") {
+        setWeight(toDisplayWeight(engine.weight_kg, units));
+        if (engine.reps !== null) setReps(engine.reps);
+        if (engine.rpe !== null) setRpe(engine.rpe);
+      }
+    } catch {
+      toast("Could not save that choice. Try again.", "error");
+    }
+  }
 
   // Pre-fill the inputs with the target whenever the next set or the exercise changes.
   useEffect(() => {
@@ -277,12 +304,16 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                 <div className="min-w-0">
                   <h2 className="text-h2 truncate text-ink">{selected.name}</h2>
                   <p className="mt-0.5 text-small text-muted">
-                    {target ? <>Target: <span className="text-ink">{describeSet(target, units)}</span> (last time{lastDay ? `, ${lastDay}` : ""})</> : previous.loading ? "Loading last time…" : "First time logging this: set your own target."}
+                    {target ? <>Target: <span className="text-ink">{describeSet(target, units)}</span> ({engine ? "suggested" : `last time${lastDay ? `, ${lastDay}` : ""}`})</> : previous.loading ? "Loading last time…" : "First time logging this: set your own target."}
                   </p>
                 </div>
                 {!selected.time_based && <RestTimer seconds={restLeft} onSkip={() => setRestLeft(0)} />}
               </div>
               {!selected.time_based && <GhostGrid prev={prevSets} done={doneSets} units={units} justLogged={logged?.id} />}
+              {suggestion.data && (
+                <SuggestionCard target={suggestion.data} units={units} decided={decided[selected.id] ?? null}
+                  onUse={() => void decide("accepted")} onKeep={() => void decide("kept")} />
+              )}
               {selected.time_based ? (
                 <div className="mt-5">
                   <div className="relative">
@@ -316,7 +347,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                       <XpGain logged={logged} className="-top-5 right-2" />
                     </span>
                   </form>
-                  <p className="mt-2 text-[11px] text-faint">Enter logs the set shown; the next set fills in from last time. RPE 10 = no reps left, 8 = two left. PRs use the Epley e1RM (1–10 reps).</p>
+                  <p className="mt-2 text-[11px] text-faint">Enter logs the set shown; the next set fills in from the target. RPE 10 = no reps left, 8 = two left. PRs use the Epley e1RM (1–10 reps).</p>
                 </>
               )}
               {!selected.time_based && <RestBar left={restLeft} total={REST_SECONDS} paused={restPaused} />}
@@ -420,7 +451,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
           <section className="card p-4 text-xs text-muted">
             <h2 className="card-title mb-2">Keyboard</h2>
             <ul className="space-y-1">
-              <li><kbd className="chip">Enter</kbd> log the set shown (last time's set)</li>
+              <li><kbd className="chip">Enter</kbd> log the set shown (the target)</li>
               <li><kbd className="chip">Tab</kbd> reps → load → RPE</li>
               <li><kbd className="chip">Space</kbd> pause or resume rest</li>
               <li><kbd className="chip">Ctrl 2</kbd> open Train from anywhere</li>
@@ -614,6 +645,23 @@ function groupSets(w: Workout | null): [string, Workout["sets"]][] {
   const m = new Map<string, Workout["sets"]>();
   for (const s of w.sets) m.set(s.exercise_name, [...(m.get(s.exercise_name) ?? []), s]);
   return [...m.entries()];
+}
+
+/** The suggestion to fill the inputs from: none for a first time, a timed activity or "keep mine". */
+export function usableSuggestion(t: ProgressionTarget | null): ProgressionTarget | null {
+  if (!t || t.kind === "none" || t.change === "first" || t.reason === "kept") return null;
+  return t;
+}
+
+/** Last time's set n with the suggestion's numbers in place. */
+export function fromSuggestion(last: WorkoutSet, t: ProgressionTarget): WorkoutSet {
+  return {
+    ...last,
+    weight_kg: t.weight_kg,
+    reps: t.kind === "reps" && t.reps !== null ? t.reps : last.reps,
+    duration_s: t.kind === "hold" && t.seconds !== null ? t.seconds : last.duration_s,
+    rpe: t.rpe ?? last.rpe,
+  };
 }
 
 /** The target for set n (0-based): last time's set n, or its last set when doing more sets. */
