@@ -207,7 +207,7 @@ export function Thumb({ exercise, className = "" }: { exercise: Pick<Exercise, "
     return <img src={exercise.image} alt="" loading="lazy" decoding="async" className={`w-full bg-white object-contain ${className}`} />;
   }
   return (
-    <div aria-hidden className={`flex w-full items-center justify-center bg-panel-2 font-display text-3xl font-bold tracking-widest text-accent/60 ${className}`}>
+    <div aria-hidden className={`flex w-full items-center justify-center bg-panel-2 font-display text-3xl font-bold tracking-widest text-accent ${className}`}>
       {exercise.name.split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
     </div>
   );
