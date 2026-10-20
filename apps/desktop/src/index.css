@@ -13,8 +13,9 @@
   --color-line: #1e2736;
   --color-line-2: #2a3446;
   --color-ink: #e6edf7;
-  --color-muted: #7d8899;
-  --color-faint: #4f5a6b;
+  /* Text tokens meet WCAG AA (4.5:1) on bg, panel and panel-2. */
+  --color-muted: #8f9bac;
+  --color-faint: #78849a;
   --color-accent: #22d3ee;
   --color-accent-dim: #0e7490;
   --color-xp: #8b7cff;
@@ -46,8 +47,8 @@
   --color-line: #dde3ec;
   --color-line-2: #c9d2df;
   --color-ink: #0f1722;
-  --color-muted: #536173;
-  --color-faint: #8592a3;
+  --color-muted: #4a5768;
+  --color-faint: #616d7e;
   --color-accent: #0e7490;
   --color-accent-dim: #67c6dc;
   --color-accent-hover: #0b5f76;
