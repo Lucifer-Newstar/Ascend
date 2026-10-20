@@ -66,7 +66,7 @@ docs/
 │   ├── security-privacy.md        ← threat model, Electron hardening, DPDP notes
 │   ├── port-register.md           ← localhost ports + IPC channel register
 │   ├── uml/                       ← 14-diagram UML set (Mermaid, PlantUML where needed)
-│   └── adr/                       ← Architecture Decision Records 0001–0013 + template
+│   └── adr/                       ← Architecture Decision Records 0001–0017 + template
 │
 ├── contracts/                     ← API CONTRACTS (contracts-first)
 │   ├── README.md                  ← conventions, mock server, drift check
@@ -142,6 +142,10 @@ docs/
 | [0011](architecture/adr/0011-prompt-contracts-and-output-validation.md) | Prompts as versioned contracts; every model output validated |
 | [0012](architecture/adr/0012-classifier-first-meal-scan.md) | Classifier-first meal scan; VLM as an optional second opinion |
 | [0013](architecture/adr/0013-custom-exercises.md) | Custom exercises: rules first, local model second, online research only with consent |
+| [0014](architecture/adr/0014-recovery-engine-v2.md) | Recovery engine v2: per-muscle readiness from dose, decay and personal factors |
+| [0015](architecture/adr/0015-progression-engine-prog-v1.md) | Progression engine prog-v1: double progression with RPE autoregulation and stall detection |
+| [0016](architecture/adr/0016-explanations-and-system-voice.md) | Explanations from templates, optional model phrasing behind the coach guard, and three System notices |
+| [0017](architecture/adr/0017-evaluation-synthetic-users.md) | Evaluating the engines on seeded synthetic users |
 
 ## 3. Reading Order for a New Member
 
