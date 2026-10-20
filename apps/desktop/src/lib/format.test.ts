@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dayLabel, kcal, pct, portionLabel, readyAtLabel } from "./format";
+import { count, dayLabel, kcal, pct, portionLabel, readyAtLabel } from "./format";
 
 describe("pct", () => {
   it("clamps to 0..1", () => {
@@ -28,5 +28,14 @@ describe("labels", () => {
   });
   it("says ready now without a time", () => {
     expect(readyAtLabel(null)).toBe("ready now");
+  });
+});
+
+describe("count", () => {
+  it("uses the singular only for exactly one", () => {
+    expect(count(1, "set")).toBe("1 set");
+    expect(count(0, "set")).toBe("0 sets");
+    expect(count(12, "rep")).toBe("12 reps");
+    expect(count(1, "hard set")).toBe("1 hard set");
   });
 });

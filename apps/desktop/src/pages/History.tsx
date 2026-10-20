@@ -5,7 +5,7 @@ import { IconTrophy } from "../components/Icons";
 import type { Page } from "../components/Layout";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState, StaleNotice } from "../components/States";
-import { dayLabel, kcal, timeLabel } from "../lib/format";
+import { count, dayLabel, kcal, timeLabel } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { formatDistance, formatDuration, toDisplayWeight, weightUnit } from "../lib/units";
 import { isOffline, useApi } from "../lib/useApi";
@@ -43,7 +43,7 @@ export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; on
         <section key={d.day} className="card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-sm font-semibold text-ink">{dayLabel(d.day)} <span className="ml-2 text-xs font-normal text-faint">{d.day}</span></h2>
-            <span className="text-xs text-muted">{d.sets} sets · {kcal(d.kcal_in)} kcal eaten · <span className="text-xp">+{d.xp} XP</span></span>
+            <span className="text-xs text-muted">{count(d.sets, "set")} · {kcal(d.kcal_in)} kcal eaten · <span className="text-xp">+{d.xp} XP</span></span>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -102,7 +102,7 @@ export function summarise(sets: WorkoutSet[], units: Units) {
         ? `${formatDuration(s.duration_s)}${s.distance_m ? ` · ${formatDistance(s.distance_m, units)}` : ""}`
         : s.weight_kg > 0
           ? `${toDisplayWeight(s.weight_kg, units)} ${weightUnit(units)} × ${s.reps}`
-          : `${s.reps} reps`;
+          : count(s.reps, "rep");
     }
     map.set(s.exercise_name, row);
   }

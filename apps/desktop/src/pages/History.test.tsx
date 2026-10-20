@@ -27,6 +27,7 @@ describe("summarise", () => {
 
   it("falls back to reps for bodyweight work", () => {
     expect(summarise([set({ exercise_name: "Push-up", weight_kg: 0, reps: 20 })], "metric")[0].best).toBe("20 reps");
+    expect(summarise([set({ exercise_name: "Pull-up", weight_kg: 0, reps: 1 })], "metric")[0].best).toBe("1 rep");
   });
 });
 

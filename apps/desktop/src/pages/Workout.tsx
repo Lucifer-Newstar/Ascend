@@ -8,6 +8,7 @@ import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
 import { TimedSetForm } from "../components/logger/TimedSetForm";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
+import { count } from "../lib/format";
 import { sessionLoad } from "../lib/load";
 import { MUSCLE_LABEL } from "../lib/muscles";
 import { usePrefs } from "../lib/prefs";
@@ -114,7 +115,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     setBusy(true);
     try {
       const res = await api.finishWorkout(workout.id);
-      toast(`Workout complete · ${res.hard_sets} hard sets · +${res.xp_awarded} XP`, "xp");
+      toast(`Workout complete · ${count(res.hard_sets, "hard set")} · +${res.xp_awarded} XP`, "xp");
       setWorkout(null);
       setRestLeft(0);
       onChanged();
@@ -213,7 +214,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
             <h2 className="card-title">Current session</h2>
             {workout && (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-muted">{workout.sets.length} sets · started {new Date(workout.started_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="text-xs text-muted">{count(workout.sets.length, "set")} · started {new Date(workout.started_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                 <button type="button" className="btn-ghost" onClick={finish} disabled={busy || workout.sets.length === 0}>Finish workout</button>
               </div>
             )}

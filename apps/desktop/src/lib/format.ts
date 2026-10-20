@@ -40,3 +40,8 @@ export function readyAtLabel(iso: string | null): string {
   const d = new Date(iso);
   return `ready ~${d.toLocaleDateString("en-GB", { weekday: "short" })} ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
 }
+
+/** "1 set", "3 sets": a count with its noun in the right number. */
+export function count(n: number, singular: string, plural = `${singular}s`): string {
+  return `${n} ${n === 1 ? singular : plural}`;
+}
