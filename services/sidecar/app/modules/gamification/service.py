@@ -20,7 +20,13 @@ from app.modules.gamification.quests import (
     ExerciseRef,
     generate_daily_quest,
 )
-from app.modules.gamification.schemas import GameSummary, QuestItemOut, StreakOut, XpOut
+from app.modules.gamification.schemas import (
+    CalmStreakOut,
+    GameSummary,
+    QuestItemOut,
+    StreakOut,
+    XpOut,
+)
 from app.modules.gamification.streaks import StreakState, compute_streak
 
 
@@ -82,6 +88,23 @@ def active_days(db: Session) -> set[date]:
 
 def streak(db: Session, today: date) -> StreakState:
     return compute_streak(active_days(db), today)
+
+
+def calm_days(db: Session) -> set[date]:
+    """Days with at least one logged meditation set."""
+    from app.modules.workouts.models import Exercise, Workout, WorkoutSet
+
+    stmt = (
+        select(Workout.day)
+        .join(WorkoutSet, WorkoutSet.workout_id == Workout.id)
+        .join(Exercise, Exercise.id == WorkoutSet.exercise_id)
+        .where(Exercise.section == "meditation")
+    )
+    return set(db.scalars(stmt).all())
+
+
+def calm_streak(db: Session, today: date) -> StreakState:
+    return compute_streak(calm_days(db), today)
 
 
 # --- quests --------------------------------------------------------------------
@@ -216,6 +239,7 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
     info = f.level_from_total(total)
     letter, title = f.rank_for_level(info.level)
     s = streak(db, now.date())
+    c = calm_streak(db, now.date())
     return GameSummary(
         xp=XpOut(
             total=total,
@@ -235,6 +259,7 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
             freezes_used=s.freezes_used,
             active_today=s.active_today,
         ),
+        calm=CalmStreakOut(current=c.current, best=c.best, active_today=c.active_today),
         quest=[QuestItemOut.model_validate(q) for q in ensure_quest(db, now)],
     )
 
@@ -244,7 +269,11 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
 
 def make_handlers(bus: EventBus) -> None:
     def on_set_logged(db: Session, e: SetLogged) -> None:
-        award(db, e.performed_at, "set", e.set_id, f.set_xp(e.rpe))
+        if e.duration_s and e.section in ("cardio", "martial_arts", "flexibility", "meditation"):
+            amount = f.timed_set_xp(e.duration_s, e.section)
+        else:
+            amount = f.set_xp(e.rpe)
+        award(db, e.performed_at, "set", e.set_id, amount)
         if e.is_pr:
             award(db, e.performed_at, "pr", e.set_id, f.PR_XP, note="new e1RM PR")
         refresh_quest(db, bus, e.performed_at)

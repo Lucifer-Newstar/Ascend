@@ -59,3 +59,14 @@ def test_daily_cap():
 def test_level_zero_rejected():
     with pytest.raises(ValueError):
         f.xp_to_next(0)
+
+
+def test_timed_set_xp():
+    from app.modules.gamification.formulas import timed_set_xp
+
+    assert timed_set_xp(1800, "cardio") == 15  # 30 min x 0.5
+    assert timed_set_xp(4 * 3600, "cardio") == 30  # capped per set
+    assert timed_set_xp(30, "flexibility") == 1  # a short hold still counts
+    assert timed_set_xp(600, "meditation") == 10  # 1 XP per calm minute
+    assert timed_set_xp(3600, "meditation") == 20  # calm cap
+    assert timed_set_xp(None, "cardio") == 0

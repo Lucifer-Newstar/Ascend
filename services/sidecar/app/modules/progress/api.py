@@ -102,10 +102,7 @@ def dashboard(
     burned = 0.0
     if profile:
         for w in db.query(Workout).filter(Workout.day == today).all():
-            dur = ((w.finished_at - w.started_at).total_seconds() / 60) if w.finished_at else None
-            burned += energy.strength_kcal(
-                energy.session_minutes(dur, len(w.sets)), profile.weight_kg
-            )
+            burned += service.workout_burn(w, profile.weight_kg)
 
     done = sum(1 for q in g.quest if q.completed_at)
     return Dashboard(
@@ -122,7 +119,7 @@ def dashboard(
             "kcal_out": Ring(
                 value=round(burned),
                 target=energy.DEFAULT_BURN_TARGET_KCAL,
-                label="kcal burned (training)",
+                label="kcal burned (training + activities)",
                 is_estimate=True,
             ),
         },

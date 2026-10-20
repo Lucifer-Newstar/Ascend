@@ -9,6 +9,7 @@ from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.workouts import service
+from app.modules.workouts.activity_seed import SECTIONS, TIME_BASED_SECTIONS
 from app.modules.workouts.schemas import (
     ExerciseOut,
     FinishedWorkout,
@@ -26,25 +27,38 @@ exercises_router = APIRouter(prefix="/exercises", tags=["workouts"])
 
 
 @exercises_router.get("", response_model=list[ExerciseOut])
-def list_exercises(q: str = "", db: Session = Depends(get_db)) -> list[ExerciseOut]:
+def list_exercises(
+    q: str = "", section: str | None = None, db: Session = Depends(get_db)
+) -> list[ExerciseOut]:
+    if section is not None and section not in SECTIONS:
+        raise HTTPException(422, f"unknown section '{section}'")
     return [
         ExerciseOut(
             id=e.id,
             name=e.name,
             equipment=e.equipment,
+            section=e.section,
+            met=e.met,
+            time_based=e.section in TIME_BASED_SECTIONS,
             muscles=[
                 MuscleWeight(muscle=m.muscle, weight=m.weight)
                 for m in sorted(e.muscles, key=lambda m: -m.weight)
             ],
         )
-        for e in service.list_exercises(db, q)
+        for e in service.list_exercises(db, q, section)
     ]
 
 
 @router.post("", response_model=WorkoutOut, status_code=201)
-def start(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> WorkoutOut:
+def start(
+    section: str = "gym", db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> WorkoutOut:
+    """Start a session (or return the one already running). `section` is a hint; the
+    first logged set decides it."""
+    if section not in SECTIONS:
+        raise HTTPException(422, f"unknown section '{section}'")
     existing = service.active_workout(db)
-    workout = existing or service.start_workout(db, now)
+    workout = existing or service.start_workout(db, now, section)
     return service.workout_out(workout)
 
 
@@ -84,6 +98,8 @@ def log_set(
         row, previous = service.log_set(db, bus, workout_id, body, now)
     except service.NotFound as e:
         raise HTTPException(404, str(e)) from e
+    except service.Invalid as e:
+        raise HTTPException(422, str(e)) from e
     except service.Conflict as e:
         raise HTTPException(409, str(e)) from e
     xp = game.xp_for_refs(db, sources=("set", "pr"), ref_id=row.id)

@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-FORMULA_VERSION = "xp-v1"
+# xp-v2: adds minute-based XP for timed sets (lifting constants unchanged from xp-v1).
+FORMULA_VERSION = "xp-v2"
 
 # --- XP rules -------------------------------------------------------------
 HARD_SET_RPE = 7.0
@@ -31,6 +32,23 @@ def set_xp(rpe: float | None) -> int:
     if rpe is None or rpe >= HARD_SET_RPE:
         return XP_PER_HARD_SET
     return XP_PER_EASY_SET
+
+
+# Timed sets: XP per active minute, capped per set so one long bout can't dominate.
+XP_PER_TIMED_MINUTE = 0.5
+TIMED_SET_CAP = 30
+XP_PER_CALM_MINUTE = 1.0
+CALM_SET_CAP = 20
+
+
+def timed_set_xp(duration_s: int | None, section: str) -> int:
+    """XP for a cardio / martial arts / flexibility bout or a meditation sit."""
+    if not duration_s or duration_s <= 0:
+        return 0
+    minutes = duration_s / 60
+    if section == "meditation":
+        return min(CALM_SET_CAP, round(minutes * XP_PER_CALM_MINUTE))
+    return min(TIMED_SET_CAP, max(1, round(minutes * XP_PER_TIMED_MINUTE)))
 
 
 def session_completion_xp(active_minutes: float, set_xp_already: int) -> int:

@@ -100,9 +100,9 @@
 
 ### Phase 4 · Breadth (8 Feb – 21 Mar)
 
-- [ ] `feat(workouts): martial arts sessions and time-based muscle load`
-- [ ] `feat(workouts): flexibility holds and ROM tests`
-- [ ] `feat(workouts): meditation sessions and calm streak`
+- [x] `feat(workouts): martial arts sessions and time-based muscle load` — also cardio; load-time-v1
+- [x] `feat(workouts): flexibility holds and ROM tests` — holds done; ROM tests deferred to v1.1
+- [x] `feat(workouts): meditation sessions and calm streak`
 - [ ] `feat(gamification): trials, weekly challenges and bosses`
 - [ ] `feat(progress): morning check-in and readiness score`
 - [ ] `feat(nutrition): adaptive TDEE from trend weight`

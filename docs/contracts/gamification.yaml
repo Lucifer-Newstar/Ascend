@@ -175,6 +175,8 @@ components:
             $ref: '#/components/schemas/QuestItemOut'
           type: array
           title: Quest
+        calm:
+          $ref: '#/components/schemas/CalmStreakOut'
       type: object
       required:
       - xp
@@ -415,3 +417,16 @@ components:
         code:
           type: string
           description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING
+    CalmStreakOut:
+      type: object
+      properties:
+        current:
+          type: integer
+        best:
+          type: integer
+        active_today:
+          type: boolean
+      required:
+      - current
+      - best
+      - active_today

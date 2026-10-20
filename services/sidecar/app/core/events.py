@@ -53,6 +53,9 @@ class SetLogged(Event):
     rpe: float | None
     performed_at: datetime
     is_pr: bool
+    # Time-based sections (cardio, martial arts, flexibility, meditation).
+    section: str = "gym"
+    duration_s: int | None = None
 
 
 @dataclass(frozen=True)
@@ -66,6 +69,8 @@ class SetUpdated(Event):
     reps: int
     rpe: float | None
     performed_at: datetime
+    section: str = "gym"
+    duration_s: int | None = None
 
 
 @dataclass(frozen=True)

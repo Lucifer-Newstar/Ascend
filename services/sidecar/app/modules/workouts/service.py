@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.events import EventBus, SetDeleted, SetLogged, SetUpdated, WorkoutLogged
 from app.modules.gamification.formulas import HARD_SET_RPE
 from app.modules.workouts import pr
+from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
 from app.modules.workouts.schemas import SetIn, SetOut, SetPatch, WorkoutOut, WorkoutSummary
 
@@ -23,10 +24,16 @@ class Conflict(Exception):
     pass
 
 
-def list_exercises(db: Session, q: str = "") -> list[Exercise]:
+class Invalid(Exception):
+    """The request is well-formed but wrong for this exercise (mapped to 422)."""
+
+
+def list_exercises(db: Session, q: str = "", section: str | None = None) -> list[Exercise]:
     stmt = select(Exercise).order_by(Exercise.name)
     if q:
         stmt = stmt.where(Exercise.name.ilike(f"%{q}%"))
+    if section:
+        stmt = stmt.where(Exercise.section == section)
     return list(db.scalars(stmt).all())
 
 
@@ -38,6 +45,9 @@ def set_out(s: WorkoutSet) -> SetOut:
         weight_kg=s.weight_kg,
         reps=s.reps,
         rpe=s.rpe,
+        duration_s=s.duration_s,
+        distance_m=s.distance_m,
+        avg_hr=s.avg_hr,
         e1rm=s.e1rm,
         is_pr=s.is_pr,
         performed_at=s.performed_at,
@@ -48,14 +58,15 @@ def workout_out(w: Workout) -> WorkoutOut:
     return WorkoutOut(
         id=w.id,
         day=w.day,
+        section=w.section,
         started_at=w.started_at,
         finished_at=w.finished_at,
         sets=[set_out(s) for s in w.sets],
     )
 
 
-def start_workout(db: Session, now: datetime) -> Workout:
-    workout = Workout(day=now.date(), started_at=now)
+def start_workout(db: Session, now: datetime, section: str = "gym") -> Workout:
+    workout = Workout(day=now.date(), started_at=now, section=section)
     db.add(workout)
     db.flush()
     return workout
@@ -83,10 +94,18 @@ def log_set(
     workout = get_workout(db, workout_id)
     if workout.finished_at is not None:
         raise Conflict("workout already finished")
-    if db.get(Exercise, data.exercise_id) is None:
+    exercise = db.get(Exercise, data.exercise_id)
+    if exercise is None:
         raise NotFound(f"exercise {data.exercise_id} not found")
+    time_based = exercise.section in TIME_BASED_SECTIONS
+    if time_based and not data.duration_s:
+        raise Invalid(f"{exercise.name} is logged by time: send duration_s")
+    if not workout.sets and workout.section != exercise.section:
+        # A session takes the section of its first set (a run started from Gym is cardio).
+        workout.section = exercise.section
 
-    e1rm = pr.e1rm_or_none(data.weight_kg, data.reps)
+    # e1RM/PR only make sense for loaded lifts.
+    e1rm = None if time_based else pr.e1rm_or_none(data.weight_kg, data.reps)
     previous = best_e1rm(db, data.exercise_id)
     row = WorkoutSet(
         workout_id=workout.id,
@@ -94,6 +113,9 @@ def log_set(
         weight_kg=data.weight_kg,
         reps=data.reps,
         rpe=data.rpe,
+        duration_s=data.duration_s,
+        distance_m=data.distance_m,
+        avg_hr=data.avg_hr,
         e1rm=e1rm,
         is_pr=pr.is_new_pr(e1rm, previous),
         performed_at=now,
@@ -111,6 +133,8 @@ def log_set(
             rpe=row.rpe,
             performed_at=now,
             is_pr=row.is_pr,
+            section=exercise.section,
+            duration_s=row.duration_s,
         ),
     )
     db.refresh(row)
@@ -157,6 +181,7 @@ def list_workouts(
             WorkoutSummary(
                 id=w.id,
                 day=w.day,
+                section=w.section,
                 started_at=w.started_at,
                 finished_at=w.finished_at,
                 sets=len(w.sets),
@@ -215,6 +240,8 @@ def update_set(
             reps=row.reps,
             rpe=row.rpe,
             performed_at=row.performed_at,
+            section=row.exercise.section,
+            duration_s=row.duration_s,
         ),
     )
     db.refresh(row)

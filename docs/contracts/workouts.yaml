@@ -40,6 +40,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/WorkoutOut'
       x-status: implemented
+      parameters:
+      - name: section
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: &id001
+          - gym
+          - calisthenics
+          - cardio
+          - martial_arts
+          - flexibility
+          - meditation
+          default: gym
+      description: Start a session or return the running one. The first logged set decides the section.
     get:
       summary: List past workouts (newest first)
       operationId: list_workouts
@@ -146,6 +161,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+      description: Lifts send weight_kg + reps; time-based sections (cardio, martial_arts, flexibility, meditation)
+        must send duration_s (422 otherwise).
   /workouts/{workout_id}/finish:
     post:
       tags:
@@ -187,6 +204,12 @@ paths:
           type: string
           default: ''
           title: Q
+      - name: section
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: *id001
       responses:
         '200':
           description: Successful Response
@@ -334,6 +357,15 @@ components:
             $ref: '#/components/schemas/MuscleWeight'
           type: array
           title: Muscles
+        section:
+          type: string
+          enum: *id001
+        met:
+          type:
+          - number
+          - 'null'
+        time_based:
+          type: boolean
       type: object
       required:
       - id
@@ -411,11 +443,13 @@ components:
           maximum: 500.0
           minimum: 0.0
           title: Weight Kg
+          default: 0
         reps:
           type: integer
           maximum: 100.0
           minimum: 1.0
           title: Reps
+          default: 1
         rpe:
           anyOf:
           - type: number
@@ -423,11 +457,26 @@ components:
             minimum: 1.0
           - type: 'null'
           title: Rpe
+        duration_s:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+          maximum: 21600
+        distance_m:
+          type:
+          - number
+          - 'null'
+          minimum: 0
+        avg_hr:
+          type:
+          - integer
+          - 'null'
+          minimum: 30
+          maximum: 230
       type: object
       required:
       - exercise_id
-      - weight_kg
-      - reps
       title: SetIn
     SetOut:
       properties:
@@ -463,6 +512,18 @@ components:
           type: string
           format: date-time
           title: Performed At
+        duration_s:
+          type:
+          - integer
+          - 'null'
+        distance_m:
+          type:
+          - number
+          - 'null'
+        avg_hr:
+          type:
+          - integer
+          - 'null'
       type: object
       required:
       - id
@@ -525,6 +586,9 @@ components:
             $ref: '#/components/schemas/SetOut'
           type: array
           title: Sets
+        section:
+          type: string
+          enum: *id001
       type: object
       required:
       - id
@@ -555,6 +619,9 @@ components:
           type: number
         xp:
           type: integer
+        section:
+          type: string
+          enum: *id001
       required:
       - id
       - day
@@ -580,6 +647,16 @@ components:
           - 'null'
           minimum: 1
           maximum: 10
+        duration_s:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+        distance_m:
+          type:
+          - number
+          - 'null'
+          minimum: 0
     PROut:
       type: object
       properties:
