@@ -1,5 +1,8 @@
 """Fill a database with ~2 weeks of realistic demo history.
 
+Gym sessions, Indian meals, morning weigh-ins and check-ins, tape measurements, a
+few cardio and meditation sessions, and a goal weight for the Progress ETA.
+
 Used for screenshots, UI work and demos. It goes through the real services
 and event bus with a simulated clock, so XP, quests and muscle load are
 exactly what the app would have produced live.
@@ -15,6 +18,7 @@ from __future__ import annotations
 import argparse
 import random
 from datetime import datetime, time, timedelta
+from typing import Literal
 
 from sqlalchemy import select
 
@@ -27,8 +31,15 @@ from app.modules.gamification.models import QuestItem
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.models import Food
 from app.modules.nutrition.schemas import MealIn
+from app.modules.progress import body, checkins
 from app.modules.progress import service as progress
-from app.modules.progress.schemas import ProfileIn
+from app.modules.progress.schemas import (
+    BodyMetricIn,
+    CheckinIn,
+    MeasurementIn,
+    MeasurementSite,
+    ProfileIn,
+)
 from app.modules.workouts import service as workouts
 from app.modules.workouts.models import Exercise
 from app.modules.workouts.schemas import SetIn
@@ -53,6 +64,18 @@ SPLIT = {
         ("Leg Curl", 35, 12),
         ("Standing Calf Raise", 50, 12),
     ],
+}
+# Timed sessions on some rest days: (section, activity, minutes, metres or None, avg HR)
+TIMED = {
+    10: ("cardio", "Brisk Walking", 35, 3200, 112),
+    6: ("cardio", "Stationary Bike", 25, None, 128),
+    3: ("meditation", "Box Breathing", 10, None, None),
+}
+# Tape measurements at the start and near the end of the fortnight: site -> (first, last) cm
+TAPE: dict[MeasurementSite, tuple[float, float]] = {
+    "waist": (79.0, 79.5),
+    "arm": (31.0, 31.5),
+    "chest": (93.0, 94.0),
 }
 # Rest days are the gaps; today (offset 0) gets meals only.
 SCHEDULE = {
@@ -116,6 +139,7 @@ def seed(days: int, wipe: bool) -> None:
                 weight_kg=68,
                 goal="bulk",
                 activity="moderate",
+                target_weight_kg=72,
             ),
         )
         ex = {e.name: e.id for e in db.scalars(select(Exercise)).all()}
@@ -128,6 +152,33 @@ def seed(days: int, wipe: bool) -> None:
                 return datetime.combine(_day, time(h, m))
 
             game.ensure_quest(db, at(7, 0))
+            # Morning weigh-in: a slow bulk (~0.3 kg/week) with day-to-day water noise.
+            if offset > 0 and rng.random() < 0.85:
+                kg = 68.0 + 0.045 * (days - offset) + rng.uniform(-0.35, 0.35)
+                body.log_metric(
+                    db, BodyMetricIn(measured_at=at(7, 10), weight_kg=round(kg, 1)), at(7, 10)
+                )
+            if offset in (days - 1, 1):
+                for site, (first, last) in TAPE.items():
+                    cm = first if offset == days - 1 else last
+                    body.log_measurement(
+                        db, MeasurementIn(measured_at=at(7, 15), site=site, cm=cm), at(7, 15)
+                    )
+            if offset > 0:  # today is left for the user's own check-in
+                sore: Literal["none", "some"] = (
+                    "some" if SCHEDULE.get(offset + 1) == "legs" else "none"
+                )
+                checkins.record(
+                    db,
+                    bus,
+                    CheckinIn(
+                        sleep=rng.choice([3, 4, 4, 5]),
+                        energy=rng.choice([3, 4, 4, 5]),
+                        soreness=sore,
+                        mood=rng.choice([3, 4, 5]),
+                    ),
+                    at(7, 20),
+                )
             plan = [
                 ("breakfast", at(8, 15)),
                 ("lunch", at(13, 20)),
@@ -171,6 +222,26 @@ def seed(days: int, wipe: bool) -> None:
                             t,
                         )
                 workouts.finish_workout(db, bus, w.id, t + timedelta(minutes=5))
+
+            timed = TIMED.get(offset)
+            if timed:
+                section, name, minutes, metres, hr = timed
+                t = at(7, 45)
+                w = workouts.start_workout(db, t, section=section)
+                workouts.log_set(
+                    db,
+                    bus,
+                    w.id,
+                    SetIn(
+                        exercise_id=ex[name],
+                        duration_s=minutes * 60,
+                        distance_m=metres,
+                        avg_hr=hr,
+                        rpe=5.0 if section == "cardio" else None,
+                    ),
+                    t + timedelta(minutes=minutes),
+                )
+                workouts.finish_workout(db, bus, w.id, t + timedelta(minutes=minutes + 1))
 
             if offset > 0:
                 for q in db.scalars(select(QuestItem).where(QuestItem.day == day)).all():
