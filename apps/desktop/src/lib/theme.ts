@@ -21,6 +21,14 @@ export function applyTheme(theme: Theme, root: HTMLElement = document.documentEl
   root.dataset.theme = theme;
 }
 
+/**
+ * Mirror Settings → "Reduce motion" onto <html data-motion>, so the CSS rules that
+ * honour prefers-reduced-motion follow the in-app toggle too (see index.css).
+ */
+export function applyMotionPreference(reduce: boolean, root: HTMLElement = document.documentElement): void {
+  root.dataset.motion = reduce ? "reduce" : "full";
+}
+
 /** Current value of a CSS custom property, for libraries that need literal colours. */
 export function cssVar(name: string, fallback = ""): string {
   if (typeof document === "undefined") return fallback;

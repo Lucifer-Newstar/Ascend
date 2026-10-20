@@ -1,5 +1,5 @@
 /**
- * User preferences (theme, units, AI, sessions per week) loaded once at boot
+ * User preferences (theme, units, AI, sessions per week, reduce motion) loaded once at boot
  * and shared through context. Changes are saved to the sidecar first, then
  * applied, so the UI never shows a preference that was not stored.
  */
@@ -7,7 +7,7 @@ import type { Settings } from "@ascend/shared";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { api } from "../api/client";
-import { applyTheme, resolveTheme, systemPrefersLight } from "./theme";
+import { applyMotionPreference, applyTheme, resolveTheme, systemPrefersLight } from "./theme";
 
 interface PrefsValue {
   settings: Settings;
@@ -48,8 +48,15 @@ export function PrefsProvider({
     return () => mq.removeEventListener("change", onChange);
   }, [settings.theme]);
 
+  useEffect(() => applyMotionPreference(Boolean(settings.reduce_motion)), [settings.reduce_motion]);
+
   const value = useMemo(() => ({ settings, update }), [settings, update]);
   return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>;
+}
+
+/** Prefs when inside <PrefsProvider>, else null (for components that also render standalone). */
+export function useOptionalPrefs(): PrefsValue | null {
+  return useContext(PrefsContext);
 }
 
 export function usePrefs(): PrefsValue {
