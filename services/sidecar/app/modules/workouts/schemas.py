@@ -89,6 +89,8 @@ class SetOut(BaseModel):
     e1rm: float | None
     is_pr: bool
     performed_at: datetime
+    # The exercise's measure, so a client can show "45 s hold" without a lookup.
+    measure: str = "reps"
 
 
 class LoggedSet(BaseModel):
