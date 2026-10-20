@@ -12,9 +12,9 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import date, datetime
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 from sqlalchemy.orm import Session
 
@@ -23,7 +23,24 @@ log = logging.getLogger("ascend.events")
 
 @dataclass(frozen=True)
 class Event:
-    """Base class. Subclasses are plain frozen dataclasses."""
+    """Base class. Subclasses are plain frozen dataclasses.
+
+    VERSION is bumped when a subclass's fields change shape, so a stored event
+    (outbox, export) can always be read back with the right schema.
+    """
+
+    VERSION: ClassVar[int] = 1
+
+    @classmethod
+    def event_name(cls) -> str:
+        return cls.__name__
+
+    def payload(self) -> dict[str, Any]:
+        """JSON-ready dict: dates and datetimes as ISO strings."""
+        out: dict[str, Any] = {}
+        for key, value in asdict(self).items():
+            out[key] = value.isoformat() if isinstance(value, date | datetime) else value
+        return out
 
 
 @dataclass(frozen=True)
@@ -36,6 +53,26 @@ class SetLogged(Event):
     rpe: float | None
     performed_at: datetime
     is_pr: bool
+
+
+@dataclass(frozen=True)
+class SetUpdated(Event):
+    """A logged set was edited. Handlers replace what they derived from the old values."""
+
+    set_id: int
+    workout_id: int
+    exercise_id: int
+    weight_kg: float
+    reps: int
+    rpe: float | None
+    performed_at: datetime
+
+
+@dataclass(frozen=True)
+class SetDeleted(Event):
+    set_id: int
+    workout_id: int
+    exercise_id: int
 
 
 @dataclass(frozen=True)
