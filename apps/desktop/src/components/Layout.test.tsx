@@ -52,6 +52,19 @@ describe("Layout", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Diet" })).toHaveFocus();
   });
 
+  it("starts a new page at the top instead of the previous page's scroll offset", () => {
+    const { rerender } = renderAt("settings", "Settings");
+    const main = document.getElementById("main")!;
+    main.scrollTop = 400;
+    expect(main.scrollTop).toBe(400);
+    rerender(
+      <Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Dashboard">
+        <p>content</p>
+      </Layout>,
+    );
+    expect(main.scrollTop).toBe(0);
+  });
+
   it("does not grab focus on first load under StrictMode's double effects", () => {
     render(
       <StrictMode>

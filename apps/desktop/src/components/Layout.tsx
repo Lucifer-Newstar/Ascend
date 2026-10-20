@@ -32,6 +32,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
 }) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   const heading = useRef<HTMLHeadingElement>(null);
+  const main = useRef<HTMLElement>(null);
   const shownPage = useRef(page);
 
   // A page change moves focus to the new page's heading (screen readers announce it,
@@ -43,6 +44,9 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
     if (shownPage.current === page) return;
     shownPage.current = page;
     heading.current?.focus();
+    // The scroll container is shared by every page: start the new page at its top
+    // instead of the previous page's scroll offset.
+    if (main.current) main.current.scrollTop = 0;
   }, [page, title]);
 
   return (
@@ -106,7 +110,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
           </div>
         </header>
         {/* tabIndex 0: a page with no controls (e.g. a long History) must still scroll from the keyboard. */}
-        <main id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
+        <main ref={main} id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
       </div>
     </div>
   );

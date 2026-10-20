@@ -151,7 +151,7 @@ describe("AddExerciseView", () => {
     await userEvent.click(screen.getByRole("button", { name: "Suggest details" }));
     expect(await screen.findByRole("heading", { name: "Research report" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "wger.de" })[0]).toHaveAttribute("href", "https://wger.de/en/exercise/77/view/");
-    await userEvent.click(screen.getByRole("button", { name: "Keep the offline equipment" }));
+    await userEvent.click(screen.getByRole("button", { name: "Keep offline equipment" }));
     expect(screen.getByText("kept offline")).toBeInTheDocument();
     expect(api.createExercise).not.toHaveBeenCalled(); // nothing is saved silently
     await userEvent.click(screen.getByRole("button", { name: "Add to my library" }));

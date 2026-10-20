@@ -682,17 +682,31 @@ def insufficient(p: Proposal, conf: dict[str, str]) -> list[str]:
     return gaps
 
 
+SECTION_LABELS = {
+    "gym": "Strength",
+    "calisthenics": "Calisthenics",
+    "cardio": "Cardio",
+    "martial_arts": "Martial arts",
+    "flexibility": "Mobility",
+    "meditation": "Mind",
+}
+
+
 def _display(key: str, value: Any) -> str:
-    if value is None:
+    """The value as the user reads it in the report."""
+    if value is None or value == {} or value == []:
         return "-"
     if key == "muscles" and isinstance(value, dict):
-        primary = [k for k, w in value.items() if w >= 1.0]
-        secondary = [k for k, w in value.items() if w < 1.0]
+        names = {k: MUSCLE_BY_KEY[k].label if k in MUSCLE_BY_KEY else k for k in value}
+        primary = [names[k] for k, w in value.items() if w >= 1.0]
+        secondary = [names[k] for k, w in value.items() if w < 1.0]
         text = ", ".join(primary)
-        return text + (f" (+ {', '.join(secondary)})" if secondary else "")
+        return text + (f" (also {', '.join(secondary)})" if secondary else "")
     if key == "instructions" and isinstance(value, list):
-        return f"{len(value)} steps"
-    return str(value)
+        return f"{len(value)} step{'s' if len(value) != 1 else ''}"
+    if key == "section":
+        return SECTION_LABELS.get(str(value), str(value))
+    return str(value).replace("_", " ").capitalize()
 
 
 def report_fields(offline: Proposal, final: Proposal, res: Research) -> list[dict[str, Any]]:

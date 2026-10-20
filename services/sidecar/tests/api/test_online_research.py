@@ -131,7 +131,9 @@ def test_allow_once_researches_without_turning_the_setting_on(client, no_ai, web
     by_field = {f["field"]: f for f in r["fields"]}
     assert {"muscles", "equipment", "instructions"} <= set(by_field)
     assert by_field["equipment"]["url"] == "https://wger.de/en/exercise/77/view/"
-    assert by_field["equipment"]["offline_value"] == "other"
+    assert by_field["equipment"]["offline_value"] == "Other"
+    assert by_field["equipment"]["value"] == "Barbell"
+    assert by_field["muscles"]["value"].startswith("Lower chest")
     assert by_field["equipment"]["conflict"] is True
     # The offline guess travels with it, so the user can keep it instead.
     assert a["offline"]["equipment"] == "other" and a["offline_sources"]["equipment"] == "rules"

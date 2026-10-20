@@ -215,7 +215,7 @@ function Review({ analysis: a, draft, setDraft, onSave, busy, onOpenExisting }: 
             {others.map((m) => (
               <li key={m.id}>
                 <button type="button" className="chip hover:border-accent hover:text-accent" onClick={() => onOpenExisting(m.id)}>
-                  {m.name} <span className="text-faint">· {Math.round(m.score * 100)}% match</span>
+                  {m.name} <span className="ml-1 text-faint">· {Math.round(m.score * 100)}% match</span>
                 </button>
               </li>
             ))}
@@ -419,7 +419,7 @@ function ResearchReportCard({ report: r, analysis: a, draft, setDraft }: {
           return (
             <li key={s} className="chip">
               {s === "wger" ? "wger.de" : "Wikipedia"}: {CALL_TEXT[best.status] ?? best.status}
-              <span className="text-faint"> · {calls.length} request{calls.length === 1 ? "" : "s"}</span>
+              <span className="ml-1 text-faint">· {calls.length} request{calls.length === 1 ? "" : "s"}</span>
             </li>
           );
         })}
@@ -448,10 +448,11 @@ function ResearchReportCard({ report: r, analysis: a, draft, setDraft }: {
                   <td className="py-2 pr-3 text-muted">
                     {f.offline_value}
                     {f.conflict && <span className="ml-1 text-warn">(differs)</span>}
+                    {!f.conflict && f.offline_value !== "-" && <span className="ml-1 text-faint">(agrees)</span>}
                   </td>
                   <td className="py-2 text-right">
                     {f.conflict && !kept(f.field) && (
-                      <button type="button" className="btn-ghost px-2 py-0.5 text-xs" onClick={() => keep(f.field)} aria-label={`Keep the offline ${f.label.toLowerCase()}`}>Keep offline</button>
+                      <button type="button" className="btn-ghost px-2 py-0.5 text-xs" onClick={() => keep(f.field)} aria-label={`Keep offline ${f.label.toLowerCase()}`}>Keep offline</button>
                     )}
                     {kept(f.field) && <span className="text-faint">kept offline</span>}
                   </td>
