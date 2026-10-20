@@ -16,8 +16,18 @@ export const isOffline = (status: number | null): boolean => status === 0 || sta
  * Load data on mount (and when `deps` change). `reload()` refetches without clearing,
  * and a failed refresh keeps the last good data so screens can show it as stale.
  */
-export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []): ApiState<T> {
-  const [data, setData] = useState<T | null>(null);
+// Last good result per cacheKey, so a screen opened again (or the app reloaded within
+// the session) paints its previous content at once and refreshes in the background.
+const cache = new Map<string, unknown>();
+
+/** Test helper: forget cached results. */
+export function clearApiCache(): void {
+  cache.clear();
+}
+
+export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = [], opts: { cacheKey?: string } = {}): ApiState<T> {
+  const { cacheKey } = opts;
+  const [data, setData] = useState<T | null>(() => (cacheKey && cache.has(cacheKey) ? (cache.get(cacheKey) as T) : null));
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +41,7 @@ export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []): ApiState<
     fnRef
       .current()
       .then((d) => {
+        if (cacheKey) cache.set(cacheKey, d);
         if (!alive) return;
         setData(d);
         setError(null);

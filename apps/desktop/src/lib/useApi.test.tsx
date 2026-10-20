@@ -40,4 +40,17 @@ describe("useApi", () => {
     rerender({ k: 2 });
     await waitFor(() => expect(fn).toHaveBeenCalledTimes(2));
   });
+
+  it("paints the cached result at once when a screen opens again, then refreshes", async () => {
+    const first = renderHook(() => useApi(() => Promise.resolve({ n: 1 }), [], { cacheKey: "screen" }));
+    await waitFor(() => expect(first.result.current.data).toEqual({ n: 1 }));
+    first.unmount();
+    let resolve: (v: { n: number }) => void = () => {};
+    const slow = new Promise<{ n: number }>((r) => { resolve = r; });
+    const again = renderHook(() => useApi(() => slow, [], { cacheKey: "screen" }));
+    expect(again.result.current.data).toEqual({ n: 1 }); // no empty frame, no skeleton
+    expect(again.result.current.loading).toBe(true);
+    act(() => resolve({ n: 2 }));
+    await waitFor(() => expect(again.result.current.data).toEqual({ n: 2 }));
+  });
 });
