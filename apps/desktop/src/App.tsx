@@ -104,7 +104,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
-      {page === "history" && <HistoryPage refreshKey={refreshKey} />}
+      {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} />}
     </Layout>
   );
