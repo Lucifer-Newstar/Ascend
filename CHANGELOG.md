@@ -87,6 +87,13 @@ Formula and model versions are listed where a number you see could change.
   buttons name the food or meal for screen readers.
 
 ### Fixed
+- `seed_demo --wipe` now also removes exercises you added (they are user data); before, a re-seed
+  kept them and a repeat "add" of the same name was refused as a duplicate.
+- Switching pages now starts the new page at the top. Before, it kept the previous page's scroll
+  position, because every page shares one scroll container.
+- Add exercise: the research report shows readable values ("Lower chest", "Barbell") and marks each
+  online value as agreeing with or differing from the offline guess. The "Keep offline" button's
+  accessible name now contains its visible text (axe `label-content-name-mismatch`).
 - **XP farming closed (`xp-v3`)**: deleting a set takes its XP back; editing can remove a PR's XP
   but never add it; set XP stops after 10 sets of one exercise or 40 in a day; PR XP is paid once per
   exercise per day (3 a day) and not for a jump of more than 25% (likely a typo); the session bonus
