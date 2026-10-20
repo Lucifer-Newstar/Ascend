@@ -6,23 +6,11 @@ import { Segmented } from "../components/Segmented";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
+import { saveFile, todayStamp } from "../lib/files";
 import { kcal } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
-
-async function saveFile(defaultName: string, content: string): Promise<string | null> {
-  if (window.ascend) {
-    const res = await window.ascend.saveExport({ defaultName, content });
-    return res.saved ? res.path : null;
-  }
-  // Browser dev mode: trigger a download instead of a native save dialog.
-  const url = URL.createObjectURL(new Blob([content], { type: "text/plain" }));
-  const a = Object.assign(document.createElement("a"), { href: url, download: defaultName });
-  a.click();
-  URL.revokeObjectURL(url);
-  return defaultName;
-}
 
 export function SettingsPage({ onToggleAi, onChanged }: { onToggleAi: () => void; onChanged: () => void }) {
   const profile = useApi(api.profile, []);
@@ -42,7 +30,7 @@ export function SettingsPage({ onToggleAi, onChanged }: { onToggleAi: () => void
 
   async function exportData(kind: "json" | "workouts" | "meals") {
     try {
-      const stamp = new Date().toISOString().slice(0, 10);
+      const stamp = todayStamp();
       const content = kind === "json" ? JSON.stringify(await api.exportJson(), null, 2) : await api.exportCsv(kind);
       const name = kind === "json" ? `ascend-export-${stamp}.json` : `ascend-${kind}-${stamp}.csv`;
       const path = await saveFile(name, content);
