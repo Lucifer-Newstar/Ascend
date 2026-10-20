@@ -208,14 +208,12 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
 function Bar({ label, value, target, unit, color }: { label: string; value: number; target?: number; unit: string; color: string }) {
   return (
     <div>
-      <div className="flex items-baseline justify-between text-xs">
-        <span className="text-muted">{label}</span>
-        <span className="text-faint">{target ? `of ${kcal(target)} ${unit}` : ""}</span>
-      </div>
+      <div className="text-xs text-muted">{label}</div>
       <div className="mt-0.5 text-lg font-semibold text-ink">{kcal(value)} <span className="text-xs font-normal text-muted">{unit}</span></div>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line">
         <div className="h-full rounded-full" style={{ width: `${(target ? pct(value, target) : Math.min(1, value / 300)) * 100}%`, background: color }} />
       </div>
+      {target ? <div className="mt-1 truncate text-[11px] text-faint">of {kcal(target)} {unit}</div> : null}
     </div>
   );
 }
