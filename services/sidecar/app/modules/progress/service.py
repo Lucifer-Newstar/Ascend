@@ -1,14 +1,15 @@
-"""Profile, settings and muscle-state queries + the SetLogged -> muscle load handler."""
+"""Profile, settings and muscle-state queries + the SetLogged -> muscle dose handler."""
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import cast
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.events import EventBus, SetDeleted, SetImported, SetLogged, SetUpdated
+from app.modules.intelligence import doses, recovery, recovery_service
 from app.modules.nutrition import tdee as tdee_engine
 from app.modules.progress import energy, muscle_load
 from app.modules.progress.models import MuscleLoadEvent, Profile, Setting
@@ -21,7 +22,7 @@ from app.modules.progress.schemas import (
     Units,
 )
 from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
-from app.modules.workouts.models import Exercise, Workout
+from app.modules.workouts.models import Exercise, Workout, WorkoutSet
 
 PROFILE_ID = 1
 
@@ -107,34 +108,60 @@ def update_settings(db: Session, data: SettingsIn) -> SettingsOut:
 
 
 def muscle_states(db: Session, now: datetime) -> list[muscle_load.MuscleState]:
-    since = now - timedelta(days=28)
-    rows = db.scalars(select(MuscleLoadEvent).where(MuscleLoadEvent.at >= since)).all()
-    contribs = [muscle_load.Contribution(r.muscle, r.es, r.at) for r in rows]
-    return muscle_load.compute_states(contribs, now)
+    """Every muscle's status from the recovery-v2 engine (personal factors, today's check-in).
+    The MuscleState shape is unchanged, so quests, deload and the coach read it as before."""
+    return [
+        muscle_load.MuscleState(
+            key=s.key,
+            label=s.label,
+            group=s.group,
+            map_slug=s.map_slug,
+            status=s.status,
+            es_7d=s.es_7d,
+            weekly_low=s.weekly_low,
+            weekly_high=s.weekly_high,
+            fatigue=s.fatigue,
+            readiness=s.readiness,
+            ready_at=s.ready_at,
+        )
+        for s in recovery_service.states(db, now)
+    ]
+
+
+def _e1rm_before(db: Session, exercise_id: int, at: datetime, set_id: int) -> float | None:
+    return db.scalar(
+        select(func.max(WorkoutSet.e1rm)).where(
+            WorkoutSet.exercise_id == exercise_id,
+            WorkoutSet.performed_at < at,
+            WorkoutSet.id != set_id,
+        )
+    )
 
 
 def on_set_logged(db: Session, event: SetLogged | SetUpdated | SetImported) -> None:
-    """Event handler: turn one logged set into per-muscle effective-set rows."""
+    """Event handler: turn one logged set into per-muscle recovery-v2 dose rows."""
     exercise = db.get(Exercise, event.exercise_id)
     if exercise is None:
         return
-    if event.duration_s and exercise.section in TIME_BASED_SECTIONS:
-        base = muscle_load.time_effective_sets(event.duration_s, event.rpe)
-        version = muscle_load.TIME_FORMULA_VERSION
-    else:
-        base = muscle_load.effort(event.rpe)
-        version = muscle_load.FORMULA_VERSION
-    for link in exercise.muscles:
-        es = round(link.weight * base, 3)
-        if es <= 0:
-            continue
+    pairs = doses.set_dose(
+        muscles={link.muscle: link.weight for link in exercise.muscles},
+        at=event.performed_at,
+        measure=exercise.measure,
+        section=exercise.section,
+        reps=event.reps,
+        weight_kg=event.weight_kg,
+        rpe=event.rpe,
+        duration_s=event.duration_s,
+        e1rm_ref=_e1rm_before(db, event.exercise_id, event.performed_at, event.set_id),
+    )
+    for muscle, es in pairs:
         db.add(
             MuscleLoadEvent(
                 set_id=event.set_id,
-                muscle=link.muscle,
+                muscle=muscle,
                 es=es,
                 at=event.performed_at,
-                formula_version=version,
+                formula_version=recovery.ALGO_VERSION,
             )
         )
 
