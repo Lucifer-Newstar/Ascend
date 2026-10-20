@@ -12,11 +12,12 @@ from pathlib import Path
 
 
 def _default_data_dir() -> Path:
-    # Windows: %APPDATA%\ASCEND ; elsewhere: ~/.ascend
+    # Windows: %APPDATA%\ASCEND\data (the same folder the installed app uses).
+    # Elsewhere: ~/.ascend/data
     appdata = os.environ.get("APPDATA")
     if appdata:
-        return Path(appdata) / "ASCEND"
-    return Path.home() / ".ascend"
+        return Path(appdata) / "ASCEND" / "data"
+    return Path.home() / ".ascend" / "data"
 
 
 @dataclass(frozen=True)

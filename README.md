@@ -110,8 +110,8 @@ npm run dev -w apps/desktop                          # app: http://localhost:517
 cd services\sidecar; uv run python -m app.devtools.seed_demo --wipe
 ```
 
-Data lives in `%APPDATA%\ASCEND` (dev runs of the sidecar) or Electron's user-data folder
-(`%APPDATA%\@ascend\desktop\data` in dev, `%APPDATA%\ASCEND\data` when installed).
+Your data (one SQLite file, `ascend.db`) lives in `%APPDATA%\ASCEND\data`, whether you run the
+installed app, the dev Electron app or the sidecar on its own.
 
 ### Common commands
 

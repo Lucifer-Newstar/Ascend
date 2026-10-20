@@ -14,6 +14,9 @@ import type { ExportSaveRequest, SidecarRequest } from "@ascend/shared";
 import { IPC } from "./channels";
 import { SidecarManager } from "./sidecar";
 
+// Same user-data folder (%APPDATA%\ASCEND) in dev and when installed.
+app.setName("ASCEND");
+
 const isDev = !app.isPackaged;
 const logFile = path.join(app.getPath("userData"), "logs", "main.log");
 
