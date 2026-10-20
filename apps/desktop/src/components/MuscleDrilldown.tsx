@@ -4,8 +4,8 @@
  * The recovery block compares your readiness with the population's (recovery-v2) and has a
  * "Why?" with the formula and every input.
  */
-import type { MuscleRecovery, RecoveryGroup } from "@ascend/shared";
-import { useEffect, useRef, useState } from "react";
+import type { Explanation, MuscleRecovery, RecoveryGroup } from "@ascend/shared";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import { readyAtLabel } from "../lib/format";
@@ -32,6 +32,7 @@ export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onC
   const rec = useApi(() => api.recovery(), [code]);
   const mine = rec.data?.muscles.find((m) => m.key === code) ?? null;
   const group = mine ? rec.data?.groups.find((g) => g.group === mine.group) ?? null : null;
+  const explainMuscle = useCallback(() => api.recoveryExplanation(code), [code]);
   const panel = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
   const [closing, setClosing] = useState(false);
@@ -77,7 +78,7 @@ export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onC
             <div><dt className="text-muted">Weekly target</dt><dd className="mt-0.5 text-sm text-ink">{h.data.target_low}–{h.data.target_high} sets</dd></div>
             <div><dt className="text-muted">Readiness</dt><dd className="mt-0.5 text-sm text-ink">{Math.round(h.data.readiness * 100)}%{h.data.ready_at ? ` · ${readyAtLabel(h.data.ready_at)}` : ""}</dd></div>
           </dl>
-          {mine && group && <RecoveryYou m={mine} g={group} />}
+          {mine && group && <RecoveryYou m={mine} g={group} explain={explainMuscle} />}
           {h.data.suggestion && <p className="rounded-lg border border-line bg-panel px-3 py-2 text-xs text-ink">{h.data.suggestion}</p>}
           {h.data.daily.length > 1 && (
             <div>
@@ -125,7 +126,7 @@ export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onC
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 /** "Population vs you": the same doses decayed with the population half-life and with yours. */
-export function RecoveryYou({ m, g }: { m: MuscleRecovery; g: RecoveryGroup }) {
+export function RecoveryYou({ m, g, explain }: { m: MuscleRecovery; g: RecoveryGroup; explain?: () => Promise<Explanation> }) {
   const slower = g.k > 1;
   return (
     <div className="rounded-lg border border-line bg-panel px-3 py-2 text-xs" data-testid="recovery-you">
@@ -140,7 +141,7 @@ export function RecoveryYou({ m, g }: { m: MuscleRecovery; g: RecoveryGroup }) {
           : `Population recovery for ${g.group} until your sessions show a clear difference (${g.n} usable so far).`}
       </p>
       <div className="mt-1">
-        <WhyButton why={m.why} label={`Why is ${m.label} readiness ${pct(m.readiness)}?`} />
+        <WhyButton why={m.why} label={`Why is ${m.label} readiness ${pct(m.readiness)}?`} explain={explain} />
       </div>
     </div>
   );

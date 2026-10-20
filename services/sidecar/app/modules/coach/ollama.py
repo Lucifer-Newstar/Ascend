@@ -32,14 +32,21 @@ def is_available(host: str, model: str, timeout: float = 1.5) -> bool:
         return False
 
 
-def chat(host: str, model: str, facts: str, question: str, timeout: float = 20.0) -> str:
+def chat(
+    host: str,
+    model: str,
+    facts: str,
+    question: str,
+    timeout: float = 20.0,
+    system: str = SYSTEM_PROMPT,
+) -> str:
     payload = {
         "model": model,
         "stream": False,
         "think": False,  # qwen3: skip the hidden reasoning pass for faster replies
         "options": {"temperature": 0.4, "num_predict": 220},
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system},
             {
                 "role": "user",
                 "content": f"Facts (from the app's own formulas):\n{facts}\n\nQuestion: {question}",

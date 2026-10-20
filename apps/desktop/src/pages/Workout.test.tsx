@@ -23,6 +23,7 @@ vi.mock("../api/client", () => ({
     exercise: vi.fn(),
     progression: vi.fn(),
     decideProgression: vi.fn(),
+    progressionExplanation: vi.fn(),
   },
 }));
 

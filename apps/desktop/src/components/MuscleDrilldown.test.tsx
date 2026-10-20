@@ -8,7 +8,7 @@ import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { MuscleDrilldown, RecoveryYou } from "./MuscleDrilldown";
 
 vi.mock("../api/client", () => ({
-  api: { muscleHistory: vi.fn(), updateSettings: vi.fn(), recovery: vi.fn(() => Promise.reject(new Error("not needed"))) },
+  api: { muscleHistory: vi.fn(), updateSettings: vi.fn(), recovery: vi.fn(() => Promise.reject(new Error("not needed"))), recoveryExplanation: vi.fn(() => Promise.reject(new Error("not needed"))) },
 }));
 
 const history: MuscleHistory = {

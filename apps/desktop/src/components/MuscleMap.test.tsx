@@ -9,7 +9,7 @@ import { expectNoAxeViolations } from "../test/axe";
 import { MuscleMap } from "./MuscleMap";
 
 vi.mock("../api/client", () => ({
-  api: { muscleActivity: vi.fn(), muscleHistory: vi.fn(), updateSettings: vi.fn(), recovery: vi.fn(() => Promise.reject(new Error("not needed"))) },
+  api: { muscleActivity: vi.fn(), muscleHistory: vi.fn(), updateSettings: vi.fn(), recovery: vi.fn(() => Promise.reject(new Error("not needed"))), recoveryExplanation: vi.fn(() => Promise.reject(new Error("not needed"))) },
 }));
 
 const m = (key: string, label: string, map_slug: string, over: Partial<MuscleState> = {}): MuscleState => ({

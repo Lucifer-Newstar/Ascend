@@ -2,8 +2,8 @@
  * The "Why?" disclosure used by the intelligence layer: the formula in words and every
  * input with the exact value the engine used, so no suggested number is unexplained.
  */
-import type { Why } from "@ascend/shared";
-import { useId, useState } from "react";
+import type { Explanation, Why } from "@ascend/shared";
+import { useEffect, useId, useState } from "react";
 
 export const WHY_LABEL: Record<string, string> = {
   // prog-v1
@@ -33,7 +33,13 @@ export const WHY_LABEL: Record<string, string> = {
   readiness_population: "Readiness (population)",
 };
 
-export function WhyButton({ why, label, title }: { why: Why; label: string; title?: string }) {
+export function WhyButton({ why, label, title, explain }: {
+  why: Why;
+  label: string;
+  title?: string;
+  /** Optional plain-language sentence (local model, number-checked; else the template). */
+  explain?: () => Promise<Explanation>;
+}) {
   const [open, setOpen] = useState(false);
   const id = useId();
   return (
@@ -42,15 +48,30 @@ export function WhyButton({ why, label, title }: { why: Why; label: string; titl
         aria-label={label} onClick={() => setOpen((o) => !o)}>
         Why?
       </button>
-      {open && <WhyPanel id={id} why={why} title={title} />}
+      {open && <WhyPanel id={id} why={why} title={title} explain={explain} />}
     </div>
   );
 }
 
-export function WhyPanel({ why, id, title }: { why: Why; id?: string; title?: string }) {
+export function WhyPanel({ why, id, title, explain }: { why: Why; id?: string; title?: string; explain?: () => Promise<Explanation> }) {
+  const [plain, setPlain] = useState<Explanation | null>(null);
+  useEffect(() => {
+    if (!explain) return;
+    let alive = true;
+    explain().then((e) => alive && setPlain(e)).catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [explain]);
   return (
     <div id={id} className="panel-in mt-2 rounded-md border border-line bg-panel-2 p-3 text-xs" data-testid="why-panel">
       {title && <p className="font-medium text-ink">{title}</p>}
+      {plain && (
+        <p className="mb-2 text-ink" data-testid="why-plain">
+          {plain.text}{" "}
+          <span className="text-faint">({plain.phrasing === "model" ? "phrased by the local model, numbers checked" : "template"})</span>
+        </p>
+      )}
       <p className="text-ink">{why.formula}</p>
       <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-muted">
         {Object.entries(why.inputs).map(([k, v]) => (

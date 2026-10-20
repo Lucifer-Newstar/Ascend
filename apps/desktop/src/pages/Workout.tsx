@@ -101,6 +101,12 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const target = engine && lastTarget ? fromSuggestion(lastTarget, engine) : lastTarget;
   const targetKey = `${selected?.id ?? 0}:${doneSets.length}:${previous.data?.workout_id ?? 0}:${engine ? `${engine.reason}:${engine.weight_kg}:${engine.reps ?? engine.seconds}` : "last"}`;
 
+  const selectedId = selected?.id;
+  const explainTarget = useMemo(
+    () => (selectedId === undefined ? undefined : () => api.progressionExplanation(selectedId)),
+    [selectedId],
+  );
+
   async function decide(choice: "accepted" | "kept") {
     if (!selected) return;
     const id = selected.id;
@@ -312,7 +318,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               {!selected.time_based && <GhostGrid prev={prevSets} done={doneSets} units={units} justLogged={logged?.id} />}
               {suggestion.data && (
                 <SuggestionCard target={suggestion.data} units={units} decided={decided[selected.id] ?? null}
-                  onUse={() => void decide("accepted")} onKeep={() => void decide("kept")} />
+                  onUse={() => void decide("accepted")} onKeep={() => void decide("kept")} explain={explainTarget} />
               )}
               {selected.time_based ? (
                 <div className="mt-5">

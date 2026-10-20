@@ -141,3 +141,17 @@ class StalledLiftOut(BaseModel):
     sessions_flat: int
     best: float | None
     unit: Literal["kg", "reps", "s"]
+
+
+class ExplanationOut(BaseModel):
+    """A plain-language sentence for one engine number. `text` is the local model's
+    sentence only when it passed the coach guard; otherwise it is the template."""
+
+    text: str
+    template: str
+    phrasing: Literal["model", "template"]
+    model: str | None
+    fallback: str | None
+    checks: dict[str, str] | None
+    facts: str
+    version: str
