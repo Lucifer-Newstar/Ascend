@@ -28,16 +28,16 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
 }) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   const heading = useRef<HTMLHeadingElement>(null);
-  const firstRender = useRef(true);
+  const shownPage = useRef(page);
 
   // A page change moves focus to the new page's heading (screen readers announce it,
-  // keyboard users continue from the top) and updates the window title.
+  // keyboard users continue from the top) and updates the window title. Comparing with
+  // the page last shown (not a first-render flag) keeps the first load unfocused even
+  // when React runs effects twice (StrictMode in development).
   useEffect(() => {
     document.title = `${title} · ASCEND`;
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
+    if (shownPage.current === page) return;
+    shownPage.current = page;
     heading.current?.focus();
   }, [page, title]);
 
