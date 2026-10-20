@@ -11,11 +11,12 @@ import threading
 from collections.abc import AsyncIterator, Callable
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from app import __version__
-from app.core import outbox_worker
+from app.core import outbox_worker, stream
 from app.core.config import Settings, load_settings
 from app.core.db import checkpoint_wal, make_engine, make_session_factory
 from app.core.events import EventBus
@@ -149,6 +150,37 @@ def create_app(
         checkpoint = checkpoint_wal(engine)
         app.state.request_exit()
         return {"status": "stopping", "wal_checkpoint": checkpoint}
+
+    @app.get(
+        "/events",
+        tags=["system"],
+        response_class=StreamingResponse,
+        responses={
+            200: {
+                "description": "text/event-stream; each message is a ServerEvent",
+                "content": {
+                    "text/event-stream": {"schema": {"$ref": "#/components/schemas/ServerEvent"}}
+                },
+            }
+        },
+    )
+    async def events(
+        request: Request,
+        once: bool = False,
+        last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+    ) -> StreamingResponse:
+        """Server-sent stream of dashboard changes, completed quests and PRs, read from the
+        outbox. Reconnect with Last-Event-ID to resume; `once=true` sends the backlog and
+        closes."""
+        gen = stream.stream(
+            app.state.session_factory,
+            stream.parse_last_id(last_event_id),
+            once,
+            request.is_disconnected,
+        )
+        return StreamingResponse(
+            gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache"}
+        )
 
     for router in (
         workouts_router,
