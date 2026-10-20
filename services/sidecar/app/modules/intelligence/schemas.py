@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -64,3 +65,79 @@ class RecoveryOut(BaseModel):
     checkin: CheckinUsed | None
     groups: list[RecoveryGroupOut]
     muscles: list[MuscleRecoveryOut]
+
+
+# --- progression (prog-v1) ---------------------------------------------------------------
+
+
+class E1rmPoint(BaseModel):
+    at: datetime
+    value: float
+
+
+class E1rmOut(BaseModel):
+    """Session performance: RIR-adjusted e1RM (kg) for loaded lifts, best reps for
+    bodyweight moves, best seconds for holds."""
+
+    unit: Literal["kg", "reps", "s"]
+    current: float | None
+    best: float | None
+    last: float | None
+    trend_pct_week: float | None
+    series: list[E1rmPoint]
+
+
+class SkillGoalOut(BaseModel):
+    skill_name: str
+    step_name: str
+    criterion: str
+    sessions_met: int
+    confirm_sessions: int
+
+
+class TargetOut(BaseModel):
+    exercise_id: int
+    exercise: str
+    kind: Literal["reps", "hold", "none"]
+    sets: int
+    reps: int | None
+    seconds: int | None
+    weight_kg: float
+    rpe: float | None
+    change: str
+    reason: str
+    why: str
+    explanation: Why
+    rep_range: list[int] | None
+    increment_kg: float | None
+    e1rm: E1rmOut | None
+    stalled: bool
+    stall_sessions: int
+    skill: SkillGoalOut | None
+    readiness: float | None
+    kept_until: datetime | None
+    deload_week: bool
+    phrasing: Literal["template", "model"] = "template"
+    algo_version: str
+
+
+class DecisionIn(BaseModel):
+    choice: Literal["accepted", "kept"]
+
+
+class DecisionOut(BaseModel):
+    id: int
+    exercise_id: int
+    decided_at: datetime
+    choice: str
+    reason: str
+    kept_until: datetime | None
+    algo_version: str
+
+
+class StalledLiftOut(BaseModel):
+    exercise_id: int
+    exercise: str
+    sessions_flat: int
+    best: float | None
+    unit: Literal["kg", "reps", "s"]

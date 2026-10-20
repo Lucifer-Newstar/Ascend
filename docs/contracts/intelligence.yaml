@@ -41,6 +41,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecoveryOut'
       x-status: implemented
+  /intelligence/progression/{exercise_id}:
+    get:
+      tags:
+      - intelligence
+      summary: Progression Target
+      description: 'prog-v1: the next session''s target for one exercise, with the reason, a one-line
+
+        why, the formula and every input.'
+      operationId: progression_target_intelligence_progression__exercise_id__get
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /intelligence/progression/{exercise_id}/decision:
+    post:
+      tags:
+      - intelligence
+      summary: Progression Decision
+      description: 'Record "use it" or "keep mine" for the current target. "Keep mine" stops new
+
+        targets for this exercise for 7 days (FT-1).'
+      operationId: progression_decision_intelligence_progression__exercise_id__decision_post
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /intelligence/stalls:
+    get:
+      tags:
+      - intelligence
+      summary: Stalls
+      description: Exercises trained in the last 14 days with no rep record in 3 sessions (prog-v1).
+      operationId: stalls_intelligence_stalls_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/StalledLiftOut'
+                type: array
+                title: Response Stalls Intelligence Stalls Get
+      x-status: implemented
 components:
   schemas:
     CheckinUsed:
@@ -56,6 +140,124 @@ components:
       - sleep
       - soreness
       title: CheckinUsed
+    DecisionIn:
+      properties:
+        choice:
+          type: string
+          enum:
+          - accepted
+          - kept
+          title: Choice
+      type: object
+      required:
+      - choice
+      title: DecisionIn
+    DecisionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        decided_at:
+          type: string
+          format: date-time
+          title: Decided At
+        choice:
+          type: string
+          title: Choice
+        reason:
+          type: string
+          title: Reason
+        kept_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Kept Until
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - id
+      - exercise_id
+      - decided_at
+      - choice
+      - reason
+      - kept_until
+      - algo_version
+      title: DecisionOut
+    E1rmOut:
+      properties:
+        unit:
+          type: string
+          enum:
+          - kg
+          - reps
+          - s
+          title: Unit
+        current:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Current
+        best:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Best
+        last:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Last
+        trend_pct_week:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Trend Pct Week
+        series:
+          items:
+            $ref: '#/components/schemas/E1rmPoint'
+          type: array
+          title: Series
+      type: object
+      required:
+      - unit
+      - current
+      - best
+      - last
+      - trend_pct_week
+      - series
+      title: E1rmOut
+      description: 'Session performance: RIR-adjusted e1RM (kg) for loaded lifts, best reps for
+
+        bodyweight moves, best seconds for holds.'
+    E1rmPoint:
+      properties:
+        at:
+          type: string
+          format: date-time
+          title: At
+        value:
+          type: number
+          title: Value
+      type: object
+      required:
+      - at
+      - value
+      title: E1rmPoint
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     MuscleRecoveryOut:
       properties:
         key:
@@ -209,6 +411,184 @@ components:
       - muscles
       title: RecoveryOut
       description: 'GET /intelligence/recovery: every muscle with its inputs, and the personal factors.'
+    SkillGoalOut:
+      properties:
+        skill_name:
+          type: string
+          title: Skill Name
+        step_name:
+          type: string
+          title: Step Name
+        criterion:
+          type: string
+          title: Criterion
+        sessions_met:
+          type: integer
+          title: Sessions Met
+        confirm_sessions:
+          type: integer
+          title: Confirm Sessions
+      type: object
+      required:
+      - skill_name
+      - step_name
+      - criterion
+      - sessions_met
+      - confirm_sessions
+      title: SkillGoalOut
+    StalledLiftOut:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise:
+          type: string
+          title: Exercise
+        sessions_flat:
+          type: integer
+          title: Sessions Flat
+        best:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Best
+        unit:
+          type: string
+          enum:
+          - kg
+          - reps
+          - s
+          title: Unit
+      type: object
+      required:
+      - exercise_id
+      - exercise
+      - sessions_flat
+      - best
+      - unit
+      title: StalledLiftOut
+    TargetOut:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise:
+          type: string
+          title: Exercise
+        kind:
+          type: string
+          enum:
+          - reps
+          - hold
+          - none
+          title: Kind
+        sets:
+          type: integer
+          title: Sets
+        reps:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Reps
+        seconds:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Seconds
+        weight_kg:
+          type: number
+          title: Weight Kg
+        rpe:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Rpe
+        change:
+          type: string
+          title: Change
+        reason:
+          type: string
+          title: Reason
+        why:
+          type: string
+          title: Why
+        explanation:
+          $ref: '#/components/schemas/Why'
+        rep_range:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Rep Range
+        increment_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Increment Kg
+        e1rm:
+          anyOf:
+          - $ref: '#/components/schemas/E1rmOut'
+          - type: 'null'
+        stalled:
+          type: boolean
+          title: Stalled
+        stall_sessions:
+          type: integer
+          title: Stall Sessions
+        skill:
+          anyOf:
+          - $ref: '#/components/schemas/SkillGoalOut'
+          - type: 'null'
+        readiness:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Readiness
+        kept_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Kept Until
+        deload_week:
+          type: boolean
+          title: Deload Week
+        phrasing:
+          type: string
+          enum:
+          - template
+          - model
+          title: Phrasing
+          default: template
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - exercise_id
+      - exercise
+      - kind
+      - sets
+      - reps
+      - seconds
+      - weight_kg
+      - rpe
+      - change
+      - reason
+      - why
+      - explanation
+      - rep_range
+      - increment_kg
+      - e1rm
+      - stalled
+      - stall_sessions
+      - skill
+      - readiness
+      - kept_until
+      - deload_week
+      - algo_version
+      title: TargetOut
     TopSet:
       properties:
         exercise:
@@ -226,6 +606,32 @@ components:
       - dose_now
       - hours_ago
       title: TopSet
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     Why:
       properties:
         formula:
