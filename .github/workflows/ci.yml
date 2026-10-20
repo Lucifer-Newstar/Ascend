@@ -1,0 +1,137 @@
+# Continuous integration: runs on every push and pull request.
+#
+# Jobs (independent ones run in parallel):
+#   sidecar   -> ruff lint + format check, mypy, pytest (with coverage), Alembic upgrade check
+#   desktop   -> eslint, tsc (renderer + Electron + shared), vitest, vite build
+#   sidecar-build -> PyInstaller build on Linux + a smoke test of the binary
+#   docker    -> builds the test image and runs the tests inside it
+#
+# The Windows installer lives in release.yml (it is slow, so it runs on tags / manually).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel an older run of the same branch/PR when a new commit arrives.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sidecar:
+    name: Sidecar (lint, types, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/sidecar
+    steps:
+      - uses: actions/checkout@v4
+
+      # uv installs Python 3.12 itself (from .python-version) and caches packages.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: services/sidecar/uv.lock
+
+      - name: Install dependencies (locked)
+        run: uv sync --frozen
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Format check (ruff format)
+        run: uv run ruff format --check .
+
+      - name: Type check (mypy)
+        run: uv run mypy app
+
+      - name: Tests (pytest)
+        run: uv run pytest --cov=app --cov-report=term-missing --cov-report=xml
+
+      - name: Migrations apply to a fresh database
+        env:
+          ASCEND_DB_URL: sqlite:///${{ runner.temp }}/ci.db
+        run: uv run alembic upgrade head && uv run alembic current
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidecar-coverage
+          path: services/sidecar/coverage.xml
+
+  desktop:
+    name: Desktop (lint, types, tests, build)
+    runs-on: ubuntu-latest
+    env:
+      # The Electron binary isn't needed to lint/test/build the renderer.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install (npm workspaces, from package-lock.json)
+        run: npm ci
+
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Type check (tsc)
+        run: npm run typecheck
+
+      - name: Unit tests (vitest)
+        run: npm test
+
+      - name: Build renderer + Electron main/preload
+        run: npm run build -w apps/desktop
+
+      - name: Upload renderer build
+        uses: actions/upload-artifact@v4
+        with:
+          name: renderer-dist
+          path: apps/desktop/dist
+
+  sidecar-build:
+    name: Sidecar binary (PyInstaller, Linux)
+    runs-on: ubuntu-latest
+    needs: sidecar
+    defaults:
+      run:
+        working-directory: services/sidecar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: services/sidecar/uv.lock
+
+      - name: Build
+        run: |
+          uv sync --frozen --group build
+          uv run --group build pyinstaller packaging/ascend-sidecar.spec --noconfirm
+
+      # Start the binary with a token on stdin and check /health answers.
+      - name: Smoke test
+        run: |
+          echo ci-token | ASCEND_PORT=8799 ASCEND_DATA_DIR="$RUNNER_TEMP/data" ./dist/ascend-sidecar/ascend-sidecar &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8799/health && exit 0
+            sleep 1
+          done
+          echo "sidecar binary did not become healthy" && exit 1
+
+  docker:
+    name: Docker test image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run tests in the container
+        run: docker compose -f docker/docker-compose.yml run --rm --build sidecar-tests
