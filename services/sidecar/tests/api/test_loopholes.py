@@ -1,4 +1,7 @@
-"""Loopholes found in the ASCEND v4 sweep, one test per finding (see docs/operations/loophole-sweep.md)."""
+"""Loopholes found in the ASCEND v4 sweep, one test per finding.
+
+See docs/operations/loophole-sweep.md for the table of findings and fixes.
+"""
 
 from datetime import datetime, timedelta
 
