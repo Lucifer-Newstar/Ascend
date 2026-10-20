@@ -5,19 +5,24 @@ import { IconBowl, IconChart, IconChat, IconDashboard, IconDatabase, IconDumbbel
 export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "coach" | "history" | "data" | "settings";
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
-  { id: "dashboard", label: "Dashboard", icon: IconDashboard },
-  { id: "workout", label: "Training", icon: IconDumbbell },
+  { id: "dashboard", label: "Today", icon: IconDashboard },
+  { id: "workout", label: "Train", icon: IconDumbbell },
   { id: "library", label: "Exercises", icon: IconLibrary },
   { id: "skills", label: "Skills", icon: IconSkill },
   { id: "progress", label: "Progress", icon: IconChart },
-  { id: "diet", label: "Diet", icon: IconBowl },
+  { id: "diet", label: "Fuel", icon: IconBowl },
   { id: "coach", label: "Coach", icon: IconChat },
   { id: "history", label: "History", icon: IconHistory },
   { id: "data", label: "Import & export", icon: IconDatabase },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
-export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status, onlineResearch = false }: {
+/** Nav groups: a thin divider after these items (order and Ctrl+1…0 stay as before). */
+const GROUP_ENDS = new Set<Page>(["skills", "history", "coach"]);
+
+export type AiState = "on" | "rules" | "off";
+
+export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status, onlineResearch = false, aiState, aiModel, command }: {
   page: Page;
   onNavigate: (p: Page) => void;
   aiEnabled: boolean | null;
@@ -28,6 +33,11 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
   status?: ReactNode;
   /** Settings -> Online research is on: the app may contact wger.de and Wikipedia. */
   onlineResearch?: boolean;
+  /** "on" = local model answering, "rules" = AI on but the model is not running, "off". */
+  aiState?: AiState;
+  aiModel?: string | null;
+  /** The command bar opener (Ctrl+K). */
+  command?: ReactNode;
   children: ReactNode;
 }) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -54,7 +64,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
       <a href="#main" className="skip-link" onClick={(e) => { e.preventDefault(); heading.current?.focus(); }}>
         Skip to content
       </a>
-      <aside className="flex w-[216px] shrink-0 flex-col border-r border-line bg-sidebar">
+      <aside className="flex w-[232px] shrink-0 flex-col border-r border-line bg-sidebar">
         <div className="flex items-center gap-2.5 px-5 pb-6 pt-6">
           <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden>
             <path d="M16 3 29 28H3L16 3Z" fill="none" stroke="var(--color-accent)" strokeWidth="2.4" strokeLinejoin="round" />
@@ -62,31 +72,37 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
           </svg>
           <span className="font-display text-xl font-bold tracking-[0.2em] text-ink">ASCEND</span>
         </div>
-        <nav className="flex-1 space-y-0.5 px-3" aria-label="Main">
+        <nav className="flex-1 px-3" aria-label="Main">
+          <ul className="space-y-0.5">
           {NAV.map(({ id, label, icon: Icon }, i) => {
             const active = page === id;
+            const key = i === 9 ? 0 : i + 1;
             return (
-              <button key={id} type="button" onClick={() => onNavigate(id)} aria-current={active ? "page" : undefined}
-                title={`${label} (Ctrl+${i + 1})`} aria-keyshortcuts={`Control+${i + 1}`}
-                className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${active ? "bg-accent/10 text-accent" : "text-muted hover:bg-panel-2 hover:text-ink"}`}>
-                {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-accent" />}
+              <li key={id} className={GROUP_ENDS.has(id) ? "mb-2 border-b border-line pb-2" : undefined}>
+              <button type="button" onClick={() => onNavigate(id)} aria-current={active ? "page" : undefined}
+                title={`${label} (Ctrl+${key})`} aria-keyshortcuts={`Control+${key}`}
+                className={`group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-150 ${active ? "bg-accent/10 font-medium text-accent" : "text-muted hover:bg-panel-2 hover:text-ink"}`}>
+                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-accent" />}
                 <Icon width={18} />
-                {label}
+                <span className="flex-1 truncate text-left">{label}</span>
+                <kbd aria-hidden="true" className={`font-sans text-[10px] ${active ? "text-accent" : "text-faint opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"}`}>Ctrl {key}</kbd>
               </button>
+              </li>
             );
           })}
+          </ul>
         </nav>
         <div className="px-5 py-5 text-[11px] leading-relaxed text-faint">
           {onlineResearch ? "Online research on · only exercise names leave this PC" : "Offline · data stays on this PC"}
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[68px] shrink-0 items-center justify-between border-b border-line px-8">
-          <div>
-            <h1 ref={heading} tabIndex={-1} className="text-lg font-semibold text-ink outline-none">{title}</h1>
-            <p className="text-xs text-muted">{subtitle ?? today}</p>
+        <header className="flex h-[76px] shrink-0 items-center justify-between gap-4 border-b border-line px-8">
+          <div className="min-w-0">
+            <h1 ref={heading} tabIndex={-1} className="text-display-l truncate text-ink outline-none">{title}</h1>
+            <p className="text-small text-muted">{subtitle ?? today}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
           {onlineResearch && (
             <button type="button" onClick={() => onNavigate("settings")}
               className="flex items-center gap-2 rounded-full border border-warn/60 px-3 py-1.5 text-xs text-warn hover:bg-warn/10"
@@ -99,19 +115,34 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
             </button>
           )}
           {status}
-          <button type="button" onClick={onToggleAi} disabled={aiEnabled === null} role="switch" aria-checked={Boolean(aiEnabled)}
-            className="flex items-center gap-2.5 rounded-full border border-line-2 py-1.5 pl-3 pr-1.5 text-xs text-muted hover:border-accent/50"
-            title="When off, the coach uses rule-based tips only. Everything else works the same.">
-            AI coach
-            <span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${aiEnabled ? "bg-accent" : "bg-line-2"}`}>
-              <span className={`h-4 w-4 rounded-full bg-white transition-transform ${aiEnabled ? "translate-x-4" : ""}`} />
-            </span>
-          </button>
+          <AiStatusDot aiEnabled={aiEnabled} state={aiState} model={aiModel} onToggle={onToggleAi} />
+          {command}
           </div>
         </header>
         {/* tabIndex 0: a page with no controls (e.g. a long History) must still scroll from the keyboard. */}
         <main ref={main} id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
       </div>
     </div>
+  );
+}
+
+const AI_WORDS: Record<AiState, { label: string; dot: string; tip: string }> = {
+  on: { label: "AI on", dot: "bg-good", tip: "The local model is running and words the coach's answers. Numbers always come from the engines." },
+  rules: { label: "AI on · rules", dot: "bg-warn", tip: "AI is on but the local model is not running, so the coach uses rule-based tips." },
+  off: { label: "AI off", dot: "bg-line-input", tip: "AI is off: the coach uses rule-based tips only. Everything else works the same." },
+};
+
+/** AI status dot (full / rules-only / off) that also switches AI on and off. */
+function AiStatusDot({ aiEnabled, state, model, onToggle }: { aiEnabled: boolean | null; state?: AiState; model?: string | null; onToggle: () => void }) {
+  const s: AiState = aiEnabled ? (state ?? "on") : "off";
+  const w = AI_WORDS[s];
+  return (
+    <button type="button" onClick={onToggle} disabled={aiEnabled === null} role="switch" aria-checked={Boolean(aiEnabled)}
+      aria-label={s === "rules" ? "AI coach (model not running, rule-based tips)" : "AI coach"} data-ai-state={s}
+      className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-xs text-muted transition-colors duration-150 hover:border-accent/50 hover:text-ink"
+      title={`${w.tip}${model && s === "on" ? ` Model: ${model}.` : ""} Click to turn AI ${aiEnabled ? "off" : "on"}.`}>
+      <span className={`h-2 w-2 rounded-full ${w.dot}`} aria-hidden="true" />
+      <span aria-hidden="true">{w.label}</span>
+    </button>
   );
 }

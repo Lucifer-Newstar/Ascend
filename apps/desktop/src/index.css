@@ -155,7 +155,9 @@ body {
 
 /* Reusable component classes (Tailwind v4 @utility so they can be composed with @apply). */
 @utility card {
-  @apply rounded-lg border border-line bg-panel shadow-panel;
+  @apply rounded-lg border border-line bg-panel;
+  /* Read at runtime (not via the shadow utility, which inlines the dark value). */
+  box-shadow: var(--shadow-panel);
 }
 /* Window header style (Rajdhani 14/20, 600, uppercase, +0.08em): card and window titles. */
 @utility card-title {

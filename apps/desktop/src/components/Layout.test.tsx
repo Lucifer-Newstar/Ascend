@@ -102,4 +102,23 @@ describe("Layout", () => {
     const { container } = renderAt("dashboard", "Dashboard");
     await expectNoAxeViolations(container);
   });
+
+  it("labels the rail the v5 way and keeps Ctrl+1…0 in rail order", () => {
+    renderAt("dashboard", "Today");
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    const names = [...nav.querySelectorAll("button")].map((b) => b.textContent?.replace(/Ctrl \d/, "").trim());
+    expect(names).toEqual(["Today", "Train", "Exercises", "Skills", "Progress", "Fuel", "Coach", "History", "Import & export", "Settings"]);
+    expect(screen.getByRole("button", { name: "Skills" })).toHaveAttribute("aria-keyshortcuts", "Control+4");
+    expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-keyshortcuts", "Control+0");
+  });
+
+  it("shows the AI status: on, rules only (model not running) or off", () => {
+    const { rerender } = render(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled onToggleAi={() => {}} title="Today" aiState="on" aiModel="qwen3:4b"><p /></Layout>);
+    expect(screen.getByRole("switch", { name: "AI coach" })).toHaveAttribute("data-ai-state", "on");
+    expect(screen.getByText("AI on")).toBeInTheDocument();
+    rerender(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled onToggleAi={() => {}} title="Today" aiState="rules"><p /></Layout>);
+    expect(screen.getByRole("switch", { name: /model not running/ })).toHaveAttribute("aria-checked", "true");
+    rerender(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Today" aiState="rules"><p /></Layout>);
+    expect(screen.getByRole("switch", { name: "AI coach" })).toHaveAttribute("data-ai-state", "off");
+  });
 });
