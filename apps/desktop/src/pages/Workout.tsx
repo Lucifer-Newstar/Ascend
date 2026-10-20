@@ -149,7 +149,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               <button type="button" onClick={() => setSelected(e)}
                 className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"}`}>
                 <div className={`text-sm ${selected?.id === e.id ? "text-accent" : "text-ink"}`}>{e.name}</div>
-                <div className="mt-0.5 truncate text-xs text-faint">
+                <div className={`mt-0.5 truncate text-xs ${selected?.id === e.id ? "text-muted" : "text-faint"}`}>
                   {e.equipment}
                   {e.muscles.some((m) => m.weight >= 1) && ` · ${e.muscles.filter((m) => m.weight >= 1).map((m) => MUSCLE_LABEL[m.muscle] ?? m.muscle).join(", ")}`}
                   {e.time_based && e.met ? ` · MET ${e.met}` : ""}
