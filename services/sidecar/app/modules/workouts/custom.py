@@ -37,6 +37,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import __version__
 from app.core.events import EventBus, ExerciseAdded
 from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.workouts import library as lib
@@ -408,7 +409,7 @@ def apply_ai(p: Proposal, raw: dict[str, Any]) -> list[str]:
 #     equipment statements, so it would add a request without adding a field.
 
 WIKIPEDIA_API = "https://en.wikipedia.org/api/rest_v1/page/summary"
-USER_AGENT = "ASCEND-desktop/0.4 (offline fitness app; user-initiated exercise lookups)"
+USER_AGENT = f"ASCEND-desktop/{__version__} (offline fitness app; user-initiated exercise lookups)"
 RESEARCH_TIMEOUT = httpx.Timeout(6.0, connect=4.0)
 
 WGER_MUSCLES: dict[str, dict[str, float]] = {
