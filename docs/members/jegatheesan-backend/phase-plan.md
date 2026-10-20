@@ -43,9 +43,9 @@
 - [ ] `feat(nutrition): INDB recipe import with licence column`
 - [ ] `feat(nutrition): IFCT raw foods + Open Food Facts India subset import`
 - [ ] `feat(nutrition): portion units and oil level`
-- [ ] `feat(core): transactional outbox + dispatcher with replay on start`
-- [ ] `feat(core): processed_events for idempotent handlers`
-- [ ] `feat(core): SSE /events with Last-Event-ID`
+- [x] `feat(core): transactional outbox + dispatcher with replay on start` — worker's first pass at start-up delivers anything left pending
+- [x] `feat(core): processed_events for idempotent handlers`
+- [x] `feat(core): SSE /events with Last-Event-ID`
 - [ ] `test(progress): golden files for load model v1`
 - [ ] `test(workouts): Hypothesis tests for e1RM and progression`
 - [ ] `feat(coach): facts block formatters with fact ids`
