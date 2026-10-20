@@ -164,7 +164,7 @@ function Node({ n, selected, focusable, onSelect, onKey, register }: {
       data-node={n.id}
       data-state={s.status}
       aria-pressed={selected}
-      aria-label={`${s.name} (${n.treeName}), ${stateLabel(s)}`}
+      title={`${s.name}: ${stateLabel(s)}`}
       onClick={() => onSelect(n.id)}
       onKeyDown={(e) => onKey(e, n.id)}
       className={`absolute flex items-center gap-2 rounded-md border bg-panel px-2 text-left text-xs transition-[transform,border-color] duration-150 hover:-translate-y-px ${tone} ${selected ? "ring-2 ring-accent ring-offset-2 ring-offset-bg" : ""}`}
@@ -179,8 +179,10 @@ function Node({ n, selected, focusable, onSelect, onKey, register }: {
       )}
       <span className="min-w-0">
         <span className="line-clamp-2 font-medium leading-tight">{s.name}</span>
-        <span className="block text-[10px] leading-tight text-faint" aria-hidden="true">
+        {/* The accessible name is the visible text plus the tree and the state in words. */}
+        <span className="block text-[10px] leading-tight text-faint">
           {s.status === "next" ? `${Math.round(s.pct)}%` : s.status === "unlocked" ? "Mastered" : "Locked"}
+          <span className="sr-only">{s.status === "next" ? (s.pct > 0 ? " in progress" : " available") : ""}, {n.treeName}</span>
         </span>
       </span>
     </button>

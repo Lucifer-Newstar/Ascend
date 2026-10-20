@@ -115,10 +115,10 @@ describe("Skill tree canvas", () => {
     await userEvent.click(await screen.findByRole("radio", { name: "Levers" }));
     const canvas = await screen.findByRole("group", { name: /Levers skill trees/ });
     const nodes = within(canvas).getAllByRole("button");
-    expect(nodes.map((n) => n.getAttribute("aria-label"))).toEqual([
-      "Tuck front lever (Front lever), mastered",
-      "Advanced tuck (Front lever), in progress, 56%",
-      "Straddle (Front lever), locked",
+    expect(nodes.map((n) => n.textContent)).toEqual([
+      "Tuck front leverMastered, Front lever",
+      "Advanced tuck56% in progress, Front lever",
+      "StraddleLocked, Front lever",
     ]);
     const drawer = await screen.findByTestId("step-drawer");
     expect(within(drawer).getByRole("heading", { name: "Advanced tuck" })).toBeInTheDocument();
