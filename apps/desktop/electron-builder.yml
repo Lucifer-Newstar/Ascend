@@ -1,0 +1,33 @@
+# electron-builder config: produces the Windows NSIS installer.
+#   npm run dist:win            (from apps/desktop, after building the sidecar)
+# Not verified on real Windows yet; see docs/../README "Packaging".
+appId: app.ascend.desktop
+productName: ASCEND
+copyright: Copyright © 2026 The ASCEND team
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**
+  - dist-electron/**
+  - package.json
+# The PyInstaller "onedir" build of the sidecar is shipped next to the app as
+# resources/sidecar/ascend-sidecar.exe (see electron/sidecar.ts -> command()).
+extraResources:
+  - from: ../../services/sidecar/dist/ascend-sidecar
+    to: sidecar
+    filter: ["**/*"]
+asar: true
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  # Code signing: unsigned for now (SmartScreen will warn). Add a certificate via
+  # CSC_LINK / CSC_KEY_PASSWORD secrets in CI when the team has one.
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  artifactName: ASCEND-Setup-${version}.${ext}
+publish: null
