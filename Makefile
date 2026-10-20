@@ -5,7 +5,7 @@ DESKTOP := apps/desktop
 
 .DEFAULT_GOAL := help
 .PHONY: help install hooks dev-sidecar dev-web dev-electron seed lint format typecheck test \
-        test-sidecar test-desktop coverage migrate migrate-fresh check build build-sidecar \
+        test-sidecar test-desktop coverage migrate migrate-fresh contracts check build build-sidecar \
         dist-win docker-test clean
 
 help: ## List targets
@@ -60,7 +60,10 @@ test-desktop: ## vitest
 coverage: ## pytest with an HTML coverage report in services/sidecar/htmlcov/
 	cd $(SIDECAR) && uv run pytest --cov=app --cov-report=term-missing --cov-report=html
 
-check: lint typecheck test migrate-fresh build ## Everything CI runs, in one go (run before a PR)
+contracts: ## Compare the sidecar OpenAPI with docs/contracts (drift check)
+	cd $(SIDECAR) && uv run --with pyyaml python ../../scripts/check_contract_drift.py
+
+check: lint typecheck test migrate-fresh contracts build ## Everything CI runs, in one go (run before a PR)
 
 build: ## Build renderer + Electron main/preload
 	npm run build -w $(DESKTOP)

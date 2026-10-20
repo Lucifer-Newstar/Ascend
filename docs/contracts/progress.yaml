@@ -761,6 +761,13 @@ components:
           default: moderate
         energy:
           $ref: '#/components/schemas/EnergyTargets'
+        target_weight_kg:
+          anyOf:
+          - type: number
+            maximum: 300.0
+            minimum: 30.0
+          - type: 'null'
+          title: Target Weight Kg
       type: object
       required:
       - age
@@ -948,9 +955,6 @@ components:
           default: 3
       required:
       - ai_enabled
-      - units
-      - theme
-      - sessions_per_week
     StreakOut:
       properties:
         current:
@@ -1173,8 +1177,18 @@ components:
           type: string
       required:
       - code
+      - label
       - days
+      - status
+      - es_7d
+      - target_low
+      - target_high
+      - readiness
+      - ready_at
       - daily
+      - contributing_sets
+      - suggestion
+      - formula_version
     BodyMetricIn:
       type: object
       properties:
@@ -1224,6 +1238,8 @@ components:
       - measured_at
       - weight_kg
       - trend_kg
+      - waist_cm
+      - resting_hr
     EtaOut:
       type: object
       properties:
@@ -1265,9 +1281,15 @@ components:
           examples:
           - trend-v1
       required:
+      - goal_kg
+      - current_trend_kg
+      - rate_kg_per_week
+      - eta_from
+      - eta_to
       - confidence
       - on_track
-      - note
+      - reason
+      - formula_version
     CheckinIn:
       type: object
       properties:
@@ -1330,6 +1352,10 @@ components:
           - readiness-v1
       required:
       - day
+      - sleep
+      - energy
+      - soreness
+      - mood
       - readiness
       - band
       - quest_adjustment
@@ -1422,3 +1448,5 @@ components:
       - volume_kg
       - active_minutes
       - xp
+      - avg_kcal_in
+      - avg_weight_kg
