@@ -68,3 +68,22 @@ The 120 ms fade under Reduce motion is the one animation that survives the globa
 "0.01 ms" rule: it lives in `@layer components` with `!important`, which outranks the
 unlayered global rule.
 
+
+## v5: logger, canvas, command bar and sound
+
+All of these animate `transform` or `opacity` only and collapse under Reduce motion (the OS
+setting or Settings → Reduce motion), through the global rules in `index.css`.
+
+| Effect | Where | Duration | Reduce motion |
+|---|---|---|---|
+| Saved set flashes the accent | `.set-flash` (logger rows) | 150 ms opacity | not visible |
+| Rest bar shrinks under the active set | `RestBar` | 1 s linear steps, `scaleX` | jumps per second |
+| Current skill node glows | `.skill-node-current` | 2.4 s loop, opacity | static |
+| Canvas zoom and pan | `SkillTreeCanvas` | follows the pointer (no easing) | unchanged (user-driven) |
+| Command bar opens | `.dialog-in` | 150 ms rise + fade | appears |
+| Streak popover / step drawer | `.panel-in` | existing token | appears |
+
+**Sound** (`lib/sound.ts`) is separate from motion: off by default, a volume slider and a
+Test button in Settings. Effects are WebAudio tones under half a second (set, quest, level-up,
+skill), so there are no audio files in the bundle. The preference is stored in this browser
+profile (localStorage).

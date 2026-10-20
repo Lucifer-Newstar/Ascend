@@ -89,3 +89,18 @@ window special.
   Notices are non-modal regions announced through a polite live region, and close on Esc,
   with their button, or by themselves after 7 seconds (not while hovered or focused).
 - **Light theme:** white glass, a firmer border, no glow and no blur.
+
+## Screens and components added in v5
+
+| Piece | File | Notes |
+|---|---|---|
+| Today ("Hunter HQ") | `pages/Dashboard.tsx`, `QuestWindow.tsx`, `StatusPanel.tsx`, `Insights.tsx` | 12-column grid: quest 8 + status 4, insights 7 + check-in 5, fuel 4 + muscle map 8. Every stat and insight has a "Why?". |
+| Train logger | `pages/Workout.tsx` (`GhostGrid`, `RestBar`) | 3 / 6 / 3 panes. Last session in grey (`text-faint`) beside today's sets; the inputs pre-fill from the matching set, so Enter repeats it. Rest bar shrinks with `scaleX`. |
+| Skill-tree canvas | `components/SkillTreeCanvas.tsx` | Nodes: mastered (good + check), current (accent ring + glow), locked (line-2 + lock). State is always in text too. One node in the tab order; arrows follow edges. |
+| Command bar | `components/CommandBar.tsx`, `lib/commands.ts` | A normal dialog (not a System window). `combobox` + `listbox` with `aria-activedescendant`. Rule-based parser; unknown text goes to the Coach. |
+| Awakening onboarding | `pages/Onboarding.tsx` | Five steps, all skippable; the last one is the only System window in the flow. |
+| Streak explainer | `components/XpChip.tsx` (`StreakButton`) | A disclosure from the flame: freezes, and "progress is never lost". |
+| Shared states | `components/States.tsx` | `Loading`, `ErrorState` (full or `compact` inline with Retry), `StaleNotice`, `Empty` (optional action), plus `Skeleton`. Use these rather than ad-hoc text. |
+
+Programmatic focus targets (`tabindex="-1"`: the page heading after navigation, an opened
+panel) get no focus ring; real controls always keep the 2 px accent outline.
