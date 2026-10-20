@@ -6,13 +6,29 @@ under-trained, recovering or overreached. Everything runs and is stored on your 
 optional local AI coach (Ollama + `qwen3:4b`) explains your numbers, and the app works fully
 without it.
 
-![Dashboard](docs/screenshots/ASCEND_MVP_Dashboard.png)
+![Today](docs/screenshots/ASCEND_v5_Today.png)
 
-| Workout logger | Diet log |
+| Train: three-pane logger | Skills: tree canvas |
 |---|---|
-| ![Workout logger](docs/screenshots/ASCEND_MVP_Workout_Logger.png) | ![Diet](docs/screenshots/ASCEND_MVP_Diet.png) |
+| ![Train](docs/screenshots/ASCEND_v5_Train.png) | ![Skills](docs/screenshots/ASCEND_v5_Skills.png) |
 
-> Screens use demo data from `app.devtools.seed_demo`.
+> Screens use demo data from `app.devtools.seed_demo`. The v0.1 MVP screens are kept in
+> [docs/screenshots](docs/screenshots/).
+
+## The v5 interface
+
+| What | How it works |
+|---|---|
+| **Today ("Hunter HQ")** | The daily quest as a System window with time left, a status panel (STR, AGI, END, VIT, INT) where every number has a "Why?", up to three insights, check-in, fuel and the muscle map on a 12-column grid. |
+| **Train** | Keyboard-first logger: last session's sets in grey next to today's, the next set pre-filled from last time (Enter logs it), a rest bar (Space pauses), muscles hit and the skills the exercise feeds. |
+| **Skills** | A zoomable, pannable tree canvas per family; arrow keys move along the edges; a drawer shows the criteria, the estimate (only with enough data) and "Train this skill". |
+| **Ctrl+K** | Command bar: `bench 80x5 @8`, `log 3x8 pull-up`, `plank 45s`, `weight 81.4`, `add 2 eggs`, `train front lever`, a page name, or any question for the Coach. Rule-based, no model. |
+| **Awakening** | Five-step first run with an equipment checklist (respected by quests and skill suggestions) and a baseline test logged as a real session. |
+| **Streaks** | Freezes cover missed days, and a missed day never removes XP, levels, ranks or skills; the next quest adds a short Comeback item instead. |
+| **Accessibility and motion** | WCAG AA colours in both themes (unit-tested), labelled controls, axe-clean screens, Reduce motion honoured everywhere, optional sound off by default. |
+
+Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages · **Enter** log the set shown ·
+**Space** pause rest · arrows on the skill canvas.
 
 ## What's in the MVP (v0.1.0)
 
@@ -22,7 +38,7 @@ without it.
 | Workout logger: 41 seeded exercises with primary/secondary muscle weights, sets with kg / reps / RPE, **PR detection** (Epley e1RM), rest timer | `workouts` |
 | Gamification: XP per set and session, level curve `100 × L^1.3`, ranks E→S, rule-generated **daily quest**, streak with **freezes**; all formulas versioned | `gamification` |
 | Muscle recovery: per-muscle effective sets with recovery decay → under / optimal / recovering / over | `progress/muscle_load.py` |
-| Dashboard: three rings (quest tasks, kcal eaten, kcal burned), today's quest, XP bar, front/back muscle map | `apps/desktop/src/pages/Dashboard.tsx` |
+| Today (was Dashboard): three rings (quest tasks, kcal eaten, kcal burned), today's quest, XP bar, front/back muscle map | `apps/desktop/src/pages/Dashboard.tsx` |
 | Diet log: 31 approximate Indian foods (idli, dosa, sambar, chutneys, rice, chapati, dal, curd...) with katori/piece portions, daily totals | `nutrition` |
 | Coach: rule-based tips always; local Ollama `qwen3:4b` if running; **AI on/off toggle** | `coach` |
 | History by day (workouts + meals) and export to **JSON / CSV** | `progress/history.py` |
