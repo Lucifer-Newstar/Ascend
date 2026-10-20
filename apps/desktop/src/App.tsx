@@ -116,7 +116,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       status={<XpChip refreshKey={refreshKey} />}>
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
-      {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onOpenCoach={() => navigate("coach")} />}
+      {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenCoach={() => navigate("coach")} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
