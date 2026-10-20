@@ -1,0 +1,43 @@
+# pre-commit runs these checks on the files you stage, before each commit.
+#   pip install pre-commit   (or: uv tool install pre-commit)
+#   pre-commit install       # once per clone
+#   pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]   # allow custom tags in GitHub/compose files
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1024]   # datasets/models belong in DVC, not git
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^services/sidecar/
+      - id: ruff-format
+        files: ^services/sidecar/
+
+  # ESLint uses the repo's own installed version (run `npm ci` first).
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (desktop)
+        entry: npm run lint --
+        language: system
+        files: ^apps/desktop/.*\.(ts|tsx)$
+        pass_filenames: false
+
+  # Enforce Conventional Commit messages (feat:, fix:, chore:, ...).
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
