@@ -8,7 +8,8 @@ import { IconSpark } from "../components/Icons";
 import { MuscleMap } from "../components/MuscleMap";
 import { QuestList } from "../components/QuestCard";
 import { Rings } from "../components/Rings";
-import { ErrorState, Loading } from "../components/States";
+import { LoadingLayout, Skeleton, SkeletonCard } from "../components/Skeleton";
+import { ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
 import { XpBar } from "../components/XpBar";
 import { grams } from "../lib/format";
@@ -23,7 +24,7 @@ export function DashboardPage({ onOpenCoach, refreshKey }: { onOpenCoach: () => 
     api.coachTip().then(setTip).catch(() => setTip(null));
   }, [refreshKey]);
 
-  if (loading && !data) return <Loading label="Loading your day…" />;
+  if (loading && !data) return <DashboardSkeleton />;
   if (error || !data) return <ErrorState message={error ?? "No data"} onRetry={reload} />;
 
   async function complete(id: number) {
@@ -88,5 +89,27 @@ function Macro({ label, value }: { label: string; value: string }) {
       <div className="text-faint">{label}</div>
       <div className="mt-0.5 font-semibold text-ink">{value}</div>
     </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <LoadingLayout label="Loading your day…">
+      <div className="grid grid-cols-12 gap-5">
+        <SkeletonCard className="col-span-12 xl:col-span-8" lines={2} />
+        <SkeletonCard className="col-span-12 xl:col-span-4" lines={2} />
+        <div className="card col-span-12 flex items-center gap-6 p-5 lg:col-span-5" aria-hidden="true">
+          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-24 w-24 rounded-full" />)}
+        </div>
+        <SkeletonCard className="col-span-12 lg:col-span-7" lines={3} />
+        <div className="card col-span-12 flex gap-5 p-5" aria-hidden="true">
+          <Skeleton className="h-64 w-40" />
+          <Skeleton className="h-64 w-40" />
+          <div className="flex-1 space-y-3">
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-4 w-full" />)}
+          </div>
+        </div>
+      </div>
+    </LoadingLayout>
   );
 }
