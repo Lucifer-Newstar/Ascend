@@ -457,6 +457,21 @@ export interface GameSummary {
   quest: QuestItem[];
 }
 
+/** GET /game/stats: one computed hunter stat (0-100) and the numbers behind it (stats-v1). */
+export interface Stat {
+  key: "str" | "agi" | "end" | "vit" | "int";
+  label: string;
+  value: number;
+  formula: string;
+  inputs: Record<string, number | string | null>;
+}
+
+export interface Stats {
+  stats: Stat[];
+  version: string;
+  window_days: number;
+}
+
 export interface Ring {
   value: number;
   target: number;

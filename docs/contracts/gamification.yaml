@@ -24,7 +24,8 @@ security:
 - launchToken: []
 tags:
 - name: gamification
-  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own grant (a deleted set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
+  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own
+    grant (a deleted set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
 paths:
   /game/summary:
     get:
@@ -155,6 +156,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/StreakOut'
       x-status: planned
+      tags:
+      - gamification
+  /game/stats:
+    get:
+      summary: Hunter Stats
+      description: STR, AGI, END, VIT and INT (0-100), each with its formula and inputs (stats-v1).
+      operationId: hunter_stats_game_stats_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsOut'
+      x-status: implemented
       tags:
       - gamification
 components:
@@ -430,3 +446,54 @@ components:
       - current
       - best
       - active_today
+    StatOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        label:
+          type: string
+          title: Label
+        value:
+          type: integer
+          title: Value
+        formula:
+          type: string
+          title: Formula
+        inputs:
+          additionalProperties:
+            anyOf:
+            - type: number
+            - type: integer
+            - type: string
+            - type: 'null'
+          type: object
+          title: Inputs
+      type: object
+      required:
+      - key
+      - label
+      - value
+      - formula
+      - inputs
+      title: StatOut
+      description: One computed hunter stat (0-100) with the numbers behind it.
+    StatsOut:
+      properties:
+        stats:
+          items:
+            $ref: '#/components/schemas/StatOut'
+          type: array
+          title: Stats
+        version:
+          type: string
+          title: Version
+        window_days:
+          type: integer
+          title: Window Days
+      type: object
+      required:
+      - stats
+      - version
+      - window_days
+      title: StatsOut

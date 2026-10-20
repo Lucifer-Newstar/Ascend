@@ -53,3 +53,19 @@ class GameSummary(BaseModel):
     streak: StreakOut
     calm: CalmStreakOut = CalmStreakOut(current=0, best=0, active_today=False)
     quest: list[QuestItemOut]
+
+
+class StatOut(BaseModel):
+    """One computed hunter stat (0-100) with the numbers behind it."""
+
+    key: str
+    label: str
+    value: int
+    formula: str
+    inputs: dict[str, float | int | str | None]
+
+
+class StatsOut(BaseModel):
+    stats: list[StatOut]
+    version: str
+    window_days: int

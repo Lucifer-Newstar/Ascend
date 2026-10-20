@@ -30,6 +30,16 @@ Formula and model versions are listed where a number you see could change.
   with Reduce motion), your **streak flame**, and an **AI status dot**: green when the local
   model is answering, amber when AI is on but the model is not running (rule-based tips),
   grey when off. Clicking the dot still switches AI on and off.
+- **Today, redesigned ("Hunter HQ")** (UI-2). The page now leads with the **Daily Quest** in a
+  System window (each task's progress, time left until local midnight, the reward and
+  "Start today's session") and a **Status** panel (rank, level, XP and five stats), both above
+  the fold at 1280×720. The morning check-in moved below them and still collapses to a
+  one-line summary once done; then Insights (at most three, each with a "Why?"), Fuel rings
+  and the muscle map. A recommended deload appears on Today as a System warning.
+- **Five computed stats: STR, AGI, END, VIT, INT** (`stats-v1`, new `GET /game/stats`). Each
+  is a 0-100 score from your own logs (skill-tree steps, best e1RM vs body weight, cardio
+  minutes, check-ins, meals and quests), never allocated by hand, and each has a "Why?" that
+  lists its formula and the numbers used. See `docs/architecture/hunter-stats.md`.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

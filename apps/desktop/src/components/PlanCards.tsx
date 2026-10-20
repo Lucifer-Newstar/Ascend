@@ -48,7 +48,7 @@ export function WeeklyReviewCard({ refreshKey }: { refreshKey: number }) {
   );
 }
 
-export function DeloadCard({ refreshKey }: { refreshKey: number }) {
+export function DeloadCard({ refreshKey, onlyWhenRecommended = false, className = "" }: { refreshKey: number; onlyWhenRecommended?: boolean; className?: string }) {
   const [tick, setTick] = useState(0);
   const d = useApi(api.deload, [refreshKey, tick]);
   const [busy, setBusy] = useState(false);
@@ -96,14 +96,16 @@ export function DeloadCard({ refreshKey }: { refreshKey: number }) {
   // A recommended deload is a System event, so it gets the System window; otherwise a plain card.
   if (d.data?.recommended && d.data.kind !== "active") {
     return (
-      <SystemWindow variant="warning" title="Deload notice" testId="deload-notice"
+      <SystemWindow variant="warning" title="Deload notice" testId="deload-notice" className={className}
         actions={<button type="button" className="btn-primary" disabled={busy} onClick={start}>Start deload week</button>}>
         {content}
       </SystemWindow>
     );
   }
+  // On Today the check only appears when it has something to say.
+  if (onlyWhenRecommended) return null;
   return (
-    <section className="card card-hover p-5" aria-labelledby="deload-title">
+    <section className={`card card-hover p-5 ${className}`} aria-labelledby="deload-title">
       <h2 id="deload-title" className="card-title mb-2">Deload check</h2>
       {content}
     </section>

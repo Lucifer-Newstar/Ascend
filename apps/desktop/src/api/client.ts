@@ -51,6 +51,7 @@ import type {
   MealType,
   MuscleState,
   Profile,
+  Stats,
   ProfileIn,
   QuestItem,
   Workout,
@@ -159,6 +160,7 @@ export const api = {
   deleteMeal: (id: number) => call<null>("DELETE", `/meals/${id}`),
 
   game: () => call<GameSummary>("GET", "/game/summary"),
+  stats: () => call<Stats>("GET", "/game/stats"),
   completeQuest: (id: number) => call<QuestItem>("POST", `/game/quests/${id}/complete`),
 
   coachStatus: () => call<CoachStatus>("GET", "/coach/status"),
