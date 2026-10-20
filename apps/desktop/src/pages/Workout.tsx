@@ -2,20 +2,15 @@ import type { Exercise, Workout } from "@ascend/shared";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
-import { IconSearch, IconTimer, IconTrophy } from "../components/Icons";
+import { IconSearch, IconTrophy } from "../components/Icons";
+import { NumberField, RestTimer, RpeSelect } from "../components/logger/fields";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
 import { sessionLoad } from "../lib/load";
+import { MUSCLE_LABEL } from "../lib/muscles";
 import { useApi } from "../lib/useApi";
 
-const MUSCLE_LABEL: Record<string, string> = {
-  upper_chest: "Upper chest", lower_chest: "Chest", front_delts: "Front delts", side_delts: "Side delts",
-  rear_delts: "Rear delts", biceps: "Biceps", triceps: "Triceps", forearms: "Forearms", traps: "Traps",
-  lats: "Lats", rhomboids: "Mid-back", lower_back: "Lower back", abs: "Abs", obliques: "Obliques",
-  glutes: "Glutes", quads: "Quads", hamstrings: "Hamstrings", adductors: "Adductors", calves: "Calves",
-};
 const REST_SECONDS = 90;
-const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   // Lifts only: timed activities (runs, rounds, holds) are logged from their own tabs.
@@ -134,13 +129,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               <div className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
                 <NumberField label="Weight (kg)" value={weight} step={2.5} onChange={setWeight} />
                 <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
-                <label className="block">
-                  <span className="mb-1.5 block text-xs text-muted">RPE (effort)</span>
-                  <select className="input" value={rpe ?? ""} onChange={(e) => setRpe(e.target.value ? Number(e.target.value) : null)}>
-                    <option value="">not logged</option>
-                    {RPE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </label>
+                <RpeSelect value={rpe} onChange={setRpe} />
                 <button type="button" className="btn-primary h-[38px] px-5" onClick={logSet} disabled={busy}>Log set</button>
               </div>
               <p className="mt-2 text-[11px] text-faint">RPE 10 = no reps left in the tank, 8 = two left. PRs use the Epley e1RM formula (1–10 reps).</p>
@@ -222,30 +211,4 @@ function groupSets(w: Workout | null): [string, Workout["sets"]][] {
   const m = new Map<string, Workout["sets"]>();
   for (const s of w.sets) m.set(s.exercise_name, [...(m.get(s.exercise_name) ?? []), s]);
   return [...m.entries()];
-}
-
-function NumberField({ label, value, step, onChange }: { label: string; value: number; step: number; onChange: (n: number) => void }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs text-muted">{label}</span>
-      <div className="flex">
-        <button type="button" className="rounded-l-lg border border-r-0 border-line-2 bg-panel-2 px-3 text-muted hover:text-ink" onClick={() => onChange(Math.max(0, +(value - step).toFixed(1)))} aria-label={`decrease ${label}`}>−</button>
-        <input className="input rounded-none text-center" type="number" value={value} step={step} onChange={(e) => onChange(Number(e.target.value))} />
-        <button type="button" className="rounded-r-lg border border-l-0 border-line-2 bg-panel-2 px-3 text-muted hover:text-ink" onClick={() => onChange(+(value + step).toFixed(1))} aria-label={`increase ${label}`}>+</button>
-      </div>
-    </label>
-  );
-}
-
-function RestTimer({ seconds, onSkip }: { seconds: number; onSkip: () => void }) {
-  if (seconds <= 0) return <div className="flex items-center gap-1.5 text-xs text-faint"><IconTimer width={14} height={14} /> rest timer starts after a set</div>;
-  const mm = Math.floor(seconds / 60);
-  const ss = String(seconds % 60).padStart(2, "0");
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-1.5">
-      <IconTimer width={16} height={16} className="text-accent" />
-      <span className="font-display text-lg font-bold text-accent">{mm}:{ss}</span>
-      <button type="button" className="text-xs text-muted hover:text-ink" onClick={onSkip}>skip</button>
-    </div>
-  );
 }
