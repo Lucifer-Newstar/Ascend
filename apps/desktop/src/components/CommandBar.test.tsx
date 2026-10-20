@@ -1,5 +1,5 @@
 import type { Exercise } from "@ascend/shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -115,6 +115,21 @@ describe("CommandBar", () => {
     const { onClose } = renderBar();
     await userEvent.type(screen.getByRole("combobox", { name: "Command" }), "{Escape}");
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("rows appearing under a resting pointer do not steal the selection; moving the pointer does", async () => {
+    renderBar();
+    await waitFor(() => expect(api.exercises).toHaveBeenCalled());
+    await userEvent.type(screen.getByRole("combobox", { name: "Command" }), "how do I deload");
+    const [coach] = screen.getAllByRole("option");
+    fireEvent.mouseEnter(coach);
+    expect(coach).toHaveAttribute("aria-selected", "true");
+    await userEvent.clear(screen.getByRole("combobox", { name: "Command" }));
+    const options = screen.getAllByRole("option");
+    fireEvent.mouseEnter(options[3]);
+    expect(options[0]).toHaveAttribute("aria-selected", "true");
+    fireEvent.mouseMove(options[3]);
+    expect(options[3]).toHaveAttribute("aria-selected", "true");
   });
 
   it("closes on Escape even when focus is not in the field", async () => {

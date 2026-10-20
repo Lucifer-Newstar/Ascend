@@ -106,6 +106,9 @@ Formula and model versions are listed where a number you see could change.
 - Fix: Esc pressed right after Ctrl+K now closes the command bar (the field is focused at
   once, and Esc works wherever focus is inside the bar). Measured in headless Chromium: the
   bar opens in 78 ms the first time and about 30 ms after that.
+- Fix: results that appear under a resting mouse pointer no longer steal the command bar's
+  selection (only moving the pointer changes it), so Enter always runs the highlighted
+  best match.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

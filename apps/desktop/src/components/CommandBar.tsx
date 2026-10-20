@@ -247,7 +247,7 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
                   id={`${listId}-${i}`}
                   role="option"
                   aria-selected={i === active}
-                  onMouseEnter={() => setActive(i)}
+                  onMouseMove={() => { if (active !== i) setActive(i); }}
                   onClick={() => void run(r)}
                   className={`flex cursor-pointer items-baseline justify-between gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-100 ${i === active ? "bg-accent/12 text-ink" : "text-muted"}`}
                 >
