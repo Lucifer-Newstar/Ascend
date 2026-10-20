@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -26,3 +26,20 @@ class RecoveryParam(Base):
     personal: Mapped[bool] = mapped_column(Boolean, default=False)
     algo_version: Mapped[str] = mapped_column(String(16))
     updated_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class ProgressionDecision(Base):
+    """What the user did with a prog-v1 target: "accepted" it or chose "kept" (keep my own
+    numbers, which stops new targets for that exercise for 7 days)."""
+
+    __tablename__ = "progression_decisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    exercise_id: Mapped[int] = mapped_column(
+        ForeignKey("exercises.id", ondelete="CASCADE"), index=True
+    )
+    decided_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    choice: Mapped[str] = mapped_column(String(10))
+    reason: Mapped[str] = mapped_column(String(24))
+    target_json: Mapped[str] = mapped_column(Text, default="{}")
+    algo_version: Mapped[str] = mapped_column(String(16))
