@@ -75,8 +75,13 @@ schema-valid examples, so screens can be built before the backend lands.
 - a `planned` operation that appears in the code fails the check until its `x-status`
   is flipped to `implemented` in the same PR.
 
-The generated TypeScript types (`openapi-typescript`) are rebuilt in the same job; a stale
-`packages/shared/src/api-types.gen.ts` fails CI.
+Error responses (404, 409…) documented in a contract may be missing from the code's
+OpenAPI, because FastAPI only lists responses an endpoint declares; an error response the
+code declares must be documented. Run it locally with `make contracts`;
+`--update-counts` rewrites the counts in manifest.json.
+
+Planned: generated TypeScript types (`openapi-typescript`) checked in the same job. Until
+then `packages/shared/src/api.ts` is kept in sync by hand.
 
 ## 5. Changing a contract
 

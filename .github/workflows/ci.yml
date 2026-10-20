@@ -1,7 +1,8 @@
 # Continuous integration: runs on every push and pull request.
 #
 # Jobs (independent ones run in parallel):
-#   sidecar   -> ruff lint + format check, mypy, pytest (with coverage), Alembic upgrade check
+#   sidecar   -> ruff lint + format check, mypy, pytest (with coverage), Alembic upgrade check,
+#                contract drift (OpenAPI vs docs/contracts)
 #   desktop   -> eslint, tsc (renderer + Electron + shared), vitest, vite build
 #   sidecar-build -> PyInstaller build on Linux + a smoke test of the binary
 #   docker    -> builds the test image and runs the tests inside it
@@ -90,6 +91,11 @@ jobs:
         run: |
           export ASCEND_DB_URL="sqlite:///$(python -c 'import pathlib,os;print(pathlib.Path(os.environ["RUNNER_TEMP"]).as_posix())')/ci.db"
           uv run alembic upgrade head && uv run alembic current
+
+      # The served OpenAPI must match docs/contracts (see docs/contracts/README.md §4).
+      - name: Contract drift
+        if: matrix.os == 'ubuntu-latest'
+        run: uv run --with pyyaml python ../../scripts/check_contract_drift.py
 
       # Artifact names carry the OS and short SHA so downloads from different runs
       # and matrix legs never overwrite each other.
