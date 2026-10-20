@@ -31,6 +31,7 @@ Below MIN_OBS informative observations (phi > 0.05 at k = 1) the group keeps k =
 
 from __future__ import annotations
 
+import bisect
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -48,6 +49,7 @@ MIN_OBS = 4
 MIN_SESSIONS_PER_EXERCISE = 4
 INFORMATIVE_PHI = 0.05
 KNOT_WEEKS = 6.0
+_LN2 = math.log(2.0)
 LOOKBACK_H = 336.0  # 14 days: even at k = 1.6 the slowest muscles are below 5 % by then
 
 
@@ -74,7 +76,8 @@ class Observation:
         """Fatigue fraction at the session start, saturating at 1 like readiness does."""
         total = 0.0
         for share, hl, items in self.parts:
-            f = sum(v * rec.decay(h, hl * k) for h, v in items)
+            c = -_LN2 / (hl * k)
+            f = sum(v * math.exp(c * h) for h, v in items)
             total += share * min(1.0, f)
         return total
 
@@ -115,25 +118,35 @@ def primary_group(muscles: Mapping[str, float]) -> str | None:
 def observations(
     perfs: Sequence[SessionPerf], contribs: Sequence[rec.Contribution]
 ) -> list[Observation]:
-    by_muscle: dict[str, list[rec.Contribution]] = {}
-    for c in contribs:
-        by_muscle.setdefault(c.muscle, []).append(c)
+    # Per muscle: contribution times (hours since an epoch, sorted) and ES / capacity.
+    epoch = min([c.at for c in contribs] + [p.start for p in perfs], default=datetime(2000, 1, 1))
+    by_muscle: dict[str, tuple[list[float], list[float]]] = {}
+    for c in sorted(contribs, key=lambda c: c.at):
+        mus = MUSCLE_BY_KEY.get(c.muscle)
+        if mus is None:
+            continue
+        ts, vs = by_muscle.setdefault(c.muscle, ([], []))
+        ts.append((c.at - epoch).total_seconds() / 3600)
+        vs.append(c.es / mus.capacity_es)
     out: list[Observation] = []
     for p in perfs:
         group = primary_group(p.muscles)
         if group is None or p.e1rm <= 0:
             continue
+        start_h = (p.start - epoch).total_seconds() / 3600
         prim = {m: w for m, w in p.muscles.items() if w >= 1.0 and m in MUSCLE_BY_KEY}
         total_w = sum(prim.values()) or 1.0
         parts: list[tuple[float, float, tuple[tuple[float, float], ...]]] = []
         for m, w in sorted(prim.items()):
-            mus = MUSCLE_BY_KEY[m]
-            items = tuple(
-                (h, c.es / mus.capacity_es)
-                for c in by_muscle.get(m, [])
-                if 0 < (h := (p.start - c.at).total_seconds() / 3600) <= LOOKBACK_H
-            )
-            parts.append((w / total_w, mus.half_life_h, items))
+            ts, vs = by_muscle.get(m, ([], []))
+            lo = bisect.bisect_left(ts, start_h - LOOKBACK_H)
+            hi = bisect.bisect_left(ts, start_h)  # strictly before the session start
+            # Sets of one session sit minutes apart: bucket by half hour (error < 1 %).
+            buckets: dict[float, float] = {}
+            for i in range(lo, hi):
+                key = round((start_h - ts[i]) * 2) / 2 or 0.5
+                buckets[key] = buckets.get(key, 0.0) + vs[i]
+            parts.append((w / total_w, MUSCLE_BY_KEY[m].half_life_h, tuple(buckets.items())))
         out.append(Observation(group, p.exercise, p.start, math.log(p.e1rm), tuple(parts)))
     return out
 
@@ -242,15 +255,18 @@ def fit_group(group: str, obs: Sequence[Observation]) -> GroupFit:
     y_res: list[float] = []
     for name, v in usable.items():
         y_res += resid[name]([o.y for o in v])
+    syy = sum(y * y for y in y_res)
     dof = max(1, len(flat) - sum(len(r.b[0]) for r in resid.values()) - 1)
     table: list[tuple[float, float, float]] = []
     for k in K_GRID:
         x_res: list[float] = []
         for name, v in usable.items():
             x_res += resid[name]([o.phi(k) for o in v])
+        sxx = sum(x * x for x in x_res)
+        sxy = sum(x * y for x, y in zip(x_res, y_res, strict=True))
         for alpha in ALPHA_GRID:
-            sse = sum((y + alpha * x) ** 2 for x, y in zip(x_res, y_res, strict=True))
-            table.append((k, alpha, sse))
+            # sum (y + alpha x)^2, expanded so each alpha costs O(1)
+            table.append((k, alpha, syy + 2 * alpha * sxy + alpha * alpha * sxx))
     best_k, _, best_sse = min(table, key=lambda r: r[2])
     sigma2 = max(best_sse / dof, 1e-8)
     logp = [(k, a, -sse / (2 * sigma2) + _log_prior(k)) for k, a, sse in table]
