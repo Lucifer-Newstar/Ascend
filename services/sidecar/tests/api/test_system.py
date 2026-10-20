@@ -10,6 +10,24 @@ def test_health_is_open_and_reports_wal(settings):
     assert r.json()["journal_mode"] == "wal"
 
 
+def test_health_reports_db_and_migration_head(settings):
+    with TestClient(create_app(settings)) as c:
+        body = c.get("/health").json()
+    assert body["status"] == "ok"
+    assert body["db"] == "ok"
+    assert body["migration"] == body["migration_head"]
+    assert body["migration_head"] != "none"
+
+
+def test_health_is_degraded_when_migrations_are_missing(settings):
+    # migrate=False leaves an empty database: the API is up but not usable yet.
+    with TestClient(create_app(settings, migrate=False)) as c:
+        body = c.get("/health").json()
+    assert body["status"] == "degraded"
+    assert body["db"] == "migration_pending"
+    assert body["migration"] == "none"
+
+
 def test_requests_without_token_are_rejected(settings):
     with TestClient(create_app(settings)) as c:
         assert c.get("/exercises").status_code == 401

@@ -16,7 +16,7 @@ from app import __version__
 from app.core.config import Settings, load_settings
 from app.core.db import make_engine, make_session_factory
 from app.core.events import EventBus
-from app.core.migrate import run_migrations
+from app.core.migrate import current_revision, head_revision, run_migrations
 from app.core.security import TokenAuthMiddleware
 from app.modules.coach.api import router as coach_router
 from app.modules.gamification import service as gamification_service
@@ -74,11 +74,30 @@ def create_app(
             CORSMiddleware, allow_origins=DEV_ORIGINS, allow_methods=["*"], allow_headers=["*"]
         )
 
+    head = head_revision()
+
     @app.get("/health", tags=["system"])
     def health() -> dict[str, str]:
-        with engine.connect() as conn:
-            mode = conn.exec_driver_sql("PRAGMA journal_mode").scalar()
-        return {"status": "ok", "version": __version__, "journal_mode": str(mode)}
+        """Open endpoint polled by Electron main. 'degraded' means the API is up but the
+        database is unreachable or behind the newest migration."""
+        db_status, mode, current = "ok", "unknown", None
+        try:
+            with engine.connect() as conn:
+                mode = str(conn.exec_driver_sql("PRAGMA journal_mode").scalar())
+                current = current_revision(conn)
+        except Exception as exc:  # pragma: no cover - exercised by the corrupt-db test
+            log.error("health: database check failed: %s", exc)
+            db_status = "error"
+        if db_status == "ok" and current != head:
+            db_status = "migration_pending"
+        return {
+            "status": "ok" if db_status == "ok" else "degraded",
+            "version": __version__,
+            "journal_mode": mode,
+            "db": db_status,
+            "migration": current or "none",
+            "migration_head": head,
+        }
 
     @app.post("/shutdown", tags=["system"])
     def shutdown() -> dict[str, str]:
