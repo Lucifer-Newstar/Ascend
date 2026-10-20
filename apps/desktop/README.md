@@ -46,6 +46,32 @@ npm run dev -w apps/desktop                            # terminal 2 -> http://lo
 | `typecheck` / `lint` / `test` | tsc / eslint / vitest |
 | `dist:win` | build + electron-builder → `release/ASCEND-Setup-x.y.z.exe` (needs the sidecar build first) |
 
+## Packaging
+
+The Windows installer is electron-builder's NSIS target (`electron-builder.yml`):
+
+- **Per-user install**, no admin prompt: `%LOCALAPPDATA%\Programs\ASCEND`. The user can
+  pick another folder. Desktop and Start-menu shortcuts are created.
+- **Data is kept** on uninstall (`%APPDATA%\ASCEND`), so a reinstall finds the same database.
+- **The sidecar** is the PyInstaller one-folder build from `services/sidecar/dist/ascend-sidecar`,
+  copied to `resources/sidecar/` as an extra resource.
+- **Fuses** (`build/fuses.cjs`, run as `afterPack`): RunAsNode, `NODE_OPTIONS` and `--inspect`
+  are switched off in the binary, ASAR integrity validation is on, and the app only loads
+  from `app.asar`. Check a binary with `npx electron-fuses read --app <exe>`.
+- **Icons** come from `build/icon.png` / `build/icon.ico`, rendered by `scripts/make_icons.py`.
+
+Build it on Windows:
+
+```bash
+make build-sidecar                              # services/sidecar/dist/ascend-sidecar/
+cd services/sidecar && uv run python packaging/smoke.py   # start, /health, /shutdown
+make dist-win                                   # apps/desktop/release/ASCEND-Setup-x.y.z.exe
+```
+
+CI builds the same installer on every push to `main` that touches the app and on `v*`
+tags (`.github/workflows/release.yml`); download it from the run's artefacts. The build
+is unsigned for now, so SmartScreen shows "unknown publisher" on first run.
+
 ## Theme
 
 Dark, restrained cyan accent (`#22D3EE`), violet XP (`#8B7CFF`), status colours shared with the
