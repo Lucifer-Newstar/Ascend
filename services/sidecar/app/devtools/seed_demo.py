@@ -39,6 +39,7 @@ from app.modules.progress.schemas import (
     MeasurementIn,
     MeasurementSite,
     ProfileIn,
+    SettingsIn,
 )
 from app.modules.workouts import service as workouts
 from app.modules.workouts.models import Exercise
@@ -142,6 +143,8 @@ def seed(days: int, wipe: bool) -> None:
                 target_weight_kg=72,
             ),
         )
+        # The demo trains a push/pull/legs split about five days a week.
+        progress.update_settings(db, SettingsIn(sessions_per_week=5))
         ex = {e.name: e.id for e in db.scalars(select(Exercise)).all()}
         foods = {f.name: f.id for f in db.scalars(select(Food)).all()}
 

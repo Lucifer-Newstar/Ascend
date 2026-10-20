@@ -29,6 +29,7 @@ def test_seed_demo_fills_progress_activity_and_checkins(
         sections = {w["section"] for w in c.get("/workouts", params={"limit": 50}).json()}
         assert sections == {"gym", "cardio", "meditation"}
         assert c.get("/profile").json()["target_weight_kg"] == 72
+        assert c.get("/settings").json()["sessions_per_week"] == 5
         assert c.get("/progress/eta").status_code == 200
 
 
