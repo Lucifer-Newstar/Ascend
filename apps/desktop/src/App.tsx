@@ -4,6 +4,7 @@ import type { Settings } from "@ascend/shared";
 
 import { api } from "./api/client";
 import { Layout, type Page } from "./components/Layout";
+import { CommandBar, CommandButton, isCommandKey } from "./components/CommandBar";
 import { ErrorState, Loading } from "./components/States";
 import { SystemEvents } from "./components/SystemEvents";
 import { ToastProvider } from "./components/Toast";
@@ -118,6 +119,17 @@ export default function App() {
 function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void }) {
   const { settings, update } = usePrefs();
   usePageShortcuts(navigate);
+  // Ctrl+K (Cmd+K on a Mac) opens the command bar from anywhere.
+  const [commandOpen, setCommandOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!isCommandKey(e)) return;
+      e.preventDefault();
+      setCommandOpen((o) => !o);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const toggleAi = async () => {
     await update({ ai_enabled: !settings.ai_enabled });
     bump();
@@ -131,8 +143,9 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
   return (
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
-      aiState={aiState} aiModel={coach.data?.model}>
+      aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}>
       <SystemEvents game={game.data ?? undefined} />
+      <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} onChanged={bump} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>

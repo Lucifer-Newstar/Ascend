@@ -2,6 +2,7 @@ import type { CoachReply } from "@ascend/shared";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
+import { PENDING_COACH_KEY } from "../components/CommandBar";
 import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { IconSpark } from "../components/Icons";
 import { useApi } from "../lib/useApi";
@@ -26,6 +27,15 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
+
+  // A question typed into the command bar (Ctrl+K) arrives here and is asked once.
+  useEffect(() => {
+    const pending = sessionStorage.getItem(PENDING_COACH_KEY);
+    if (!pending) return;
+    sessionStorage.removeItem(PENDING_COACH_KEY);
+    setMsgs((m) => [...m, { role: "user", text: pending }]);
+    void ask(pending);
+  }, []);
 
   // Keep the newest message in view as the conversation grows.
   useEffect(() => {

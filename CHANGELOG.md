@@ -63,6 +63,15 @@ Formula and model versions are listed where a number you see could change.
   step, Enter selects. A drawer shows the selected step's criteria with progress, the
   time-to-unlock estimate (only with enough data), feeders, "Train this skill", "Log" and a
   link to the full tree page.
+- **Ctrl+K command bar** (also the "Log or ask…" button in the header). Type what you did
+  or where you want to go: "bench 80x5 @8" logs a set (starting today's session if none is
+  open; kg or lb, your units by default), "pull-up x8" a bodyweight set, "plank 45s" a hold,
+  "weight 81.4" a weigh-in, "lunch chicken rice" a meal (meal from the word or the time of
+  day), "train front lever" adds the skill to today's quest, "dark"/"light" switch the
+  theme, "ai off" turns the local AI off, and a page name opens it. Anything else goes to
+  the Coach as a question. The parser is rule-based: no model is involved. Exercise names
+  are matched against the library (names, aliases and abbreviations such as "ohp", "rdl",
+  "db"), with the top three matches offered. Arrow keys pick, Enter runs, Esc closes.
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

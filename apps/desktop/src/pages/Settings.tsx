@@ -13,6 +13,7 @@ import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
 const SHORTCUTS: [string, string][] = [
+  ["Ctrl+K", "Command bar: log a set (\"bench 80x5 @8\"), a hold, a meal or your weight, open a page, or ask the Coach"],
   ["Ctrl+1 … Ctrl+9, Ctrl+0", "Open a page, in sidebar order"],
   ["Tab / Shift+Tab", "Move between controls; the first Tab offers “Skip to content”"],
   ["Alt+← / Alt+→", "Back / forward between pages"],
