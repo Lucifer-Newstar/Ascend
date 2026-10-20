@@ -13,7 +13,8 @@ import type { Page } from "../components/Layout";
 import { IconCheck, IconLock } from "../components/Icons";
 import { Segmented } from "../components/Segmented";
 import { SkeletonCard } from "../components/Skeleton";
-import { ErrorState, Loading } from "../components/States";
+import { SkillTreeCanvas } from "../components/SkillTreeCanvas";
+import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
 import { setPendingExercise } from "../lib/pending";
 import { useApi } from "../lib/useApi";
@@ -53,22 +54,25 @@ export function SkillsPage({ onNavigate, onChanged }: { onNavigate: (p: Page) =>
   return openKey ? (
     <SkillDetailView skillKey={openKey} onBack={() => open(null)} onNavigate={onNavigate} onChanged={onChanged} />
   ) : (
-    <SkillGrid onOpen={open} />
+    <SkillGrid onOpen={open} onNavigate={onNavigate} onChanged={onChanged} />
   );
 }
 
-function SkillGrid({ onOpen }: { onOpen: (key: string) => void }) {
+type View = "tree" | "cards";
+
+function SkillGrid({ onOpen, onNavigate, onChanged }: { onOpen: (key: string) => void; onNavigate: (p: Page) => void; onChanged: () => void }) {
   const list = useApi(() => api.skills(), []);
   const [family, setFamily] = useState<FamilyFilter>("all");
+  const [view, setView] = useState<View>("tree");
   const shown = useMemo(() => (list.data ?? []).filter((s) => family === "all" || s.family === family), [list.data, family]);
   if (list.error && !list.data) return <ErrorState message={list.error} onRetry={list.reload} />;
   const started = (list.data ?? []).filter((s) => s.steps_unlocked > 1 || (s.pct_to_next ?? 0) > 0).length;
   const unlockedSteps = (list.data ?? []).reduce((n, s) => n + s.steps_unlocked, 0);
   return (
-    <div className="max-w-6xl space-y-4">
+    <div className="space-y-4">
       <section className="card flex flex-wrap items-center gap-x-6 gap-y-3 p-4">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-ink">Calisthenics skill trees</h2>
+          <h2 className="text-h3 text-ink">Calisthenics skill trees</h2>
           <p className="mt-0.5 text-xs text-muted">
             Progress comes from the sets you log: hit a step&apos;s target in two sessions to unlock the next.
           </p>
@@ -79,12 +83,15 @@ function SkillGrid({ onOpen }: { onOpen: (key: string) => void }) {
             <span className="font-semibold text-ink">{unlockedSteps}</span> steps unlocked
           </p>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap items-center gap-3">
           <Segmented label="Skill family" value={family} options={FAMILY_OPTIONS} onChange={setFamily} />
+          <Segmented label="View" value={view} options={[{ value: "tree", label: "Tree" }, { value: "cards", label: "Cards" }]} onChange={setView} />
         </div>
       </section>
       {list.loading && !list.data ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} lines={3} />)}</div>
+      ) : view === "tree" ? (
+        <TreeView keys={shown.map((s) => s.key)} family={family} onOpen={onOpen} onNavigate={onNavigate} onChanged={onChanged} />
       ) : (
         <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" aria-label="Skill trees">
           {shown.map((s) => (
@@ -95,6 +102,115 @@ function SkillGrid({ onOpen }: { onOpen: (key: string) => void }) {
         </ul>
       )}
     </div>
+  );
+}
+
+/** Canvas (8 columns) and the step drawer (4 columns). */
+function TreeView({ keys, family, onOpen, onNavigate, onChanged }: {
+  keys: string[];
+  family: FamilyFilter;
+  onOpen: (key: string) => void;
+  onNavigate: (p: Page) => void;
+  onChanged: () => void;
+}) {
+  const joined = keys.join(",");
+  const [tick, setTick] = useState(0);
+  const details = useApi(() => Promise.all(keys.map((k) => api.skill(k))), [joined, tick]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const trees = details.data ?? [];
+  // Select the first current step when the family changes.
+  useEffect(() => {
+    if (!details.data) return;
+    if (selected && details.data.some((t) => selected.startsWith(`${t.key}/`))) return;
+    const t = details.data.find((x) => x.next_step) ?? details.data[0];
+    setSelected(t ? `${t.key}/${t.next_step ?? t.steps[0]?.key}` : null);
+  }, [details.data, selected]);
+  if (details.error && !details.data) return <ErrorState message={details.error} onRetry={details.reload} />;
+  if (!details.data) return <Loading label="Loading skill trees…" />;
+  if (trees.length === 0) return <Empty title="No trees in this family." />;
+  const [treeKey, stepKey] = (selected ?? "").split("/");
+  const tree = trees.find((t) => t.key === treeKey) ?? null;
+  const step = tree?.steps.find((s) => s.key === stepKey) ?? null;
+  return (
+    <div className="grid grid-cols-12 gap-4">
+      <section className="card col-span-12 p-4 xl:col-span-8" aria-labelledby="canvas-title">
+        <h3 id="canvas-title" className="sr-only">Skill tree canvas</h3>
+        <SkillTreeCanvas trees={trees} selected={selected} onSelect={setSelected} fitAll={family !== "all"}
+          label={`${family === "all" ? "All" : FAMILY_LABEL[family]} skill trees. Use the arrow keys to move between steps.`} />
+      </section>
+      <div className="col-span-12 xl:col-span-4">
+        {tree && step ? (
+          <StepDrawer tree={tree} step={step} onOpen={() => onOpen(tree.key)} onNavigate={onNavigate}
+            onTrained={() => { onChanged(); setTick((t) => t + 1); }} />
+        ) : (
+          <section className="card p-5 text-sm text-muted">Select a step to see what unlocks it.</section>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StepDrawer({ tree, step, onOpen, onNavigate, onTrained }: {
+  tree: SkillDetail;
+  step: SkillStep;
+  onOpen: () => void;
+  onNavigate: (p: Page) => void;
+  onTrained: () => void;
+}) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const isNext = tree.next_step === step.key;
+  async function train() {
+    setBusy(true);
+    try {
+      const r = await api.trainSkill(tree.key);
+      toast(r.message, r.added ? "xp" : "info");
+      onTrained();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+  const log = (id: number | null) => {
+    if (id === null) return;
+    setPendingExercise({ id, section: "calisthenics" });
+    onNavigate("workout");
+  };
+  return (
+    <section className="card panel-in sticky top-0 p-5" aria-labelledby="drawer-title" data-testid="step-drawer" key={`${tree.key}/${step.key}`}>
+      <p className="card-title">{tree.name}</p>
+      <h3 id="drawer-title" className="text-h2 mt-1 text-ink">{step.name}</h3>
+      <p className="mt-1 text-sm text-muted">
+        <span className={step.status === "unlocked" ? "text-good" : step.status === "next" ? "text-accent" : "text-muted"}>
+          {step.status === "unlocked" ? `Mastered${step.unlocked_at ? ` on ${fmtDate(step.unlocked_at)}` : ""}` : step.status === "next" ? `Next step · ${Math.round(step.pct)}% to unlock` : "Locked: unlock the steps before it first"}
+        </span>
+        {step.xp > 0 && <span className="text-xp"> · +{step.xp} XP</span>}
+      </p>
+      {step.status === "next" && <ProgressBar className="mt-2" pct={step.pct} label={`Progress to ${step.name}`} />}
+      {step.criteria.length > 0 ? (
+        <>
+          <h4 className="mt-4 text-xs font-semibold uppercase tracking-wider text-faint">Criteria</h4>
+          <ul className="mt-2 space-y-3">{step.criteria.map((c) => <CriterionRow key={c.text} c={c} />)}</ul>
+        </>
+      ) : (
+        <p className="mt-4 text-xs text-muted">An entry step: it starts unlocked.</p>
+      )}
+      {isNext && <Eta s={tree} />}
+      {step.uncertain && <p className="mt-3 text-xs text-faint">Uncertain target: {step.note || "sources disagree on the exact number."}</p>}
+      {tree.feeders.length > 0 && (
+        <p className="mt-4 text-xs text-muted">
+          <span className="font-medium text-ink">Feeders: </span>{tree.feeders.slice(0, 4).map((f) => f.name).join(", ")}
+        </p>
+      )}
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button type="button" className="btn-primary" onClick={train} disabled={busy}>{busy ? "Adding…" : "Train this skill"}</button>
+        {step.exercise_id !== null && step.status !== "locked" && (
+          <button type="button" className="btn-ghost" onClick={() => log(step.exercise_id)}>Log {step.exercise}</button>
+        )}
+        <button type="button" className="btn-ghost" onClick={onOpen}>Open tree page</button>
+      </div>
+    </section>
   );
 }
 

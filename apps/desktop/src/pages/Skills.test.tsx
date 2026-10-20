@@ -61,6 +61,7 @@ describe("skillKeyFromHash", () => {
 describe("SkillsPage", () => {
   it("lists trees with the current step, % to next and badges, and filters by family", async () => {
     const { container } = renderPage();
+    await userEvent.click(await screen.findByRole("radio", { name: "Cards" }));
     const list = await screen.findByRole("list", { name: "Skill trees" });
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     expect(screen.getByText("Tuck front lever")).toBeInTheDocument();
@@ -74,6 +75,7 @@ describe("SkillsPage", () => {
 
   it("opens a tree with steps, criteria, an estimate labelled as such, feeders and sources", async () => {
     const { container } = renderPage();
+    await userEvent.click(await screen.findByRole("radio", { name: "Cards" }));
     await userEvent.click(await screen.findByRole("button", { name: /Front lever/ }));
     expect(window.location.hash).toBe("#skills/front_lever");
     expect(await screen.findByText("Next: Advanced tuck")).toBeInTheDocument();
@@ -104,5 +106,41 @@ describe("SkillsPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Log Tuck Front Lever" }));
     expect(onNavigate).toHaveBeenCalledWith("workout");
     expect(JSON.parse(sessionStorage.getItem("ascend.pendingExercise")!)).toEqual({ id: 7, section: "calisthenics" });
+  });
+});
+
+describe("Skill tree canvas", () => {
+  it("draws every step as a node with its state in words, selects the current step and shows the drawer", async () => {
+    const { container } = renderPage();
+    await userEvent.click(await screen.findByRole("radio", { name: "Levers" }));
+    const canvas = await screen.findByRole("group", { name: /Levers skill trees/ });
+    const nodes = within(canvas).getAllByRole("button");
+    expect(nodes.map((n) => n.textContent)).toEqual([
+      "Tuck front leverMastered, Front lever",
+      "Advanced tuck56% in progress, Front lever",
+      "StraddleLocked, Front lever",
+    ]);
+    const drawer = await screen.findByTestId("step-drawer");
+    expect(within(drawer).getByRole("heading", { name: "Advanced tuck" })).toBeInTheDocument();
+    expect(within(drawer).getByText(/Estimate: about 15 days/)).toBeInTheDocument();
+    expect(await axeViolations(container)).toEqual([]);
+  });
+
+  it("moves along the edges with the arrow keys and selects with Enter", async () => {
+    renderPage();
+    await userEvent.click(await screen.findByRole("radio", { name: "Levers" }));
+    const canvas = await screen.findByRole("group", { name: /Levers skill trees/ });
+    const current = within(canvas).getByRole("button", { name: /Advanced tuck/ });
+    expect(current).toHaveAttribute("tabindex", "0");
+    current.focus();
+    await userEvent.keyboard("{ArrowRight}");
+    const straddle = within(canvas).getByRole("button", { name: /Straddle/ });
+    expect(straddle).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
+    expect(within(screen.getByTestId("step-drawer")).getByRole("heading", { name: "Straddle" })).toBeInTheDocument();
+    await userEvent.keyboard("{ArrowLeft}{ArrowLeft}");
+    expect(within(canvas).getByRole("button", { name: /Tuck front lever/ })).toHaveFocus();
+    await userEvent.keyboard("{Home}");
+    expect(current).toHaveFocus();
   });
 });
