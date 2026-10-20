@@ -75,59 +75,57 @@ paths:
   /import/strong:
     post:
       summary: Import a Strong CSV export (both header variants)
-      operationId: import_strong
+      description: 'Import a Strong CSV export (classic or 2025 layout). `dry_run` (default true)
+
+        returns the report without writing anything.'
+      operationId: import_strong_import_strong_post
       requestBody:
-        required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  contentMediaType: text/csv
-                dry_run:
-                  type: boolean
-                  default: true
-              required:
-              - file
+              $ref: '#/components/schemas/ImportIn'
+        required: true
       responses:
         '200':
-          description: OK
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ImportReport'
-      x-status: planned
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
       tags:
       - import-export
   /import/hevy:
     post:
       summary: Import a Hevy CSV export
-      operationId: import_hevy
+      description: Import a Hevy CSV export. `dry_run` (default true) only reports.
+      operationId: import_hevy_import_hevy_post
       requestBody:
-        required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  contentMediaType: text/csv
-                dry_run:
-                  type: boolean
-                  default: true
-              required:
-              - file
+              $ref: '#/components/schemas/ImportIn'
+        required: true
       responses:
         '200':
-          description: OK
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ImportReport'
-      x-status: planned
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
       tags:
       - import-export
   /import/plan:
@@ -244,7 +242,6 @@ components:
       - type
       title: ValidationError
     ImportReport:
-      type: object
       properties:
         format:
           type: string
@@ -253,25 +250,49 @@ components:
           - strong_csv_2025
           - hevy_csv
           - ascend_plan_csv
+          title: Format
         workouts:
           type: integer
+          title: Workouts
         sets:
           type: integer
+          title: Sets
         unmatched_exercises:
-          type: array
           items:
             type: string
+          type: array
+          title: Unmatched Exercises
+          default: []
         warnings:
-          type: array
           items:
             type: string
+          type: array
+          title: Warnings
+          default: []
         dry_run:
           type: boolean
+          title: Dry Run
+        skipped_duplicates:
+          type: integer
+          title: Skipped Duplicates
+          default: 0
+        skipped_warmups:
+          type: integer
+          title: Skipped Warmups
+          default: 0
+        matched_exercises:
+          additionalProperties:
+            type: string
+          type: object
+          title: Matched Exercises
+          default: {}
+      type: object
       required:
       - format
       - workouts
       - sets
       - dry_run
+      title: ImportReport
     BackupOut:
       type: object
       properties:
@@ -317,3 +338,31 @@ components:
         code:
           type: string
           description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING
+    ImportIn:
+      properties:
+        csv:
+          type: string
+          maxLength: 20000000
+          minLength: 1
+          title: Csv
+        dry_run:
+          type: boolean
+          title: Dry Run
+          default: true
+        unit:
+          type: string
+          enum:
+          - kg
+          - lb
+          title: Unit
+          description: Weight unit for Strong's 2025 export, which has no unit column
+          default: kg
+        include_warmups:
+          type: boolean
+          title: Include Warmups
+          default: false
+      type: object
+      required:
+      - csv
+      title: ImportIn
+      description: 'The CSV travels as text: renderer -> IPC -> main -> sidecar carries JSON only.'
