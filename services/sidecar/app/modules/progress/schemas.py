@@ -5,8 +5,14 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.schemas import StrictIn
+
 
 class ProfileIn(BaseModel):
+    # PUT /profile is a whole-object update and clients echo back what GET returned,
+    # so read-only fields such as `energy` are ignored rather than rejected.
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
     name: str = Field(default="", max_length=80)
     age: int = Field(ge=13, le=100)
     sex: Literal["male", "female"]
@@ -55,7 +61,7 @@ class SettingsOut(BaseModel):
     sessions_per_week: int = 3
 
 
-class SettingsIn(BaseModel):
+class SettingsIn(StrictIn):
     """Partial update: only the fields sent are changed."""
 
     ai_enabled: bool | None = None
@@ -64,7 +70,7 @@ class SettingsIn(BaseModel):
     sessions_per_week: int | None = Field(default=None, ge=1, le=7)
 
 
-class BodyMetricIn(BaseModel):
+class BodyMetricIn(StrictIn):
     measured_at: datetime | None = None
     weight_kg: float = Field(ge=20, le=300)
     waist_cm: float | None = Field(default=None, ge=30, le=250)
@@ -83,7 +89,7 @@ class BodyMetricOut(BaseModel):
 MeasurementSite = Literal["waist", "hips", "chest", "arm", "thigh", "calf", "neck"]
 
 
-class MeasurementIn(BaseModel):
+class MeasurementIn(StrictIn):
     measured_at: datetime | None = None
     site: MeasurementSite
     cm: float = Field(ge=10, le=250)
@@ -111,7 +117,7 @@ class EtaOut(BaseModel):
     note: Literal["Estimate, not a promise"] = "Estimate, not a promise"
 
 
-class CheckinIn(BaseModel):
+class CheckinIn(StrictIn):
     sleep: int = Field(ge=1, le=5)
     energy: int = Field(ge=1, le=5)
     soreness: Literal["none", "some", "a_lot"]

@@ -5,12 +5,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.core.schemas import StrictIn
+
 # 20 MB of CSV is roughly ten years of daily training in Strong; anything bigger is
 # almost certainly the wrong file.
 MAX_CSV_CHARS = 20_000_000
 
 
-class ImportIn(BaseModel):
+class ImportIn(StrictIn):
     """The CSV travels as text: renderer -> IPC -> main -> sidecar carries JSON only."""
 
     csv: str = Field(min_length=1, max_length=MAX_CSV_CHARS)
@@ -33,7 +35,7 @@ class ImportReport(BaseModel):
     matched_exercises: dict[str, str] = {}
 
 
-class BackupIn(BaseModel):
+class BackupIn(StrictIn):
     password: str | None = Field(
         default=None, description="Optional AES-256 password; not supported yet (422)"
     )
@@ -49,7 +51,7 @@ class BackupOut(BaseModel):
     reason: Literal["manual", "pre-migration"] | str = "manual"
 
 
-class RestoreIn(BaseModel):
+class RestoreIn(StrictIn):
     path: str = Field(min_length=1, max_length=1024)
     password: str | None = None
 

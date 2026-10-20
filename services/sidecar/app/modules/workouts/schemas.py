@@ -4,6 +4,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.schemas import StrictIn
+
 
 class MuscleWeight(BaseModel):
     muscle: str
@@ -21,7 +23,7 @@ class ExerciseOut(BaseModel):
     muscles: list[MuscleWeight]
 
 
-class SetIn(BaseModel):
+class SetIn(StrictIn):
     """One set. Lifts send weight + reps; time-based sections send duration_s
     (and distance_m for cardio). The service checks the right fields are present."""
 
@@ -88,7 +90,7 @@ class WorkoutSummary(BaseModel):
     title: str = ""
 
 
-class SetPatch(BaseModel):
+class SetPatch(StrictIn):
     """Partial edit of a logged set; omitted fields keep their value."""
 
     weight_kg: float | None = Field(default=None, ge=0, le=500)
