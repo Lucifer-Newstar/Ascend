@@ -54,6 +54,18 @@ describe("SettingsPage", () => {
     expect(save).toHaveBeenCalledWith({ sessions_per_week: 5 });
   });
 
+  it("turns on Reduce motion and mirrors it onto <html data-motion>", async () => {
+    const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
+    setup(save);
+    const toggle = await screen.findByRole("checkbox", { name: /reduce motion/i });
+    expect(toggle).not.toBeChecked();
+    expect(document.documentElement.dataset.motion).toBe("full");
+    await userEvent.click(toggle);
+    expect(save).toHaveBeenCalledWith({ reduce_motion: true });
+    await waitFor(() => expect(document.documentElement.dataset.motion).toBe("reduce"));
+    expect(toggle).toBeChecked();
+  });
+
   it("keeps the old value when saving fails", async () => {
     const save = vi.fn().mockRejectedValue(new Error("engine offline"));
     setup(save);

@@ -47,6 +47,17 @@ export interface MuscleState {
   ready_at: string | null;
 }
 
+/** GET /muscles/activity?days=1..30: per-muscle load over a window (map hover card). */
+export interface MuscleActivity {
+  key: string;
+  /** Effective sets in the window (primary movers 1, secondary movers their share). */
+  sets: number;
+  /** Lifting volume load (weight x reps) attributed by muscle share, kg. */
+  volume_kg: number;
+  /** Most recent load, looking back up to 28 days. */
+  last_trained: string | null;
+}
+
 export type Section = "gym" | "calisthenics" | "cardio" | "martial_arts" | "flexibility" | "meditation";
 
 export interface Exercise {
@@ -262,6 +273,8 @@ export interface Settings {
   units: Units;
   theme: ThemePref;
   sessions_per_week: number;
+  /** Calm the interface: no tilt, flips, count-ups or celebrations (the OS setting is honoured as well). */
+  reduce_motion: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------

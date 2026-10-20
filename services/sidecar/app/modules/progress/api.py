@@ -12,7 +12,16 @@ from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
-from app.modules.progress import body, checkins, drilldown, energy, history, service, weekly
+from app.modules.progress import (
+    activity,
+    body,
+    checkins,
+    drilldown,
+    energy,
+    history,
+    service,
+    weekly,
+)
 from app.modules.progress.schemas import (
     BodyMetricIn,
     BodyMetricOut,
@@ -204,6 +213,17 @@ def progress_eta(db: Session = Depends(get_db), now: datetime = Depends(get_now)
     """Estimated date range to reach the profile's target weight."""
     profile = service.get_profile(db)
     return body.eta_for(db, profile.target_weight_kg if profile else None, now)
+
+
+@router.get("/muscles/activity", response_model=list[activity.MuscleActivity])
+def muscle_activity(
+    days: int = Query(default=7, ge=1, le=30),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> list[activity.MuscleActivity]:
+    """Per-muscle effective sets, attributed volume load and last-trained time over
+    the last 1-30 days (the muscle map's range switch and hover card)."""
+    return activity.muscle_activity(db, days, now)
 
 
 @router.get("/muscles/{code}/history", response_model=drilldown.MuscleHistory)

@@ -404,6 +404,42 @@ paths:
                 - $ref: '#/components/schemas/CheckinOut'
                 - type: 'null'
       x-status: implemented
+  /muscles/activity:
+    get:
+      summary: Muscle Activity
+      description: 'Per-muscle effective sets, attributed volume load and last-trained time over
+
+        the last 1-30 days (the muscle map''s range switch and hover card).'
+      operationId: muscle_activity_muscles_activity_get
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 30
+          minimum: 1
+          default: 7
+          title: Days
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MuscleActivity'
+                title: Response Muscle Activity Muscles Activity Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - progress
 components:
   securitySchemes:
     launchToken:
@@ -929,6 +965,10 @@ components:
           - 'null'
           minimum: 1
           maximum: 7
+        reduce_motion:
+          type:
+          - boolean
+          - 'null'
     SettingsOut:
       type: object
       title: SettingsOut
@@ -953,6 +993,9 @@ components:
           minimum: 1
           maximum: 7
           default: 3
+        reduce_motion:
+          type: boolean
+          default: false
       required:
       - ai_enabled
     StreakOut:
@@ -1450,3 +1493,27 @@ components:
       - xp
       - avg_kcal_in
       - avg_weight_kg
+    MuscleActivity:
+      properties:
+        key:
+          type: string
+          title: Key
+        sets:
+          type: number
+          title: Sets
+        volume_kg:
+          type: number
+          title: Volume Kg
+        last_trained:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Trained
+      type: object
+      required:
+      - key
+      - sets
+      - volume_kg
+      - last_trained
+      title: MuscleActivity

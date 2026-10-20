@@ -40,7 +40,7 @@ export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; on
     <div className="max-w-4xl space-y-4">
       {error && <StaleNotice message={error} onRetry={reload} />}
       {data.map((d) => (
-        <section key={d.day} className="card p-5">
+        <section key={d.day} className="card card-hover p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-sm font-semibold text-ink">{dayLabel(d.day)} <span className="ml-2 text-xs font-normal text-faint">{d.day}</span></h2>
             <span className="text-xs text-muted">{count(d.sets, "set")} · {kcal(d.kcal_in)} kcal eaten · <span className="text-xp">+{d.xp} XP</span></span>

@@ -1,12 +1,13 @@
 import type { MuscleHistory } from "@ascend/shared";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { api } from "../api/client";
+import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { MuscleDrilldown } from "./MuscleDrilldown";
 
-vi.mock("../api/client", () => ({ api: { muscleHistory: vi.fn() } }));
+vi.mock("../api/client", () => ({ api: { muscleHistory: vi.fn(), updateSettings: vi.fn() } }));
 
 const history: MuscleHistory = {
   code: "quads", label: "Quads", days: 7, status: "optimal", es_7d: 12, target_low: 10, target_high: 20,
@@ -21,6 +22,28 @@ describe("MuscleDrilldown", () => {
     expect(await screen.findByRole("heading", { name: "Quads" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Muscle details" })).toHaveFocus();
     await userEvent.keyboard("{Escape}");
+    // Plays the closing animation first, then unmounts (once, even on a second Escape).
+    expect(screen.getByRole("region", { name: "Muscle details" })).toHaveClass("panel-out");
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
+  it("opens with the panel-in animation", async () => {
+    vi.mocked(api.muscleHistory).mockResolvedValue(history);
+    render(<MuscleDrilldown code="quads" onClose={vi.fn()} />);
+    expect(await screen.findByRole("region", { name: "Muscle details" })).toHaveClass("panel-in");
+  });
+
+  it("closes at once with reduced motion", async () => {
+    vi.mocked(api.muscleHistory).mockResolvedValue(history);
+    const onClose = vi.fn();
+    render(
+      <PrefsProvider initial={{ ...DEFAULT_SETTINGS, reduce_motion: true }} save={vi.fn()}>
+        <MuscleDrilldown code="quads" onClose={onClose} />
+      </PrefsProvider>,
+    );
+    await screen.findByRole("heading", { name: "Quads" });
+    await userEvent.click(screen.getByRole("button", { name: "Close muscle details" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

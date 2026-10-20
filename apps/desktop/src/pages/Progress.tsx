@@ -41,7 +41,7 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
 
   return (
     <div className="grid grid-cols-12 gap-5">
-      <section className="card col-span-12 p-5 xl:col-span-8" aria-labelledby="weight-title">
+      <section className="card card-hover col-span-12 p-5 xl:col-span-8" aria-labelledby="weight-title">
         <div className="mb-3 flex items-center justify-between">
           <h2 id="weight-title" className="card-title">Body weight · 90 days</h2>
           <span className="text-[11px] text-faint">dots = weigh-ins · line = trend (smooths water swings)</span>
@@ -52,7 +52,7 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
         <WeighInForm units={units} lastKg={metrics.data?.at(-1)?.weight_kg} onSaved={reload} />
       </section>
 
-      <section className="card col-span-12 p-5 xl:col-span-4" aria-labelledby="eta-title">
+      <section className="card card-hover col-span-12 p-5 xl:col-span-4" aria-labelledby="eta-title">
         <h2 id="eta-title" className="card-title mb-3">Goal weight ETA</h2>
         {eta.loading && !eta.data ? <ChartSkeleton height="h-40" /> : !eta.data ? <ErrorState message={eta.error ?? "No data"} onRetry={eta.reload} offline={isOffline(eta.status)} /> : (
           <EtaCard eta={eta.data} units={units} profile={profile.data ?? null} onSaved={reload} />
@@ -202,7 +202,7 @@ function WeeklyCard({ refreshKey, units }: { refreshKey: number; units: Units })
   const value = (w: WeekSummary) => Math.round(metric === "volume_kg" ? toDisplayWeight(w.volume_kg, units, 0) : w[metric]);
   const data: WeekSummary[] = weeks.data ?? [];
   return (
-    <section className="card col-span-12 p-5 xl:col-span-8" aria-labelledby="weekly-title">
+    <section className="card card-hover col-span-12 p-5 xl:col-span-8" aria-labelledby="weekly-title">
       <div className="mb-3 flex items-center justify-between gap-4">
         <h2 id="weekly-title" className="card-title">Last 8 weeks</h2>
         <Segmented
@@ -230,7 +230,7 @@ function PrCard({ refreshKey, units }: { refreshKey: number; units: Units }) {
   const prs = useApi(api.prs, [refreshKey]);
   const list: PersonalRecord[] = (prs.data ?? []).slice(0, 8);
   return (
-    <section className="card col-span-12 p-5 xl:col-span-4" aria-labelledby="pr-title">
+    <section className="card card-hover col-span-12 p-5 xl:col-span-4" aria-labelledby="pr-title">
       <h2 id="pr-title" className="card-title mb-3 flex items-center gap-2"><IconTrophy width={14} height={14} /> Personal records</h2>
       {prs.loading && !prs.data ? <ChartSkeleton height="h-40" /> : !prs.data ? <ErrorState message={prs.error ?? "No data"} onRetry={prs.reload} offline={isOffline(prs.status)} /> : list.length === 0 ? (
         <Empty title="No PRs yet." hint="Log weighted sets of 1–10 reps." />
@@ -280,7 +280,7 @@ function MeasurementsCard({ refreshKey, units }: { refreshKey: number; units: Un
   }
 
   return (
-    <section className="card col-span-12 p-5" aria-labelledby="measure-title">
+    <section className="card card-hover col-span-12 p-5" aria-labelledby="measure-title">
       <h2 id="measure-title" className="card-title mb-3">Measurements</h2>
       {list.loading && !list.data ? <ChartSkeleton height="h-20" /> : !list.data ? <ErrorState message={list.error ?? "No data"} onRetry={list.reload} offline={isOffline(list.status)} /> : (
         <div className="grid grid-cols-12 gap-5">

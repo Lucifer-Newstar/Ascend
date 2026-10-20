@@ -1,9 +1,10 @@
 /**
  * Placeholder blocks shown while a screen loads, shaped like the content that will
- * replace them so the layout does not jump. The pulse stops for reduced motion.
+ * replace them so the layout does not jump. A light band sweeps across them (the
+ * .skeleton shimmer in index.css); it stays still with reduced motion.
  */
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <span aria-hidden="true" className={`block animate-pulse rounded-md bg-line/70 motion-reduce:animate-none ${className}`} />;
+  return <span aria-hidden="true" className={`skeleton block rounded-md bg-line/70 ${className}`} />;
 }
 
 export function SkeletonCard({ lines = 3, className = "", title = true }: { lines?: number; className?: string; title?: boolean }) {
