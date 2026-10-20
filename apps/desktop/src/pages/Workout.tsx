@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import { IconSearch, IconTimer, IconTrophy } from "../components/Icons";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
+import { sessionLoad } from "../lib/load";
 import { useApi } from "../lib/useApi";
 
 const MUSCLE_LABEL: Record<string, string> = {
@@ -213,25 +214,6 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
       </section>
     </div>
   );
-}
-
-/** Same effort bands as the sidecar's load model (app/modules/progress/muscle_load.py). */
-export function effort(rpe: number | null): number {
-  if (rpe === null || rpe >= 7) return 1;
-  if (rpe >= 5) return 0.5;
-  return 0.25;
-}
-
-function sessionLoad(w: Workout | null, library: Exercise[]): [string, number][] {
-  if (!w) return [];
-  const byId = new Map(library.map((e) => [e.id, e]));
-  const totals = new Map<string, number>();
-  for (const s of w.sets) {
-    for (const m of byId.get(s.exercise_id)?.muscles ?? []) {
-      totals.set(m.muscle, (totals.get(m.muscle) ?? 0) + m.weight * effort(s.rpe));
-    }
-  }
-  return [...totals.entries()].sort((a, b) => b[1] - a[1]);
 }
 
 function groupSets(w: Workout | null): [string, Workout["sets"]][] {
