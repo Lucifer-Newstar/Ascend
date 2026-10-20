@@ -1,6 +1,12 @@
 import pytest
 
-from app.modules.coach.validate import Num, check_numbers, extract_numbers
+from app.modules.coach.validate import (
+    Num,
+    check_banned,
+    check_numbers,
+    check_reply,
+    extract_numbers,
+)
 
 FACTS = "\n".join(
     [
@@ -80,3 +86,32 @@ def test_rounding_must_drop_digits():
 def test_empty_reply_and_reply_without_numbers_pass():
     assert check_numbers("", FACTS).ok
     assert check_numbers("Great work, keep going.", FACTS).ok
+
+
+@pytest.mark.parametrize(
+    ("reply", "rule"),
+    [
+        ("Take 400 mg of ibuprofen before training.", "dose"),
+        ("A painkiller will help.", "medicine"),
+        ("You probably have a torn rotator cuff.", "diagnosis"),
+        ("I've updated your plan to add squats.", "plan_changed"),
+        ("No excuses, get to the gym.", "shame"),
+    ],
+)
+def test_banned_phrases_name_their_rule(reply, rule):
+    assert rule in check_banned(reply)
+
+
+def test_ordinary_advice_is_not_banned():
+    assert check_banned("Sleep well, eat your protein and keep the rest days.") == []
+    assert check_banned("Want me to suggest a change to your plan? You can approve it.") == []
+
+
+def test_check_reply_summarises_both_validators():
+    checks = check_reply("Rest three days and take 2 tablets.", FACTS, None)
+    assert not checks.ok
+    summary = checks.summary()
+    assert summary["numbers"] == "fail"
+    assert summary["banned"] == "fail:dose"
+    assert summary["version"].startswith("validate-")
+    assert check_reply("Protein is at 96 g of 140 g.", FACTS, "how is my protein?").ok
