@@ -1,5 +1,5 @@
 import type { Settings } from "@ascend/shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -37,7 +37,7 @@ describe("SettingsPage", () => {
   it("saves the light theme and applies it to <html>", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
-    await screen.findByText("Appearance & units");
+    await screen.findByText("Appearance");
     expect(document.documentElement.dataset.theme).toBe("dark");
     await userEvent.click(screen.getByLabelText("Light"));
     expect(save).toHaveBeenCalledWith({ theme: "light" });
@@ -66,6 +66,16 @@ describe("SettingsPage", () => {
     expect(toggle).toBeChecked();
   });
 
+  it("groups appearance apart from units and training", async () => {
+    setup(vi.fn());
+    const appearance = await screen.findByRole("region", { name: "Appearance" });
+    expect(within(appearance).getByRole("group", { name: "Theme" })).toBeInTheDocument();
+    expect(within(appearance).getByRole("checkbox", { name: /reduce motion/i })).toBeInTheDocument();
+    const units = screen.getByRole("region", { name: "Units & training" });
+    expect(within(units).getByRole("group", { name: "Units" })).toBeInTheDocument();
+    expect(within(units).getByRole("combobox", { name: /training days/i })).toBeInTheDocument();
+  });
+
   it("keeps the old value when saving fails", async () => {
     const save = vi.fn().mockRejectedValue(new Error("engine offline"));
     setup(save);
@@ -83,7 +93,7 @@ describe("SettingsPage", () => {
 
   it("has no axe violations", async () => {
     const { container } = setup(vi.fn());
-    await screen.findByText("Appearance & units");
+    await screen.findByText("Appearance");
     await expectNoAxeViolations(container);
   });
 });

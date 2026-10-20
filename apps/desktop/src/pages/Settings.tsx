@@ -64,7 +64,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           </label>
         </section>
         <section className="card space-y-4 p-5" aria-labelledby="appearance-title">
-          <h2 id="appearance-title" className="card-title">Appearance & units</h2>
+          <h2 id="appearance-title" className="card-title">Appearance</h2>
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">Theme</span>
             <Segmented
@@ -72,15 +72,6 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
               value={settings.theme}
               options={[{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }, { value: "system", label: "System" }]}
               onChange={(theme) => save({ theme }, `Theme: ${theme}`)}
-            />
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-ink">Units</span>
-            <Segmented
-              label="Units"
-              value={settings.units}
-              options={[{ value: "metric", label: "kg · cm · km" }, { value: "imperial", label: "lb · in · mi" }]}
-              onChange={(units) => save({ units }, units === "metric" ? "Units: metric" : "Units: imperial")}
             />
           </div>
           <label className="flex items-center justify-between gap-4">
@@ -96,6 +87,18 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
               onChange={(e) => save({ reduce_motion: e.target.checked }, e.target.checked ? "Reduce motion: on" : "Reduce motion: off")}
             />
           </label>
+        </section>
+        <section className="card space-y-4 p-5" aria-labelledby="units-title">
+          <h2 id="units-title" className="card-title">Units & training</h2>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm text-ink">Units</span>
+            <Segmented
+              label="Units"
+              value={settings.units}
+              options={[{ value: "metric", label: "kg · cm · km" }, { value: "imperial", label: "lb · in · mi" }]}
+              onChange={(units) => save({ units }, units === "metric" ? "Units: metric" : "Units: imperial")}
+            />
+          </div>
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">
               Training days per week
