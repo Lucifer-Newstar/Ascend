@@ -1,26 +1,27 @@
-import type { Exercise, Workout } from "@ascend/shared";
+import type { Exercise, Section, SetIn, SetPatch, Workout, WorkoutSet } from "@ascend/shared";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
-import { IconSearch, IconTimer, IconTrophy } from "../components/Icons";
+import { IconSearch, IconTrophy } from "../components/Icons";
+import { NumberField, RestTimer, RPE_OPTIONS, RpeSelect } from "../components/logger/fields";
+import { SECTIONS, SectionTabs } from "../components/logger/SectionTabs";
+import { TimedSetForm } from "../components/logger/TimedSetForm";
 import { Empty, ErrorState, Loading } from "../components/States";
 import { useToast } from "../components/Toast";
 import { sessionLoad } from "../lib/load";
+import { MUSCLE_LABEL } from "../lib/muscles";
+import { usePrefs } from "../lib/prefs";
+import { formatDistance, formatDuration, fromDisplayWeight, parseDuration, toDisplayWeight, weightUnit } from "../lib/units";
 import { useApi } from "../lib/useApi";
 
-const MUSCLE_LABEL: Record<string, string> = {
-  upper_chest: "Upper chest", lower_chest: "Chest", front_delts: "Front delts", side_delts: "Side delts",
-  rear_delts: "Rear delts", biceps: "Biceps", triceps: "Triceps", forearms: "Forearms", traps: "Traps",
-  lats: "Lats", rhomboids: "Mid-back", lower_back: "Lower back", abs: "Abs", obliques: "Obliques",
-  glutes: "Glutes", quads: "Quads", hamstrings: "Hamstrings", adductors: "Adductors", calves: "Calves",
-};
 const REST_SECONDS = 90;
-const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
-  // Lifts only: timed activities (runs, rounds, holds) are logged from their own tabs.
-  const exercises = useApi(() => api.exercises().then((all) => all.filter((e) => !e.time_based)), []);
+  const [section, setSection] = useState<Section>("gym");
+  const exercises = useApi(() => api.exercises("", section), [section]);
   const active = useApi(api.activeWorkout, []);
+  const { settings } = usePrefs();
+  const units = settings.units;
   const [query, setQuery] = useState("");
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [selected, setSelected] = useState<Exercise | null>(null);
@@ -47,21 +48,60 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     return q ? list.filter((e) => e.name.toLowerCase().includes(q) || e.muscles.some((m) => (MUSCLE_LABEL[m.muscle] ?? m.muscle).toLowerCase().includes(q))) : list;
   }, [exercises.data, query]);
 
-  if (exercises.loading && !exercises.data) return <Loading label="Loading exercise library…" />;
   if (exercises.error) return <ErrorState message={exercises.error} onRetry={exercises.reload} />;
 
-  async function logSet() {
+  function changeSection(s: Section) {
+    setSection(s);
+    setSelected(null);
+    setQuery("");
+  }
+
+  async function logSet(body?: SetIn) {
     if (!selected) return;
     setBusy(true);
     try {
-      const w = workout ?? (await api.startWorkout());
-      const res = await api.logSet(w.id, { exercise_id: selected.id, weight_kg: weight, reps, rpe });
+      const w = workout ?? (await api.startWorkout(section));
+      const payload = body ?? { exercise_id: selected.id, weight_kg: fromDisplayWeight(weight, units), reps, rpe };
+      const res = await api.logSet(w.id, payload);
       const fresh = await api.activeWorkout();
       setWorkout(fresh);
-      setRestLeft(REST_SECONDS);
-      if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${res.set.e1rm} kg · +${res.xp_awarded} XP`, "pr");
-      else toast(`Set logged · +${res.xp_awarded} XP`, "xp");
+      if (!selected.time_based) setRestLeft(REST_SECONDS);
+      if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
+      else toast(`${selected.time_based ? formatDuration(res.set.duration_s ?? 0) + " logged" : "Set logged"} · +${res.xp_awarded} XP`, "xp");
       onChanged();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshSession() {
+    setWorkout(await api.activeWorkout());
+    onChanged();
+  }
+
+  async function editSet(s: WorkoutSet, patch: SetPatch) {
+    if (!workout) return;
+    setBusy(true);
+    try {
+      const updated = await api.editSet(workout.id, s.id, patch);
+      await refreshSession();
+      toast(updated.is_pr ? "Set updated · still a PR" : "Set updated", "info");
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteSet(s: WorkoutSet) {
+    if (!workout) return;
+    setBusy(true);
+    try {
+      await api.deleteSet(workout.id, s.id);
+      await refreshSession();
+      toast("Set deleted", "info");
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -88,24 +128,31 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const groups = groupSets(workout);
   const load = sessionLoad(workout, exercises.data ?? []);
 
+  const sectionLabel = SECTIONS.find((s) => s.id === section)?.label ?? "Gym";
+
   return (
+    <div className="space-y-5">
+    <SectionTabs value={section} onChange={changeSection} />
     <div className="grid h-full grid-cols-12 gap-5">
       <section className="card col-span-12 flex min-h-0 flex-col lg:col-span-4">
         <div className="border-b border-line p-4">
-          <h2 className="card-title mb-3">Exercise library</h2>
+          <h2 className="card-title mb-3">{sectionLabel} library</h2>
           <div className="relative">
             <IconSearch className="absolute left-3 top-2.5 text-faint" width={16} height={16} />
-            <input className="input pl-9" placeholder="Search exercise or muscle…" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input className="input pl-9" aria-label="Search exercises" placeholder="Search exercise or muscle…" value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
         </div>
-        <ul className="max-h-[calc(100vh-260px)] min-h-0 flex-1 overflow-y-auto p-2">
+        <ul className="max-h-[calc(100vh-320px)] min-h-0 flex-1 overflow-y-auto p-2" aria-busy={exercises.loading}>
+          {exercises.loading && !exercises.data && <li><Loading label="Loading exercises…" /></li>}
           {filtered.map((e) => (
             <li key={e.id}>
               <button type="button" onClick={() => setSelected(e)}
                 className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"}`}>
                 <div className={`text-sm ${selected?.id === e.id ? "text-accent" : "text-ink"}`}>{e.name}</div>
                 <div className="mt-0.5 truncate text-xs text-faint">
-                  {e.equipment} · {e.muscles.filter((m) => m.weight >= 1).map((m) => MUSCLE_LABEL[m.muscle] ?? m.muscle).join(", ")}
+                  {e.equipment}
+                  {e.muscles.some((m) => m.weight >= 1) && ` · ${e.muscles.filter((m) => m.weight >= 1).map((m) => MUSCLE_LABEL[m.muscle] ?? m.muscle).join(", ")}`}
+                  {e.time_based && e.met ? ` · MET ${e.met}` : ""}
                 </div>
               </button>
             </li>
@@ -129,24 +176,30 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                     ))}
                   </div>
                 </div>
-                <RestTimer seconds={restLeft} onSkip={() => setRestLeft(0)} />
+                {!selected.time_based && <RestTimer seconds={restLeft} onSkip={() => setRestLeft(0)} />}
               </div>
-              <div className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
-                <NumberField label="Weight (kg)" value={weight} step={2.5} onChange={setWeight} />
-                <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
-                <label className="block">
-                  <span className="mb-1.5 block text-xs text-muted">RPE (effort)</span>
-                  <select className="input" value={rpe ?? ""} onChange={(e) => setRpe(e.target.value ? Number(e.target.value) : null)}>
-                    <option value="">not logged</option>
-                    {RPE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </label>
-                <button type="button" className="btn-primary h-[38px] px-5" onClick={logSet} disabled={busy}>Log set</button>
-              </div>
-              <p className="mt-2 text-[11px] text-faint">RPE 10 = no reps left in the tank, 8 = two left. PRs use the Epley e1RM formula (1–10 reps).</p>
+              {selected.time_based ? (
+                <div className="mt-5">
+                  <TimedSetForm key={selected.id} exercise={selected} units={units} busy={busy} onSubmit={(s) => logSet(s)} />
+                  <p className="mt-2 text-[11px] text-faint">
+                    Calories use the activity's MET value ({selected.met ?? "n/a"}) × your weight × time, an estimate.
+                    {selected.muscles.length === 0 && " Stretching and meditation add no muscle load."}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
+                    <NumberField label={`Weight (${weightUnit(units)})`} value={weight} step={units === "imperial" ? 5 : 2.5} onChange={setWeight} />
+                    <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
+                    <RpeSelect value={rpe} onChange={setRpe} />
+                    <button type="button" className="btn-primary h-[38px] px-5" onClick={() => logSet()} disabled={busy}>Log set</button>
+                  </div>
+                  <p className="mt-2 text-[11px] text-faint">RPE 10 = no reps left in the tank, 8 = two left. PRs use the Epley e1RM formula (1–10 reps).</p>
+                </>
+              )}
             </>
           ) : (
-            <Empty title="Pick an exercise from the library to start logging." hint="Sets are saved instantly. Your session starts with the first set." />
+            <Empty title={`Pick a ${sectionLabel.toLowerCase()} exercise from the library to start logging.`} hint="Sets are saved instantly. Your session starts with the first set." />
           )}
         </div>
 
@@ -167,26 +220,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
               {groups.map(([name, sets]) => (
                 <div key={name}>
                   <div className="mb-1.5 text-sm font-medium text-ink">{name}</div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
-                        <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">kg</th><th className="font-medium">Reps</th>
-                        <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sets.map((s, i) => (
-                        <tr key={s.id} className="border-t border-line/70">
-                          <td className="py-1.5 text-muted">{i + 1}</td>
-                          <td className="text-ink">{s.weight_kg}</td>
-                          <td className="text-ink">{s.reps}</td>
-                          <td className="text-muted">{s.rpe ?? "–"}</td>
-                          <td className="text-muted">{s.e1rm ? `${s.e1rm} kg` : "–"}</td>
-                          <td>{s.is_pr && <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn"><IconTrophy width={12} height={12} /> PR</span>}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <SetTable sets={sets} units={units} onEdit={editSet} onDelete={deleteSet} busy={busy} />
                 </div>
               ))}
             </div>
@@ -214,6 +248,135 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         )}
       </section>
     </div>
+    </div>
+  );
+}
+
+function SetTable({ sets, units, onEdit, onDelete, busy }: {
+  sets: WorkoutSet[];
+  units: "metric" | "imperial";
+  onEdit: (s: WorkoutSet, patch: SetPatch) => void;
+  onDelete: (s: WorkoutSet) => void;
+  busy: boolean;
+}) {
+  const timed = sets.some((s) => s.duration_s !== null);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState<number | null>(null);
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
+          {timed ? (
+            <>
+              <th className="w-14 py-1 font-medium">#</th><th className="font-medium">Time</th><th className="font-medium">Distance</th>
+              <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th className="w-24 font-medium" /><th><span className="sr-only">Actions</span></th>
+            </>
+          ) : (
+            <>
+              <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">{weightUnit(units)}</th><th className="font-medium">Reps</th>
+              <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium" /><th><span className="sr-only">Actions</span></th>
+            </>
+          )}
+        </tr>
+      </thead>
+      <tbody>
+        {sets.map((s, i) => editing === s.id ? (
+          <EditRow key={s.id} index={i} set={s} timed={timed} units={units} busy={busy}
+            onCancel={() => setEditing(null)}
+            onSave={(patch) => { onEdit(s, patch); setEditing(null); }} />
+        ) : (
+          <tr key={s.id} className="group border-t border-line/70">
+            <td className="py-1.5 text-muted">{i + 1}</td>
+            {timed ? (
+              <>
+                <td className="text-ink">{formatDuration(s.duration_s ?? 0)}</td>
+                <td className="text-ink">{s.distance_m ? formatDistance(s.distance_m, units) : "–"}</td>
+                <td className="text-muted">{s.avg_hr ?? "–"}</td>
+                <td className="text-muted">{s.rpe ?? "–"}</td>
+                <td />
+              </>
+            ) : (
+              <>
+                <td className="text-ink">{toDisplayWeight(s.weight_kg, units)}</td>
+                <td className="text-ink">{s.reps}</td>
+                <td className="text-muted">{s.rpe ?? "–"}</td>
+                <td className="text-muted">{s.e1rm ? `${toDisplayWeight(s.e1rm, units)} ${weightUnit(units)}` : "–"}</td>
+                <td>{s.is_pr && <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-0.5 text-xs font-semibold text-warn"><IconTrophy width={12} height={12} /> PR</span>}</td>
+              </>
+            )}
+            <td className="w-28 text-right">
+              {confirming === s.id ? (
+                <span className="inline-flex gap-2 text-xs">
+                  <button type="button" className="text-bad hover:underline" disabled={busy} onClick={() => { onDelete(s); setConfirming(null); }}>Delete set {i + 1}?</button>
+                  <button type="button" className="text-muted hover:text-ink" onClick={() => setConfirming(null)}>No</button>
+                </span>
+              ) : (
+                <span className="inline-flex gap-3 text-xs opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                  <button type="button" className="text-muted hover:text-accent" aria-label={`Edit set ${i + 1}`} onClick={() => setEditing(s.id)}>Edit</button>
+                  <button type="button" className="text-muted hover:text-bad" aria-label={`Delete set ${i + 1}`} onClick={() => setConfirming(s.id)}>Delete</button>
+                </span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function EditRow({ index, set, timed, units, busy, onSave, onCancel }: {
+  index: number;
+  set: WorkoutSet;
+  timed: boolean;
+  units: "metric" | "imperial";
+  busy: boolean;
+  onSave: (patch: SetPatch) => void;
+  onCancel: () => void;
+}) {
+  const [weight, setWeight] = useState(String(toDisplayWeight(set.weight_kg, units)));
+  const [reps, setReps] = useState(String(set.reps));
+  const [duration, setDuration] = useState(formatDuration(set.duration_s ?? 0));
+  const [rpe, setRpe] = useState<number | null>(set.rpe);
+  const [error, setError] = useState<string | null>(null);
+
+  function save() {
+    if (timed) {
+      const seconds = parseDuration(duration);
+      if (!seconds) return setError("duration?");
+      return onSave({ duration_s: seconds, rpe });
+    }
+    const w = Number(weight);
+    const r = Number(reps);
+    if (Number.isNaN(w) || w < 0 || !Number.isInteger(r) || r < 1) return setError("check weight/reps");
+    onSave({ weight_kg: fromDisplayWeight(w, units), reps: r, rpe });
+  }
+
+  return (
+    <tr className="border-t border-line/70 bg-panel-2/60">
+      <td className="py-1.5 text-muted">{index + 1}</td>
+      {timed ? (
+        <td colSpan={3}><input aria-label="Edit duration" className="input h-8 w-28" value={duration} onChange={(e) => setDuration(e.target.value)} /></td>
+      ) : (
+        <>
+          <td><input aria-label="Edit weight" className="input h-8 w-20" value={weight} onChange={(e) => setWeight(e.target.value)} inputMode="decimal" /></td>
+          <td><input aria-label="Edit reps" className="input h-8 w-16" value={reps} onChange={(e) => setReps(e.target.value)} inputMode="numeric" /></td>
+        </>
+      )}
+      <td>
+        <select aria-label="Edit RPE" className="input h-8 w-20 py-0" value={rpe ?? ""} onChange={(e) => setRpe(e.target.value ? Number(e.target.value) : null)}>
+          <option value="">–</option>
+          {RPE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+      </td>
+      {!timed && <td className="text-xs text-bad">{error}</td>}
+      {timed && <td className="text-xs text-bad">{error}</td>}
+      <td className="text-right">
+        <span className="inline-flex gap-3 text-xs">
+          <button type="button" className="text-accent hover:underline" disabled={busy} onClick={save}>Save</button>
+          <button type="button" className="text-muted hover:text-ink" onClick={onCancel}>Cancel</button>
+        </span>
+      </td>
+    </tr>
   );
 }
 
@@ -222,30 +385,4 @@ function groupSets(w: Workout | null): [string, Workout["sets"]][] {
   const m = new Map<string, Workout["sets"]>();
   for (const s of w.sets) m.set(s.exercise_name, [...(m.get(s.exercise_name) ?? []), s]);
   return [...m.entries()];
-}
-
-function NumberField({ label, value, step, onChange }: { label: string; value: number; step: number; onChange: (n: number) => void }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs text-muted">{label}</span>
-      <div className="flex">
-        <button type="button" className="rounded-l-lg border border-r-0 border-line-2 bg-panel-2 px-3 text-muted hover:text-ink" onClick={() => onChange(Math.max(0, +(value - step).toFixed(1)))} aria-label={`decrease ${label}`}>−</button>
-        <input className="input rounded-none text-center" type="number" value={value} step={step} onChange={(e) => onChange(Number(e.target.value))} />
-        <button type="button" className="rounded-r-lg border border-l-0 border-line-2 bg-panel-2 px-3 text-muted hover:text-ink" onClick={() => onChange(+(value + step).toFixed(1))} aria-label={`increase ${label}`}>+</button>
-      </div>
-    </label>
-  );
-}
-
-function RestTimer({ seconds, onSkip }: { seconds: number; onSkip: () => void }) {
-  if (seconds <= 0) return <div className="flex items-center gap-1.5 text-xs text-faint"><IconTimer width={14} height={14} /> rest timer starts after a set</div>;
-  const mm = Math.floor(seconds / 60);
-  const ss = String(seconds % 60).padStart(2, "0");
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-1.5">
-      <IconTimer width={16} height={16} className="text-accent" />
-      <span className="font-display text-lg font-bold text-accent">{mm}:{ss}</span>
-      <button type="button" className="text-xs text-muted hover:text-ink" onClick={onSkip}>skip</button>
-    </div>
-  );
 }

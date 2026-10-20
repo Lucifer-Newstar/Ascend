@@ -17,7 +17,7 @@ import { WorkoutPage } from "./pages/Workout";
 
 const TITLES: Record<Page, string> = {
   dashboard: "Dashboard",
-  workout: "Workout logger",
+  workout: "Training",
   diet: "Diet",
   coach: "Coach",
   history: "History",
