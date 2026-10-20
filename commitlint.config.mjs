@@ -5,9 +5,11 @@
 //   <type>(<scope>): <summary in the imperative, lower case>
 //   feat(progress): add body measurement endpoints
 //
-// Merge commits ("Merge PR #12: ...") are ignored by commitlint's defaults.
+// Merge commits are skipped: GitHub's defaults ("Merge pull request ...") by
+// commitlint itself, and our lead-merge titles ("Merge PR #12: ...") below.
 export default {
   extends: ["@commitlint/config-conventional"],
+  ignores: [(message) => /^Merge PR #\d+: /.test(message)],
   rules: {
     "type-enum": [
       2,
@@ -20,9 +22,9 @@ export default {
       "always",
       [
         // sidecar modules
-        "core", "workouts", "activities", "progress", "gamification", "nutrition", "coach", "ai", "io",
+        "sidecar", "db", "core", "workouts", "activities", "progress", "gamification", "nutrition", "coach", "ai", "io",
         // desktop
-        "desktop", "ui", "electron", "a11y",
+        "desktop", "shared", "ui", "electron", "a11y",
         // ops and ml
         "ci", "docker", "build", "release", "ml", "deps", "meta", "repo", "github",
         // docs
