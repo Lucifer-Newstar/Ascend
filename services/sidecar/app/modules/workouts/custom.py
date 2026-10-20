@@ -12,8 +12,12 @@ stage set it, and the user's own edits win over all of them):
                structured JSON that is validated field by field; anything invalid is
                dropped and the earlier value stays. Skipped when AI is off or the model
                is not installed: the rules proposal stands on its own.
-  4. wger      optional online lookup on wger.de (exact name), only when Settings ->
-               "Online exercise lookup" is on AND the request asks for it. Off by default.
+  4. online    optional online research (wger.de for fields, Wikipedia for a summary),
+               only when Settings -> "Online research" is on or the user allowed this one
+               lookup. Off by default; with neither, no network request is made at all.
+
+Every proposed field also gets a confidence (high / medium / low) from the stage that set
+it; when a core field is low the review says so and offers online research.
 
 See docs/architecture/adr/0013-custom-exercises.md.
 """
@@ -63,12 +67,26 @@ class Proposal:
     values: dict[str, Any] = field(default_factory=dict)
     sources: dict[str, str] = field(default_factory=dict)
     attribution: list[dict[str, str]] = field(default_factory=list)
+    # Fields the rules filled with a fallback default because no keyword matched.
+    guessed: set[str] = field(default_factory=set)
 
-    def put(self, key: str, value: Any, source: str) -> None:
+    def put(self, key: str, value: Any, source: str, *, guessed: bool = False) -> None:
         if value is None or value == [] or value == {}:
             return
         self.values[key] = value
         self.sources[key] = source
+        if guessed:
+            self.guessed.add(key)
+        else:
+            self.guessed.discard(key)
+
+    def snapshot(self) -> Proposal:
+        return Proposal(
+            values=json.loads(json.dumps(self.values)),
+            sources=dict(self.sources),
+            attribution=list(self.attribution),
+            guessed=set(self.guessed),
+        )
 
 
 # --- 1. library ----------------------------------------------------------------------------
@@ -175,6 +193,7 @@ def rules_proposal(name: str, equipment_hint: str | None = None) -> Proposal:
     if equipment is None and _BODYWEIGHT.search(lower):
         equipment = "bodyweight"
     section = next((s for rx, s in _SECTION_RULES if re.search(rx, lower)), None)
+    section_guessed = section is None and equipment is None
     if section is None:
         section = (
             "calisthenics"
@@ -193,10 +212,13 @@ def rules_proposal(name: str, equipment_hint: str | None = None) -> Proposal:
                 if section == "gym" or section == "calisthenics":
                     break  # the first (most specific) strength rule decides
     pattern = lib.map_pattern(name, None, "static" if measure == "hold" else None, [])
+    pattern_guessed = pattern == "other"
     if section == "cardio":
         pattern = "locomotion"
     elif section == "flexibility":
         pattern = "mobility"
+    if section in ("cardio", "flexibility"):
+        pattern_guessed = False
     difficulty = (
         "beginner"
         if _BEGINNER.search(lower)
@@ -204,16 +226,24 @@ def rules_proposal(name: str, equipment_hint: str | None = None) -> Proposal:
         if _EXPERT.search(lower)
         else "intermediate"
     )
+    difficulty_guessed = not (_BEGINNER.search(lower) or _EXPERT.search(lower))
     low, high = lib.default_range(measure)
-    p.put("section", section, "rules")
+    p.put("section", section, "rules", guessed=section_guessed)
+    no_gear = section in ("cardio", "meditation")
     p.put(
         "equipment",
-        equipment or ("none" if section in ("cardio", "meditation") else "other"),
+        equipment or ("none" if no_gear else "other"),
         "rules",
+        guessed=equipment is None and not no_gear,
     )
     p.put("measure", measure, "rules")
-    p.put("pattern", pattern, "rules")
-    p.put("difficulty", difficulty if section in ("gym", "calisthenics") else None, "rules")
+    p.put("pattern", pattern, "rules", guessed=pattern_guessed)
+    p.put(
+        "difficulty",
+        difficulty if section in ("gym", "calisthenics") else None,
+        "rules",
+        guessed=difficulty_guessed,
+    )
     p.put("muscles", muscles, "rules")
     p.put("rep_low", low, "rules")
     p.put("rep_high", high, "rules")
@@ -364,7 +394,22 @@ def apply_ai(p: Proposal, raw: dict[str, Any]) -> list[str]:
     return applied
 
 
-# --- 4. wger (optional, online) ------------------------------------------------------------------
+# --- 4. online research (optional) -------------------------------------------------------------
+#
+# Only ever reached through `research()`, which `analyse()` calls only when Settings ->
+# "Online research" is on or the user allowed this single lookup. The exercise name is the
+# only thing sent. Sources (licences checked, see ADR-0013):
+#   * wger.de exercise API: exercise data under CC-BY-SA 4.0 (licence and author per
+#     exercise come back in the API and are stored as attribution). Fills fields.
+#   * Wikipedia REST page summary: text under CC BY-SA 4.0. Used for a one-paragraph
+#     summary in the report only, never for structured fields, and only when the article
+#     title matches the name (a redirect to a generic article such as "Exercise" is ignored).
+#   * Wikidata (CC0) was checked and is not queried: exercise items carry no muscle or
+#     equipment statements, so it would add a request without adding a field.
+
+WIKIPEDIA_API = "https://en.wikipedia.org/api/rest_v1/page/summary"
+USER_AGENT = "ASCEND-desktop/0.4 (offline fitness app; user-initiated exercise lookups)"
+RESEARCH_TIMEOUT = httpx.Timeout(6.0, connect=4.0)
 
 WGER_MUSCLES: dict[str, dict[str, float]] = {
     "Biceps": {"biceps": 1},
@@ -382,6 +427,19 @@ WGER_MUSCLES: dict[str, dict[str, float]] = {
     "Quads": {"quads": 1},
     "Hamstrings": {"hamstrings": 1},
     "Lats": {"lats": 1},
+    # wger leaves name_en empty for some muscles; their Latin names map the same way.
+    "Biceps brachii": {"biceps": 1},
+    "Anterior deltoid": {"front_delts": 1},
+    "Pectoralis major": {"lower_chest": 1, "upper_chest": 0.5},
+    "Triceps brachii": {"triceps": 1},
+    "Rectus abdominis": {"abs": 1},
+    "Obliquus externus abdominis": {"obliques": 1},
+    "Gastrocnemius": {"calves": 1},
+    "Gluteus maximus": {"glutes": 1},
+    "Trapezius": {"traps": 1},
+    "Quadriceps femoris": {"quads": 1},
+    "Biceps femoris": {"hamstrings": 1},
+    "Latissimus dorsi": {"lats": 1},
 }
 WGER_EQUIPMENT: dict[str, str] = {
     "Barbell": "barbell",
@@ -398,11 +456,51 @@ WGER_EQUIPMENT: dict[str, str] = {
 }
 
 
+FIELD_LABELS = {
+    "section": "Type",
+    "equipment": "Equipment",
+    "measure": "Measured in",
+    "pattern": "Movement pattern",
+    "difficulty": "Difficulty",
+    "muscles": "Muscles",
+    "instructions": "Instructions",
+}
+
+
 @dataclass
 class OnlineResult:
-    status: str  # off | not_requested | ok | not_found | error
+    status: str  # off | not_requested | ok | not_found | offline | timeout | rate_limited | error
     detail: str = ""
     applied: list[str] = field(default_factory=list)
+
+
+@dataclass
+class SourceCall:
+    source: str  # wger | wikipedia
+    url: str
+    status: str  # ok | not_found | offline | timeout | rate_limited | error | skipped
+
+
+@dataclass
+class Research:
+    """What online research found, ready for the report the user confirms."""
+
+    query: str
+    consent: str  # setting | once
+    calls: list[SourceCall] = field(default_factory=list)
+    wger: dict[str, Any] | None = None
+    summary: str = ""
+    summary_url: str = ""
+
+    @property
+    def outcome(self) -> str:
+        statuses = [c.status for c in self.calls]
+        if self.wger is not None or self.summary:
+            return "ok"
+        for bad in ("rate_limited", "timeout", "offline", "error"):
+            if bad in statuses:
+                return bad
+        return "not_found"
 
 
 def _strip_html(text: str) -> list[str]:
@@ -412,19 +510,96 @@ def _strip_html(text: str) -> list[str]:
     return [s[:300] for s in sentences[:8]]
 
 
-def wger_lookup(name: str, client: httpx.Client) -> dict[str, Any] | None:
-    """Exact-name lookup (wger's public API filters translations by exact name only)."""
-    variants = list(dict.fromkeys([name.strip(), name.strip().title(), name.strip().capitalize()]))
-    for variant in variants:
-        r = client.get(f"{WGER_API}/exercise-translation/", params={"name": variant, "language": 2})
+def _hyphenate(text: str) -> str:
+    return re.sub(r"(?i)\b(push|pull|chin|sit|step) ?up", lambda m: m.group(1) + "-up", text)
+
+
+def name_variants(name: str) -> list[str]:
+    """wger filters translations by exact, case-sensitive name and has no search endpoint
+    (it answers 404), so try the spellings people and wger actually use: as typed, Title
+    Case, Sentence case, lower case, each also with "push-up"-style hyphens. At most 6."""
+    base = re.sub(r"\s+", " ", name).strip()
+    out: list[str] = []
+    for form in (base, base.title(), base.capitalize(), base.lower()):
+        out += [form, _hyphenate(form)]
+    return list(dict.fromkeys(v for v in out if v))[:6]
+
+
+def _status_of(exc: Exception) -> str:
+    if isinstance(exc, httpx.TimeoutException):
+        return "timeout"
+    if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 429:
+        return "rate_limited"
+    if isinstance(exc, httpx.TransportError):
+        return "offline"
+    return "error"
+
+
+def wger_lookup(name: str, client: httpx.Client, calls: list[SourceCall]) -> dict[str, Any] | None:
+    key = lib.normalize(name)
+    for variant in name_variants(name):
+        url = f"{WGER_API}/exercise-translation/"
+        r = client.get(url, params={"name": variant, "language": 2})
         r.raise_for_status()
-        results = r.json().get("results", [])
-        if results:
-            tr = results[0]
-            info = client.get(f"{WGER_API}/exerciseinfo/{int(tr['exercise'])}/")
-            info.raise_for_status()
-            return {"translation": tr, "info": info.json()}
+        # Unknown filters are ignored by the API (it would return every exercise), so a
+        # result only counts when its name really is the name asked for.
+        results = [
+            x for x in r.json().get("results", []) if lib.normalize(str(x.get("name", ""))) == key
+        ]
+        if not results:
+            calls.append(SourceCall("wger", str(r.request.url), "not_found"))
+            continue
+        tr = results[0]
+        calls.append(SourceCall("wger", str(r.request.url), "ok"))
+        info = client.get(f"{WGER_API}/exerciseinfo/{int(tr['exercise'])}/")
+        info.raise_for_status()
+        calls.append(SourceCall("wger", str(info.request.url), "ok"))
+        return {"translation": tr, "info": info.json()}
     return None
+
+
+def wikipedia_summary(
+    name: str, client: httpx.Client, calls: list[SourceCall]
+) -> tuple[str, str] | None:
+    title = re.sub(r"\s+", "_", name.strip().capitalize())
+    url = f"{WIKIPEDIA_API}/{title}"
+    r = client.get(url, params={"redirect": "true"})
+    if r.status_code == 404:
+        calls.append(SourceCall("wikipedia", url, "not_found"))
+        return None
+    r.raise_for_status()
+    data = r.json()
+    found = str(data.get("title") or "")
+    # Only an article about this exercise; a redirect to a broad topic is not evidence.
+    if data.get("type") != "standard" or lib.normalize(found) != lib.normalize(name):
+        calls.append(SourceCall("wikipedia", url, "not_found"))
+        return None
+    calls.append(SourceCall("wikipedia", url, "ok"))
+    extract = re.sub(r"\s+", " ", str(data.get("extract") or "")).strip()
+    sentences = re.split(r"(?<=[.!?])\s+", extract)
+    summary = " ".join(sentences[:2])[:400]
+    page = str(((data.get("content_urls") or {}).get("desktop") or {}).get("page") or "")
+    return summary, page or f"https://en.wikipedia.org/wiki/{title}"
+
+
+def research(name: str, client: httpx.Client, consent: str) -> Research:
+    """Ask wger, then Wikipedia. Every failure is caught and recorded; never raises."""
+    res = Research(query=name, consent=consent)
+    try:
+        res.wger = wger_lookup(name, client, res.calls)
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
+        res.calls.append(SourceCall("wger", f"{WGER_API}/exercise-translation/", _status_of(e)))
+    # Skip Wikipedia when wger already showed the network is down or rate limited.
+    if any(c.status in ("offline", "timeout") for c in res.calls):
+        res.calls.append(SourceCall("wikipedia", WIKIPEDIA_API, "skipped"))
+        return res
+    try:
+        found = wikipedia_summary(name, client, res.calls)
+        if found:
+            res.summary, res.summary_url = found
+    except (httpx.HTTPError, ValueError, TypeError) as e:
+        res.calls.append(SourceCall("wikipedia", WIKIPEDIA_API, _status_of(e)))
+    return res
 
 
 def apply_wger(p: Proposal, found: dict[str, Any]) -> list[str]:
@@ -433,9 +608,9 @@ def apply_wger(p: Proposal, found: dict[str, Any]) -> list[str]:
     muscles: dict[str, float] = {}
     for key, scale in (("muscles", 1.0), ("muscles_secondary", 0.5)):
         for m in info.get(key, []) or []:
-            for region, w in WGER_MUSCLES.get(
-                str(m.get("name_en") or m.get("name") or ""), {}
-            ).items():
+            label = str(m.get("name_en") or m.get("name") or "")
+            regions = WGER_MUSCLES.get(label) or WGER_MUSCLES.get(str(m.get("name") or ""), {})
+            for region, w in regions.items():
                 muscles[region] = max(muscles.get(region, 0.0), w * scale)
     if muscles and any(w == 1.0 for w in muscles.values()):
         p.put("muscles", muscles, "wger")
@@ -450,20 +625,99 @@ def apply_wger(p: Proposal, found: dict[str, Any]) -> list[str]:
     if str((info.get("category") or {}).get("name")) == "Cardio":
         p.put("section", "cardio", "wger")
         applied.append("section")
+    elif equipment and "section" in p.guessed:
+        section = "calisthenics" if equipment[0] in ("bodyweight", "bar", "rings") else "gym"
+        p.put("section", section, "wger")
+        applied.append("section")
     steps = _strip_html(str(tr.get("description") or ""))
     if steps:
         p.put("instructions", steps, "wger")
         applied.append("instructions")
     lic = info.get("license") or {}
+    author = str(info.get("license_author") or "").strip()
     p.attribution.append(
         {
             "source": "wger",
-            "title": f"wger exercise #{int(tr['exercise'])}: {tr.get('name')}",
+            "title": f"wger exercise #{int(tr['exercise'])}: {tr.get('name')}"
+            + (f" (by {author[:60]})" if author else ""),
             "url": f"https://wger.de/en/exercise/{int(tr['exercise'])}/view/",
             "license": str(lic.get("short_name") or "see wger.de"),
         }
     )
     return applied
+
+
+# --- confidence --------------------------------------------------------------------------------
+
+CORE_FIELDS = ("section", "equipment", "measure", "pattern", "muscles")
+
+
+def confidence(p: Proposal, seed_score: float | None) -> dict[str, str]:
+    """high: the user, an exact wger match, or a near-identical library exercise.
+    medium: a looser library match, a validated local-model answer, a keyword rule.
+    low: a rules fallback (no keyword matched) or nothing at all."""
+    out: dict[str, str] = {}
+    for key in (*CORE_FIELDS, "difficulty", "instructions"):
+        src = p.sources.get(key)
+        if src is None:
+            out[key] = "low"
+        elif src in ("user", "wger"):
+            out[key] = "high"
+        elif src == "library":
+            out[key] = "high" if (seed_score or 0) >= 0.95 else "medium"
+        elif src == "local_ai":
+            out[key] = "medium"
+        else:
+            out[key] = "low" if key in p.guessed else "medium"
+    return out
+
+
+def insufficient(p: Proposal, conf: dict[str, str]) -> list[str]:
+    """Core fields the offline stages could not support. Muscles are not needed for
+    meditation or mobility, so their absence there is not a gap."""
+    gaps = [k for k in CORE_FIELDS if conf.get(k) == "low"]
+    if p.values.get("section") in ("meditation", "flexibility") and "muscles" in gaps:
+        gaps.remove("muscles")
+    return gaps
+
+
+def _display(key: str, value: Any) -> str:
+    if value is None:
+        return "-"
+    if key == "muscles" and isinstance(value, dict):
+        primary = [k for k, w in value.items() if w >= 1.0]
+        secondary = [k for k, w in value.items() if w < 1.0]
+        text = ", ".join(primary)
+        return text + (f" (+ {', '.join(secondary)})" if secondary else "")
+    if key == "instructions" and isinstance(value, list):
+        return f"{len(value)} steps"
+    return str(value)
+
+
+def report_fields(offline: Proposal, final: Proposal, res: Research) -> list[dict[str, Any]]:
+    """One row per field online research set: its value, the link it came from, and the
+    offline guess it replaces (so a conflict is visible and the user can keep either)."""
+    rows: list[dict[str, Any]] = []
+    url = ""
+    if res.wger is not None:
+        url = f"https://wger.de/en/exercise/{int(res.wger['translation']['exercise'])}/view/"
+    for key in FIELD_LABELS:
+        if final.sources.get(key) != "wger":
+            continue
+        new, old = final.values.get(key), offline.values.get(key)
+        rows.append(
+            {
+                "field": key,
+                "label": FIELD_LABELS[key],
+                "value": _display(key, new),
+                "source": "wger",
+                "url": url,
+                "offline_value": _display(key, old),
+                "offline_source": offline.sources.get(key, ""),
+                "conflict": old is not None and old != new,
+            }
+        )
+    return rows
 
 
 # --- analyse / create ---------------------------------------------------------------
@@ -477,6 +731,11 @@ class Analysis:
     duplicate: Exercise | None
     ai: AiResult
     online: OnlineResult
+    confidence: dict[str, str] = field(default_factory=dict)
+    insufficient: list[str] = field(default_factory=list)
+    offline: Proposal | None = None
+    research: Research | None = None
+    report: list[dict[str, Any]] = field(default_factory=list)
 
 
 def analyse(
@@ -490,15 +749,22 @@ def analyse(
     model: str,
     online_allowed: bool,
     online_requested: bool,
+    allow_once: bool = False,
+    now: datetime | None = None,
     http: httpx.Client | None = None,
 ) -> Analysis:
+    """online_allowed: the Settings toggle. allow_once: the user allowed this lookup only.
+    Online research runs when it is permitted (either of those) AND wanted (the user asked,
+    or the setting is on and the offline proposal is insufficient). Otherwise no client is
+    even created."""
     name = re.sub(r"\s+", " ", name).strip()
     matches = library_matches(db, name)
     duplicate = find_duplicate(db, name)
     p = rules_proposal(name, equipment_hint)
-    seed = next((e for e, score, _ in matches if score >= 0.85), None)
-    if seed is not None:
-        _from_library(p, seed)
+    seed_hit = next(((e, score) for e, score, _ in matches if score >= 0.85), None)
+    if seed_hit is not None:
+        _from_library(p, seed_hit[0])
+    seed_score = seed_hit[1] if seed_hit else None
     # Local model.
     from app.modules.coach import ollama
 
@@ -515,26 +781,87 @@ def analyse(
             )
         except (httpx.HTTPError, ValueError) as e:
             ai = AiResult("error", str(e)[:120], model)
-    # wger.
-    if not online_allowed:
-        online = OnlineResult("off", "Online lookup is off in Settings")
-    elif not online_requested:
-        online = OnlineResult("not_requested")
+    _make_consistent(p)
+    offline_conf = confidence(p, seed_score)
+    gaps = insufficient(p, offline_conf)
+    # Online research.
+    permitted = online_allowed or allow_once
+    wanted = online_requested or (online_allowed and bool(gaps))
+    res: Research | None = None
+    offline: Proposal | None = None
+    if not wanted:
+        online = OnlineResult("not_requested" if permitted else "off")
+    elif not permitted:
+        online = OnlineResult(
+            "off", "Online research is off: allow this lookup once or turn it on in Settings"
+        )
     else:
-        client = http or httpx.Client(timeout=6.0, headers={"Accept": "application/json"})
+        offline = p.snapshot()
+        consent = "setting" if online_allowed else "once"
+        client = http or httpx.Client(
+            timeout=RESEARCH_TIMEOUT,
+            headers={"Accept": "application/json", "User-Agent": USER_AGENT},
+            follow_redirects=True,
+        )
         try:
-            found = wger_lookup(name, client)
-            if found is None:
-                online = OnlineResult("not_found", "No exercise with this exact name on wger.de")
-            else:
-                online = OnlineResult("ok", applied=apply_wger(p, found))
-        except (httpx.HTTPError, ValueError, KeyError) as e:
-            online = OnlineResult("error", str(e)[:120])
+            res = research(name, client, consent)
         finally:
             if http is None:
                 client.close()
-    _make_consistent(p)
-    return Analysis(name, p, matches, duplicate, ai, online)
+        applied = apply_wger(p, res.wger) if res.wger is not None else []
+        if res.summary:
+            p.attribution.append(
+                {
+                    "source": "wikipedia",
+                    "title": f"Wikipedia: {name}",
+                    "url": res.summary_url,
+                    "license": "CC BY-SA 4.0",
+                }
+            )
+        details = {
+            "ok": "",
+            "not_found": "No exercise with this name on wger.de or Wikipedia",
+            "offline": "No internet connection; the offline proposal stands",
+            "timeout": "The lookup timed out; the offline proposal stands",
+            "rate_limited": "wger.de asked us to slow down; try again in a minute",
+            "error": "The lookup failed; the offline proposal stands",
+        }
+        online = OnlineResult(res.outcome, details[res.outcome], applied)
+        _make_consistent(p)
+        _log(db, res, now or datetime.now())
+    conf = confidence(p, seed_score)
+    report = report_fields(offline, p, res) if (offline is not None and res is not None) else []
+    return Analysis(
+        name,
+        p,
+        matches,
+        duplicate,
+        ai,
+        online,
+        confidence=conf,
+        insufficient=insufficient(p, conf),
+        offline=offline,
+        research=res,
+        report=report,
+    )
+
+
+def _log(db: Session, res: Research, now: datetime) -> None:
+    from app.modules.workouts.models import OnlineLookupLog
+
+    db.add(
+        OnlineLookupLog(
+            at=now,
+            query=res.query[:80],
+            sources_json=json.dumps(
+                [{"source": c.source, "url": c.url[:300], "status": c.status} for c in res.calls]
+            ),
+            outcome=res.outcome,
+            consent=res.consent,
+            detail="",
+        )
+    )
+    db.flush()
 
 
 TIMED_SECTIONS = ("cardio", "martial_arts", "flexibility", "meditation")
