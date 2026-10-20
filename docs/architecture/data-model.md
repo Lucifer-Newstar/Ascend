@@ -76,7 +76,7 @@ erDiagram
 | `settings` | key, value (JSON) — units, reset_hour, ai_mode (`off`/`rules_only`/`on`), tier, notifications, quiet hours |
 | `injuries` | id, area (muscle/joint), side, type (`dull`/`sharp`/`tingling`), severity, status (`active`/`returning`/`cleared`), blocked_patterns (JSON), started_at, cleared_at |
 | `pain_logs` | id, injury_id, score 0–10, context, logged_at |
-| `checkins` | id, day_key, sleep, energy, soreness (JSON per muscle), mood, readiness, algo_version |
+| `checkins` | id, day, sleep, energy, soreness (none/some/a_lot), mood, readiness, band, algo_version, quest_note (what the check-in did to the quest; migration 0007) |
 | `app_meta` | key, value — schema version, install id (local only), last backup |
 
 ### Training

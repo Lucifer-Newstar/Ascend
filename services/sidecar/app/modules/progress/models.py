@@ -66,6 +66,8 @@ class Checkin(Base):
     band: Mapped[str] = mapped_column(String(8))
     algo_version: Mapped[str] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(DateTime)
+    # What this check-in did to today's quest, as shown to the user (see checkins.record).
+    quest_note: Mapped[str | None] = mapped_column(String(160), nullable=True)
 
 
 class Setting(Base):

@@ -23,12 +23,23 @@ def _out(row: Checkin) -> CheckinOut:
         mood=row.mood,
         readiness=row.readiness,
         band=row.band,  # type: ignore[arg-type]
-        quest_adjustment=engine.ADJUSTMENT[row.band],
+        quest_adjustment=row.quest_note or engine.ADJUSTMENT[row.band],
         algo_version=row.algo_version,
     )
 
 
-def record(db: Session, bus: EventBus, data: CheckinIn, now: datetime) -> CheckinOut:
+# Shown instead of the band's note when training had already started: the quest is
+# only resized while untouched, so promising "one set shorter" would be wrong.
+QUEST_ALREADY_STARTED = (
+    "Training was already under way, so today's quest stays as it is. Take it easy."
+)
+
+
+def record(
+    db: Session, bus: EventBus, data: CheckinIn, now: datetime, *, quest_started: bool = False
+) -> CheckinOut:
+    """Store today's check-in and announce it. `quest_started` (from the caller, which
+    may read gamification state) says whether the training quest can still be resized."""
     r = engine.readiness(data.sleep, data.energy, data.soreness, data.mood)
     row = db.scalars(select(Checkin).where(Checkin.day == now.date())).first()
     if row is None:
@@ -41,6 +52,7 @@ def record(db: Session, bus: EventBus, data: CheckinIn, now: datetime) -> Checki
         data.mood,
     )
     row.readiness, row.band, row.algo_version = r.score, r.band, engine.FORMULA_VERSION
+    row.quest_note = QUEST_ALREADY_STARTED if quest_started and r.band != "green" else None
     db.flush()
     bus.publish(db, CheckinRecorded(day=row.day, at=now, readiness=r.score, band=r.band))
     return _out(row)

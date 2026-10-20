@@ -47,8 +47,18 @@ def test_checkin_after_training_started_leaves_quest_alone(client, profile, cloc
     w = client.post("/workouts").json()["id"]
     client.post(f"/workouts/{w}/sets", json={"exercise_id": ex["id"], "weight_kg": 20, "reps": 8})
     clock.now += timedelta(minutes=5)
-    client.post("/checkins", json=BAD)
+    body = client.post("/checkins", json=BAD).json()
     assert training_item(client)["code"] == item["code"]
+    assert body["band"] == "red"
+    assert "already under way" in body["quest_adjustment"]
+    assert "already under way" in client.get("/checkins/today").json()["quest_adjustment"]
+
+
+def test_note_matches_what_happened_before_training(client, profile):
+    body = client.post("/checkins", json=BAD).json()
+    assert body["quest_adjustment"].startswith("Today's training quest is swapped")
+    good = client.post("/checkins", json=GOOD).json()
+    assert good["quest_adjustment"] == "Today's plan is unchanged."
 
 
 def test_skipped_checkin_and_history(client, profile, clock):
