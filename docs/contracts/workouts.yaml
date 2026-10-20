@@ -1,0 +1,662 @@
+# ASCEND contract — workouts
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — workouts
+  version: 0.1.0
+  description: 'Workout logging, sets, exercises, PRs and plans. Owner: Jegatheesan (backend).
+
+
+    Operations marked `x-status: implemented` match the v0.1 code skeleton exactly (generated from its OpenAPI on
+    2026-10-20). `x-status: planned` operations are the agreed v1.0 design; they are additive and are mocked by
+    Prism until implemented.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: workouts
+  description: Shared logger for gym, calisthenics and cardio
+paths:
+  /workouts:
+    post:
+      tags:
+      - workouts
+      summary: Start
+      operationId: start_workouts_post
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutOut'
+      x-status: implemented
+    get:
+      summary: List past workouts (newest first)
+      operationId: list_workouts
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+      - name: before
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkoutSummary'
+      x-status: planned
+      tags:
+      - workouts
+  /workouts/active:
+    get:
+      tags:
+      - workouts
+      summary: Active
+      operationId: active_workouts_active_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/WorkoutOut'
+                - type: 'null'
+                title: Response Active Workouts Active Get
+      x-status: implemented
+  /workouts/{workout_id}:
+    get:
+      tags:
+      - workouts
+      summary: Get
+      operationId: get_workouts__workout_id__get
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Workout Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /workouts/{workout_id}/sets:
+    post:
+      tags:
+      - workouts
+      summary: Log Set
+      operationId: log_set_workouts__workout_id__sets_post
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Workout Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoggedSet'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /workouts/{workout_id}/finish:
+    post:
+      tags:
+      - workouts
+      summary: Finish
+      operationId: finish_workouts__workout_id__finish_post
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Workout Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishedWorkout'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /exercises:
+    get:
+      tags:
+      - workouts
+      summary: List Exercises
+      operationId: list_exercises_exercises_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ''
+          title: Q
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExerciseOut'
+                title: Response List Exercises Exercises Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /workouts/{workout_id}/sets/{set_id}:
+    patch:
+      summary: Edit a logged set (re-runs PR, XP, muscle load via events)
+      operationId: edit_set
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: set_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - workouts
+    delete:
+      summary: Delete a logged set
+      operationId: delete_set
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: set_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - workouts
+  /prs:
+    get:
+      summary: Personal records
+      operationId: list_prs
+      parameters:
+      - name: exercise_id
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PROut'
+      x-status: planned
+      tags:
+      - workouts
+  /plans/current:
+    get:
+      summary: The active training plan
+      operationId: current_plan
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - workouts
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'
+  schemas:
+    ExerciseOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        equipment:
+          type: string
+          title: Equipment
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleWeight'
+          type: array
+          title: Muscles
+      type: object
+      required:
+      - id
+      - name
+      - equipment
+      - muscles
+      title: ExerciseOut
+    FinishedWorkout:
+      properties:
+        workout:
+          $ref: '#/components/schemas/WorkoutOut'
+        xp_awarded:
+          type: integer
+          title: Xp Awarded
+        active_minutes:
+          type: number
+          title: Active Minutes
+        hard_sets:
+          type: integer
+          title: Hard Sets
+      type: object
+      required:
+      - workout
+      - xp_awarded
+      - active_minutes
+      - hard_sets
+      title: FinishedWorkout
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    LoggedSet:
+      properties:
+        set:
+          $ref: '#/components/schemas/SetOut'
+        xp_awarded:
+          type: integer
+          title: Xp Awarded
+        previous_best_e1rm:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Previous Best E1Rm
+      type: object
+      required:
+      - set
+      - xp_awarded
+      - previous_best_e1rm
+      title: LoggedSet
+    MuscleWeight:
+      properties:
+        muscle:
+          type: string
+          title: Muscle
+        weight:
+          type: number
+          title: Weight
+      type: object
+      required:
+      - muscle
+      - weight
+      title: MuscleWeight
+    SetIn:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        weight_kg:
+          type: number
+          maximum: 500.0
+          minimum: 0.0
+          title: Weight Kg
+        reps:
+          type: integer
+          maximum: 100.0
+          minimum: 1.0
+          title: Reps
+        rpe:
+          anyOf:
+          - type: number
+            maximum: 10.0
+            minimum: 1.0
+          - type: 'null'
+          title: Rpe
+      type: object
+      required:
+      - exercise_id
+      - weight_kg
+      - reps
+      title: SetIn
+    SetOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise_name:
+          type: string
+          title: Exercise Name
+        weight_kg:
+          type: number
+          title: Weight Kg
+        reps:
+          type: integer
+          title: Reps
+        rpe:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Rpe
+        e1rm:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: E1Rm
+        is_pr:
+          type: boolean
+          title: Is Pr
+        performed_at:
+          type: string
+          format: date-time
+          title: Performed At
+      type: object
+      required:
+      - id
+      - exercise_id
+      - exercise_name
+      - weight_kg
+      - reps
+      - rpe
+      - e1rm
+      - is_pr
+      - performed_at
+      title: SetOut
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    WorkoutOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        day:
+          type: string
+          format: date
+          title: Day
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        sets:
+          items:
+            $ref: '#/components/schemas/SetOut'
+          type: array
+          title: Sets
+      type: object
+      required:
+      - id
+      - day
+      - started_at
+      - finished_at
+      - sets
+      title: WorkoutOut
+    WorkoutSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        sets:
+          type: integer
+        volume_kg:
+          type: number
+        xp:
+          type: integer
+      required:
+      - id
+      - started_at
+      - sets
+    SetPatch:
+      type: object
+      properties:
+        weight_kg:
+          type: number
+          minimum: 0
+          maximum: 500
+        reps:
+          type: integer
+          minimum: 1
+          maximum: 100
+        rpe:
+          type:
+          - number
+          - 'null'
+          minimum: 1
+          maximum: 10
+    PROut:
+      type: object
+      properties:
+        exercise_id:
+          type: integer
+        type:
+          type: string
+          enum:
+          - e1rm
+          - rm_n
+          - volume
+          - reps
+          - hold
+          - time
+          - distance
+        value:
+          type: number
+        formula:
+          type:
+          - string
+          - 'null'
+          enum:
+          - epley
+          - brzycki
+          - null
+        algo_version:
+          type: string
+        achieved_at:
+          type: string
+          format: date-time
+      required:
+      - exercise_id
+      - type
+      - value
+      - achieved_at
+    PlanOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          type: string
+          enum:
+          - planner
+          - imported
+          - manual
+        days:
+          type: array
+          items:
+            type: object
+            properties:
+              weekday:
+                type: integer
+                minimum: 0
+                maximum: 6
+              focus:
+                type: string
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    exercise_id:
+                      type: integer
+                    sets:
+                      type: integer
+                    rep_low:
+                      type: integer
+                    rep_high:
+                      type: integer
+                    target_rpe:
+                      type: number
+                    rest_s:
+                      type: integer
+      required:
+      - id
+      - source
+      - days
+    Error:
+      type: object
+      required:
+      - detail
+      properties:
+        detail:
+          type: string
+          description: Plain-language error, safe to show
+        code:
+          type: string
+          description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING

@@ -1,0 +1,417 @@
+# ASCEND contract — gamification
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — gamification
+  version: 0.1.0
+  description: 'XP, levels, quests, streaks, freezes and ranks. Owner: Jegatheesan.
+
+
+    Operations marked `x-status: implemented` match the v0.1 code skeleton exactly (generated from its OpenAPI on
+    2026-10-20). `x-status: planned` operations are the agreed v1.0 design; they are additive and are mocked by
+    Prism until implemented.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: gamification
+  description: Humane game layer — XP is never taken away
+paths:
+  /game/summary:
+    get:
+      tags:
+      - gamification
+      summary: Summary
+      operationId: summary_game_summary_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSummary'
+      x-status: implemented
+  /game/quests/{item_id}/complete:
+    post:
+      tags:
+      - gamification
+      summary: Complete
+      operationId: complete_game_quests__item_id__complete_post
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestItemOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /game/quests/{item_id}/swap:
+    post:
+      summary: Swap one quest item (once a day)
+      operationId: swap_quest_item
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestSwapIn'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestItemOut'
+        '409':
+          description: Already swapped today
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - gamification
+  /game/xp/history:
+    get:
+      summary: XP per day
+      operationId: xp_history
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 30
+          maximum: 365
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/XpHistoryRow'
+      x-status: planned
+      tags:
+      - gamification
+  /game/rank:
+    get:
+      summary: Rank, title and next trial
+      operationId: get_rank
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RankOut'
+      x-status: planned
+      tags:
+      - gamification
+  /game/mode:
+    put:
+      summary: Pause quests/streaks (sick, injury, travel, exam) up to 14 days
+      operationId: set_mode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModeIn'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreakOut'
+      x-status: planned
+      tags:
+      - gamification
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'
+  schemas:
+    GameSummary:
+      properties:
+        xp:
+          $ref: '#/components/schemas/XpOut'
+        streak:
+          $ref: '#/components/schemas/StreakOut'
+        quest:
+          items:
+            $ref: '#/components/schemas/QuestItemOut'
+          type: array
+          title: Quest
+      type: object
+      required:
+      - xp
+      - streak
+      - quest
+      title: GameSummary
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    QuestItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        day:
+          type: string
+          format: date
+          title: Day
+        kind:
+          type: string
+          title: Kind
+        code:
+          type: string
+          title: Code
+        title:
+          type: string
+          title: Title
+        detail:
+          type: string
+          title: Detail
+        metric:
+          type: string
+          title: Metric
+        target:
+          type: integer
+          title: Target
+        progress:
+          type: integer
+          title: Progress
+        xp:
+          type: integer
+          title: Xp
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+      type: object
+      required:
+      - id
+      - day
+      - kind
+      - code
+      - title
+      - detail
+      - metric
+      - target
+      - progress
+      - xp
+      - completed_at
+      title: QuestItemOut
+    StreakOut:
+      properties:
+        current:
+          type: integer
+          title: Current
+        best:
+          type: integer
+          title: Best
+        freezes_held:
+          type: integer
+          title: Freezes Held
+        freezes_used:
+          type: integer
+          title: Freezes Used
+        active_today:
+          type: boolean
+          title: Active Today
+      type: object
+      required:
+      - current
+      - best
+      - freezes_held
+      - freezes_used
+      - active_today
+      title: StreakOut
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    XpOut:
+      properties:
+        total:
+          type: integer
+          title: Total
+        today:
+          type: integer
+          title: Today
+        level:
+          type: integer
+          title: Level
+        xp_into_level:
+          type: integer
+          title: Xp Into Level
+        xp_for_next:
+          type: integer
+          title: Xp For Next
+        rank:
+          type: string
+          title: Rank
+        rank_title:
+          type: string
+          title: Rank Title
+        daily_cap:
+          type: integer
+          title: Daily Cap
+        formula_version:
+          type: string
+          title: Formula Version
+      type: object
+      required:
+      - total
+      - today
+      - level
+      - xp_into_level
+      - xp_for_next
+      - rank
+      - rank_title
+      - daily_cap
+      - formula_version
+      title: XpOut
+    QuestSwapIn:
+      type: object
+      properties:
+        replacement_kind:
+          type: string
+      required:
+      - replacement_kind
+    XpHistoryRow:
+      type: object
+      properties:
+        day:
+          type: string
+          format: date
+        xp:
+          type: integer
+        sources:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - day
+      - xp
+    RankOut:
+      type: object
+      properties:
+        rank:
+          type: string
+          enum:
+          - E
+          - D
+          - C
+          - B
+          - A
+          - S
+        title:
+          type: string
+          examples:
+          - Initiate
+        level:
+          type: integer
+        next_rank_level:
+          type:
+          - integer
+          - 'null'
+        trial:
+          type:
+          - object
+          - 'null'
+      required:
+      - rank
+      - title
+      - level
+    ModeIn:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - normal
+          - sick
+          - injury
+          - travel
+          - exam
+        days:
+          type: integer
+          minimum: 1
+          maximum: 14
+      required:
+      - mode
+    Error:
+      type: object
+      required:
+      - detail
+      properties:
+        detail:
+          type: string
+          description: Plain-language error, safe to show
+        code:
+          type: string
+          description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING

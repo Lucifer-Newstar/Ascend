@@ -1,0 +1,1102 @@
+# ASCEND contract — progress
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — progress
+  version: 0.1.0
+  description: 'Profile, settings, dashboard, muscle map, history, body metrics, ETA and readiness. Owner: Jegatheesan.
+
+
+    Operations marked `x-status: implemented` match the v0.1 code skeleton exactly (generated from its OpenAPI on
+    2026-10-20). `x-status: planned` operations are the agreed v1.0 design; they are additive and are mocked by
+    Prism until implemented.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: progress
+  description: Dashboard and progress data
+paths:
+  /profile:
+    get:
+      tags:
+      - progress
+      summary: Get Profile
+      operationId: get_profile_profile_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileOut'
+      x-status: implemented
+    put:
+      tags:
+      - progress
+      summary: Put Profile
+      operationId: put_profile_profile_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /settings:
+    get:
+      tags:
+      - progress
+      summary: Get Settings
+      operationId: get_settings_settings_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingsOut'
+      x-status: implemented
+    put:
+      tags:
+      - progress
+      summary: Put Settings
+      operationId: put_settings_settings_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingsOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /muscles:
+    get:
+      tags:
+      - progress
+      summary: Muscles
+      operationId: muscles_muscles_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MuscleStateOut'
+                type: array
+                title: Response Muscles Muscles Get
+      x-status: implemented
+  /dashboard:
+    get:
+      tags:
+      - progress
+      summary: Dashboard
+      operationId: dashboard_dashboard_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+      x-status: implemented
+  /history:
+    get:
+      tags:
+      - progress
+      summary: Get History
+      operationId: get_history_history_get
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 30
+          title: Days
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryDay'
+                title: Response Get History History Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /muscles/{code}/history:
+    get:
+      summary: 'Muscle drill-down: 1 to 30 days'
+      operationId: muscle_history
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 7
+          minimum: 1
+          maximum: 30
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MuscleHistory'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - progress
+  /body-metrics:
+    get:
+      summary: Body metrics with trend weight
+      operationId: list_body_metrics
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 90
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BodyMetricOut'
+      x-status: planned
+      tags:
+      - progress
+    post:
+      summary: Log weight / measurements
+      operationId: log_body_metric
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BodyMetricIn'
+      responses:
+        '201':
+          description: Logged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BodyMetricOut'
+      x-status: planned
+      tags:
+      - progress
+  /progress/eta:
+    get:
+      summary: Estimated time to goal (range + confidence)
+      operationId: eta
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EtaOut'
+      x-status: planned
+      tags:
+      - progress
+  /checkins:
+    post:
+      summary: 20-second morning check-in → readiness (v1.1)
+      operationId: checkin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckinIn'
+      responses:
+        '201':
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckinOut'
+      x-status: planned
+      tags:
+      - progress
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'
+  schemas:
+    Dashboard:
+      properties:
+        date:
+          type: string
+          title: Date
+        has_profile:
+          type: boolean
+          title: Has Profile
+        rings:
+          additionalProperties:
+            $ref: '#/components/schemas/Ring'
+          type: object
+          title: Rings
+        nutrition:
+          $ref: '#/components/schemas/Totals'
+        game:
+          $ref: '#/components/schemas/GameSummary'
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleStateOut'
+          type: array
+          title: Muscles
+      type: object
+      required:
+      - date
+      - has_profile
+      - rings
+      - nutrition
+      - game
+      - muscles
+      title: Dashboard
+    EnergyTargets:
+      properties:
+        bmr:
+          type: integer
+          title: Bmr
+        tdee:
+          type: integer
+          title: Tdee
+        kcal_target:
+          type: integer
+          title: Kcal Target
+        protein_target_g:
+          type: integer
+          title: Protein Target G
+        formula_version:
+          type: string
+          title: Formula Version
+        is_estimate:
+          type: boolean
+          title: Is Estimate
+          default: true
+      type: object
+      required:
+      - bmr
+      - tdee
+      - kcal_target
+      - protein_target_g
+      - formula_version
+      title: EnergyTargets
+    GameSummary:
+      properties:
+        xp:
+          $ref: '#/components/schemas/XpOut'
+        streak:
+          $ref: '#/components/schemas/StreakOut'
+        quest:
+          items:
+            $ref: '#/components/schemas/QuestItemOut'
+          type: array
+          title: Quest
+      type: object
+      required:
+      - xp
+      - streak
+      - quest
+      title: GameSummary
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HistoryDay:
+      properties:
+        day:
+          type: string
+          format: date
+          title: Day
+        workouts:
+          items:
+            $ref: '#/components/schemas/WorkoutOut'
+          type: array
+          title: Workouts
+        meals:
+          items:
+            $ref: '#/components/schemas/MealOut'
+          type: array
+          title: Meals
+        kcal_in:
+          type: number
+          title: Kcal In
+        sets:
+          type: integer
+          title: Sets
+        xp:
+          type: integer
+          title: Xp
+      type: object
+      required:
+      - day
+      - workouts
+      - meals
+      - kcal_in
+      - sets
+      - xp
+      title: HistoryDay
+    MealItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        food_id:
+          type: integer
+          title: Food Id
+        food_name:
+          type: string
+          title: Food Name
+        portions:
+          type: number
+          title: Portions
+        kcal:
+          type: number
+          title: Kcal
+        protein_g:
+          type: number
+          title: Protein G
+        carbs_g:
+          type: number
+          title: Carbs G
+        fat_g:
+          type: number
+          title: Fat G
+      type: object
+      required:
+      - id
+      - food_id
+      - food_name
+      - portions
+      - kcal
+      - protein_g
+      - carbs_g
+      - fat_g
+      title: MealItemOut
+    MealOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        day:
+          type: string
+          format: date
+          title: Day
+        meal_type:
+          type: string
+          title: Meal Type
+        logged_at:
+          type: string
+          format: date-time
+          title: Logged At
+        items:
+          items:
+            $ref: '#/components/schemas/MealItemOut'
+          type: array
+          title: Items
+        kcal:
+          type: number
+          title: Kcal
+      type: object
+      required:
+      - id
+      - day
+      - meal_type
+      - logged_at
+      - items
+      - kcal
+      title: MealOut
+    MuscleStateOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        label:
+          type: string
+          title: Label
+        group:
+          type: string
+          title: Group
+        map_slug:
+          type: string
+          title: Map Slug
+        status:
+          type: string
+          enum:
+          - under
+          - optimal
+          - recovering
+          - over
+          - no_data
+          title: Status
+        es_7d:
+          type: number
+          title: Es 7D
+        weekly_low:
+          type: number
+          title: Weekly Low
+        weekly_high:
+          type: number
+          title: Weekly High
+        readiness:
+          type: number
+          title: Readiness
+        ready_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ready At
+      type: object
+      required:
+      - key
+      - label
+      - group
+      - map_slug
+      - status
+      - es_7d
+      - weekly_low
+      - weekly_high
+      - readiness
+      - ready_at
+      title: MuscleStateOut
+    ProfileIn:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          title: Name
+          default: ''
+        age:
+          type: integer
+          maximum: 100.0
+          minimum: 13.0
+          title: Age
+        sex:
+          type: string
+          enum:
+          - male
+          - female
+          title: Sex
+        height_cm:
+          type: number
+          maximum: 250.0
+          minimum: 100.0
+          title: Height Cm
+        weight_kg:
+          type: number
+          maximum: 300.0
+          minimum: 30.0
+          title: Weight Kg
+        goal:
+          type: string
+          enum:
+          - cut
+          - maintain
+          - bulk
+          title: Goal
+        activity:
+          type: string
+          enum:
+          - sedentary
+          - light
+          - moderate
+          - active
+          - very_active
+          title: Activity
+          default: moderate
+      type: object
+      required:
+      - age
+      - sex
+      - height_cm
+      - weight_kg
+      - goal
+      title: ProfileIn
+    ProfileOut:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          title: Name
+          default: ''
+        age:
+          type: integer
+          maximum: 100.0
+          minimum: 13.0
+          title: Age
+        sex:
+          type: string
+          enum:
+          - male
+          - female
+          title: Sex
+        height_cm:
+          type: number
+          maximum: 250.0
+          minimum: 100.0
+          title: Height Cm
+        weight_kg:
+          type: number
+          maximum: 300.0
+          minimum: 30.0
+          title: Weight Kg
+        goal:
+          type: string
+          enum:
+          - cut
+          - maintain
+          - bulk
+          title: Goal
+        activity:
+          type: string
+          enum:
+          - sedentary
+          - light
+          - moderate
+          - active
+          - very_active
+          title: Activity
+          default: moderate
+        energy:
+          $ref: '#/components/schemas/EnergyTargets'
+      type: object
+      required:
+      - age
+      - sex
+      - height_cm
+      - weight_kg
+      - goal
+      - energy
+      title: ProfileOut
+    QuestItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        day:
+          type: string
+          format: date
+          title: Day
+        kind:
+          type: string
+          title: Kind
+        code:
+          type: string
+          title: Code
+        title:
+          type: string
+          title: Title
+        detail:
+          type: string
+          title: Detail
+        metric:
+          type: string
+          title: Metric
+        target:
+          type: integer
+          title: Target
+        progress:
+          type: integer
+          title: Progress
+        xp:
+          type: integer
+          title: Xp
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+      type: object
+      required:
+      - id
+      - day
+      - kind
+      - code
+      - title
+      - detail
+      - metric
+      - target
+      - progress
+      - xp
+      - completed_at
+      title: QuestItemOut
+    Ring:
+      properties:
+        value:
+          type: number
+          title: Value
+        target:
+          type: number
+          title: Target
+        label:
+          type: string
+          title: Label
+        is_estimate:
+          type: boolean
+          title: Is Estimate
+          default: false
+      type: object
+      required:
+      - value
+      - target
+      - label
+      title: Ring
+    SetOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise_name:
+          type: string
+          title: Exercise Name
+        weight_kg:
+          type: number
+          title: Weight Kg
+        reps:
+          type: integer
+          title: Reps
+        rpe:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Rpe
+        e1rm:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: E1Rm
+        is_pr:
+          type: boolean
+          title: Is Pr
+        performed_at:
+          type: string
+          format: date-time
+          title: Performed At
+      type: object
+      required:
+      - id
+      - exercise_id
+      - exercise_name
+      - weight_kg
+      - reps
+      - rpe
+      - e1rm
+      - is_pr
+      - performed_at
+      title: SetOut
+    SettingsIn:
+      properties:
+        ai_enabled:
+          type: boolean
+          title: Ai Enabled
+      type: object
+      required:
+      - ai_enabled
+      title: SettingsIn
+    SettingsOut:
+      properties:
+        ai_enabled:
+          type: boolean
+          title: Ai Enabled
+      type: object
+      required:
+      - ai_enabled
+      title: SettingsOut
+    StreakOut:
+      properties:
+        current:
+          type: integer
+          title: Current
+        best:
+          type: integer
+          title: Best
+        freezes_held:
+          type: integer
+          title: Freezes Held
+        freezes_used:
+          type: integer
+          title: Freezes Used
+        active_today:
+          type: boolean
+          title: Active Today
+      type: object
+      required:
+      - current
+      - best
+      - freezes_held
+      - freezes_used
+      - active_today
+      title: StreakOut
+    Totals:
+      properties:
+        kcal:
+          type: number
+          title: Kcal
+          default: 0
+        protein_g:
+          type: number
+          title: Protein G
+          default: 0
+        carbs_g:
+          type: number
+          title: Carbs G
+          default: 0
+        fat_g:
+          type: number
+          title: Fat G
+          default: 0
+      type: object
+      title: Totals
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    WorkoutOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        day:
+          type: string
+          format: date
+          title: Day
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        sets:
+          items:
+            $ref: '#/components/schemas/SetOut'
+          type: array
+          title: Sets
+      type: object
+      required:
+      - id
+      - day
+      - started_at
+      - finished_at
+      - sets
+      title: WorkoutOut
+    XpOut:
+      properties:
+        total:
+          type: integer
+          title: Total
+        today:
+          type: integer
+          title: Today
+        level:
+          type: integer
+          title: Level
+        xp_into_level:
+          type: integer
+          title: Xp Into Level
+        xp_for_next:
+          type: integer
+          title: Xp For Next
+        rank:
+          type: string
+          title: Rank
+        rank_title:
+          type: string
+          title: Rank Title
+        daily_cap:
+          type: integer
+          title: Daily Cap
+        formula_version:
+          type: string
+          title: Formula Version
+      type: object
+      required:
+      - total
+      - today
+      - level
+      - xp_into_level
+      - xp_for_next
+      - rank
+      - rank_title
+      - daily_cap
+      - formula_version
+      title: XpOut
+    MuscleDay:
+      type: object
+      properties:
+        day:
+          type: string
+          format: date
+        eff_sets:
+          type: number
+        readiness:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+      - day
+      - eff_sets
+    MuscleHistory:
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+          - hamstrings
+        days:
+          type: integer
+        target_low:
+          type: number
+        target_high:
+          type: number
+        daily:
+          type: array
+          items:
+            $ref: '#/components/schemas/MuscleDay'
+        contributing_sets:
+          type: array
+          items:
+            type: object
+            properties:
+              set_id:
+                type: integer
+              exercise:
+                type: string
+              weight:
+                type: number
+              effort:
+                type: number
+              es:
+                type: number
+        suggestion:
+          type:
+          - string
+          - 'null'
+      required:
+      - code
+      - days
+      - daily
+    BodyMetricIn:
+      type: object
+      properties:
+        measured_at:
+          type: string
+          format: date-time
+        weight_kg:
+          type: number
+          minimum: 20
+          maximum: 300
+        waist_cm:
+          type: number
+        resting_hr:
+          type: integer
+      required:
+      - weight_kg
+    BodyMetricOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        measured_at:
+          type: string
+          format: date-time
+        weight_kg:
+          type: number
+        trend_kg:
+          type: number
+      required:
+      - id
+      - measured_at
+      - weight_kg
+    EtaOut:
+      type: object
+      properties:
+        goal_kg:
+          type: number
+        current_trend_kg:
+          type: number
+        rate_kg_per_week:
+          type:
+          - number
+          - 'null'
+        eta_from:
+          type:
+          - string
+          - 'null'
+          format: date
+        eta_to:
+          type:
+          - string
+          - 'null'
+          format: date
+        confidence:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+        on_track:
+          type: boolean
+        reason:
+          type:
+          - string
+          - 'null'
+        note:
+          type: string
+          const: Estimate, not a promise
+      required:
+      - confidence
+      - on_track
+      - note
+    CheckinIn:
+      type: object
+      properties:
+        sleep:
+          type: integer
+          minimum: 1
+          maximum: 5
+        energy:
+          type: integer
+          minimum: 1
+          maximum: 5
+        soreness:
+          type: string
+          enum:
+          - none
+          - some
+          - a_lot
+        mood:
+          type: integer
+          minimum: 1
+          maximum: 5
+      required:
+      - sleep
+      - energy
+      - soreness
+      - mood
+    CheckinOut:
+      type: object
+      properties:
+        readiness:
+          type: integer
+          minimum: 0
+          maximum: 100
+        band:
+          type: string
+          enum:
+          - green
+          - amber
+          - red
+        quest_adjustment:
+          type: string
+      required:
+      - readiness
+      - band
+    Error:
+      type: object
+      required:
+      - detail
+      properties:
+        detail:
+          type: string
+          description: Plain-language error, safe to show
+        code:
+          type: string
+          description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING

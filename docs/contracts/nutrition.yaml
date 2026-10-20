@@ -1,0 +1,685 @@
+# ASCEND contract — nutrition
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — nutrition
+  version: 0.1.0
+  description: 'Food search (INDB/IFCT/Open Food Facts), meals, portions and meal-photo scans. Owner: Jegatheesan;
+    classifier: Navin.
+
+
+    Operations marked `x-status: implemented` match the v0.1 code skeleton exactly (generated from its OpenAPI on
+    2026-10-20). `x-status: planned` operations are the agreed v1.0 design; they are additive and are mocked by
+    Prism until implemented.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: nutrition
+  description: Indian-food-aware nutrition logging
+paths:
+  /foods:
+    get:
+      tags:
+      - nutrition
+      summary: Search Foods
+      operationId: search_foods_foods_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ''
+          title: Q
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoodOut'
+                title: Response Search Foods Foods Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /meals:
+    post:
+      tags:
+      - nutrition
+      summary: Log Meal
+      operationId: log_meal_meals_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealLoggedOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /meals/{meal_id}:
+    delete:
+      tags:
+      - nutrition
+      summary: Delete Meal
+      operationId: delete_meal_meals__meal_id__delete
+      parameters:
+      - name: meal_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Meal Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /meals/day:
+    get:
+      tags:
+      - nutrition
+      summary: Day Log
+      operationId: day_log_meals_day_get
+      parameters:
+      - name: day
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Day
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DayLog'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /foods/{food_id}/portions:
+    get:
+      summary: Portion units for a food (katori, ladle, piece…)
+      operationId: food_portions
+      parameters:
+      - name: food_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortionOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - nutrition
+  /scans:
+    post:
+      summary: Upload a meal photo; queues a scan job
+      operationId: create_scan
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  contentMediaType: image/jpeg
+                plate_cm:
+                  type: number
+              required:
+              - photo
+      responses:
+        '202':
+          description: Scan queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanCreated'
+        '409':
+          description: AI is off or models missing — use search
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - nutrition
+  /scans/{scan_id}:
+    get:
+      summary: Scan result with top-3 candidates per item
+      operationId: get_scan
+      parameters:
+      - name: scan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - nutrition
+  /scans/{scan_id}/confirm:
+    post:
+      summary: Confirm items; logs the meal and stores corrections
+      operationId: confirm_scan
+      parameters:
+      - name: scan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScanConfirm'
+      responses:
+        '201':
+          description: Meal logged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealLoggedOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - nutrition
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'
+  schemas:
+    DayLog:
+      properties:
+        day:
+          type: string
+          format: date
+          title: Day
+        meals:
+          items:
+            $ref: '#/components/schemas/MealOut'
+          type: array
+          title: Meals
+        totals:
+          $ref: '#/components/schemas/Totals'
+        kcal_target:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Kcal Target
+        protein_target_g:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Protein Target G
+        values_are_approximate:
+          type: boolean
+          title: Values Are Approximate
+          default: true
+      type: object
+      required:
+      - day
+      - meals
+      - totals
+      - kcal_target
+      - protein_target_g
+      title: DayLog
+    FoodOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        portion_label:
+          type: string
+          title: Portion Label
+        portion_g:
+          type: number
+          title: Portion G
+        kcal:
+          type: number
+          title: Kcal
+        protein_g:
+          type: number
+          title: Protein G
+        carbs_g:
+          type: number
+          title: Carbs G
+        fat_g:
+          type: number
+          title: Fat G
+        source:
+          type: string
+          title: Source
+      type: object
+      required:
+      - id
+      - name
+      - portion_label
+      - portion_g
+      - kcal
+      - protein_g
+      - carbs_g
+      - fat_g
+      - source
+      title: FoodOut
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MealIn:
+      properties:
+        meal_type:
+          type: string
+          enum:
+          - breakfast
+          - lunch
+          - dinner
+          - snack
+          title: Meal Type
+        items:
+          items:
+            $ref: '#/components/schemas/MealItemIn'
+          type: array
+          maxItems: 30
+          minItems: 1
+          title: Items
+      type: object
+      required:
+      - meal_type
+      - items
+      title: MealIn
+    MealItemIn:
+      properties:
+        food_id:
+          type: integer
+          title: Food Id
+        portions:
+          type: number
+          maximum: 20.0
+          exclusiveMinimum: 0.0
+          title: Portions
+      type: object
+      required:
+      - food_id
+      - portions
+      title: MealItemIn
+    MealItemOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        food_id:
+          type: integer
+          title: Food Id
+        food_name:
+          type: string
+          title: Food Name
+        portions:
+          type: number
+          title: Portions
+        kcal:
+          type: number
+          title: Kcal
+        protein_g:
+          type: number
+          title: Protein G
+        carbs_g:
+          type: number
+          title: Carbs G
+        fat_g:
+          type: number
+          title: Fat G
+      type: object
+      required:
+      - id
+      - food_id
+      - food_name
+      - portions
+      - kcal
+      - protein_g
+      - carbs_g
+      - fat_g
+      title: MealItemOut
+    MealLoggedOut:
+      properties:
+        meal:
+          $ref: '#/components/schemas/MealOut'
+        xp_awarded:
+          type: integer
+          title: Xp Awarded
+      type: object
+      required:
+      - meal
+      - xp_awarded
+      title: MealLoggedOut
+    MealOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        day:
+          type: string
+          format: date
+          title: Day
+        meal_type:
+          type: string
+          title: Meal Type
+        logged_at:
+          type: string
+          format: date-time
+          title: Logged At
+        items:
+          items:
+            $ref: '#/components/schemas/MealItemOut'
+          type: array
+          title: Items
+        kcal:
+          type: number
+          title: Kcal
+      type: object
+      required:
+      - id
+      - day
+      - meal_type
+      - logged_at
+      - items
+      - kcal
+      title: MealOut
+    Totals:
+      properties:
+        kcal:
+          type: number
+          title: Kcal
+          default: 0
+        protein_g:
+          type: number
+          title: Protein G
+          default: 0
+        carbs_g:
+          type: number
+          title: Carbs G
+          default: 0
+        fat_g:
+          type: number
+          title: Fat G
+          default: 0
+      type: object
+      title: Totals
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ScanCreated:
+      type: object
+      properties:
+        scan_id:
+          type: integer
+        job_id:
+          type: integer
+      required:
+      - scan_id
+      - job_id
+    ScanCandidate:
+      type: object
+      properties:
+        food_id:
+          type: integer
+        name:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+      - food_id
+      - name
+      - confidence
+    ScanItem:
+      type: object
+      properties:
+        index:
+          type: integer
+        box:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+          description: x, y, w, h in 0–1
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScanCandidate'
+        preselected:
+          type:
+          - integer
+          - 'null'
+          description: food_id when confidence ≥ 0.80
+        question:
+          type:
+          - string
+          - 'null'
+          description: One question when confidence < 0.65
+        unit:
+          type: string
+          enum:
+          - katori
+          - ladle
+          - cup
+          - piece
+          - tbsp
+          - g
+        qty:
+          type: number
+        oil_level:
+          type: integer
+          minimum: 0
+          maximum: 2
+        kcal_low:
+          type: number
+        kcal_high:
+          type: number
+      required:
+      - index
+      - candidates
+      - unit
+      - qty
+    ScanOut:
+      type: object
+      properties:
+        scan_id:
+          type: integer
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - ready
+          - failed
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScanItem'
+        failure_reason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - too_dark
+          - blurry
+          - no_food_found
+          - timeout
+          - ai_off
+          - null
+        model_versions:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - scan_id
+      - status
+      - items
+    ScanConfirmItem:
+      type: object
+      properties:
+        index:
+          type: integer
+        food_id:
+          type: integer
+        unit:
+          type: string
+        qty:
+          type: number
+          exclusiveMinimum: 0
+        oil_level:
+          type: integer
+          minimum: 0
+          maximum: 2
+      required:
+      - index
+      - food_id
+      - unit
+      - qty
+    ScanConfirm:
+      type: object
+      properties:
+        meal_type:
+          type: string
+          enum:
+          - breakfast
+          - lunch
+          - dinner
+          - snack
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScanConfirmItem'
+      required:
+      - meal_type
+      - items
+    PortionOut:
+      type: object
+      properties:
+        unit:
+          type: string
+        grams:
+          type: number
+      required:
+      - unit
+      - grams
+    Error:
+      type: object
+      required:
+      - detail
+      properties:
+        detail:
+          type: string
+          description: Plain-language error, safe to show
+        code:
+          type: string
+          description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING

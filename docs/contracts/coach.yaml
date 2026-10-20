@@ -1,0 +1,462 @@
+# ASCEND contract — coach
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — coach
+  version: 0.1.0
+  description: 'ARC coach: tips, Q&A, chat, injury protocol, proposals and the weekly review. Rules decide; the
+    model only explains (ADR-0005). Owner: Jegatheesan.
+
+
+    Operations marked `x-status: implemented` match the v0.1 code skeleton exactly (generated from its OpenAPI on
+    2026-10-20). `x-status: planned` operations are the agreed v1.0 design; they are additive and are mocked by
+    Prism until implemented.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: coach
+  description: On-device coach with rules fallback
+paths:
+  /coach/status:
+    get:
+      tags:
+      - coach
+      summary: Coach Status
+      operationId: coach_status_coach_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachStatus'
+      x-status: implemented
+  /coach/tip:
+    get:
+      tags:
+      - coach
+      summary: Tip
+      operationId: tip_coach_tip_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachOut'
+      x-status: implemented
+  /coach/ask:
+    post:
+      tags:
+      - coach
+      summary: Ask
+      operationId: ask_coach_ask_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /coach/chat:
+    post:
+      summary: Chat with ARC; streams tokens as SSE (chat.token / chat.done)
+      operationId: coach_chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatIn'
+      responses:
+        '200':
+          description: text/event-stream of chat.token then chat.done
+          content:
+            text/event-stream:
+              schema:
+                type: string
+      x-status: planned
+      tags:
+      - coach
+  /coach/proposals:
+    get:
+      summary: Pending and recent proposals
+      operationId: list_proposals
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - pending
+          - applied
+          - edited
+          - kept
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProposalOut'
+      x-status: planned
+      tags:
+      - coach
+  /coach/proposals/{proposal_id}/apply:
+    post:
+      summary: Apply a proposal (the only way plans change)
+      operationId: apply_proposal
+      parameters:
+      - name: proposal_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - coach
+  /coach/proposals/{proposal_id}/keep:
+    post:
+      summary: Keep my plan (reject)
+      operationId: keep_plan
+      parameters:
+      - name: proposal_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - coach
+  /coach/injuries:
+    post:
+      summary: Report pain or injury; red flags bypass the model
+      operationId: report_injury
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InjuryIn'
+      responses:
+        '201':
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InjuryOut'
+      x-status: planned
+      tags:
+      - coach
+  /coach/weekly-review/latest:
+    get:
+      summary: Latest weekly review
+      operationId: latest_review
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyReviewOut'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-status: planned
+      tags:
+      - coach
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'
+  schemas:
+    AskIn:
+      properties:
+        question:
+          type: string
+          maxLength: 1000
+          title: Question
+          default: ''
+      type: object
+      title: AskIn
+    CoachOut:
+      properties:
+        source:
+          type: string
+          title: Source
+        text:
+          type: string
+          title: Text
+        tip_code:
+          type: string
+          title: Tip Code
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model
+        fallback_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fallback Reason
+      type: object
+      required:
+      - source
+      - text
+      - tip_code
+      - model
+      - fallback_reason
+      title: CoachOut
+    CoachStatus:
+      properties:
+        ai_enabled:
+          type: boolean
+          title: Ai Enabled
+        ollama_available:
+          type: boolean
+          title: Ollama Available
+        model:
+          type: string
+          title: Model
+      type: object
+      required:
+      - ai_enabled
+      - ollama_available
+      - model
+      title: CoachStatus
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ChatIn:
+      type: object
+      properties:
+        thread_id:
+          type:
+          - integer
+          - 'null'
+        text:
+          type: string
+          maxLength: 2000
+        language:
+          type: string
+          enum:
+          - en
+          - ta
+          - hi
+          default: en
+      required:
+      - text
+    ProposalOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+          enum:
+          - plan_change
+          - deload
+          - kcal_target
+          - injury_protocol
+        diff:
+          type: object
+        reason:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - applied
+          - edited
+          - kept
+      required:
+      - id
+      - kind
+      - diff
+      - status
+    InjuryIn:
+      type: object
+      properties:
+        area:
+          type: string
+          examples:
+          - knee
+        side:
+          type: string
+          enum:
+          - left
+          - right
+          - both
+        type:
+          type: string
+          enum:
+          - dull
+          - sharp
+          - tingling
+        pain:
+          type: integer
+          minimum: 0
+          maximum: 10
+        when:
+          type: string
+      required:
+      - area
+      - side
+      - type
+      - pain
+    InjuryOut:
+      type: object
+      properties:
+        id:
+          type: integer
+        red_flag:
+          type: boolean
+          description: True → no exercise advice; see a doctor or physio
+        blocked_patterns:
+          type: array
+          items:
+            type: string
+        proposal_id:
+          type:
+          - integer
+          - 'null'
+        message:
+          type: string
+      required:
+      - id
+      - red_flag
+      - message
+    WeeklyReviewOut:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              severity:
+                type: integer
+              numbers:
+                type: object
+        proposals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProposalOut'
+        summary:
+          type: string
+        summary_source:
+          type: string
+          enum:
+          - model
+          - template
+      required:
+      - week_start
+      - findings
+      - summary
+      - summary_source
+    Error:
+      type: object
+      required:
+      - detail
+      properties:
+        detail:
+          type: string
+          description: Plain-language error, safe to show
+        code:
+          type: string
+          description: Stable machine code, e.g. SIDECAR_UNAVAILABLE, MODEL_MISSING

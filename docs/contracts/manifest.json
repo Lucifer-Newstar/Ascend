@@ -1,0 +1,118 @@
+{
+  "comment": "Module \u2192 contract mapping for the contract-drift check (scripts/check_contract_drift.py). The check loads the sidecar app, takes its OpenAPI, and compares every operation tagged with the module against the contract file; operations marked x-status: planned may be missing but must match once implemented. Add a row when a module lands.",
+  "app": "services/sidecar/app/main.py:create_app",
+  "openapi": "3.1.0",
+  "modules": [
+    {
+      "id": "system",
+      "package": "app.core",
+      "contract": "system.yaml",
+      "path_prefixes": [
+        "/events",
+        "/health",
+        "/jobs",
+        "/models",
+        "/shutdown"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 2,
+        "planned": 5
+      }
+    },
+    {
+      "id": "workouts",
+      "package": "app.modules.workouts",
+      "contract": "workouts.yaml",
+      "path_prefixes": [
+        "/exercises",
+        "/plans",
+        "/prs",
+        "/workouts"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 6,
+        "planned": 5
+      }
+    },
+    {
+      "id": "nutrition",
+      "package": "app.modules.nutrition",
+      "contract": "nutrition.yaml",
+      "path_prefixes": [
+        "/foods",
+        "/meals",
+        "/scans"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 4,
+        "planned": 4
+      }
+    },
+    {
+      "id": "gamification",
+      "package": "app.modules.gamification",
+      "contract": "gamification.yaml",
+      "path_prefixes": [
+        "/game"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 2,
+        "planned": 4
+      }
+    },
+    {
+      "id": "coach",
+      "package": "app.modules.coach",
+      "contract": "coach.yaml",
+      "path_prefixes": [
+        "/coach"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 3,
+        "planned": 6
+      }
+    },
+    {
+      "id": "progress",
+      "package": "app.modules.progress",
+      "contract": "progress.yaml",
+      "path_prefixes": [
+        "/body-metrics",
+        "/checkins",
+        "/dashboard",
+        "/history",
+        "/muscles",
+        "/profile",
+        "/progress",
+        "/settings"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 7,
+        "planned": 5
+      }
+    },
+    {
+      "id": "import-export",
+      "package": "app.modules.io",
+      "contract": "import-export.yaml",
+      "path_prefixes": [
+        "/backup",
+        "/export",
+        "/import",
+        "/restore"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 2,
+        "planned": 5
+      },
+      "note": "Export endpoints currently live in app.modules.progress; they move to app.modules.io in Phase 3 without changing paths."
+    }
+  ]
+}

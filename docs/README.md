@@ -1,3 +1,149 @@
-# Documentation
+# ASCEND — Documentation
 
-Project documentation (architecture, ADRs, contracts, team plan) lives here.
+> **The navigation hub for all ASCEND project documentation.**
+> ASCEND is an offline Windows desktop fitness RPG with an on-device AI coach:
+> workouts become quests, effort becomes XP, and every number comes from a
+> deterministic engine the team can explain.
+>
+> Maintainer: Navin Jairam M (Team Lead, DevOps/MLOps). Updated whenever the
+> structure changes (rule 2: the docs folder stays clean).
+>
+> Status: **planning** (docs written 2026-10-20, before the first line of code).
+> Every date in these docs is an **estimate** unless it says otherwise.
+
+---
+
+## 1. Document Tree
+
+```text
+docs/
+├── README.md                      ← you are here (index & reading order)
+│
+├── project/                       ← WHAT & WHY
+│   ├── proposal.md                ← the project proposal (incl. AI-assistance disclosure)
+│   └── roadmap.md                 ← milestone-level roadmap (v0.1 → v1.0 → v1.2)
+│
+├── planning/                      ← HOW WE DECIDE
+│   ├── README.md                  ← planning index + decision log
+│   ├── product-vision.md          ← how the finished app looks & behaves
+│   ├── features.md                ← locked scope: MVP v1.0 vs v1.1 vs later
+│   ├── phases.md                  ← phases 0–5: deliverables, gates, handoffs
+│   ├── timeline.md                ← calendar Oct 2026 → May 2027 (estimates)
+│   ├── kickoff.md                 ← team kickoff: agenda, first issues, gate
+│   ├── tracker.md                 ← status board through v1.0
+│   └── integration-edge-cases.md  ← cross-member risk register
+│
+├── team/                          ← WHO & HOW WE WORK
+│   ├── team-structure.md          ← roles, ownership matrix, reviewers
+│   └── working-rules.md           ← project rules, commits, branches, DoD
+│
+├── members/                       ← PER-MEMBER PLANS (each member's folder)
+│   ├── README.md                  ← member index + cross-member handoffs
+│   ├── dhanush-frontend/          ← Member 1 — Electron / React UI / muscle map (+ work-log)
+│   ├── jegatheesan-backend/       ← Member 2 — FastAPI sidecar / engines / Ollama (+ work-log)
+│   ├── gokul-devops/              ← Member 3 — CI/CD / Docker / installers (+ work-log)
+│   └── navin-lead/                ← Member 4 — lead / MLOps / classifier / releases (+ kickoff, study path)
+│
+├── architecture/                  ← SYSTEM DESIGN
+│   ├── system-architecture.md     ← processes, modules, event bus, jobs, model manager
+│   ├── data-model.md              ← SQLite schema, migrations, derived data
+│   ├── ml-pipeline.md             ← DVC → training → MLflow → ONNX → eval gate
+│   ├── telemetry-model.md         ← local-only logs, events, metrics, crash reports
+│   ├── security-privacy.md        ← threat model, Electron hardening, DPDP notes
+│   ├── port-register.md           ← localhost ports + IPC channel register
+│   ├── uml/                       ← 14-diagram UML set (Mermaid, PlantUML where needed)
+│   └── adr/                       ← Architecture Decision Records 0001–0010 + template
+│
+├── contracts/                     ← API CONTRACTS (contracts-first)
+│   ├── README.md                  ← conventions, mock server, drift check
+│   ├── manifest.json              ← module → contract → router prefix
+│   ├── ipc-contract.md            ← Electron preload ↔ main channels
+│   ├── system.yaml                ← health, jobs, models, event stream
+│   ├── workouts.yaml
+│   ├── nutrition.yaml
+│   ├── gamification.yaml
+│   ├── coach.yaml
+│   ├── progress.yaml
+│   └── import-export.yaml
+│
+├── development/                   ← HOW TO BUILD
+│   ├── contributing.md            ← branching, commits, PR rules, review
+│   ├── local-setup.md             ← Windows 11 machine setup, step by step
+│   └── tech-stack.md              ← chosen stack & rationale
+│
+└── operations/                    ← HOW TO SHIP & MEASURE
+    ├── evaluation.md              ← metrics, targets, how we measure
+    └── release-process.md         ← versioning, release workflow, rollback
+```
+
+## 2. Index by Topic
+
+| Topic | Go to |
+|---|---|
+| What is ASCEND and why build it? | [project/proposal.md](project/proposal.md) |
+| What exactly are we building (MVP vs later)? | [planning/features.md](planning/features.md) |
+| What does the finished app look and feel like? | [planning/product-vision.md](planning/product-vision.md) |
+| Phases, gates and handoffs | [planning/phases.md](planning/phases.md) |
+| The calendar | [planning/timeline.md](planning/timeline.md) |
+| The first team meeting | [planning/kickoff.md](planning/kickoff.md) |
+| What is done / in progress | [planning/tracker.md](planning/tracker.md) |
+| Who owns what | [team/team-structure.md](team/team-structure.md) |
+| Rules, commits, branches | [team/working-rules.md](team/working-rules.md) |
+| My phase plan | [members/](members/README.md) — your folder |
+| How the app is built (processes, modules) | [architecture/system-architecture.md](architecture/system-architecture.md) |
+| Database tables and migrations | [architecture/data-model.md](architecture/data-model.md) |
+| Food classifier + MLOps | [architecture/ml-pipeline.md](architecture/ml-pipeline.md) |
+| Logs, events, crash reports (local only) | [architecture/telemetry-model.md](architecture/telemetry-model.md) |
+| Security and privacy | [architecture/security-privacy.md](architecture/security-privacy.md) |
+| Ports and IPC channels | [architecture/port-register.md](architecture/port-register.md) |
+| UML diagrams | [architecture/uml/](architecture/uml/README.md) |
+| Why we decided X | [architecture/adr/](architecture/adr/adr-template.md) · [planning/README.md §2](planning/README.md#2-decision-log) |
+| API contracts (OpenAPI + IPC) | [contracts/](contracts/README.md) |
+| Why this stack | [development/tech-stack.md](development/tech-stack.md) |
+| How to contribute | [development/contributing.md](development/contributing.md) |
+| Set up my Windows machine | [development/local-setup.md](development/local-setup.md) |
+| How we measure success | [operations/evaluation.md](operations/evaluation.md) |
+| How we ship a release | [operations/release-process.md](operations/release-process.md) |
+
+### ADR list
+
+| ADR | Decision |
+|---|---|
+| [0001](architecture/adr/0001-electron-react-desktop.md) | Electron + React + TypeScript desktop shell |
+| [0002](architecture/adr/0002-fastapi-python-sidecar.md) | Python FastAPI sidecar for domain logic and AI |
+| [0003](architecture/adr/0003-sqlite-local-only.md) | SQLite (WAL, Alembic) as the only database |
+| [0004](architecture/adr/0004-ollama-qwen3-local-llm.md) | Ollama with qwen3:4b (coach) and qwen3-vl:2b (meals) |
+| [0005](architecture/adr/0005-deterministic-engines-llm-explains.md) | Deterministic engines decide; the LLM only explains |
+| [0006](architecture/adr/0006-own-food-classifier-indb-ifct.md) | Own Indian-food classifier + INDB/IFCT nutrient DB |
+| [0007](architecture/adr/0007-modular-monolith-event-bus.md) | Modular monolith with an in-process event bus |
+| [0008](architecture/adr/0008-electron-builder-pyinstaller-packaging.md) | electron-builder (NSIS) + PyInstaller packaging |
+| [0009](architecture/adr/0009-offline-first-no-cloud.md) | Offline-first, no cloud, no accounts |
+| [0010](architecture/adr/0010-import-export-formats.md) | Import/export formats (Strong/Hevy CSV, JSON, .ascendbak) |
+
+## 3. Reading Order for a New Member
+
+1. **Start here** — get the map.
+2. **[team/](team/team-structure.md)** — who we are and how we work (rules first).
+3. **[planning/features.md](planning/features.md)** — what we are building. Scope is locked; read it before writing code.
+4. **[planning/phases.md](planning/phases.md) + [timeline.md](planning/timeline.md)** — when things happen and what "done" means per phase.
+5. **[members/<your-folder>/](members/README.md)** — your role, your commit-sized tasks.
+6. **[architecture/system-architecture.md](architecture/system-architecture.md)** and the ADRs — read before touching any interface.
+7. **[contracts/](contracts/README.md)** — the API you build against or implement.
+8. **[development/local-setup.md](development/local-setup.md)** — set up your machine, then open your first PR.
+9. **[operations/](operations/evaluation.md)** — how the project will be judged.
+
+## 4. Housekeeping Rules (rule 2 in practice)
+
+- **One purpose per file.** Every document answers one question; a new topic gets a new file in the right folder.
+- **No orphans.** Every file is reachable from this index; when you add a file, add its row to §2.
+- **Living documents.** Planning docs change; changes go in the decision log ([planning/README.md §2](planning/README.md#2-decision-log)), never silently.
+- **ADRs for architecture.** Any change to the stack, a process boundary or a contract needs an ADR (copy [adr-template.md](architecture/adr/adr-template.md)).
+- **Links stay green.** CI runs a markdown link check on `docs/` (see [contributing.md](development/contributing.md#5-ci-checks-on-every-pr)).
+
+## 5. Honesty Rules for These Docs
+
+- **Estimates are labelled.** Dates, hours, accuracies, latencies and model speeds are estimates until measured; measured values replace them with a date and a link to the run.
+- **Unverified is labelled.** Anything not yet tested on our hardware (Tamil quality of qwen3:4b, VLM box quality on Indian plates, signing options) is marked *unverified*.
+- **AI assistance is disclosed.** Parts of the code were written with AI assistance ([proposal §9](project/proposal.md#9-ai-assistance-disclosure)). Whoever opens a PR must be able to explain every line of it.
+- **Original IP only.** ASCEND is inspired by the *genre* of workout RPGs. No names, art, logos, characters or terminology from any existing anime, manhwa or game are used.
+- **No personal contact data** (phone numbers, home addresses) in the repo.

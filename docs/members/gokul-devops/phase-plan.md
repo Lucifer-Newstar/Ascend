@@ -1,0 +1,82 @@
+# Gokul · DevOps Phase Plan
+
+> **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged.
+
+| Phase | I deliver | I need | Handoff / completion check |
+|---|---|---|---|
+| **0 · Foundations** | pre-commit, CI matrix, PyInstaller sidecar + NSIS hello-world installer on CI, dev container | Skeleton (exists) | CI-built installer installs and starts on a clean Windows user |
+| **1 · Core loop** | Coverage gate, contract-drift job, migration fixture tests, docs checks, MLflow Compose, caches | Contracts, fixtures from Jegatheesan | Drift job fails on a deliberate mismatch; fixture upgrade green |
+| **2 · Local AI** | ML training image (CUDA), Prometheus/Grafana Compose, AI tests marked and split | Metrics names from Jegatheesan | Navin trains in the image on the RTX 3050; dashboard shows latency |
+| **3 · Ship v1.0** | Release workflow, update channels, SBOM + checksums, packaged smoke test, egress test, rollback drill support | Release decisions from Navin | `v1.0.0` released by the workflow; drill recorded |
+| **4 · Breadth** | Playwright journeys + visual regression in CI; optional kind + Helm lab for MLflow | Screens from Dhanush | E2E stable (< 2% flaky) |
+| **5 · MLOps loop** | `model-release.yml`, manifest publishing | Promoted model from Navin | Model-only update reaches the app |
+
+## Commit-sized tasks
+
+### Phase 0 · Foundations (26 Oct – 8 Nov)
+
+- [ ] `chore(meta): .gitattributes for LF and binary files`
+- [ ] `chore(meta): pre-commit with ruff, mypy, eslint, prettier, gitleaks`
+- [ ] `ci: python job (ruff, mypy, pytest) with uv cache`
+- [ ] `ci: node job (eslint, tsc, vitest) with npm cache`
+- [ ] `ci: run both jobs on windows-latest and ubuntu-latest`
+- [ ] `build: review and harden the PyInstaller one-folder spec (services/sidecar/packaging)`
+- [ ] `ci: build sidecar on windows-latest and upload artefact`
+- [ ] `build: electron-builder NSIS per-user config with sidecar in extraResources`
+- [ ] `ci: build hello-world installer artefact on main`
+- [ ] `build: Electron fuses (RunAsNode off, ASAR integrity)`
+- [ ] `chore(infra): dev container with Python 3.12 and Node LTS`
+- [ ] `chore(meta): Dependabot for npm, uv and GitHub Actions`
+
+### Phase 1 · Core loop (9 Nov – 13 Dec)
+
+- [ ] `ci: coverage gate 80% on rules modules`
+- [ ] `ci: contract drift check against docs/contracts via manifest.json`
+- [ ] `ci: regenerate OpenAPI TS types and fail if stale`
+- [ ] `ci: migration upgrade test from fixture databases`
+- [ ] `ci: import-linter layering contracts`
+- [ ] `ci: docs job (markdown link check + mermaid render)`
+- [ ] `ci: gitleaks, npm audit and pip-audit on PRs`
+- [ ] `build(infra): MLflow Compose with local artefact volume` (pair: Navin)
+- [ ] `ci: pin all actions by commit SHA`
+- [ ] `perf(ci): split fast ubuntu jobs from windows build jobs`
+
+### Phase 2 · Local AI (14 Dec – 17 Jan)
+
+- [ ] `build(infra): ML training Dockerfile (CUDA, PyTorch, timm) for WSL2 GPU`
+- [ ] `docs(infra): GPU-in-Docker check and troubleshooting`
+- [ ] `build(infra): Prometheus + Grafana Compose for the dev sidecar`
+- [ ] `feat(infra): Grafana dashboard JSON (latency, jobs, tokens/s)`
+- [ ] `ci: mark GPU tests and skip them on hosted runners`
+- [ ] `ci: ml-eval workflow skeleton on tagged models` (pair: Navin)
+
+### Phase 3 · Ship v1.0 (18 Jan – 7 Feb)
+
+- [ ] `ci: release workflow on v* tags (sidecar → installer → draft release)`
+- [ ] `ci: SHA256SUMS and CycloneDX SBOM attached to releases`
+- [ ] `ci: verify release assets and latest.yml before publish`
+- [ ] `feat(desktop): electron-updater with stable and beta channels` (pair: Dhanush)
+- [ ] `test(e2e): silent install + launch + log a set smoke test`
+- [ ] `test(e2e): egress-blocked run fails on non-localhost connections`
+- [ ] `ci: protected release environment with Navin as reviewer`
+- [ ] `chore(scripts): release.ps1 bumps versions in both manifests and tags`
+- [ ] `docs(operations): rollback drill timings` (pair: Navin)
+
+### Phase 4 · Breadth (8 Feb – 21 Mar)
+
+- [ ] `ci: Playwright for Electron journeys on windows-latest`
+- [ ] `ci: visual regression with approved baselines` (pair: Dhanush)
+- [ ] `ci: flaky-test report and auto-retry once`
+- [ ] `feat(infra): kind cluster + Helm chart for MLflow (optional lab)`
+
+### Phase 5 · MLOps loop (22 Mar – 16 May)
+
+- [ ] `ci: model-release workflow uploads ONNX + labels and updates manifest`
+- [ ] `ci: manifest schema validation and min_app_version check`
+
+## DevOps completion check (each phase)
+
+- [ ] Required checks enforced by branch protection
+- [ ] CI time within budget (< 12 min PR)
+- [ ] Installer artefact built from `main` and installable
+- [ ] Work log updated; demo given at the gate
