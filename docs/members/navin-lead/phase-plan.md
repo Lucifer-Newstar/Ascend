@@ -15,12 +15,12 @@
 
 ### Phase 0 · Foundations (26 Oct – 8 Nov)
 
-- [ ] `docs: add docs/ folder (architecture, planning, team, members)`
-- [ ] `chore(meta): CODEOWNERS, PR template, issue templates`
-- [ ] `chore(meta): branch protection notes + labels in CONTRIBUTING`
+- [x] `docs: add docs/ folder (architecture, planning, team, members)`
+- [x] `chore(meta): CODEOWNERS, PR template, issue templates` — CODEOWNERS in PR #1; templates by Gokul in PR #2
+- [x] `chore(meta): branch protection notes + labels in CONTRIBUTING` — PR #1, docs/development/branch-protection.md
 - [ ] `docs(meta): README with AI-assistance line, quickstart, screenshots`
-- [ ] `docs(adr): mark ADR-0001…0012 accepted after kickoff`
-- [ ] `docs(planning): kickoff minutes and decision log K1–K8`
+- [x] `docs(adr): mark ADR-0001…0012 accepted after kickoff` — PR #1
+- [x] `docs(planning): kickoff minutes and decision log K1–K8`
 - [ ] `docs(planning): tracker updated for the Phase 0 gate`
 - [ ] `docs(ml): start the two-week team food diary for the class list`
 
