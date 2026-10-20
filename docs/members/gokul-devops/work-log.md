@@ -6,9 +6,5 @@
 
 | Date | What I shipped | PR / evidence | Notes (handoff, follow-up) |
 |---|---|---|---|
-|  |  |  |  |
-
-<!--
-Example row (delete when you add your first real one):
-| 2026-11-03 | Example: describe the merged change | #12 | Handed to <member> for <next step> |
--->
+| 2026-10-20 | CI on all branches + PRs + nightly; Windows/Ubuntu matrix; artifact names per OS/SHA; coverage summary | PR #2 (`ci/foundations`) | Main keeps one run per commit; other refs cancel superseded runs |
+| 2026-10-20 | commitlint job + config, PR template, issue forms, Dependabot, gitleaks/mypy hooks, `make check` | PR #2 | Whole history lints clean; everyone should run `make hooks` once |
