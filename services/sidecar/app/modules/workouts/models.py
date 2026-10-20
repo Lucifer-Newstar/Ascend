@@ -123,3 +123,26 @@ class WorkoutSet(Base):
     performed_at: Mapped[datetime] = mapped_column(DateTime)
     workout: Mapped[Workout] = relationship(back_populates="sets")
     exercise: Mapped[Exercise] = relationship(lazy="joined")
+
+
+class OnlineLookupLog(Base):
+    """One row per online research request (ADR-0013): what was asked, of whom, and what
+    came back. Local only; the user can read and clear it in Settings."""
+
+    __tablename__ = "online_lookup_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    query: Mapped[str] = mapped_column(String(80))
+    # JSON list of {"source", "url", "status"}: one entry per request sent.
+    sources_json: Mapped[str] = mapped_column(Text, default="[]")
+    # ok | not_found | offline | timeout | rate_limited | error
+    outcome: Mapped[str] = mapped_column(String(16))
+    # How the request was allowed: setting | once
+    consent: Mapped[str] = mapped_column(String(8))
+    detail: Mapped[str] = mapped_column(String(200), default="")
+
+    @property
+    def sources(self) -> list[dict[str, Any]]:
+        value = json.loads(self.sources_json or "[]")
+        return value if isinstance(value, list) else []
