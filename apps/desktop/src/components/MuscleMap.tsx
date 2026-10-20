@@ -128,9 +128,10 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
             type="button"
             className="btn-ghost px-3 py-1.5 text-xs"
             onClick={() => setSide((s) => (s === "front" ? "back" : "front"))}
-            aria-label={side === "front" ? "Show the back of the body" : "Show the front of the body"}
+            aria-label={side === "front" ? "Show back of the body" : "Show front of the body"}
+            title="Flip the figure"
           >
-            <FlipIcon /> {side === "front" ? "Front · flip to back" : "Back · flip to front"}
+            <FlipIcon /> {side === "front" ? "Show back" : "Show front"}
           </button>
         </div>
         <div className="min-w-0 flex-1 space-y-4">
@@ -206,17 +207,17 @@ function MuscleTooltip({ s, view, rangeWords }: { s: SlugSummary; view: View; ra
         </span>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-        <dt className="text-faint">Sets</dt>
-        <dd className="text-right text-ink">{s.sets} <span className="text-faint">· {rangeWords}</span></dd>
-        <dt className="text-faint">Volume</dt>
+        <dt className="text-muted">Sets</dt>
+        <dd className="text-right text-ink">{s.sets} <span className="text-muted">· {rangeWords}</span></dd>
+        <dt className="text-muted">Volume</dt>
         <dd className="text-right text-ink">{s.volumeKg > 0 ? `${s.volumeKg.toLocaleString()} kg` : "–"}</dd>
-        <dt className="text-faint">Last trained</dt>
+        <dt className="text-muted">Last trained</dt>
         <dd className="text-right text-ink">{agoLabel(s.lastTrained)}</dd>
       </dl>
       {view === "recovery" && s.regions.length > 1 && (
-        <div className="mt-1.5 border-t border-line pt-1.5 text-faint">{s.regions.map((r) => r.label).join(" · ")}</div>
+        <div className="mt-1.5 border-t border-line pt-1.5 text-muted">{s.regions.map((r) => r.label).join(" · ")}</div>
       )}
-      <div className="mt-1.5 text-[10px] text-faint">Click for details</div>
+      <div className="mt-1.5 text-[10px] text-muted">Click for details</div>
     </div>
   );
 }

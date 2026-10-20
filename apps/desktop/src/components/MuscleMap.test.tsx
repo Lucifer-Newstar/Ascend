@@ -51,10 +51,10 @@ describe("MuscleMap", () => {
     const flip = screen.getByTestId("muscle-flip");
     expect(figure()).toHaveAttribute("data-side", "front");
     expect(flip.style.transform).toBe("none");
-    await userEvent.click(screen.getByRole("button", { name: "Show the back of the body" }));
+    await userEvent.click(screen.getByRole("button", { name: "Show back of the body" }));
     expect(figure()).toHaveAttribute("data-side", "back");
     expect(flip.style.transform).toBe("rotateY(180deg)");
-    expect(screen.getByRole("button", { name: "Show the front of the body" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show front of the body" })).toBeInTheDocument();
   });
 
   it("shows sets, volume and last trained when a muscle is hovered", async () => {

@@ -178,7 +178,7 @@ export function MuscleFigure(props: MuscleFigureProps) {
       />
       {hovered && tooltip && (
         <div ref={tip} className="pointer-events-none absolute left-0 top-0 z-10 w-52" style={{ transform: `translate3d(${pointer.current.x + 14}px, ${pointer.current.y + 14}px, 0)` }}>
-          <div className="pop-in origin-top-left rounded-lg border border-line-2 bg-panel/95 p-3 text-xs shadow-xl backdrop-blur-sm">{tooltip}</div>
+          <div className="pop-in origin-top-left rounded-lg border border-line-2 bg-panel p-3 text-xs shadow-xl">{tooltip}</div>
         </div>
       )}
     </div>
