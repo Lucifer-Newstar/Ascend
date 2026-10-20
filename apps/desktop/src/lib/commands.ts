@@ -10,10 +10,10 @@ import type { Page } from "../components/Layout";
 
 export type Command =
   | { kind: "nav"; page: Page; label: string }
-  | { kind: "set"; query: string; weightKg: number; reps: number; rpe: number | null }
+  | { kind: "set"; query: string; weightKg: number; reps: number; rpe: number | null; sets?: number }
   | { kind: "hold"; query: string; seconds: number; rpe: number | null }
   | { kind: "weight"; kg: number }
-  | { kind: "meal"; query: string; mealType: MealType }
+  | { kind: "meal"; query: string; mealType: MealType; portions?: number }
   | { kind: "train"; query: string }
   | { kind: "theme"; theme: "dark" | "light" }
   | { kind: "ai"; on: boolean }
@@ -56,8 +56,12 @@ export function parseCommand(text: string, units: Units, now = new Date()): Comm
   const out: Command[] = [];
   let m: RegExpMatchArray | null;
 
-  // A set with load: "bench 80x5", "log squat 100 kg x 3 @8", "row 135lb × 8".
-  if ((m = lower.match(new RegExp(`^(?:log |add )?(.+?) ${num} ?(kg|kgs|lb|lbs)? ?[x×*] ?(\\d+)(?: ?(?:@|rpe) ?${num})?$`)))) {
+  // Several sets: "log 3x8 pull-up", "log 5×5 squat at 100 kg", "3x10 dips @8" (load only after "at").
+  if ((m = lower.match(new RegExp(`^(?:log |add )?(\\d+) ?[x×*] ?(\\d+) ([a-z].*?)(?: at ${num} ?(kg|kgs|lb|lbs)?)?(?: ?(?:@|rpe) ?${num})?$`)))) {
+    const unit = m[5] ? (m[5].startsWith("lb") ? "lb" : "kg") : units === "imperial" ? "lb" : "kg";
+    const w = m[4] ? toNum(m[4]) : 0;
+    out.push({ kind: "set", query: m[3], weightKg: unit === "lb" ? Math.round(w * LB * 100) / 100 : w, reps: Number(m[2]), rpe: m[6] ? toNum(m[6]) : null, sets: Number(m[1]) });
+  } else if ((m = lower.match(new RegExp(`^(?:log |add )?(.+?) ${num} ?(kg|kgs|lb|lbs)? ?[x×*] ?(\\d+)(?: ?(?:@|rpe) ?${num})?$`)))) {
     const unit = m[3] ? (m[3].startsWith("lb") ? "lb" : "kg") : units === "imperial" ? "lb" : "kg";
     const w = toNum(m[2]);
     out.push({ kind: "set", query: m[1], weightKg: unit === "lb" ? Math.round(w * LB * 100) / 100 : w, reps: Number(m[4]), rpe: m[5] ? toNum(m[5]) : null });
@@ -76,6 +80,9 @@ export function parseCommand(text: string, units: Units, now = new Date()): Comm
   }
   if ((m = lower.match(/^(?:(ate|eat|had|meal|breakfast|lunch|dinner|snack):? )(.+)$/))) {
     out.push({ kind: "meal", query: m[2], mealType: mealTypeFor(m[1], now.getHours()) });
+  } else if ((m = lower.match(new RegExp(`^add ${num} (?:x |× )?([a-z].*)$`)))) {
+    // "add 2 eggs": portions of a food, meal from the time of day.
+    out.push({ kind: "meal", query: m[2], mealType: mealTypeFor(undefined, now.getHours()), portions: toNum(m[1]) });
   }
   if ((m = lower.match(/^(?:train|practi[cs]e|work on) (.+)$/))) out.push({ kind: "train", query: m[1] });
   if ((m = lower.match(/^(?:(?:theme|mode|switch to|go) )?(dark|light)(?: mode| theme)?$/))) out.push({ kind: "theme", theme: m[1] as "dark" | "light" });

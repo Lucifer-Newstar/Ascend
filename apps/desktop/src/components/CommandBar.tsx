@@ -81,14 +81,27 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
 
   const rows = useMemo<Row[]>(() => {
     if (!text.trim()) {
-      return PAGE_WORDS.map((p) => ({ id: `nav-${p.page}`, group: "Go to", title: p.label, run: () => onNavigate(p.page) }));
+      const quick: Row[] = [
+        { id: "q-train", group: "Quick actions", title: "Start or continue today's session", run: () => onNavigate("workout") },
+        { id: "q-set", group: "Quick actions", title: "Log a set…", hint: "bench 80x5 @8", run: () => fill("bench 80x5 @8") },
+        { id: "q-sets", group: "Quick actions", title: "Log several sets…", hint: "log 3x8 pull-up", run: () => fill("log 3x8 pull-up") },
+        { id: "q-hold", group: "Quick actions", title: "Log a hold…", hint: "plank 45s", run: () => fill("plank 45s") },
+        { id: "q-weight", group: "Quick actions", title: "Log body weight…", hint: "weight 81.4", run: () => fill("weight ") },
+        { id: "q-food", group: "Quick actions", title: "Log food…", hint: "add 2 eggs", run: () => fill("add 1 ") },
+        { id: "q-checkin", group: "Quick actions", title: "Morning check-in", run: () => onNavigate("dashboard") },
+        { id: "q-skill", group: "Quick actions", title: "Train a skill…", hint: "train front lever", run: () => fill("train ") },
+        { id: "q-coach", group: "Quick actions", title: "Ask the Coach", run: () => onNavigate("coach") },
+        { id: "q-theme", group: "Quick actions", title: `Switch to the ${settings.theme === "light" ? "dark" : "light"} theme`, run: async () => { await update({ theme: settings.theme === "light" ? "dark" : "light" }); } },
+      ];
+      return [...quick, ...PAGE_WORDS.map((p) => ({ id: `nav-${p.page}`, group: "Go to", title: p.label, run: () => onNavigate(p.page) }))];
     }
     const out: Row[] = [];
     for (const c of commands) {
       if (c.kind === "set") {
         for (const ex of rankExercises(c.query, exercises ?? [], 3, { weighted: c.weightKg > 0 })) {
-          const what = `${c.weightKg > 0 ? formatWeight(c.weightKg, units) : "bodyweight"} × ${c.reps}${c.rpe !== null ? ` @${c.rpe}` : ""}`;
-          out.push({ id: `set-${ex.id}`, group: "Log a set", title: `${ex.name} · ${what}`, hint: "Adds to today's session", run: () => logSet(ex, { weight_kg: c.weightKg, reps: c.reps, rpe: c.rpe }, what) });
+          const n = c.sets ?? 1;
+          const what = `${n > 1 ? `${n} sets of ` : ""}${c.weightKg > 0 ? formatWeight(c.weightKg, units) : "bodyweight"} × ${c.reps}${c.rpe !== null ? ` @${c.rpe}` : ""}`;
+          out.push({ id: `set-${ex.id}`, group: n > 1 ? "Log sets" : "Log a set", title: `${ex.name} · ${what}`, hint: "Adds to today's session", run: () => logSet(ex, { weight_kg: c.weightKg, reps: c.reps, rpe: c.rpe }, what, n) });
         }
       } else if (c.kind === "hold") {
         const ranked = rankExercises(c.query, exercises ?? [], 6).sort((a, b) => Number(b.measure === "hold") - Number(a.measure === "hold")).slice(0, 3);
@@ -105,9 +118,10 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
         } });
       } else if (c.kind === "meal") {
         const list = foods?.q === c.query ? foods.list : [];
+        const portions = c.portions ?? 1;
         for (const f of list.slice(0, 3)) {
-          out.push({ id: `meal-${f.id}`, group: "Log food", title: `${f.name} as ${c.mealType}`, hint: `1 × ${f.portion_label} · ${Math.round(f.kcal)} kcal`, run: async () => {
-            await api.logMeal(c.mealType, [{ food_id: f.id, portions: 1 }]);
+          out.push({ id: `meal-${f.id}`, group: "Log food", title: `${portions !== 1 ? `${portions} × ` : ""}${f.name} as ${c.mealType}`, hint: `${portions} × ${f.portion_label} · ${Math.round(f.kcal * portions)} kcal`, run: async () => {
+            await api.logMeal(c.mealType, [{ food_id: f.id, portions }]);
             toast(`${f.name} logged as ${c.mealType}`, "info");
             onChanged();
           } });
@@ -138,25 +152,40 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
     return out;
     // logSet is stable enough for a render; the rows rebuild on every input change anyway.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, commands, exercises, skills, foods, units]);
+  }, [text, commands, exercises, skills, foods, units, settings.theme]);
 
   useEffect(() => setActive(0), [text]);
 
-  async function logSet(ex: Exercise, body: { weight_kg?: number; reps?: number; rpe?: number | null; duration_s?: number }, what: string) {
+  async function logSet(ex: Exercise, body: { weight_kg?: number; reps?: number; rpe?: number | null; duration_s?: number }, what: string, times = 1) {
     let w = await api.activeWorkout();
     if (!w) w = await api.startWorkout(ex.section);
-    const r = await api.logSet(w.id, { exercise_id: ex.id, ...body });
-    toast(`${ex.name} · ${what} logged · +${r.xp_awarded} XP`, "xp");
-    if (r.set.is_pr) toast(`New PR on ${ex.name}`, "pr");
+    let xp = 0;
+    let pr = false;
+    for (let i = 0; i < times; i += 1) {
+      const r = await api.logSet(w.id, { exercise_id: ex.id, ...body });
+      xp += r.xp_awarded;
+      pr = pr || r.set.is_pr;
+    }
+    toast(`${ex.name} · ${what} logged · +${xp} XP`, "xp");
+    if (pr) toast(`New PR on ${ex.name}`, "pr");
     onChanged();
+  }
+
+  /** Quick actions that need details put a template in the field instead of running. */
+  const filling = useRef(false);
+  function fill(t: string) {
+    filling.current = true;
+    setText(t);
+    input.current?.focus();
   }
 
   async function run(row: Row | undefined) {
     if (!row || busy) return;
     setBusy(true);
     try {
+      filling.current = false;
       await row.run();
-      close();
+      if (!filling.current) close();
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {

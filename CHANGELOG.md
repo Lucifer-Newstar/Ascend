@@ -72,6 +72,10 @@ Formula and model versions are listed where a number you see could change.
   the Coach as a question. The parser is rule-based: no model is involved. Exercise names
   are matched against the library (names, aliases and abbreviations such as "ohp", "rdl",
   "db"), with the top three matches offered. Arrow keys pick, Enter runs, Esc closes.
+- Command bar: **ten quick actions** when the field is empty (actions that need details,
+  such as "Log body weight…", put a template in the field instead of running), **N×M sets**
+  ("log 3x8 pull-up", "log 5×5 back squat at 100 kg") and **"add N <food>"** portions
+  ("add 2 eggs", meal from the time of day).
 
 ### Added
 - **Calisthenics skill trees** (Skills page, Ctrl+4): 12 trees covering muscle-up, one-arm push-up, dips,

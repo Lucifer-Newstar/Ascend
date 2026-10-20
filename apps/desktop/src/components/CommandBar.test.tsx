@@ -52,7 +52,11 @@ describe("CommandBar", () => {
     expect(screen.getByRole("dialog", { name: "Command bar" })).toBeInTheDocument();
     const input = screen.getByRole("combobox", { name: "Command" });
     await waitFor(() => expect(input).toHaveFocus());
-    expect(screen.getAllByRole("option").map((o) => o.textContent)).toContain("Fuel");
+    const options = screen.getAllByRole("option").map((o) => o.textContent ?? "");
+    expect(options).toContain("Fuel");
+    // Ten quick actions come first.
+    expect(options.slice(0, 10).every((o) => !["Today", "Fuel"].includes(o))).toBe(true);
+    expect(options[0]).toBe("Start or continue today's session");
     expect(await axeViolations(container)).toEqual([]);
   });
 
@@ -86,6 +90,25 @@ describe("CommandBar", () => {
     const input = screen.getByRole("combobox", { name: "Command" });
     await userEvent.type(input, "weight 81.4{Enter}");
     await waitFor(() => expect(api.logWeight).toHaveBeenCalledWith(81.4));
+  });
+
+  it("logs N sets from 'log 3x8 pull-up'", async () => {
+    const pullup: Exercise = { id: 5, name: "Pull-up", equipment: "bar", section: "calisthenics", met: null, time_based: false, muscles: [], source: "ascend" };
+    vi.mocked(api.exercises).mockResolvedValue([pullup]);
+    renderBar();
+    await waitFor(() => expect(api.exercises).toHaveBeenCalled());
+    await userEvent.type(screen.getByRole("combobox", { name: "Command" }), "log 3x8 pull-up");
+    expect(await screen.findByRole("option", { name: /Pull-up · 3 sets of bodyweight × 8/ })).toBeInTheDocument();
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => expect(api.logSet).toHaveBeenCalledTimes(3));
+    expect(api.startWorkout).toHaveBeenCalledWith("calisthenics");
+  });
+
+  it("a quick action that needs details fills the field and keeps the bar open", async () => {
+    const { onClose } = renderBar();
+    await userEvent.click(screen.getByRole("option", { name: /Log body weight/ }));
+    expect(screen.getByRole("combobox", { name: "Command" })).toHaveValue("weight ");
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("closes on Escape", async () => {

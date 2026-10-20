@@ -15,6 +15,18 @@ describe("parseCommand", () => {
     expect(parseCommand("bench 82,5x5", "metric")[0]).toMatchObject({ weightKg: 82.5 });
   });
 
+  it("reads several sets as N×M <exercise>, with an optional load after 'at'", () => {
+    expect(parseCommand("log 3x8 pull-up", "metric")[0]).toEqual({ kind: "set", query: "pull-up", weightKg: 0, reps: 8, rpe: null, sets: 3 });
+    expect(parseCommand("log 5×5 back squat at 100 kg", "metric")[0]).toEqual({ kind: "set", query: "back squat", weightKg: 100, reps: 5, rpe: null, sets: 5 });
+    expect(parseCommand("3x10 dips @8", "metric")[0]).toEqual({ kind: "set", query: "dips", weightKg: 0, reps: 10, rpe: 8, sets: 3 });
+    expect(parseCommand("4x6 row at 135", "imperial")[0]).toMatchObject({ weightKg: 61.23, sets: 4 });
+  });
+
+  it("reads 'add N <food>' as portions", () => {
+    expect(parseCommand("add 2 eggs", "metric", at(8))[0]).toEqual({ kind: "meal", query: "eggs", mealType: "breakfast", portions: 2 });
+    expect(parseCommand("add 1.5 rice", "metric", at(13))[0]).toEqual({ kind: "meal", query: "rice", mealType: "lunch", portions: 1.5 });
+  });
+
   it("reads bodyweight sets and holds", () => {
     expect(parseCommand("pull-up x8", "metric")[0]).toEqual({ kind: "set", query: "pull-up", weightKg: 0, reps: 8, rpe: null });
     expect(parseCommand("push-up 20 reps", "metric")[0]).toMatchObject({ kind: "set", reps: 20 });
