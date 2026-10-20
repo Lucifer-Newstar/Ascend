@@ -33,7 +33,7 @@ export function QuestList({ items, onComplete }: { items: QuestItem[]; onComplet
               </button>
               <div className="min-w-0 flex-1">
                 <div className={`truncate text-sm font-medium ${complete ? "text-muted line-through decoration-faint" : "text-ink"}`}>{q.title}</div>
-                <div className="truncate text-xs text-faint">
+                <div className="truncate text-xs text-muted">
                   {KIND_LABEL[q.kind]} · {manual ? q.detail : `${q.progress}/${q.target} · auto-tracked`}
                 </div>
               </div>

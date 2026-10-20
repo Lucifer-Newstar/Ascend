@@ -18,7 +18,7 @@
   --color-faint: #78849a;
   --color-accent: #22d3ee;
   --color-accent-dim: #0e7490;
-  --color-xp: #8b7cff;
+  --color-xp: #9a8cff;
   --color-good: #22c55e;
   --color-warn: #f5a524;
   --color-bad: #ef4444;
@@ -49,11 +49,15 @@
   --color-ink: #0f1722;
   --color-muted: #4a5768;
   --color-faint: #616d7e;
-  --color-accent: #0e7490;
+  --color-accent: #0c6680;
   --color-accent-dim: #67c6dc;
-  --color-accent-hover: #0b5f76;
+  --color-accent-hover: #09536a;
   --color-on-accent: #ffffff;
-  --color-xp: #6d5ce8;
+  --color-xp: #5b49d6;
+  /* Status text needs darker shades on white than on the dark panels (AA 4.5:1). */
+  --color-warn: #b45309;
+  --color-good: #15803d;
+  --color-bad: #c42b2b;
   --color-nodata: #d5dbe5;
   --color-sidebar: #ffffff;
   --color-map-fill: #e3e8f0;
