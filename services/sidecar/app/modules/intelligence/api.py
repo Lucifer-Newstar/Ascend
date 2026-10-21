@@ -5,16 +5,19 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
 from app.modules.intelligence import (
+    diet_service,
     explain,
+    insights,
     notices,
     personal,
     progression_service,
     recovery_service,
+    tdee,
 )
 from app.modules.intelligence import progression as prog
 from app.modules.intelligence import recovery as rec
@@ -25,6 +28,9 @@ from app.modules.intelligence.schemas import (
     E1rmOut,
     E1rmPoint,
     ExplanationOut,
+    InsightCheckOut,
+    InsightFindingOut,
+    InsightsOut,
     MuscleRecoveryOut,
     NoticeOut,
     RecoveryGroupOut,
@@ -32,6 +38,9 @@ from app.modules.intelligence.schemas import (
     SkillGoalOut,
     StalledLiftOut,
     TargetOut,
+    TdeeOut,
+    TdeePointOut,
+    TdeeWeekOut,
     TopSet,
     Why,
 )
@@ -284,3 +293,172 @@ def system_notices(
         NoticeOut(id=n.id, code=n.code, title=n.title, text=n.text, at=n.at)  # type: ignore[arg-type]
         for n in notices.current(db, now)
     ]
+
+
+# --- diet: adaptive TDEE and weekly insights (ADR-0018, ADR-0019) ----------------------------
+
+TDEE_FORMULA = (
+    "Kalman filter on [trend weight W, expenditure T]: overnight W += (intake - T) / 7700; "
+    "a morning weigh-in corrects W and, through their covariance, T. "
+    "Prior T = Mifflin-St Jeor BMR x activity factor (SD 450 kcal). "
+    "Weekly target = T at the end of last week + goal adjustment, changed only after 6+ logged "
+    "days and a settled estimate, by at most 250 kcal a week."
+)
+
+
+def _tdee_or_404(db: Session, now: datetime) -> tdee.TdeeResult:
+    report = diet_service.tdee_report(db, now.date())
+    if report is None:
+        raise HTTPException(404, "Set up your profile first")
+    return report
+
+
+def _tdee_template(r: tdee.TdeeResult) -> tuple[str, dict[str, float | int | str]]:
+    facts: dict[str, float | int | str] = {
+        "tdee_kcal": round(r.tdee_kcal),
+        "range_low_kcal": round(r.low_kcal),
+        "range_high_kcal": round(r.high_kcal),
+        "formula_tdee_kcal": round(r.prior_tdee_kcal),
+        "weekly_target_kcal": r.target_kcal,
+        "weigh_ins": r.weigh_ins,
+        "intake_days_last_7": r.intake_days_7,
+    }
+    text = (
+        f"You burn about {round(r.tdee_kcal)} kcal a day (likely {round(r.low_kcal)} to "
+        f"{round(r.high_kcal)}), estimated from {r.weigh_ins} weigh-ins and your logged meals; "
+        f"the formula alone said {round(r.prior_tdee_kcal)}. This week's target is "
+        f"{r.target_kcal} kcal."
+    )
+    if r.paused:
+        text += f" Meals were logged on {r.intake_days_7} of the last 7 days, so the target holds."
+    return text, facts
+
+
+@router.get("/tdee", response_model=TdeeOut)
+def tdee_estimate(
+    days: int = Query(90, ge=7, le=365),
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> TdeeOut:
+    """tdee-v1: expenditure ± SD, trend weight, the weekly target and the last `days` days."""
+    r = _tdee_or_404(db, now)
+    return TdeeOut(
+        algo_version=r.algo_version,
+        status=r.status,  # type: ignore[arg-type]
+        tdee_kcal=r.tdee_kcal,
+        sd_kcal=r.sd_kcal,
+        low_kcal=round(r.low_kcal, 1),
+        high_kcal=round(r.high_kcal, 1),
+        formula_tdee_kcal=r.prior_tdee_kcal,
+        formula_target_kcal=r.formula_target_kcal,
+        target_kcal=r.target_kcal,
+        target_source=r.target_source,  # type: ignore[arg-type]
+        target_week_start=r.target_week_start,
+        trend_kg=r.trend_kg,
+        days_of_data=r.days_of_data,
+        weigh_ins=r.weigh_ins,
+        intake_days_7=r.intake_days_7,
+        weigh_ins_7=r.weigh_ins_7,
+        gate_days=tdee.GATE_DAYS,
+        paused=r.paused,
+        reason=r.reason,
+        series=[
+            TdeePointOut(
+                day=s.day,
+                weight_kg=s.weight_kg,
+                intake_kcal=s.intake_kcal,
+                intake_used=s.intake_used,
+                trend_kg=s.trend_kg,
+                tdee_kcal=s.tdee_kcal,
+                sd_kcal=s.sd_kcal,
+            )
+            for s in r.series[-days:]
+        ],
+        weeks=[
+            TdeeWeekOut(
+                week_start=w.week_start,
+                target_kcal=w.target_kcal,
+                tdee_kcal=w.tdee_kcal,
+                sd_kcal=w.sd_kcal,
+                intake_days=w.intake_days,
+                changed=w.changed,
+                from_estimate=w.from_estimate,
+                reason=w.reason,
+            )
+            for w in r.weeks[-12:]
+        ],
+        why=Why(
+            formula=TDEE_FORMULA,
+            inputs={
+                "tdee_kcal": r.tdee_kcal,
+                "sd_kcal": r.sd_kcal,
+                "formula_tdee_kcal": r.prior_tdee_kcal,
+                "trend_kg": r.trend_kg,
+                "weigh_ins": r.weigh_ins,
+                "days_of_data": r.days_of_data,
+                "intake_days_7": r.intake_days_7,
+                "gate_days": tdee.GATE_DAYS,
+                "weekly_target_kcal": r.target_kcal,
+                "target_source": r.target_source,
+                "status": r.status,
+            },
+        ),
+    )
+
+
+@router.get("/tdee/explanation", response_model=ExplanationOut)
+def tdee_explanation(
+    request: Request, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> ExplanationOut:
+    """The expenditure estimate in plain words (local model behind the coach guard, else
+    the template)."""
+    r = _tdee_or_404(db, now)
+    template, facts = _tdee_template(r)
+    key = ("tdee", now.date().isoformat(), f"{r.tdee_kcal}:{r.sd_kcal}:{r.target_kcal}")
+    return _explanation_out(explain.explain(db, request.app.state.settings, key, template, facts))
+
+
+def _insights_or_404(db: Session, now: datetime) -> insights.InsightReport:
+    out = diet_service.insight_report(db, now.date())
+    if out is None:
+        raise HTTPException(404, "Set up your profile first")
+    return out[0]
+
+
+@router.get("/insights", response_model=InsightsOut)
+def diet_insights(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> InsightsOut:
+    """insights-v1: at most three findings for the last 7 complete days, each with a Why."""
+    rep = _insights_or_404(db, now)
+    return InsightsOut(
+        algo_version=rep.algo_version,
+        week_end=rep.week_end,
+        findings=[
+            InsightFindingOut(
+                code=f.code,
+                title=f.title,
+                text=f.text,
+                severity=f.severity,
+                numbers=f.numbers,
+                why=Why(formula=f.formula, inputs=f.inputs),
+            )
+            for f in rep.findings
+        ],
+        checks=[
+            InsightCheckOut(code=c.code, outcome=c.outcome, detail=c.detail)  # type: ignore[arg-type]
+            for c in rep.checks
+        ],
+    )
+
+
+@router.get("/insights/{code}/explanation", response_model=ExplanationOut)
+def insight_explanation(
+    code: str, request: Request, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> ExplanationOut:
+    """One finding in plain words (local model behind the coach guard, else its own text)."""
+    rep = _insights_or_404(db, now)
+    f = next((x for x in rep.findings if x.code == code), None)
+    if f is None:
+        raise HTTPException(404, f"No {code} finding this week")
+    facts = {k: v for k, v in f.inputs.items() if v is not None}
+    key = ("insight", f.code, f"{rep.week_end.isoformat()}:{sorted(facts.items())}")
+    return _explanation_out(explain.explain(db, request.app.state.settings, key, f.text, facts))

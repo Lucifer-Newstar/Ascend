@@ -10,7 +10,7 @@ from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
-from app.modules.intelligence import recovery_service
+from app.modules.intelligence import diet_service, recovery_service
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
 from app.modules.progress import (
@@ -147,6 +147,7 @@ def dashboard(
     today = now.date()
     profile = service.get_profile(db)
     targets = service.energy_for(profile) if profile else None
+    adaptive = diet_service.calorie_target(db, today) if profile else None
     totals = nutrition.day_totals(db, today)
     g = game.summary(db, bus, now)
 
@@ -163,7 +164,7 @@ def dashboard(
             "tasks": Ring(value=done, target=max(1, len(g.quest)), label="Quest tasks"),
             "kcal_in": Ring(
                 value=totals.kcal,
-                target=targets.kcal_target if targets else 2000,
+                target=adaptive[0] if adaptive else targets.kcal_target if targets else 2000,
                 label="kcal eaten",
                 is_estimate=True,
             ),

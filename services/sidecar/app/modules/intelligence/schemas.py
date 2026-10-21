@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel
@@ -166,3 +166,83 @@ class NoticeOut(BaseModel):
     title: str
     text: str
     at: datetime
+
+
+# --- diet: adaptive TDEE and weekly insights (ADR-0018, ADR-0019) ----------------------------
+
+
+class TdeePointOut(BaseModel):
+    """One day of tdee-v1: the morning state after that day's weigh-in."""
+
+    day: date
+    weight_kg: float | None
+    intake_kcal: float | None
+    intake_used: bool
+    trend_kg: float
+    tdee_kcal: float
+    sd_kcal: float
+
+
+class TdeeWeekOut(BaseModel):
+    """The calorie target set on one Monday and why it changed or held."""
+
+    week_start: date
+    target_kcal: int
+    tdee_kcal: float
+    sd_kcal: float
+    intake_days: int
+    changed: bool
+    from_estimate: bool
+    reason: str
+
+
+class TdeeOut(BaseModel):
+    """GET /intelligence/tdee: expenditure with its range, trend weight and weekly target."""
+
+    algo_version: str
+    status: Literal["cold_start", "learning", "adaptive"]
+    tdee_kcal: float
+    sd_kcal: float
+    low_kcal: float
+    high_kcal: float
+    formula_tdee_kcal: float
+    formula_target_kcal: int
+    target_kcal: int
+    target_source: Literal["formula", "adaptive"]
+    target_week_start: date
+    trend_kg: float | None
+    days_of_data: int
+    weigh_ins: int
+    intake_days_7: int
+    weigh_ins_7: int
+    gate_days: int
+    paused: bool
+    reason: str
+    series: list[TdeePointOut]
+    weeks: list[TdeeWeekOut]
+    why: Why
+
+
+class InsightFindingOut(BaseModel):
+    code: str
+    title: str
+    text: str
+    severity: float
+    numbers: dict[str, float | int | str]
+    why: Why
+
+
+class InsightCheckOut(BaseModel):
+    code: str
+    outcome: Literal["fired", "quiet", "not_enough_data"]
+    detail: str
+
+
+class InsightsOut(BaseModel):
+    """GET /intelligence/insights: at most three findings for the last 7 complete days, plus
+    every rule that was checked and why it stayed quiet."""
+
+    algo_version: str
+    week_end: date
+    findings: list[InsightFindingOut]
+    checks: list[InsightCheckOut]

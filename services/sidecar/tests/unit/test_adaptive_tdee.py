@@ -46,6 +46,7 @@ def test_prior_is_mifflin_st_jeor_times_activity() -> None:
     assert td.goal_target(2702.8, "cut") == 2200
     assert td.goal_target(2702.8, "bulk") == 3000
     assert td.goal_target(1000, "cut") == 1200
+    assert td.formula_target(2702.8125, "cut") == 2203
 
 
 def test_no_data_is_a_cold_start_with_the_formula_range() -> None:
@@ -53,7 +54,7 @@ def test_no_data_is_a_cold_start_with_the_formula_range() -> None:
     assert r.status == "cold_start"
     assert r.tdee_kcal == pytest.approx(2702.8, abs=0.1)
     assert r.sd_kcal == td.PRIOR_SD_KCAL
-    assert r.target_kcal == 2200 and r.target_source == "formula"
+    assert r.target_kcal == 2203 and r.target_source == "formula"
 
 
 def test_first_day_keeps_the_prior_and_a_weigh_in_moves_the_trend() -> None:

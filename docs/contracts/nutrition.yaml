@@ -347,6 +347,14 @@ components:
           - type: integer
           - type: 'null'
           title: Kcal Target
+        kcal_target_source:
+          anyOf:
+          - type: string
+            enum:
+            - formula
+            - adaptive
+          - type: 'null'
+          title: Kcal Target Source
         protein_target_g:
           anyOf:
           - type: integer
