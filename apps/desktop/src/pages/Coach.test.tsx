@@ -7,7 +7,7 @@ import { ToastProvider } from "../components/Toast";
 import { CoachPage } from "./Coach";
 
 vi.mock("../api/client", () => ({
-  api: { coachStatus: vi.fn(), coachAsk: vi.fn(), weeklyReview: vi.fn(), deload: vi.fn(), startDeload: vi.fn() },
+  api: { coachStatus: vi.fn(), coachAsk: vi.fn(), weeklyReview: vi.fn(), deload: vi.fn(), startDeload: vi.fn(), notices: vi.fn() },
 }));
 
 const reply = { source: "rules" as const, text: "Train legs today.", tip_code: "under_quads", model: null, fallback_reason: "ai_disabled" };
@@ -20,6 +20,9 @@ describe("CoachPage", () => {
   beforeEach(() => {
     vi.mocked(api.coachStatus).mockResolvedValue({ ai_enabled: false, ollama_available: false, model: "qwen3:4b" });
     vi.mocked(api.weeklyReview).mockRejectedValue(new Error("skip"));
+    vi.mocked(api.notices).mockResolvedValue([
+      { id: "raised:1", code: "raised", title: "Target raised", text: "Bench press: 62.5 kg × 8 next time.", at: new Date().toISOString() },
+    ]);
     vi.mocked(api.deload).mockRejectedValue(new Error("skip"));
   });
 
@@ -67,5 +70,12 @@ describe("CoachPage", () => {
     expect(notice).toHaveAttribute("data-variant", "warning");
     expect(within(notice).getByText("Planned deload: 5 hard weeks in a row.")).toBeInTheDocument();
     expect(within(notice).getByRole("button", { name: "Start deload week" })).toBeInTheDocument();
+  });
+
+  it("lists the engines' System notices beside the chat", async () => {
+    renderPage();
+    const log = await screen.findByRole("region", { name: "System log" });
+    expect(await within(log).findByText("Bench press: 62.5 kg × 8 next time.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Ask ARC" })).toBeInTheDocument();
   });
 });
