@@ -1,17 +1,17 @@
 /**
  * Fuel (12-column grid, spec §8.4): a KPI strip, then today's intake and meal list (8 columns)
- * beside the energy card (4 columns), then the meal builder: the Indian food table and the
+ * beside the adaptive TDEE card (4 columns, tdee-v1), then the meal builder: the Indian food table and the
  * plate side by side. Every card owns its loading, error and empty state through <Panel>.
  */
-import type { Food, MealType, Profile } from "@ascend/shared";
+import type { Food, MealType } from "@ascend/shared";
 import { useMemo, useState } from "react";
 
 import { api } from "../api/client";
 import { IconMinus, IconPlus, IconSearch, IconTrash } from "../components/Icons";
+import { TdeePanel } from "../components/DietCards";
 import { KpiStrip, KpiTile, PageGrid, Panel } from "../components/Page";
 import { Empty } from "../components/States";
 import { useToast } from "../components/Toast";
-import { WhyButton } from "../components/WhyPanel";
 import { grams, kcal, pct, portionLabel, timeLabel } from "../lib/format";
 import { useApi } from "../lib/useApi";
 
@@ -25,7 +25,7 @@ function defaultMealType(): MealType {
 export function DietPage({ onChanged }: { onChanged: () => void }) {
   const foods = useApi(() => api.foods(), []);
   const day = useApi(api.dayLog, []);
-  const profile = useApi(api.profile, []);
+  const [tick, setTick] = useState(0);
   const [query, setQuery] = useState("");
   const [mealType, setMealType] = useState<MealType>(defaultMealType());
   const [plate, setPlate] = useState<{ food: Food; portions: number }[]>([]);
@@ -52,6 +52,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
       toast(`${mealType[0].toUpperCase() + mealType.slice(1)} logged${res.xp_awarded ? ` · +${res.xp_awarded} XP` : ""}`, "xp");
       setPlate([]);
       day.reload();
+      setTick((t) => t + 1);
       onChanged();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -65,6 +66,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
       await api.deleteMeal(id);
       toast(`${mealName[0].toUpperCase() + mealName.slice(1)} deleted`, "info");
       day.reload();
+      setTick((t) => t + 1);
       onChanged();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -80,7 +82,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
   return (
     <PageGrid label="Fuel">
       <KpiStrip>
-        <KpiTile index={0} label="Calories today" loading={dayLoading} value={d ? `${kcal(d.totals.kcal)} kcal` : "–"} sub={d ? `of ${kcal(target)} kcal target (estimate)` : undefined} />
+        <KpiTile index={0} label="Calories today" loading={dayLoading} value={d ? `${kcal(d.totals.kcal)} kcal` : "–"} sub={d ? `of ${kcal(target)} kcal ${d.kcal_target_source === "adaptive" ? "adaptive target" : "target (estimate)"}` : undefined} />
         <KpiTile index={1} label="Protein" loading={dayLoading} tone={d && proteinTarget && d.totals.protein_g >= proteinTarget ? "good" : "ink"}
           value={d ? grams(d.totals.protein_g) : "–"} sub={d && proteinTarget ? `of ${grams(proteinTarget)} target` : undefined} />
         <KpiTile index={2} label={left >= 0 ? "Left today" : "Over today"} loading={dayLoading} tone={left < 0 ? "warn" : "ink"}
@@ -123,7 +125,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
         )}
       </Panel>
 
-      <EnergyPanel profile={profile.data ?? null} loading={profile.loading && !profile.data} error={!profile.data ? profile.error ?? null : null} onRetry={profile.reload} />
+      <TdeePanel refreshKey={tick} />
 
       <Panel id="builder" index={6} className="col-span-12" title="Add a meal" hover={false}
         action={
@@ -203,36 +205,6 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
         </div>
       </Panel>
     </PageGrid>
-  );
-}
-
-const ACTIVITY_LABEL: Record<string, string> = { sedentary: "sedentary ×1.2", light: "light ×1.375", moderate: "moderate ×1.55", active: "active ×1.725", very_active: "very active ×1.9" };
-
-/** The day's energy target and where it comes from (Mifflin-St Jeor × activity, then the goal). */
-function EnergyPanel({ profile, loading, error, onRetry }: { profile: Profile | null; loading: boolean; error: string | null; onRetry: () => void }) {
-  const e = profile?.energy;
-  return (
-    <Panel id="energy" index={5} className="col-span-12 xl:col-span-4" title="Energy target"
-      hint="Formula estimate; real expenditure can differ by a few hundred kcal"
-      loading={loading} error={error} onRetry={onRetry} skeletonLines={5}
-      empty={profile && !e ? { title: "No profile yet.", hint: "Finish onboarding to get a target." } : null}>
-      {profile && e && (
-        <>
-          <dl className="grid grid-cols-2 gap-3 text-sm">
-            <div><dt className="text-xs text-muted">Daily target</dt><dd className="font-display text-2xl font-bold text-ink">{kcal(e.kcal_target)} <span className="text-xs font-normal text-muted">kcal</span></dd></div>
-            <div><dt className="text-xs text-muted">Protein</dt><dd className="font-display text-2xl font-bold text-ink">{grams(e.protein_target_g)}</dd></div>
-            <div><dt className="text-xs text-muted">Expenditure (TDEE)</dt><dd className="text-ink">≈ {kcal(e.tdee)} kcal</dd></div>
-            <div><dt className="text-xs text-muted">BMR</dt><dd className="text-ink">≈ {kcal(e.bmr)} kcal</dd></div>
-          </dl>
-          <div className="mt-4 border-t border-line pt-3">
-            <WhyButton label="Why this energy target?" why={{
-              formula: "BMR (Mifflin-St Jeor) × activity factor = TDEE; target = TDEE + goal adjustment (cut −500, maintain 0, bulk +300), at least 1,200 kcal.",
-              inputs: { sex: profile.sex, age: profile.age, height_cm: profile.height_cm, weight_kg: profile.weight_kg, activity: ACTIVITY_LABEL[profile.activity] ?? profile.activity, goal: profile.goal, bmr_kcal: Math.round(e.bmr), tdee_kcal: Math.round(e.tdee), target_kcal: e.kcal_target },
-            }} />
-          </div>
-        </>
-      )}
-    </Panel>
   );
 }
 
