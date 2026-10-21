@@ -1,4 +1,8 @@
-import { useState } from "react";
+/**
+ * Import & export (12-column grid): a three-step strip (choose, check, imported) above the
+ * import card (8 columns) and the export and "what gets imported" cards (4 columns).
+ */
+import { useState, type CSSProperties } from "react";
 
 import type { ImportReport, ImportSource } from "@ascend/shared";
 
@@ -6,9 +10,12 @@ import { api } from "../api/client";
 import { FileDrop } from "../components/FileDrop";
 import { IconDownload } from "../components/Icons";
 import { ImportReportCard } from "../components/ImportReportCard";
+import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
 import { useToast } from "../components/Toast";
 import { readTextFile, saveFile, todayStamp } from "../lib/files";
+
+const stagger = (i: number): CSSProperties => ({ ["--i" as string]: i }) as CSSProperties;
 
 type Step = "pick" | "checking" | "preview" | "importing" | "done";
 
@@ -92,8 +99,9 @@ export function DataPage({ onChanged, onOpenHistory }: { onChanged: () => void; 
   const busy = step === "checking" || step === "importing";
 
   return (
-    <div className="grid max-w-5xl grid-cols-12 gap-5">
-      <section className="card col-span-12 space-y-5 p-5 lg:col-span-7" aria-labelledby="import-title">
+    <PageGrid label="Import and export">
+      <ImportSteps step={step} />
+      <section className="card rise-in col-span-12 space-y-5 self-start p-5 xl:col-span-8" style={stagger(1)} aria-labelledby="import-title">
         <div>
           <h2 id="import-title" className="card-title">Import from another app</h2>
           <p className="mt-1 text-sm text-muted">
@@ -133,7 +141,7 @@ export function DataPage({ onChanged, onOpenHistory }: { onChanged: () => void; 
           </label>
         </div>
         {source === "strong" && (
-          <p className="text-xs text-faint">
+          <p className="text-xs text-muted">
             The unit only matters for Strong's newer export, which doesn't say. The classic export carries its own unit.
           </p>
         )}
@@ -174,8 +182,8 @@ export function DataPage({ onChanged, onOpenHistory }: { onChanged: () => void; 
         )}
       </section>
 
-      <div className="col-span-12 space-y-5 lg:col-span-5">
-        <section className="card p-5" aria-labelledby="export-title">
+      <div className="col-span-12 space-y-5 xl:col-span-4">
+        <section className="card rise-in p-5" style={stagger(2)} aria-labelledby="export-title">
           <h2 id="export-title" className="card-title mb-1">Export your data</h2>
           <p className="mb-3 text-sm text-muted">Everything you logged, in open formats. Yours to keep or take elsewhere.</p>
           <div className="flex flex-wrap gap-2">
@@ -184,8 +192,8 @@ export function DataPage({ onChanged, onOpenHistory }: { onChanged: () => void; 
             <button type="button" className="btn-ghost" onClick={() => exportData("meals")}><IconDownload width={16} height={16} /> Meals (CSV)</button>
           </div>
         </section>
-        <section className="card p-5 text-xs leading-relaxed text-muted">
-          <h2 className="card-title mb-2">What gets imported</h2>
+        <section className="card rise-in p-5 text-xs leading-relaxed text-muted" style={stagger(3)} aria-labelledby="what-title">
+          <h2 id="what-title" className="card-title mb-2">What gets imported</h2>
           <ul className="list-inside list-disc space-y-1">
             <li>Workouts, sets, weights, reps, RPE, and time and distance for cardio.</li>
             <li>Exercise names are matched to the ASCEND library. Names it can't match are listed and skipped, never guessed.</li>
@@ -193,6 +201,33 @@ export function DataPage({ onChanged, onOpenHistory }: { onChanged: () => void; 
           </ul>
         </section>
       </div>
-    </div>
+    </PageGrid>
+  );
+}
+
+const STEPS = [
+  { key: "pick", label: "Choose a file", hint: "Strong or Hevy CSV" },
+  { key: "preview", label: "Check the preview", hint: "Nothing saved yet" },
+  { key: "done", label: "Imported", hint: "Duplicates skipped" },
+] as const;
+
+/** Where the import stands: choose, check, imported. The current step is marked for screen readers. */
+function ImportSteps({ step }: { step: string }) {
+  const at = step === "done" ? 2 : step === "preview" || step === "importing" ? 1 : 0;
+  return (
+    <ol className="col-span-12 grid grid-cols-3 gap-3" aria-label="Import steps">
+      {STEPS.map((s, i) => (
+        <li key={s.key} aria-current={i === at ? "step" : undefined}
+          className={`card rise-in flex items-center gap-3 px-4 py-3 ${i === at ? "border-accent/60" : ""}`} style={stagger(0)}>
+          <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${i < at ? "bg-good text-on-accent" : i === at ? "bg-accent text-on-accent" : "bg-panel-3 text-muted"}`}>
+            {i < at ? "✓" : i + 1}
+          </span>
+          <span className="min-w-0">
+            <span className={`block truncate text-sm font-medium ${i === at ? "text-ink" : "text-muted"}`}>{s.label}</span>
+            <span className="block truncate text-xs text-muted">{s.hint}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }

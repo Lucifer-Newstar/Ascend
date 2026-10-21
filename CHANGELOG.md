@@ -6,6 +6,15 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Changed (v7 layouts)
+- **Progress, Fuel, Coach, History, Import & export and Settings** now use the same 12-column layout as Today, Train and Skills (spec §8.4).
+  - **Progress:** a KPI strip (trend weight, goal ETA, this week, PRs in 30 days), estimated 1RM or best hold per key movement, weekly sets per muscle against its band, and a PR timeline.
+  - **Fuel:** a KPI strip (calories, protein, left or over, meals), today's intake and meals beside an energy card whose "Why?" shows the formula inputs, and one meal-builder card with the food table and the plate side by side.
+  - **Coach:** the chat at a fixed height beside the weekly review, the deload check and a System log of the engines' notices.
+  - **History:** range KPIs, a training/meal-day filter, 30 or 90 days, an activity calendar that jumps to a day, and sessions by source.
+  - **Import & export:** a choose → check → imported step strip; **Settings:** a sticky section index.
+- Every card on these screens shows loading, error and empty states the same way (one `Panel` component), and cards rise in with a short stagger that Reduce motion turns off. No API contract changed.
+
 ### Added (v6 intelligence layer)
 - **Recovery engine v2** (`recovery-v2`, ADR-0014).
   - Per-muscle readiness for all 19 regions. A set's dose counts its effort (reps in reserve from RPE, else from your e1RM), so an easy set loads a muscle less than a set to failure.
