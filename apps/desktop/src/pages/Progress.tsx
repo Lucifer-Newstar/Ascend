@@ -1,31 +1,26 @@
 /**
- * Progress: body weight with its trend line and an ETA to the goal weight,
- * weekly training volume, personal records and tape measurements.
+ * Progress (12-column grid, spec §8.4): a KPI strip, then body weight with its trend and the
+ * goal-weight ETA, estimated 1RM / best hold per key movement, weekly sets per muscle against
+ * its band, the 8-week totals, a PR timeline and tape measurements. Every card owns its
+ * loading, error and empty state through <Panel>.
  */
-import type { BodyMetric, Eta, Measurement, MeasurementSite, PersonalRecord, Profile, Units, WeekSummary } from "@ascend/shared";
+import type { BodyMetric, Eta, Measurement, MeasurementSite, MuscleState, PersonalRecord, Profile, Units, WeekSummary } from "@ascend/shared";
 import { useState } from "react";
 
 import { api } from "../api/client";
 import { BarChart, LineChart } from "../components/charts";
 import { IconTrophy } from "../components/Icons";
+import { KpiStrip, KpiTile, Panel, PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
-import { Skeleton } from "../components/Skeleton";
-import { Empty, ErrorState } from "../components/States";
+import { Empty } from "../components/States";
 import { useToast } from "../components/Toast";
+import { count } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { formatLength, formatWeight, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
-import { isOffline, useApi } from "../lib/useApi";
-
-function ChartSkeleton({ height = "h-48" }: { height?: string }) {
-  return (
-    <div role="status" aria-busy="true">
-      <span className="sr-only">Loading…</span>
-      <Skeleton className={`${height} w-full`} />
-    </div>
-  );
-}
+import { useApi } from "../lib/useApi";
 
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const DAY_MS = 86_400_000;
 
 export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; onChanged: () => void }) {
   const { settings } = usePrefs();
@@ -38,33 +33,56 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
   const metrics = useApi(() => api.bodyMetrics(90), [refreshKey, tick]);
   const eta = useApi(api.eta, [refreshKey, tick]);
   const profile = useApi(api.profile, [refreshKey, tick]);
+  const weeks = useApi(() => api.weekly(8), [refreshKey, tick]);
+  const prs = useApi(api.prs, [refreshKey]);
+
+  const series = metrics.data ?? [];
+  const latest = series.at(-1);
+  const first = series[0];
+  const thisWeek = weeks.data?.at(-1);
+  const recentPrs = (prs.data ?? []).filter((p) => Date.now() - new Date(p.achieved_at).getTime() <= 30 * DAY_MS);
 
   return (
-    <div className="grid grid-cols-12 gap-5">
-      <section className="card card-hover col-span-12 p-5 xl:col-span-8" aria-labelledby="weight-title">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 id="weight-title" className="card-title">Body weight · 90 days</h2>
-          <span className="text-[11px] text-faint">dots = weigh-ins · line = trend (smooths water swings)</span>
-        </div>
-        {metrics.loading && !metrics.data ? <ChartSkeleton /> : !metrics.data ? <ErrorState message={metrics.error ?? "No data"} onRetry={metrics.reload} offline={isOffline(metrics.status)} /> : (
-          <WeightChart metrics={metrics.data ?? []} units={units} />
-        )}
-        <WeighInForm units={units} lastKg={metrics.data?.at(-1)?.weight_kg} onSaved={reload} />
-      </section>
+    <PageGrid label="Progress">
+      <KpiStrip>
+        <KpiTile index={0} label="Trend weight" loading={metrics.loading && !metrics.data}
+          value={latest ? formatWeight(latest.trend_kg, units) : "–"}
+          sub={latest && first && series.length > 1 ? `${signed(toDisplayWeight(latest.trend_kg - first.trend_kg, units))} ${weightUnit(units)} over ${count(series.length, "weigh-in")}` : "Log a weigh-in to start the trend"} />
+        <KpiTile index={1} label="Goal ETA (estimate)" loading={eta.loading && !eta.data} tone={eta.data?.eta_from ? "accent" : "ink"}
+          value={eta.data?.eta_from && eta.data.eta_to ? `${shortDate(eta.data.eta_from)} – ${shortDate(eta.data.eta_to)}` : "–"}
+          sub={eta.data?.goal_kg ? `to ${formatWeight(eta.data.goal_kg, units)}` : "No goal weight set"} />
+        <KpiTile index={2} label="This week" loading={weeks.loading && !weeks.data}
+          value={thisWeek ? count(thisWeek.sessions, "session") : "–"}
+          sub={thisWeek ? `${count(thisWeek.sets, "set")} · ${thisWeek.active_minutes} min` : undefined} />
+        <KpiTile index={3} label="PRs · 30 days" loading={prs.loading && !prs.data} tone={recentPrs.length ? "warn" : "ink"}
+          value={prs.data ? String(recentPrs.length) : "–"}
+          sub={recentPrs[0] ? `latest: ${recentPrs[0].exercise}` : "Weighted sets of 1–10 reps count"} />
+      </KpiStrip>
 
-      <section className="card card-hover col-span-12 p-5 xl:col-span-4" aria-labelledby="eta-title">
-        <h2 id="eta-title" className="card-title mb-3">Goal weight ETA</h2>
-        {eta.loading && !eta.data ? <ChartSkeleton height="h-40" /> : !eta.data ? <ErrorState message={eta.error ?? "No data"} onRetry={eta.reload} offline={isOffline(eta.status)} /> : (
-          <EtaCard eta={eta.data} units={units} profile={profile.data ?? null} onSaved={reload} />
-        )}
-      </section>
+      <Panel id="weight" index={4} className="col-span-12 xl:col-span-8" title="Body weight · 90 days"
+        action={<span className="text-[11px] text-muted">dots = weigh-ins · line = trend</span>}
+        loading={metrics.loading && !metrics.data} error={!metrics.data ? metrics.error ?? null : null} onRetry={metrics.reload} skeletonLines={6}>
+        <WeightChart metrics={series} units={units} />
+        <WeighInForm units={units} lastKg={latest?.weight_kg} onSaved={reload} />
+      </Panel>
 
-      <WeeklyCard refreshKey={refreshKey + tick} units={units} />
-      <PrCard refreshKey={refreshKey} units={units} />
+      <Panel id="eta" index={5} className="col-span-12 xl:col-span-4" title="Goal weight ETA"
+        loading={eta.loading && !eta.data} error={!eta.data ? eta.error ?? null : null} onRetry={eta.reload} skeletonLines={5}>
+        {eta.data && <EtaCard eta={eta.data} units={units} profile={profile.data ?? null} onSaved={reload} />}
+      </Panel>
+
+      <KeyLiftsPanel prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} refreshKey={refreshKey} />
+      <MuscleBandPanel refreshKey={refreshKey + tick} />
+
+      <WeeklyPanel weeks={weeks.data ?? null} loading={weeks.loading && !weeks.data} error={!weeks.data ? weeks.error ?? null : null} onRetry={weeks.reload} units={units} />
+      <PrTimeline prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} />
+
       <MeasurementsCard refreshKey={refreshKey} units={units} />
-    </div>
+    </PageGrid>
   );
 }
+
+const signed = (n: number) => `${n > 0 ? "+" : ""}${n}`;
 
 function WeightChart({ metrics, units }: { metrics: BodyMetric[]; units: Units }) {
   if (metrics.length === 0) return <Empty title="No weigh-ins yet." hint="Log your weight below; three or more give a trend." />;
@@ -193,61 +211,141 @@ function EtaCard({ eta, units, profile, onSaved }: { eta: Eta; units: Units; pro
   );
 }
 
-type WeeklyMetric = "volume_kg" | "sessions" | "active_minutes";
-
-function WeeklyCard({ refreshKey, units }: { refreshKey: number; units: Units }) {
-  const weeks = useApi(() => api.weekly(8), [refreshKey]);
-  const [metric, setMetric] = useState<WeeklyMetric>("volume_kg");
-  const unit = metric === "volume_kg" ? ` ${weightUnit(units)}` : metric === "active_minutes" ? " min" : "";
-  const value = (w: WeekSummary) => Math.round(metric === "volume_kg" ? toDisplayWeight(w.volume_kg, units, 0) : w[metric]);
-  const data: WeekSummary[] = weeks.data ?? [];
+/**
+ * Estimated 1RM (Epley) or best hold per key movement, from prog-v1's per-exercise series.
+ * The key movements are the lifts with the most recent PRs (up to four).
+ */
+function KeyLiftsPanel({ prs, loading, error, onRetry, units, refreshKey }: {
+  prs: PersonalRecord[] | null; loading: boolean; error: string | null; onRetry: () => void; units: Units; refreshKey: number;
+}) {
+  const lifts = [...(prs ?? [])].sort((a, b) => b.achieved_at.localeCompare(a.achieved_at)).slice(0, 4);
+  const [picked, setPicked] = useState<string | null>(null);
+  const current = lifts.find((l) => String(l.exercise_id) === picked) ?? lifts[0];
+  const target = useApi(() => (current ? api.progression(current.exercise_id) : Promise.resolve(null)), [current?.exercise_id, refreshKey]);
+  const e1rm = target.data?.e1rm ?? null;
+  const points = e1rm?.series ?? [];
+  const isKg = e1rm?.unit === "kg";
+  const show = (v: number) => (isKg ? toDisplayWeight(v, units) : v);
+  const unit = isKg ? ` ${weightUnit(units)}` : e1rm?.unit === "s" ? " s" : " reps";
   return (
-    <section className="card card-hover col-span-12 p-5 xl:col-span-8" aria-labelledby="weekly-title">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 id="weekly-title" className="card-title">Last 8 weeks</h2>
-        <Segmented
-          label="Weekly metric"
-          value={metric}
-          onChange={setMetric}
-          options={[{ value: "volume_kg", label: "Volume" }, { value: "sessions", label: "Sessions" }, { value: "active_minutes", label: "Minutes" }]}
-        />
-      </div>
-      {weeks.loading && !weeks.data ? <ChartSkeleton /> : !weeks.data ? <ErrorState message={weeks.error ?? "No data"} onRetry={weeks.reload} offline={isOffline(weeks.status)} /> :
-        data.every((w) => w.sessions === 0) ? <Empty title="No training logged in the last 8 weeks." /> : (
-          <BarChart
-            labels={data.map((w) => shortDate(w.week_start))}
-            values={data.map(value)}
+    <Panel id="lifts" index={6} className="col-span-12 xl:col-span-8" title="Key movements"
+      hint={isKg ? "Estimated one-rep max (Epley), an estimate" : e1rm?.unit === "s" ? "Best hold per session" : "Best set per session"}
+      action={lifts.length > 1 ? (
+        <Segmented label="Movement" value={String(current?.exercise_id ?? "")} onChange={setPicked}
+          options={lifts.map((l) => ({ value: String(l.exercise_id), label: l.exercise.length > 18 ? `${l.exercise.slice(0, 17)}…` : l.exercise }))} />
+      ) : undefined}
+      loading={loading} error={error} onRetry={onRetry} skeletonLines={6}
+      empty={lifts.length === 0 ? { title: "No key movements yet.", hint: "Log weighted sets of 1–10 reps; each lift with a PR gets a chart here." } : null}>
+      {target.loading && !target.data ? (
+        <div role="status" aria-busy="true" className="h-48"><span className="sr-only">Loading…</span></div>
+      ) : target.error && !target.data ? (
+        <Empty title="Couldn't load this movement." hint={target.error} action={{ label: "Retry", onClick: target.reload }} />
+      ) : points.length < 2 ? (
+        <Empty title={`Only ${count(points.length, "session")} logged for ${current?.exercise ?? "this movement"}.`} hint="Two or more sessions draw a line." />
+      ) : (
+        <>
+          <div className="mb-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <span className="font-display text-3xl font-bold text-ink">{e1rm?.current != null ? `${show(e1rm.current)}${unit}` : "–"}</span>
+            {e1rm?.best != null && <span className="text-xs text-muted">best {show(e1rm.best)}{unit}</span>}
+            {e1rm?.trend_pct_week != null && <span className="text-xs text-muted">{signed(Math.round(e1rm.trend_pct_week * 10) / 10)}% per week (trend)</span>}
+          </div>
+          <LineChart
+            labels={points.map((p) => shortDate(p.at))}
             unit={unit}
-            summary={`Weekly ${metric.replace("_", " ")} for the last ${data.length} weeks`}
-            valueLabel={metric === "volume_kg" ? "Volume" : metric === "sessions" ? "Sessions" : "Minutes"}
+            summary={`${current?.exercise}: ${points.length} sessions from ${show(points[0].value)}${unit} to ${show(points[points.length - 1].value)}${unit}`}
+            series={[{ label: current?.exercise ?? "Value", values: points.map((p) => show(p.value)), className: "stroke-accent", dots: true }]}
           />
-        )}
-    </section>
+        </>
+      )}
+    </Panel>
   );
 }
 
-function PrCard({ refreshKey, units }: { refreshKey: number; units: Units }) {
-  const prs = useApi(api.prs, [refreshKey]);
-  const list: PersonalRecord[] = (prs.data ?? []).slice(0, 8);
+/** Effective sets in the last 7 days per muscle, drawn against its weekly band (recovery-v2). */
+function MuscleBandPanel({ refreshKey }: { refreshKey: number }) {
+  const muscles = useApi(api.muscles, [refreshKey], { cacheKey: "muscles" });
+  const list: MuscleState[] = [...(muscles.data ?? [])].sort((a, b) => b.es_7d - a.es_7d);
+  const trained = list.filter((m) => m.es_7d > 0).length;
   return (
-    <section className="card card-hover col-span-12 p-5 xl:col-span-4" aria-labelledby="pr-title">
-      <h2 id="pr-title" className="card-title mb-3 flex items-center gap-2"><IconTrophy width={14} height={14} /> Personal records</h2>
-      {prs.loading && !prs.data ? <ChartSkeleton height="h-40" /> : !prs.data ? <ErrorState message={prs.error ?? "No data"} onRetry={prs.reload} offline={isOffline(prs.status)} /> : list.length === 0 ? (
-        <Empty title="No PRs yet." hint="Log weighted sets of 1–10 reps." />
-      ) : (
-        <ul className="divide-y divide-line/70">
-          {list.map((p) => (
-            <li key={p.exercise_id} className="flex items-center justify-between py-2 text-sm">
-              <span className="min-w-0">
-                <span className="block truncate text-ink">{p.exercise}</span>
-                <span className="text-[11px] text-faint">{toDisplayWeight(p.weight_kg, units)} {weightUnit(units)} × {p.reps} · {shortDate(p.achieved_at)}</span>
-              </span>
-              <span className="font-display text-lg font-bold text-warn" title="Estimated one-rep max (Epley)">{formatWeight(p.value, units)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <Panel id="bands" index={7} className="col-span-12 xl:col-span-4" title="Weekly sets vs band"
+      hint={muscles.data ? `${trained} of ${list.length} muscles trained in 7 days` : undefined}
+      loading={muscles.loading && !muscles.data} error={!muscles.data ? muscles.error ?? null : null} onRetry={muscles.reload} skeletonLines={8}
+      empty={muscles.data && trained === 0 ? { title: "No sets in the last 7 days.", hint: "Each muscle's effective sets appear here against its weekly band." } : null}>
+      <ul className="space-y-1.5" aria-label="Effective sets per muscle in the last 7 days">
+        {list.slice(0, 12).map((m) => <BandRow key={m.key} m={m} />)}
+      </ul>
+      {list.length > 12 && <p className="mt-2 text-[11px] text-muted">Top 12 by sets. The muscle map on Today shows all {list.length}.</p>}
+      <p className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted">
+        <span><span className="mr-1 inline-block h-2 w-3 rounded-sm bg-under align-middle" />under</span>
+        <span><span className="mr-1 inline-block h-2 w-3 rounded-sm bg-good align-middle" />in band</span>
+        <span><span className="mr-1 inline-block h-2 w-3 rounded-sm bg-warn align-middle" />over</span>
+      </p>
+    </Panel>
+  );
+}
+
+function BandRow({ m }: { m: MuscleState }) {
+  const max = Math.max(m.weekly_high * 1.3, m.es_7d, 1);
+  const pos = (v: number) => `${Math.min(100, (v / max) * 100)}%`;
+  const state = m.es_7d < m.weekly_low ? "under" : m.es_7d > m.weekly_high ? "over" : "in band";
+  const fill = state === "under" ? "bg-under" : state === "over" ? "bg-warn" : "bg-good";
+  const sets = Math.round(m.es_7d * 10) / 10;
+  return (
+    <li className="grid grid-cols-[6.5rem_1fr_2.5rem] items-center gap-2 text-xs" aria-label={`${m.label}: ${sets} sets, band ${m.weekly_low} to ${m.weekly_high}, ${state}`}>
+      <span className="truncate text-ink">{m.label}</span>
+      <span className="relative h-2 rounded-full bg-line" aria-hidden="true">
+        <span className="absolute inset-y-0 rounded-full bg-panel-3 ring-1 ring-line-2" style={{ left: pos(m.weekly_low), width: `calc(${pos(m.weekly_high)} - ${pos(m.weekly_low)})` }} />
+        <span className={`absolute inset-y-0 left-0 rounded-full ${fill}`} style={{ width: pos(m.es_7d) }} />
+      </span>
+      <span className="text-right tabular-nums text-muted">{sets}</span>
+    </li>
+  );
+}
+
+type WeeklyMetric = "volume_kg" | "sessions" | "active_minutes";
+
+function WeeklyPanel({ weeks, loading, error, onRetry, units }: { weeks: WeekSummary[] | null; loading: boolean; error: string | null; onRetry: () => void; units: Units }) {
+  const [metric, setMetric] = useState<WeeklyMetric>("volume_kg");
+  const unit = metric === "volume_kg" ? ` ${weightUnit(units)}` : metric === "active_minutes" ? " min" : "";
+  const value = (w: WeekSummary) => Math.round(metric === "volume_kg" ? toDisplayWeight(w.volume_kg, units, 0) : w[metric]);
+  const data: WeekSummary[] = weeks ?? [];
+  return (
+    <Panel id="weekly" index={8} className="col-span-12 xl:col-span-7" title="Last 8 weeks"
+      action={<Segmented label="Weekly metric" value={metric} onChange={setMetric}
+        options={[{ value: "volume_kg", label: "Volume" }, { value: "sessions", label: "Sessions" }, { value: "active_minutes", label: "Minutes" }]} />}
+      loading={loading} error={error} onRetry={onRetry} skeletonLines={6}
+      empty={weeks && data.every((w) => w.sessions === 0) ? { title: "No training logged in the last 8 weeks." } : null}>
+      <BarChart
+        labels={data.map((w) => shortDate(w.week_start))}
+        values={data.map(value)}
+        unit={unit}
+        summary={`Weekly ${metric.replace("_", " ")} for the last ${data.length} weeks`}
+        valueLabel={metric === "volume_kg" ? "Volume" : metric === "sessions" ? "Sessions" : "Minutes"}
+      />
+    </Panel>
+  );
+}
+
+function PrTimeline({ prs, loading, error, onRetry, units }: { prs: PersonalRecord[] | null; loading: boolean; error: string | null; onRetry: () => void; units: Units }) {
+  const list = [...(prs ?? [])].sort((a, b) => b.achieved_at.localeCompare(a.achieved_at)).slice(0, 8);
+  return (
+    <Panel id="pr" index={9} className="col-span-12 xl:col-span-5"
+      title={<span className="flex items-center gap-2"><IconTrophy width={14} height={14} /> PR timeline</span>}
+      loading={loading} error={error} onRetry={onRetry} skeletonLines={6}
+      empty={prs && list.length === 0 ? { title: "No PRs yet.", hint: "Log weighted sets of 1–10 reps." } : null}>
+      <ol className="relative ml-1.5 border-l border-line-2">
+        {list.map((p) => (
+          <li key={`${p.exercise_id}-${p.set_id}`} className="relative flex items-center justify-between gap-3 py-2 pl-4 text-sm">
+            <span aria-hidden="true" className="absolute -left-[5px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-panel bg-warn" />
+            <span className="min-w-0">
+              <span className="block truncate text-ink">{p.exercise}</span>
+              <span className="text-[11px] text-muted">{shortDate(p.achieved_at)} · {toDisplayWeight(p.weight_kg, units)} {weightUnit(units)} × {p.reps}</span>
+            </span>
+            <span className="font-display text-lg font-bold text-warn" title="Estimated one-rep max (Epley)">{formatWeight(p.value, units)}</span>
+          </li>
+        ))}
+      </ol>
+    </Panel>
   );
 }
 
@@ -280,9 +378,8 @@ function MeasurementsCard({ refreshKey, units }: { refreshKey: number; units: Un
   }
 
   return (
-    <section className="card card-hover col-span-12 p-5" aria-labelledby="measure-title">
-      <h2 id="measure-title" className="card-title mb-3">Measurements</h2>
-      {list.loading && !list.data ? <ChartSkeleton height="h-20" /> : !list.data ? <ErrorState message={list.error ?? "No data"} onRetry={list.reload} offline={isOffline(list.status)} /> : (
+    <Panel id="measure" index={10} title="Measurements" loading={list.loading && !list.data} error={!list.data ? list.error ?? null : null} onRetry={list.reload} skeletonLines={2}>
+      {list.data && (
         <div className="grid grid-cols-12 gap-5">
           <ul className="col-span-12 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:col-span-8 lg:grid-cols-7">
             {SITES.map((s) => {
@@ -313,6 +410,6 @@ function MeasurementsCard({ refreshKey, units }: { refreshKey: number; units: Un
           </form>
         </div>
       )}
-    </section>
+    </Panel>
   );
 }
