@@ -40,7 +40,7 @@ describe("SettingsPage", () => {
   it("saves the light theme and applies it to <html>", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
-    await screen.findByText("Appearance");
+    await screen.findByRole("heading", { name: "Appearance" });
     expect(document.documentElement.dataset.theme).toBe("dark");
     await userEvent.click(screen.getByLabelText("Light"));
     expect(save).toHaveBeenCalledWith({ theme: "light" });
@@ -130,7 +130,14 @@ describe("SettingsPage", () => {
 
   it("has no axe violations", async () => {
     const { container } = setup(vi.fn());
-    await screen.findByText("Appearance");
+    await screen.findByRole("heading", { name: "Appearance" });
     await expectNoAxeViolations(container);
+  });
+
+  it("indexes every section and jumps to one", async () => {
+    setup(vi.fn());
+    const nav = await screen.findByRole("navigation", { name: "Settings sections" });
+    await userEvent.click(within(nav).getByRole("button", { name: "Keyboard shortcuts" }));
+    expect(screen.getByRole("heading", { name: "Keyboard shortcuts" })).toHaveFocus();
   });
 });

@@ -1,8 +1,14 @@
+/**
+ * Settings (12-column grid): a sticky section index (3 columns) beside the settings cards
+ * (9 columns): profile and targets, AI coach, online research, appearance, units, your data,
+ * shortcuts and about.
+ */
 import type { Settings } from "@ascend/shared";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 import { api } from "../api/client";
 import { IconDatabase } from "../components/Icons";
+import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState } from "../components/States";
@@ -12,6 +18,8 @@ import { usePrefs } from "../lib/prefs";
 import { play, setSoundPrefs, soundPrefs, type SoundPrefs } from "../lib/sound";
 import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
+
+const stagger = (i: number): CSSProperties => ({ ["--i" as string]: i }) as CSSProperties;
 
 const SHORTCUTS: [string, string][] = [
   ["Ctrl+K", "Command bar: log a set (\"bench 80x5 @8\"), a hold, a meal or your weight, open a page, or ask the Coach"],
@@ -41,7 +49,10 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
   if (profile.loading && !profile.data) {
     return (
       <LoadingLayout label="Loading settings…">
-        <div className="grid max-w-5xl gap-5 lg:grid-cols-2">{[6, 3, 4, 2].map((n, i) => <SkeletonCard key={i} lines={n} />)}</div>
+        <div className="grid grid-cols-12 gap-5">
+          <SkeletonCard className="col-span-12 xl:col-span-3" lines={6} />
+          <div className="col-span-12 grid gap-5 lg:grid-cols-2 xl:col-span-9">{[6, 3, 4, 2].map((n, i) => <SkeletonCard key={i} lines={n} />)}</div>
+        </div>
       </LoadingLayout>
     );
   }
@@ -49,25 +60,27 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
   const p = profile.data;
 
   return (
-    <div className="grid max-w-5xl grid-cols-12 gap-5">
-      <section className="card col-span-12 p-5 lg:col-span-7">
-        <h2 className="card-title mb-4">Profile & targets</h2>
+    <PageGrid label="Settings">
+      <SettingsNav />
+      <div className="col-span-12 grid grid-cols-12 content-start gap-5 xl:col-span-9">
+      <section className="card rise-in col-span-12 self-start p-5 2xl:col-span-7" style={stagger(1)} aria-labelledby="profile-title">
+        <h2 id="profile-title" className="card-title mb-4">Profile & targets</h2>
         <ProfileForm initial={p} submitLabel="Save profile" onSaved={() => { toast("Profile saved", "info"); profile.reload(); onChanged(); }} />
         <p className="mt-4 text-xs text-muted">
           Current estimate: BMR {kcal(p.energy.bmr)} · TDEE {kcal(p.energy.tdee)} · target {kcal(p.energy.kcal_target)} kcal ·
-          protein {p.energy.protein_target_g} g <span className="text-faint">({p.energy.formula_version}, estimate)</span>
+          protein {p.energy.protein_target_g} g <span>({p.energy.formula_version}, estimate)</span>
         </p>
       </section>
-      <div className="col-span-12 space-y-5 lg:col-span-5">
-        <section className="card p-5">
-          <h2 className="card-title mb-3">AI coach</h2>
+      <div className="col-span-12 space-y-5 md:col-span-6 2xl:col-span-5">
+        <section className="card rise-in p-5" style={stagger(2)} aria-labelledby="ai-title">
+          <h2 id="ai-title" className="card-title mb-3">AI coach</h2>
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">Use local AI (Ollama · qwen3:4b)<br /><span className="text-xs text-muted">Off = rule-based tips only. Nothing leaves this PC either way.</span></span>
             <input type="checkbox" className="h-5 w-5 accent-accent" checked={Boolean(aiEnabled)} onChange={onToggleAi} />
           </label>
         </section>
         <OnlineResearch enabled={Boolean(settings.online_lookup)} onChange={(on) => save({ online_lookup: on }, on ? "Online research: on" : "Online research: off")} />
-        <section className="card space-y-4 p-5" aria-labelledby="appearance-title">
+        <section className="card rise-in space-y-4 p-5" style={stagger(3)} aria-labelledby="appearance-title">
           <h2 id="appearance-title" className="card-title">Appearance</h2>
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">Theme</span>
@@ -93,7 +106,9 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           </label>
           <SoundSettings />
         </section>
-        <section className="card space-y-4 p-5" aria-labelledby="units-title">
+      </div>
+      <div className="col-span-12 space-y-5 md:col-span-6 2xl:col-span-7">
+        <section className="card rise-in space-y-4 p-5" style={stagger(4)} aria-labelledby="units-title">
           <h2 id="units-title" className="card-title">Units & training</h2>
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">Units</span>
@@ -121,12 +136,12 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
             </select>
           </label>
         </section>
-        <section className="card p-5">
-          <h2 className="card-title mb-2">Your data</h2>
+        <section className="card rise-in p-5" style={stagger(5)} aria-labelledby="data-title">
+          <h2 id="data-title" className="card-title mb-2">Your data</h2>
           <p className="mb-3 text-sm text-muted">Import history from Strong or Hevy, or export everything you logged.</p>
           <button type="button" className="btn-ghost" onClick={onOpenData}><IconDatabase width={16} height={16} /> Open Import & export</button>
         </section>
-        <section className="card p-5" aria-labelledby="keys-title">
+        <section className="card rise-in p-5" style={stagger(6)} aria-labelledby="keys-title">
           <h2 id="keys-title" className="card-title mb-3">Keyboard shortcuts</h2>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
             {SHORTCUTS.map(([keys, what]) => (
@@ -137,15 +152,49 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
             ))}
           </dl>
         </section>
-        <section className="card p-5 text-xs leading-relaxed text-muted">
-          <h2 className="card-title mb-2">About</h2>
+        <section className="card rise-in p-5 text-xs leading-relaxed text-muted" style={stagger(7)} aria-labelledby="about-title">
+          <h2 id="about-title" className="card-title mb-2">About</h2>
           ASCEND {__APP_VERSION__} · MIT licence · © the ASCEND team.<br />
           Muscle map artwork: react-muscle-highlighter (MIT).<br />
           Food values: approximate, IFCT 2017 / INDB-style.<br />
           TDEE (Mifflin-St Jeor), e1RM (Epley) and burn (MET) are estimates.
         </section>
       </div>
-    </div>
+      </div>
+    </PageGrid>
+  );
+}
+
+const SECTIONS: [string, string][] = [
+  ["profile-title", "Profile & targets"],
+  ["ai-title", "AI coach"],
+  ["online-title", "Online research"],
+  ["appearance-title", "Appearance"],
+  ["units-title", "Units & training"],
+  ["data-title", "Your data"],
+  ["keys-title", "Keyboard shortcuts"],
+  ["about-title", "About"],
+];
+
+/** Section index (sticky on wide windows): jumps to a section and moves focus to its heading. */
+function SettingsNav() {
+  function go(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView?.({ block: "start" });
+    el.setAttribute("tabindex", "-1");
+    el.focus({ preventScroll: true });
+  }
+  return (
+    <nav className="col-span-12 xl:col-span-3" aria-label="Settings sections">
+      <ul className="card rise-in flex flex-wrap gap-1 p-2 xl:sticky xl:top-0 xl:flex-col" style={stagger(0)}>
+        {SECTIONS.map(([id, label]) => (
+          <li key={id}>
+            <button type="button" className="w-full rounded-md px-3 py-1.5 text-left text-sm text-muted hover:bg-panel-2 hover:text-ink" onClick={() => go(id)}>{label}</button>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
@@ -156,7 +205,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
 export function OnlineResearch({ enabled, onChange }: { enabled: boolean; onChange: (on: boolean) => void }) {
   const [asking, setAsking] = useState(false);
   return (
-    <section className="card p-5" aria-labelledby="online-title">
+    <section className="card rise-in p-5" aria-labelledby="online-title">
       <h2 id="online-title" className="card-title mb-3">Online research</h2>
       <label className="flex items-center justify-between gap-4">
         <span className="text-sm text-ink">
