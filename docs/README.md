@@ -66,7 +66,7 @@ docs/
 │   ├── security-privacy.md        ← threat model, Electron hardening, DPDP notes
 │   ├── port-register.md           ← localhost ports + IPC channel register
 │   ├── uml/                       ← 14-diagram UML set (Mermaid, PlantUML where needed)
-│   └── adr/                       ← Architecture Decision Records 0001–0019 + template
+│   └── adr/                       ← Architecture Decision Records 0001–0020 + template
 │
 ├── contracts/                     ← API CONTRACTS (contracts-first)
 │   ├── README.md                  ← conventions, mock server, drift check
@@ -148,6 +148,7 @@ docs/
 | [0017](architecture/adr/0017-evaluation-synthetic-users.md) | Evaluating the engines on seeded synthetic users |
 | [0018](architecture/adr/0018-adaptive-tdee-kalman.md) | Adaptive TDEE with a Kalman filter (tdee-v1) |
 | [0019](architecture/adr/0019-weekly-diet-insights.md) | Rule-based weekly diet insights (insights-v1) |
+| [0020](architecture/adr/0020-workout-programs.md) | Workout programs read from the log (programs-v1) |
 
 ## 3. Reading Order for a New Member
 
