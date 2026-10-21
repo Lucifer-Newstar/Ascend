@@ -199,10 +199,10 @@ installed app, the dev Electron app or the sidecar on its own.
 
 Verified on Linux (CI-equivalent):
 
-- 485 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 engines, API tests with `TestClient`); ruff and mypy clean (100 source files).
+- 532 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 and v7 engines, API tests with `TestClient`); ruff and mypy clean (105 source files).
 - Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
-- tsc (renderer, Electron, shared), eslint and 277 vitest tests (45 files) pass; `vite build` succeeds.
-- The contract drift check passes (71 implemented operations match 9 contracts).
+- tsc (renderer, Electron, shared), eslint and 293 vitest tests (47 files) pass; `vite build` succeeds.
+- The contract drift check passes (79 implemented operations match 9 contracts).
 - The renderer was driven end to end against the running sidecar in headless Chromium
   (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
 - The PyInstaller sidecar binary builds, migrates and answers `/health` (Linux build).
@@ -217,8 +217,9 @@ Not yet verified:
 - The Windows installer (electron-builder + PyInstaller `.exe`) has not been built.
 - The Ollama path (coach, custom-exercise classifier and the v6 "Why?" phrasing) is tested with a
   mocked server only; `qwen3:4b` answers are untested.
-- The v6 engines are evaluated on synthetic users only (docs/ai/evaluation.md); no real-user
-  validation exists yet.
+- The v6 and v7 engines are evaluated on synthetic users only (docs/ai/evaluation.md); no real-user
+  validation exists yet. programs-v1's "half of a day's exercises" matching has not been checked
+  against real training logs.
 - Online research is tested against mocked wger.de and Wikipedia APIs. The live APIs were checked
   by hand on 2026-10-20 from the dev machine: "pallof press" and "nordic curl" were found on wger
   (via the Title Case variant), "Deadlift" got a Wikipedia summary only, "zercher squat" and
