@@ -3,15 +3,16 @@ energy expenditure, fed by daily weigh-ins and logged intake.
 
 State ``x = [W, T]``: trend weight (kg) and total daily energy expenditure (kcal/day).
 
-- Predict, on a day with logged intake ``I``: ``W' = W + (I - T) / rho`` and ``T' = T``,
+- Predict, overnight from a day with logged intake ``I``: ``W' = W + (I - T) / rho`` and
+  ``T' = T``,
   with ``rho = 7700 kcal/kg`` (an approximation, fine over weeks, not for long-range
   forecasts). Process noise: a small trend term, the intake logging error and a slow random
   walk on ``T``.
 - Predict, on a day with no usable intake (nothing logged, or under 800 kcal, which reads as
   a partly logged day): weight is carried as if in balance and its uncertainty grows; ``T``
   only drifts. Missing days never stop the filter.
-- Update, on a day with a weigh-in (several are averaged): ``z = W + noise`` with a scale
-  noise SD of 0.6 kg.
+- Update, on a day with a weigh-in (several are averaged; read as a morning weigh-in, after
+  the previous day's intake): ``z = W + noise`` with a scale noise SD of 0.6 kg.
 - Prior (cold start): Mifflin-St Jeor BMR x activity factor with SD 450 kcal, so a range is
   shown from day 1 and narrows as weigh-ins and intake accumulate.
 
@@ -150,7 +151,12 @@ def _finite(v: float | None) -> float | None:
 
 
 def run_filter(days: list[DayInput], prior_kcal: float, start_weight_kg: float) -> list[DayState]:
-    """One state per calendar day from the first to the last input day (gaps included)."""
+    """One state per calendar day from the first to the last input day (gaps included).
+
+    A day's state is the morning one: its weigh-in is applied after the overnight predict
+    that used the previous day's intake, so a day's own (possibly unfinished) intake only
+    enters tomorrow's state.
+    """
     if not days:
         return []
     by_day: dict[date, DayInput] = {}
@@ -171,15 +177,15 @@ def run_filter(days: list[DayInput], prior_kcal: float, start_weight_kg: float) 
     pww, pwt, ptt = PRIOR_WEIGHT_VAR_KG2, 0.0, PRIOR_SD_KCAL**2
     out: list[DayState] = []
     day = first
+    prev_intake: float | None = None
     while day <= last:
         inp = by_day.get(day, DayInput(day))
-        intake = _finite(inp.intake_kcal)
-        used = intake is not None and intake >= MIN_LOGGED_KCAL
         if day > first:
-            if used and intake is not None:
+            # Predict overnight with yesterday's intake (a morning weigh-in follows it).
+            if prev_intake is not None and prev_intake >= MIN_LOGGED_KCAL:
                 # W' = W + (I - T)/rho ; F = [[1, -1/rho], [0, 1]]
                 a = -1.0 / RHO_KCAL_PER_KG
-                w = w + (intake - t) / RHO_KCAL_PER_KG
+                w = w + (prev_intake - t) / RHO_KCAL_PER_KG
                 pww, pwt, ptt = (
                     pww
                     + 2 * a * pwt
@@ -202,6 +208,8 @@ def run_filter(days: list[DayInput], prior_kcal: float, start_weight_kg: float) 
         t = _clamp(t, TDEE_MIN, TDEE_MAX)
         ptt = _clamp(ptt, 1.0, PRIOR_SD_KCAL**2)
         pww = max(pww, 1e-6)
+        intake = _finite(inp.intake_kcal)
+        used = intake is not None and intake >= MIN_LOGGED_KCAL
         out.append(
             DayState(
                 day=day,
@@ -213,6 +221,7 @@ def run_filter(days: list[DayInput], prior_kcal: float, start_weight_kg: float) 
                 sd_kcal=round(math.sqrt(ptt), 1),
             )
         )
+        prev_intake = intake
         day += timedelta(days=1)
     return out
 
@@ -284,7 +293,7 @@ def compute(days: list[DayInput], profile: Profile, today: date) -> TdeeResult:
     series = run_filter(usable, prior, profile.weight_kg)
     weeks = weekly_targets(series, profile.goal, formula_target, today)
     weigh_ins = sum(1 for s in series if s.weight_kg is not None)
-    last7 = [s for s in series if (today - s.day).days < 7]
+    last7 = [s for s in series if 1 <= (today - s.day).days <= 7]  # complete days only
     intake_7 = sum(1 for s in last7 if s.intake_used)
     weigh_7 = sum(1 for s in last7 if s.weight_kg is not None)
     first_weigh_in = next((s.day for s in series if s.weight_kg is not None), None)
