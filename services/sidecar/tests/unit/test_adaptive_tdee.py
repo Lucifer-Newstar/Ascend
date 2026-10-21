@@ -105,8 +105,19 @@ def test_target_holds_when_a_week_has_fewer_than_six_logged_days() -> None:
     assert week.target_kcal == r.weeks[-2].target_kcal
 
 
+def test_target_holds_when_a_week_has_fewer_than_four_weigh_ins() -> None:
+    days = simulate(2900, 2400, 56)
+    # The last full week (Mon-Sun before today's week) keeps only 3 weigh-ins.
+    last_monday = TODAY - timedelta(days=TODAY.weekday() + 7)
+    thin = {last_monday + timedelta(days=i) for i in (1, 2, 4, 5)}
+    days = [td.DayInput(d.day, None, d.intake_kcal) if d.day in thin else d for d in days]
+    r = td.compute(days, PROFILE, TODAY + timedelta(days=1))
+    week = next(w for w in r.weeks if w.week_start == last_monday + timedelta(days=7))
+    assert not week.changed and week.reason == "3 weigh-ins last week (needs 4)"
+
+
 def test_weekly_change_is_capped() -> None:
-    # True expenditure far above the formula: the target climbs 250 kcal a week at most.
+    # True expenditure far above the formula: the target climbs 150 kcal a week at most.
     days = simulate(true_tdee=3600, intake=3100, days=84, seed=5)
     r = td.compute(days, PROFILE, TODAY)
     steps = [b.target_kcal - a.target_kcal for a, b in zip(r.weeks, r.weeks[1:], strict=False)]

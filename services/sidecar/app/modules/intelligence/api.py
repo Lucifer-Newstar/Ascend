@@ -301,8 +301,11 @@ TDEE_FORMULA = (
     "Kalman filter on [trend weight W, expenditure T]: overnight W += (intake - T) / 7700; "
     "a morning weigh-in corrects W and, through their covariance, T. "
     "Prior T = Mifflin-St Jeor BMR x activity factor (SD 450 kcal). "
-    "Weekly target = T at the end of last week + goal adjustment, changed only after 6+ logged "
-    "days and a settled estimate, by at most 250 kcal a week."
+    "Weekly target = T at the end of last week + goal adjustment, changed only after "
+    f"{tdee.GATE_DAYS}+ logged days, {tdee.WEIGH_IN_GATE}+ weigh-ins and a settled estimate, "
+    f"by at most {tdee.MAX_WEEKLY_CHANGE_KCAL} kcal a week. "
+    "T is read from the intake you log: if meals are under-logged, T is the expenditure that "
+    "matches what is logged, which is what a target in logged calories needs."
 )
 
 

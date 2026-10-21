@@ -13,10 +13,10 @@ Rules (thresholds are ASCEND's choices, marked [U] in the ADR):
 - ``protein_short``: mean protein is under 85 % of the protein target (needs 5 logged days).
 - ``weekend_gap``: weekend days average at least 300 kcal more than weekdays over 14 days
   (needs 2 weekend and 4 weekday logs).
-- ``trend_vs_goal``: the 14-day trend-weight change disagrees with the goal: a cut that is
-  not losing at least 0.1 kg a week, a cut losing over 1 % of body weight a week, a bulk not
-  gaining at least 0.05 kg a week, or maintenance drifting over 0.25 kg a week (needs 6
-  weigh-ins in 14 days).
+- ``trend_vs_goal``: the least-squares slope of the last 14 days' weigh-ins disagrees with
+  the goal by more than its standard error: a cut not losing at least 0.1 kg a week, a cut
+  losing over 1 % of body weight a week, a bulk not gaining at least 0.05 kg a week, or
+  maintenance drifting over 0.25 kg a week (needs 6 weigh-ins in 14 days).
 - ``tdee_vs_formula``: once the adaptive estimate has settled, it differs from the
   Mifflin-St Jeor estimate by at least 150 kcal and two standard deviations.
 - ``logging_gap``: fewer than 6 of the last 7 days have intake, so the weekly target holds.
@@ -24,6 +24,7 @@ Rules (thresholds are ASCEND's choices, marked [U] in the ADR):
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 
@@ -37,6 +38,7 @@ INTAKE_REL_THRESHOLD = 0.10
 PROTEIN_RATIO_THRESHOLD = 0.85
 WEEKEND_MIN_GAP_KCAL = 300.0
 TREND_MIN_WEIGH_INS = 6
+TREND_SE_MARGIN = 1.0
 CUT_MIN_LOSS_KG_WEEK = 0.1
 CUT_MAX_LOSS_PCT_WEEK = 1.0
 BULK_MIN_GAIN_KG_WEEK = 0.05
@@ -217,79 +219,83 @@ def _weekend_gap(last14: list[NutritionDay], target: int) -> Finding | RuleCheck
 
 def _trend_vs_goal(tdee: TdeeResult, goal: str, end: date) -> Finding | RuleCheck:
     window = [s for s in tdee.series if 0 <= (end - s.day).days < 15]
-    weigh_ins = sum(1 for s in window if s.weight_kg is not None)
+    points = [((s.day - end).days, s.weight_kg) for s in window if s.weight_kg is not None]
+    weigh_ins = len(points)
     if len(window) < 15 or weigh_ins < TREND_MIN_WEIGH_INS:
         return RuleCheck(
             "trend_vs_goal",
             "not_enough_data",
             f"{weigh_ins} weigh-ins in 14 days (needs {TREND_MIN_WEIGH_INS})",
         )
-    start_kg, end_kg = window[0].trend_kg, window[-1].trend_kg
-    rate = (end_kg - start_kg) / 2.0  # kg per week over 14 days
-    pct = rate / end_kg * 100 if end_kg > 0 else 0.0
+    # Least-squares slope of the raw weigh-ins and its standard error: one water-heavy
+    # morning moves the slope little, and the error says how sure the slope is.
+    n = len(points)
+    mx = sum(x for x, _ in points) / n
+    my = sum(y for _, y in points) / n
+    sxx = sum((x - mx) ** 2 for x, _ in points)
+    slope = sum((x - mx) * (y - my) for x, y in points) / sxx
+    resid = sum((y - (my + slope * (x - mx))) ** 2 for x, y in points)
+    se = math.sqrt(resid / (n - 2) / sxx)
+    rate, rate_se = slope * 7, se * 7  # kg per week
+    pct, pct_se = rate / my * 100, rate_se / my * 100
+    margin = TREND_SE_MARGIN * rate_se
     problem = ""
-    if goal == "cut" and rate > -CUT_MIN_LOSS_KG_WEEK:
+    if goal == "cut" and rate - (-CUT_MIN_LOSS_KG_WEEK) > margin:
         problem = "not_losing"
-    elif goal == "cut" and pct < -CUT_MAX_LOSS_PCT_WEEK:
+    elif goal == "cut" and -pct - CUT_MAX_LOSS_PCT_WEEK > TREND_SE_MARGIN * pct_se:
         problem = "losing_fast"
-    elif goal == "bulk" and rate < BULK_MIN_GAIN_KG_WEEK:
+    elif goal == "bulk" and BULK_MIN_GAIN_KG_WEEK - rate > margin:
         problem = "not_gaining"
-    elif goal == "maintain" and abs(rate) > MAINTAIN_MAX_DRIFT_KG_WEEK:
+    elif goal == "maintain" and abs(rate) - MAINTAIN_MAX_DRIFT_KG_WEEK > margin:
         problem = "drifting"
     inputs: dict[str, float | int | str | None] = {
         "goal": goal,
         "weigh_ins_14d": weigh_ins,
-        "trend_start_kg": start_kg,
-        "trend_end_kg": end_kg,
+        "mean_weight_kg": round(my, 2),
         "rate_kg_per_week": round(rate, 2),
+        "rate_se_kg_per_week": round(rate_se, 2),
         "rate_pct_per_week": round(pct, 2),
+        "margin_se": TREND_SE_MARGIN,
     }
     if not problem:
-        return RuleCheck("trend_vs_goal", "quiet", f"{rate:+.2f} kg/week fits a {goal}")
+        return RuleCheck(
+            "trend_vs_goal", "quiet", f"{rate:+.2f} ± {rate_se:.2f} kg/week fits a {goal}"
+        )
     titles = {
         "not_losing": "Cut, but the trend isn't falling",
         "losing_fast": "Losing faster than 1% a week",
         "not_gaining": "Bulk, but the trend isn't rising",
         "drifting": "Maintenance is drifting",
     }
-    limits = {
-        "not_losing": CUT_MIN_LOSS_KG_WEEK,
-        "losing_fast": abs(pct) - CUT_MAX_LOSS_PCT_WEEK,
-        "not_gaining": BULK_MIN_GAIN_KG_WEEK,
-        "drifting": MAINTAIN_MAX_DRIFT_KG_WEEK,
+    bands = {
+        "not_losing": f"a cut aims to lose at least {CUT_MIN_LOSS_KG_WEEK} kg a week",
+        "losing_fast": f"a cut is kept under {CUT_MAX_LOSS_PCT_WEEK:g}% of body weight a week",
+        "not_gaining": f"a bulk aims to gain at least {BULK_MIN_GAIN_KG_WEEK} kg a week",
+        "drifting": f"maintenance stays within ±{MAINTAIN_MAX_DRIFT_KG_WEEK} kg a week",
     }
-    severity = min(
-        1.0,
-        abs(
-            rate
-            - (
-                -CUT_MIN_LOSS_KG_WEEK
-                if problem == "not_losing"
-                else BULK_MIN_GAIN_KG_WEEK
-                if problem == "not_gaining"
-                else 0.0
-            )
-        )
-        / max(end_kg * 0.01, 0.1),
-    )
-    if problem == "losing_fast":
-        severity = min(1.0, limits["losing_fast"])
+    excess = abs(pct) - CUT_MAX_LOSS_PCT_WEEK if problem == "losing_fast" else 0.0
+    gap = {
+        "not_losing": rate + CUT_MIN_LOSS_KG_WEEK,
+        "not_gaining": BULK_MIN_GAIN_KG_WEEK - rate,
+        "drifting": abs(rate) - MAINTAIN_MAX_DRIFT_KG_WEEK,
+    }.get(problem, excess * my / 100)
+    severity = min(1.0, gap / max(my * 0.01, 0.1))
     return Finding(
         code="trend_vs_goal",
         title=titles[problem],
         text=(
-            f"Trend weight went from {start_kg:.1f} to {end_kg:.1f} kg in 14 days "
-            f"({rate:+.2f} kg a week) on a {goal} goal."
+            f"Your weigh-ins over 14 days move {rate:+.2f} kg a week (± {rate_se:.2f}); "
+            f"{bands[problem]}."
         ),
         severity=round(severity * 0.2 + 0.05, 3),
         numbers={
             "rate_kg_per_week": round(rate, 2),
-            "trend_start_kg": start_kg,
-            "trend_end_kg": end_kg,
+            "rate_se_kg_per_week": round(rate_se, 2),
+            "weigh_ins": weigh_ins,
         },
         formula=(
-            "rate = (trend weight today - trend weight 14 days ago) / 2 weeks; "
-            "compared with the goal's band"
+            "rate = least-squares slope of the last 14 days' weigh-ins x 7; shown only when "
+            f"it is outside the goal's band by more than {TREND_SE_MARGIN:g} standard errors"
         ),
         inputs=inputs,
     )
