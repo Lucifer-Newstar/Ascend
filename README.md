@@ -52,6 +52,24 @@ phrases what the engines computed.
 - **Real local-model phrasing is unverified.** No Ollama was available on the build machine; the guard is tested with a stub model. Without a model the app shows template text and is fully functional.
 - Latency was measured on the 4-CPU Linux build machine (finishing a workout: p50 394.2 ms), not on the target Windows laptop.
 
+## v7: diet engines and the new layouts
+
+Every screen now uses one 12-column layout with consistent loading, error and empty states,
+and motion that respects Reduce motion. Two more deterministic engines feed Fuel and Progress.
+
+| What | How it works |
+|---|---|
+| **Adaptive TDEE (`tdee-v1`)** | A two-state Kalman filter on trend weight and expenditure, fed by your weigh-ins and logged meals. It starts from Mifflin-St Jeor with a wide range and narrows as data comes in. Missing days widen the range instead of breaking it. The weekly calorie target moves only on Mondays, only after a week with 6 logged days and 4 weigh-ins, and by at most 150 kcal. Fuel shows the range, the target, completeness and the reason. [ADR-0018](docs/architecture/adr/0018-adaptive-tdee-kalman.md) |
+| **Weekly insights (`insights-v1`)** | Six fixed rules over the last 7 complete days: intake vs target, protein, weekend vs weekday, weight trend vs goal, adaptive vs formula, and logging gaps. Progress shows up to three findings, each with a "Why?", plus the list of rules that were checked. [ADR-0019](docs/architecture/adr/0019-weekly-diet-insights.md) |
+| **Evaluation** | Synthetic users, seed 2026 ([docs/ai/evaluation.md §5](docs/ai/evaluation.md)). Median TDEE error at day 56 is 82.8 kcal (formula: 194.7), and the 14-day weight prediction from day 56 is 50.3 % more accurate than the formula's. The intake, protein and weekend insights have precision 0.935-1.0. tdee-v1 takes 3.08 ms on a one-year history. |
+
+**Honest limitations of v7**
+
+- **Slow to learn.** Only 57% of synthetic users are within 150 kcal of their true expenditure on day 28. The first two weeks are no better than the formula, which is why the target stays on the formula until the estimate settles.
+- **Under-logging is absorbed.** If meals are under-logged, "you burn" is the expenditure that matches what was logged. The target still works in logged calories.
+- **The trend insight is a hint:** precision 0.397, recall 0.408 on synthetic weeks.
+- Synthetic users only, as for v6.
+
 ## What's in the MVP (v0.1.0)
 
 | Feature | Where |
