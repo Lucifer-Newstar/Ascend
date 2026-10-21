@@ -31,6 +31,18 @@ export const WHY_LABEL: Record<string, string> = {
   checkin_M: "Check-in modifier, M",
   readiness: "Readiness (you)",
   readiness_population: "Readiness (population)",
+  // tdee-v1
+  tdee_kcal: "Expenditure now, T (kcal/day)",
+  sd_kcal: "Uncertainty, 1 SD (kcal)",
+  formula_tdee_kcal: "Formula estimate (kcal/day)",
+  trend_kg: "Trend weight (kg)",
+  weigh_ins: "Weigh-ins used",
+  days_of_data: "Days of data",
+  intake_days_7: "Days with meals, last 7",
+  gate_days: "Days needed to move the target",
+  weekly_target_kcal: "This week's target (kcal)",
+  target_source: "Target comes from",
+  status: "Status",
 };
 
 export function WhyButton({ why, label, title, explain }: {

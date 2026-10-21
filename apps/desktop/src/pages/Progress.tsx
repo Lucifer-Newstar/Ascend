@@ -1,6 +1,6 @@
 /**
  * Progress (12-column grid, spec §8.4): a KPI strip, then body weight with its trend and the
- * goal-weight ETA, estimated 1RM / best hold per key movement, weekly sets per muscle against
+ * goal-weight ETA, this week's diet insights (insights-v1), estimated 1RM / best hold per key movement, weekly sets per muscle against
  * its band, the 8-week totals, a PR timeline and tape measurements. Every card owns its
  * loading, error and empty state through <Panel>.
  */
@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { api } from "../api/client";
 import { BarChart, LineChart } from "../components/charts";
+import { InsightsPanel } from "../components/DietCards";
 import { IconTrophy } from "../components/Icons";
 import { KpiStrip, KpiTile, Panel, PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
@@ -70,6 +71,8 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
         loading={eta.loading && !eta.data} error={!eta.data ? eta.error ?? null : null} onRetry={eta.reload} skeletonLines={5}>
         {eta.data && <EtaCard eta={eta.data} units={units} profile={profile.data ?? null} onSaved={reload} />}
       </Panel>
+
+      <InsightsPanel refreshKey={refreshKey + tick} index={6} />
 
       <KeyLiftsPanel prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} refreshKey={refreshKey} />
       <MuscleBandPanel refreshKey={refreshKey + tick} />

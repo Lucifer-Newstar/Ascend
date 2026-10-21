@@ -1,5 +1,5 @@
 import type { Settings } from "@ascend/shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -22,6 +22,8 @@ vi.mock("../api/client", () => ({
     updateSettings: vi.fn(),
     muscles: vi.fn(),
     progression: vi.fn(),
+    dietInsights: vi.fn(),
+    insightExplanation: vi.fn(),
   },
 }));
 
@@ -63,6 +65,22 @@ describe("ProgressPage", () => {
       { key: "chest", label: "Chest", group: "push", map_slug: "chest", status: "recovering", es_7d: 12, weekly_low: 10, weekly_high: 20, readiness: 0.7, ready_at: null },
       { key: "lats", label: "Lats", group: "pull", map_slug: "upper-back", status: "under", es_7d: 4, weekly_low: 10, weekly_high: 20, readiness: 1, ready_at: null },
     ]);
+    vi.mocked(api.dietInsights).mockResolvedValue({
+      algo_version: "insights-v1", week_end: "2026-10-20",
+      findings: [{
+        code: "protein_short", title: "Protein at 57% of target", text: "Protein averaged 62 g a day against 109 g.",
+        severity: 0.43, numbers: { mean_protein_g: 62 },
+        why: { formula: "ratio = mean(logged protein, last 7 days) / protein target", inputs: { mean_protein_g: 62.4, protein_target_g: 109 } },
+      }],
+      checks: [
+        { code: "protein_short", outcome: "fired", detail: "Protein at 57% of target" },
+        { code: "weekend_gap", outcome: "not_enough_data", detail: "1 weekend and 4 weekday logs (needs 2 and 4)" },
+      ],
+    });
+    vi.mocked(api.insightExplanation).mockResolvedValue({
+      text: "Protein averaged 62 g a day against 109 g.", template: "Protein averaged 62 g a day against 109 g.", phrasing: "template",
+      model: null, fallback: "ai_disabled", checks: null, facts: "", version: "explain-v1",
+    } as never);
     vi.mocked(api.progression).mockResolvedValue({
       exercise_id: 1, exercise: "Barbell Bench Press",
       e1rm: { unit: "kg", current: 80, best: 80, last: 80, trend_pct_week: 1.2, series: [{ at: "2026-10-08T08:00:00", value: 77.5 }, { at: "2026-10-15T08:00:00", value: 80 }] },
@@ -114,5 +132,15 @@ describe("ProgressPage", () => {
     await userEvent.type(await screen.findByLabelText("Today's weight (lb)"), "165");
     await userEvent.click(screen.getByRole("button", { name: "Log weigh-in" }));
     await waitFor(() => expect(api.logWeight).toHaveBeenCalledWith(74.843));
+  });
+
+  it("shows this week's diet insights with a Why and the rules checked", async () => {
+    renderPage();
+    const card = await screen.findByRole("region", { name: "This week's diet insights" });
+    expect(await within(card).findByText("Protein at 57% of target")).toBeInTheDocument();
+    await userEvent.click(within(card).getByRole("button", { name: "Why: Protein at 57% of target" }));
+    expect(within(card).getByTestId("why-panel")).toHaveTextContent("ratio = mean(logged protein");
+    await userEvent.click(within(card).getByRole("button", { name: "Rules checked" }));
+    expect(within(card).getByRole("list", { name: "Rules checked this week" })).toHaveTextContent("not enough data");
   });
 });
