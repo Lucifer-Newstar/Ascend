@@ -24,6 +24,10 @@ vi.mock("../api/client", () => ({
     progression: vi.fn(),
     decideProgression: vi.fn(),
     progressionExplanation: vi.fn(),
+    currentPlan: vi.fn(),
+    programs: vi.fn(),
+    choosePlan: vi.fn(),
+    leavePlan: vi.fn(),
   },
 }));
 
@@ -57,6 +61,8 @@ describe("Training page", () => {
     vi.mocked(api.previousSession).mockResolvedValue(null);
     vi.mocked(api.exercise).mockRejectedValue(new Error("not needed"));
     vi.mocked(api.progression).mockRejectedValue(new Error("no suggestion"));
+    vi.mocked(api.currentPlan).mockRejectedValue(Object.assign(new Error("No program chosen yet"), { status: 404 }));
+    vi.mocked(api.programs).mockResolvedValue([]);
   });
 
   it("switches section tabs and loads that library", async () => {

@@ -2,6 +2,7 @@ import type { Exercise, ProgressionTarget, Section, SetIn, SetPatch, SkillUnlock
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
+import { ProgramCard } from "../components/ProgramCard";
 import { play } from "../lib/sound";
 import { Transient } from "../components/Celebrate";
 import { IconCheck, IconSearch, IconTrophy } from "../components/Icons";
@@ -255,6 +256,12 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     {/* Three panes on the 12-column grid: session + library (3) | active exercise (6) | context (3). */}
     <div className="grid grid-cols-12 gap-5">
       <div className="col-span-12 flex min-h-0 flex-col gap-5 lg:col-span-3">
+        {section === "gym" && (
+          <ProgramCard refreshKey={workout?.sets.length ?? 0} onPick={(id) => {
+            const ex = exercises.data?.find((e) => e.id === id);
+            if (ex) setSelected(ex);
+          }} />
+        )}
         {sessionExercises.length > 0 && (
           <section className="card p-4" aria-labelledby="session-list-title">
             <h2 id="session-list-title" className="card-title mb-2">This session</h2>

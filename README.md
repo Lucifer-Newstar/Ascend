@@ -55,12 +55,13 @@ phrases what the engines computed.
 ## v7: diet engines and the new layouts
 
 Every screen now uses one 12-column layout with consistent loading, error and empty states,
-and motion that respects Reduce motion. Two more deterministic engines feed Fuel and Progress.
+and motion that respects Reduce motion. Two more deterministic engines feed Fuel and Progress, and Train can follow a workout program.
 
 | What | How it works |
 |---|---|
 | **Adaptive TDEE (`tdee-v1`)** | A two-state Kalman filter on trend weight and expenditure, fed by your weigh-ins and logged meals. It starts from Mifflin-St Jeor with a wide range and narrows as data comes in. Missing days widen the range instead of breaking it. The weekly calorie target moves only on Mondays, only after a week with 6 logged days and 4 weigh-ins, and by at most 150 kcal. Fuel shows the range, the target, completeness and the reason. [ADR-0018](docs/architecture/adr/0018-adaptive-tdee-kalman.md) |
 | **Weekly insights (`insights-v1`)** | Six fixed rules over the last 7 complete days: intake vs target, protein, weekend vs weekday, weight trend vs goal, adaptive vs formula, and logging gaps. Progress shows up to three findings, each with a "Why?", plus the list of rules that were checked. [ADR-0019](docs/architecture/adr/0019-weekly-diet-insights.md) |
+| **Workout programs (`programs-v1`)** | Four built-in programs: full body 3 days, upper/lower 4 days, push/pull/legs 6 days, and home full body 3 days. The Program card on Train shows the next session with each exercise's target from your progression and the sets you have done today. The plan reads your log: a finished workout that covers half of a program day counts as that day, so a missed day shifts the plan instead of skipping a session. [ADR-0020](docs/architecture/adr/0020-workout-programs.md) |
 | **Evaluation** | Synthetic users, seed 2026 ([docs/ai/evaluation.md §5](docs/ai/evaluation.md)). Median TDEE error at day 56 is 82.8 kcal (formula: 194.7), and the 14-day weight prediction from day 56 is 50.3 % more accurate than the formula's. The intake, protein and weekend insights have precision 0.935-1.0. tdee-v1 takes 3.08 ms on a one-year history. |
 
 **Honest limitations of v7**
@@ -68,6 +69,7 @@ and motion that respects Reduce motion. Two more deterministic engines feed Fuel
 - **Slow to learn.** Only 57% of synthetic users are within 150 kcal of their true expenditure on day 28. The first two weeks are no better than the formula, which is why the target stays on the formula until the estimate settles.
 - **Under-logging is absorbed.** If meals are under-logged, "you burn" is the expenditure that matches what was logged. The target still works in logged calories.
 - **The trend insight is a hint:** precision 0.397, recall 0.408 on synthetic weeks.
+- **Programs are a fixed catalog.** You cannot edit them or build your own yet. The progression engine uses each exercise's own rep zone, so a target can sit outside the program's rep range.
 - Synthetic users only, as for v6.
 
 ## What's in the MVP (v0.1.0)

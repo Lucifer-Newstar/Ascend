@@ -950,3 +950,60 @@ export interface DietInsights {
   findings: InsightFinding[];
   checks: InsightCheck[];
 }
+
+// ---- workout programs (programs-v1, ADR-0020) ------------------------------------------
+
+export interface PlanItem {
+  exercise_id: number | null;
+  exercise: string;
+  sets: number;
+  rep_low: number;
+  rep_high: number;
+  target_rpe: number;
+  rest_s: number;
+  /** prog-v1's target for the next session, e.g. "3 × 8 @ 60 kg, RPE 8". */
+  target?: string | null;
+  target_reason?: string | null;
+  done_sets?: number;
+}
+
+export interface PlanDay {
+  key: string;
+  name: string;
+  focus: string;
+  /** Suggested weekday, 0 = Monday. */
+  weekday: number;
+  items: PlanItem[];
+}
+
+/** GET /plans/programs */
+export interface ProgramSummary {
+  key: string;
+  name: string;
+  summary: string;
+  level: string;
+  equipment: string;
+  days_per_week: number;
+  fits_equipment: boolean;
+  days: PlanDay[];
+}
+
+/** GET /plans/current */
+export interface Plan {
+  id: number;
+  source: string;
+  algo_version: string;
+  program_key: string;
+  name: string;
+  started_on: string;
+  days_per_week: number;
+  days: PlanDay[];
+  next: PlanDay;
+  sessions_done: number;
+  this_week_done: number;
+  last_trained: string | null;
+  deload_week: boolean;
+  recent: { day: string; key: string; name: string }[];
+  reason: string;
+  why: Why;
+}

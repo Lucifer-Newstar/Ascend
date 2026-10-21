@@ -6,6 +6,14 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Added (v7 workout programs)
+- **Workout programs** (`programs-v1`, ADR-0020): full body 3 days, upper/lower 4 days, push/pull/legs 6 days, and home full body 3 days (dumbbells and a pull-up bar).
+  - The **Program card** on Train shows the next session: each exercise with your progression target, using the program's sets (halved in a deload week), and the sets already logged today. Click an exercise to log it.
+  - A chooser lets you follow, change or stop a program, and says when a program needs equipment you didn't list at setup.
+- **The plan reads your log.** A finished gym workout that trains at least half of a program day counts as that day. A missed day shifts the plan instead of skipping a session, and imported workouts count too. Nothing needs to be started or ticked off.
+- **API:** `GET /plans/programs`, `GET/PUT/DELETE /plans/current`. This implements the planned `/plans/current` in `workouts.yaml`; `PlanOut` replaces the placeholder schema. Migration 0016 adds `plan_enrollments`.
+- **Demo data** follows the push/pull/legs program.
+
 ### Added (v7 diet engines)
 - **Adaptive TDEE** (`tdee-v1`, ADR-0018).
   - A Kalman filter on trend weight and expenditure that learns your real energy needs from weigh-ins and logged meals.
