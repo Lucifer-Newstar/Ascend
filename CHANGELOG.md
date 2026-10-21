@@ -6,10 +6,29 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Added (v7 diet engines)
+- **Adaptive TDEE** (`tdee-v1`, ADR-0018).
+  - A Kalman filter on trend weight and expenditure that learns your real energy needs from weigh-ins and logged meals.
+  - It starts at the Mifflin-St Jeor estimate with a ±450 kcal range. Missing days widen the range instead of breaking it, and days under 800 kcal count as partly logged.
+  - Fuel's energy card shows what you burn as a range, this week's target and where it comes from, meal and weigh-in completeness, the reason the target held or moved, the 8-week estimate with its band, and a "Why?".
+- **Adaptive weekly target.** Changes only on Mondays, after a week with 6 logged days and 4 weigh-ins, by at most 150 kcal. Missing a day never moves it.
+  - Once set, it becomes the day's calorie target in Fuel and on Today's ring. `DayLog.kcal_target_source` says whether the target is `formula` or `adaptive`.
+  - Before that, the target is exactly the profile's Mifflin-St Jeor value.
+- **Weekly diet insights** (`insights-v1`, ADR-0019).
+  - Six fixed rules over the last 7 complete days: intake vs target, protein, weekend vs weekday, weight trend vs goal, adaptive vs formula, and logging gaps.
+  - Progress shows up to three findings, each with a "Why?", and a "Rules checked" list.
+  - The trend rule uses the slope of your weigh-ins and its error, so one heavy morning does not trigger it.
+- **API:** `GET /intelligence/tdee`, `GET /intelligence/insights`, and their `.../explanation` endpoints, where the local model may phrase the sentence behind the coach guard.
+- **Evaluation** (`docs/ai/evaluation.md` §5). 100 synthetic users × 120 days, with honest and under-reporting logs, plus 300 user-weeks with injected patterns.
+  - Median TDEE error at day 56: 82.8 kcal (formula: 194.7).
+  - Limits: only 57% of users are within 150 kcal on day 28, and the trend insight's precision is 0.397.
+  - Latency on a one-year history: tdee-v1 takes 3.08 ms.
+- **Demo data.** `seed_demo` now adds 10 weeks of meals and weigh-ins before the detailed fortnight, so the adaptive estimate has history to learn from.
+
 ### Changed (v7 layouts)
 - **Progress, Fuel, Coach, History, Import & export and Settings** now use the same 12-column layout as Today, Train and Skills (spec §8.4).
   - **Progress:** a KPI strip (trend weight, goal ETA, this week, PRs in 30 days), estimated 1RM or best hold per key movement, weekly sets per muscle against its band, and a PR timeline.
-  - **Fuel:** a KPI strip (calories, protein, left or over, meals), today's intake and meals beside an energy card whose "Why?" shows the formula inputs, and one meal-builder card with the food table and the plate side by side.
+  - **Fuel:** a KPI strip (calories, protein, left or over, meals), today's intake and meals beside the adaptive TDEE card, and one meal-builder card with the food table and the plate side by side.
   - **Coach:** the chat at a fixed height beside the weekly review, the deload check and a System log of the engines' notices.
   - **History:** range KPIs, a training/meal-day filter, 30 or 90 days, an activity calendar that jumps to a day, and sessions by source.
   - **Import & export:** a choose → check → imported step strip; **Settings:** a sticky section index.

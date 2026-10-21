@@ -12,16 +12,18 @@ State ``x = [W, T]``: trend weight (kg) and total daily energy expenditure (kcal
   a partly logged day): weight is carried as if in balance and its uncertainty grows; ``T``
   only drifts. Missing days never stop the filter.
 - Update, on a day with a weigh-in (several are averaged; read as a morning weigh-in, after
-  the previous day's intake): ``z = W + noise`` with a scale noise SD of 0.6 kg.
+  the previous day's intake): ``z = W + noise`` with a scale noise SD of 0.8 kg.
 - Prior (cold start): Mifflin-St Jeor BMR x activity factor with SD 450 kcal, so a range is
   shown from day 1 and narrows as weigh-ins and intake accumulate.
 
 Weekly target (MacroFactor-style, adherence neutral): the calorie target changes at most
 once a week, on Monday, from the filter state at the end of Sunday, and only when that
-week had intake logged on at least 6 of 7 days and the estimate is settled (SD <= 200 kcal,
-14+ days since the first weigh-in). Otherwise last week's target stands and the reason is
-given. A single weekly change is capped at 250 kcal. The noise values and the caps are
-tunable choices, not measured constants (marked [U] in the ADR).
+week had intake logged on at least 6 of 7 days and 4 or more weigh-ins, and the estimate is
+settled (SD <= 200 kcal, 14+ days since the first weigh-in). Otherwise last week's target
+stands and the reason is given. A single weekly change is capped at 150 kcal (both rules
+from docs/planning/features.md N3). The noise values and the caps are tunable choices, not
+measured constants (marked [U] in the ADR); the noise values were picked on a tuning seed
+(eval/diet_tune.py).
 
 Pure Python, deterministic, no I/O: the service layer reads the database and passes days in.
 """
@@ -38,18 +40,19 @@ from app.modules.nutrition import tdee as msj
 ALGO_VERSION = "tdee-v1"
 
 RHO_KCAL_PER_KG = 7700.0
-SCALE_SD_KG = 0.6
+SCALE_SD_KG = 0.8
 TREND_Q_KG2 = 0.0004
-INTAKE_SD_KCAL = 250.0
+INTAKE_SD_KCAL = 350.0
 UNLOGGED_SD_KCAL = 600.0
 TDEE_Q_KCAL2 = 100.0
 PRIOR_SD_KCAL = 450.0
 PRIOR_WEIGHT_VAR_KG2 = 1.0
 MIN_LOGGED_KCAL = 800.0
 GATE_DAYS = 6
+WEIGH_IN_GATE = 4  # weigh-ins in the week before a target change (features.md N3)
 SETTLED_SD_KCAL = 200.0
 SETTLED_DAYS = 14
-MAX_WEEKLY_CHANGE_KCAL = 250
+MAX_WEEKLY_CHANGE_KCAL = 150  # docs/planning/features.md N3
 TDEE_MIN, TDEE_MAX = 800.0, 6000.0
 MAX_DAYS = 400
 
@@ -260,12 +263,18 @@ def weekly_targets(
             if monday - timedelta(days=i) in by_day
         ]
         intake_days = sum(1 for s in prev if s.intake_used)
+        weighed = sum(1 for s in prev if s.weight_kg is not None)
         end = by_day.get(monday - timedelta(days=1))
         if end is None:
             reason = "no data last week"
             weeks.append(WeekTarget(monday, current, 0.0, 0.0, intake_days, False, reason))
         elif intake_days < GATE_DAYS:
             reason = f"intake logged on {intake_days} of 7 days (needs {GATE_DAYS})"
+            weeks.append(
+                WeekTarget(monday, current, end.tdee_kcal, end.sd_kcal, intake_days, False, reason)
+            )
+        elif weighed < WEIGH_IN_GATE:
+            reason = f"{weighed} weigh-ins last week (needs {WEIGH_IN_GATE})"
             weeks.append(
                 WeekTarget(monday, current, end.tdee_kcal, end.sd_kcal, intake_days, False, reason)
             )
@@ -320,13 +329,15 @@ def compute(days: list[DayInput], profile: Profile, today: date) -> TdeeResult:
     this_week = weeks[-1] if weeks and weeks[-1].week_start == _monday(today) else None
     target = this_week.target_kcal if this_week else start_target
     source = "adaptive" if any(w.from_estimate for w in weeks) else "formula"
-    paused = intake_7 < GATE_DAYS
+    paused = intake_7 < GATE_DAYS or weigh_7 < WEIGH_IN_GATE
     if status == "cold_start":
         reason = f"{weigh_ins} weigh-ins over {len(series)} days: the range is mostly the formula's"
-    elif paused:
+    elif intake_7 < GATE_DAYS:
         reason = (
             f"intake logged on {intake_7} of the last 7 days (needs {GATE_DAYS}); the target holds"
         )
+    elif paused:
+        reason = f"{weigh_7} weigh-ins in the last 7 days (needs {WEIGH_IN_GATE}); the target holds"
     elif status == "learning":
         reason = f"still learning: SD {end.sd_kcal:.0f} kcal (settles at {SETTLED_SD_KCAL:.0f})"
     else:

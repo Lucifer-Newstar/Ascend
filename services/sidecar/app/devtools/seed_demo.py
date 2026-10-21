@@ -253,6 +253,74 @@ def seed_history(
     return sessions
 
 
+# Earlier weeks' eating (tdee-v1 demo, ADR-0018): a lean bulk logged on about 9 days in 10,
+# with weigh-ins on about 85 % of mornings. Weight follows the intake against a fixed
+# expenditure, so the adaptive estimate has something real to learn before the fortnight.
+DIET_TRUE_TDEE_KCAL = 2550.0
+DIET_INTAKE_KCAL = 2700.0
+
+
+def meal_scale(db: Session) -> float:
+    """Portion multiplier that makes an average demo day about DIET_INTAKE_KCAL."""
+    kcal_of = {f.name: f.kcal for f in db.scalars(select(Food)).all()}
+    mean_day = sum(
+        sum(sum(kcal_of[n] * p for n, p in opt) for opt in MEALS[m]) / len(MEALS[m])
+        for m in ("breakfast", "lunch", "snack", "dinner")
+    )
+    return DIET_INTAKE_KCAL / mean_day
+
+
+def seed_diet_history(
+    db: Session,
+    bus: EventBus,
+    foods: dict[str, int],
+    rng: random.Random,
+    today: datetime,
+    days: int,
+    weeks: int,
+) -> int:
+    """Meals and weigh-ins for the `weeks` before the detailed fortnight. Returns the number
+    of days with meals logged."""
+    kcal_of = {f.name: f.kcal for f in db.scalars(select(Food)).all()}
+    scale = meal_scale(db)
+    plan = []
+    weight = 0.0
+    for offset in range(days + weeks * 7 - 1, days - 1, -1):
+        day = (today - timedelta(days=offset)).date()
+        meals = []
+        for meal_type in ("breakfast", "lunch", "snack", "dinner"):
+            items = [
+                (n, max(0.5, round(p * scale * 2) / 2)) for n, p in rng.choice(MEALS[meal_type])
+            ]
+            meals.append((meal_type, items))
+        eaten = sum(kcal_of[n] * p for _, items in meals for n, p in items)
+        plan.append((day, meals, weight, rng.random() < 0.9, rng.random() < 0.85))
+        weight += (eaten - DIET_TRUE_TDEE_KCAL) / 7700
+    shift = 67.9 - weight  # the fortnight starts at about 68 kg
+    logged = 0
+    for day, meals, w, log, weigh in plan:
+        if weigh:
+            kg = round(w + shift + rng.uniform(-0.35, 0.35), 1)
+            t = datetime.combine(day, time(7, 10))
+            body.log_metric(db, BodyMetricIn(measured_at=t, weight_kg=kg), t)
+        if log:
+            logged += 1
+            for k, (meal_type, items) in enumerate(meals):
+                nutrition.log_meal(
+                    db,
+                    bus,
+                    MealIn.model_validate(
+                        {
+                            "meal_type": meal_type,
+                            "items": [{"food_id": foods[n], "portions": p} for n, p in items],
+                        }
+                    ),
+                    datetime.combine(day, time((8, 13, 17, 20)[k], 30)),
+                )
+        db.commit()
+    return logged
+
+
 def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
     settings = load_settings()
     url = settings.resolved_db_url
@@ -291,7 +359,13 @@ def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
         ex = {e.name: e.id for e in db.scalars(select(Exercise)).all()}
         holds = {e.name for e in db.scalars(select(Exercise).where(Exercise.measure == "hold"))}
         foods = {f.name: f.id for f in db.scalars(select(Food)).all()}
+        portion_scale = meal_scale(db)  # a lean bulk's portions (about 2,700 kcal a day)
         earlier = seed_history(db, bus, ex, rng, today, days, history_weeks) if history_weeks else 0
+        diet_days = (
+            seed_diet_history(db, bus, foods, random.Random(7), today, days, history_weeks)
+            if history_weeks
+            else 0
+        )
 
         for offset in range(days - 1, -1, -1):
             day = (today - timedelta(days=offset)).date()
@@ -338,7 +412,10 @@ def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
             for meal_type, t in plan:
                 if offset > 0 and meal_type == "snack" and rng.random() < 0.5:
                     continue
-                items = rng.choice(MEALS[meal_type])
+                items = [
+                    (n, max(0.5, round(p * portion_scale * 2) / 2))
+                    for n, p in rng.choice(MEALS[meal_type])
+                ]
                 nutrition.log_meal(
                     db,
                     bus,
@@ -412,8 +489,8 @@ def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
                         game.complete_manual(db, bus, q.id, at(21, 30))
             db.commit()
     print(
-        f"seeded {days} days of demo data (+{history_weeks} earlier weeks, {earlier} gym sessions) "
-        f"into {url}"
+        f"seeded {days} days of demo data (+{history_weeks} earlier weeks, {earlier} gym sessions, "
+        f"{diet_days} days of meals) into {url}"
     )
 
 
