@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.events import (
@@ -242,21 +243,28 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
         missed,
         readiness_band=_band_today(db, today),
     )
-    for s in specs:
-        db.add(
-            QuestItem(
-                day=today,
-                kind=s.kind,
-                code=s.code,
-                title=s.title,
-                detail=s.detail,
-                metric=s.metric,
-                target=s.target,
-                xp=s.xp,
-                generator_version=GENERATOR_VERSION,
-            )
-        )
-    db.flush()
+    # Two first requests of the day (the dashboard and the quest panel at app start) can
+    # both find no quest and both build one; the second insert then hits the unique
+    # (day, code) index. A savepoint keeps that from failing the request: the loser rolls
+    # back its own rows and reads the quest the other request wrote.
+    try:
+        with db.begin_nested():
+            for s in specs:
+                db.add(
+                    QuestItem(
+                        day=today,
+                        kind=s.kind,
+                        code=s.code,
+                        title=s.title,
+                        detail=s.detail,
+                        metric=s.metric,
+                        target=s.target,
+                        xp=s.xp,
+                        generator_version=GENERATOR_VERSION,
+                    )
+                )
+    except IntegrityError:
+        pass
     return list(
         db.scalars(select(QuestItem).where(QuestItem.day == today).order_by(QuestItem.id)).all()
     )
