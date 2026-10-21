@@ -20,7 +20,7 @@ Formula and model versions are listed where a number you see could change.
   - It starts at the Mifflin-St Jeor estimate with a ±450 kcal range. Missing days widen the range instead of breaking it, and days under 800 kcal count as partly logged.
   - Fuel's energy card shows what you burn as a range, this week's target and where it comes from, meal and weigh-in completeness, the reason the target held or moved, the 8-week estimate with its band, and a "Why?".
 - **Adaptive weekly target.** Changes only on Mondays, after a week with 6 logged days and 4 weigh-ins, by at most 150 kcal. Missing a day never moves it.
-  - Once set, it becomes the day's calorie target in Fuel and on Today's ring. `DayLog.kcal_target_source` says whether the target is `formula` or `adaptive`.
+  - Once set, it becomes the day's calorie target in Fuel and on Today's ring, and Settings shows it beside the formula estimate. `DayLog.kcal_target_source` says whether the target is `formula` or `adaptive`.
   - Before that, the target is exactly the profile's Mifflin-St Jeor value.
 - **Weekly diet insights** (`insights-v1`, ADR-0019).
   - Six fixed rules over the last 7 complete days: intake vs target, protein, weekend vs weekday, weight trend vs goal, adaptive vs formula, and logging gaps.

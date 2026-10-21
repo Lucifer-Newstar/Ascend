@@ -19,6 +19,7 @@ vi.mock("../api/client", () => ({
     updateSettings: vi.fn(),
     onlineLog: vi.fn().mockResolvedValue([]),
     clearOnlineLog: vi.fn().mockResolvedValue(undefined),
+    tdee: vi.fn().mockResolvedValue({ algo_version: "tdee-v1", target_source: "adaptive", target_kcal: 2790 }),
   },
 }));
 
@@ -139,5 +140,10 @@ describe("SettingsPage", () => {
     const nav = await screen.findByRole("navigation", { name: "Settings sections" });
     await userEvent.click(within(nav).getByRole("button", { name: "Keyboard shortcuts" }));
     expect(screen.getByRole("heading", { name: "Keyboard shortcuts" })).toHaveFocus();
+  });
+
+  it("names this week's adaptive target beside the formula estimate", async () => {
+    setup(async (p) => ({ ...DEFAULT_SETTINGS, ...p }));
+    expect(await screen.findByText(/this week's adaptive target 2,790 kcal \(tdee-v1/)).toBeInTheDocument();
   });
 });
