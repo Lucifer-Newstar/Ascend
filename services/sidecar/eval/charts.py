@@ -1,6 +1,6 @@
 """Charts for docs/ai/evaluation.md from the JSON results in eval/results/.
 
-cd services/sidecar && uv run --group eval python -m eval.charts
+cd services/sidecar && uv run --group eval python -m eval.charts [--only diet]
 """
 
 from __future__ import annotations
@@ -187,11 +187,48 @@ def progression_charts(r: dict) -> list[Path]:  # type: ignore[type-arg]
     return out
 
 
+def diet_charts(d: dict) -> list[Path]:  # type: ignore[type-arg]
+    """Mean absolute TDEE error by day: tdee-v1 against the formula, both scenarios."""
+    f, axes = fig(10, 4.2, 2)
+    for ax, (key, title) in zip(
+        axes,
+        [("honest", "Honest logging"), ("under_reporting", "Under-reporting 0-15 %")],
+        strict=True,
+    ):
+        style(ax)
+        curve = d["tdee"][key]["error_curve_kcal"]
+        days = list(range(len(curve["tdee-v1"])))
+        ax.plot(
+            days, curve["formula"], color="#8b95a7", linewidth=2, label="Mifflin-St Jeor x activity"
+        )
+        ax.plot(days, curve["tdee-v1"], color="#4da8ff", linewidth=2, label="tdee-v1 (Kalman)")
+        ax.axhline(150, color=MUTED, linestyle="--", linewidth=1, label="150 kcal")
+        ax.set_title(f"{title} ({d['tdee'][key]['users']} users)", fontsize=10)
+        ax.set_xlabel("day")
+        ax.set_ylabel("mean |estimate - true TDEE| (kcal)")
+        ax.legend(facecolor=BG, edgecolor=LINE, labelcolor=INK, fontsize=8)
+    f.tight_layout()
+    p = OUT / "eval_diet_tdee.png"
+    f.savefig(p, facecolor=BG)
+    plt.close(f)
+    return [p]
+
+
 def main() -> None:
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--only", choices=["recovery", "progression", "diet"], default=None)
+    only = ap.parse_args().only
     OUT.mkdir(parents=True, exist_ok=True)
-    rec = json.loads((RESULTS / "recovery.json").read_text())
-    prog = json.loads((RESULTS / "progression.json").read_text())
-    for p in recovery_charts(rec) + progression_charts(prog):
+    paths: list[Path] = []
+    if only in (None, "recovery"):
+        paths += recovery_charts(json.loads((RESULTS / "recovery.json").read_text()))
+    if only in (None, "progression"):
+        paths += progression_charts(json.loads((RESULTS / "progression.json").read_text()))
+    if only in (None, "diet"):
+        paths += diet_charts(json.loads((RESULTS / "diet.json").read_text()))
+    for p in paths:
         print(p)
 
 

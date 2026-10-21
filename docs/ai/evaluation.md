@@ -1,4 +1,4 @@
-# Evaluation of the intelligence layer (recovery-v2, prog-v1)
+# Evaluation of the intelligence layer (recovery-v2, prog-v1, tdee-v1, insights-v1)
 
 Status: results of the build on 2026-10-21, produced by the scripts in
 `services/sidecar/eval/` with fixed seeds. Every number below is in
@@ -145,31 +145,136 @@ By RPE habit (hit within 1 rep / mean RIR error):
 - The notices endpoint (p50 129.6 ms) recomputes the deload check, the latest targets and today's quest. It is called once per app refresh.
 - These are single-machine timings; a slower laptop will be slower.
 
-## 5. Tests behind the engines
+## 5. Diet engines (tdee-v1 and insights-v1)
+
+`eval/diet_eval.py`, seed 2026. Results are in `eval/results/diet.json`; the chart is from
+`eval/charts.py --only diet`. Engines: ADR-0018 (adaptive TDEE) and ADR-0019 (weekly
+insights).
+
+**Simulator** (pure stdlib; every value is a modelling choice, not measured human data):
+
+- **Users.** Each has a sex, age, height, start weight and activity level, so the formula (Mifflin-St Jeor x activity) has a value. Their true starting expenditure is that value times a personal factor f ~ N(1, 0.12), clipped to [0.75, 1.30]. So the formula is wrong by about 12 % on average, by design.
+- **Adaptation.** True expenditure moves with weight: T = T0 + 22 kcal per kg of change. This is a crude stand-in for metabolic adaptation [U].
+- **Intake and weight.** Intake is T0 + the goal's adjustment (cut -500, maintain 0, bulk +300) + a personal offset N(0, 150) + daily noise N(0, 250). Weight follows W' = W + (I - T) / 7700.
+- **Scale noise.** The scale reads the weight + water + noise. Water is AR(1) (0.8, SD 0.3 kg); the noise is N(0, 0.2 kg).
+- **Missing days.** Each user weighs in on a share of days from U(0.5, 0.95) and logs meals on a share from U(0.7, 1.0).
+- **Scenarios.** "Honest": logged intake = true intake. "Under-reporting": each user logs (1 - b) of what they eat, b ~ U(0, 0.15).
+- **Not the engine grading itself, partly.** The filter assumes independent scale noise and a fixed T. The simulator has autocorrelated water weight and a T that moves with weight. The energy-balance equation (7700 kcal/kg) is shared, so agreement is still partly built in.
+
+**Tuning.** tdee-v1's noise values (scale SD 0.8 kg, intake SD 350 kcal) and insights-v1's trend margin (1 standard error) were picked on separate tuning seeds (7 and 11) by `eval/diet_tune.py`. The scale SD and the expenditure drift stay inside the ranges the plan named. The numbers below are from seed 2026. The same simulator generated both seeds, so this is a weak guard.
+
+### 5.1 Adaptive TDEE, 100 users x 120 days per scenario
+
+Absolute error against the true expenditure on that day, in kcal: median (p90).
+
+| Day | tdee-v1, honest | formula, honest | tdee-v1, under-reporting | formula, under-reporting |
+|---|---|---|---|---|
+| 7 | 157.0 (402.5) | 170.6 (410.6) | 196.5 (534.9) | 180.3 (548.8) |
+| 14 | 165.2 (395.3) | 172.1 (414.7) | 211.1 (479.8) | 176.3 (540.0) |
+| 28 | 129.9 (349.6) | 178.6 (422.6) | 179.1 (460.0) | 170.8 (540.9) |
+| 56 | 82.8 (211.7) | 194.7 (430.4) | 174.1 (401.7) | 182.6 (549.7) |
+| 90 | 65.5 (169.5) | 196.5 (447.8) | 159.7 (388.7) | 195.3 (557.1) |
+| 119 | 71.8 (174.6) | 201.7 (462.8) | 158.2 (364.5) | 200.4 (537.5) |
+
+| Honest logging | tdee-v1 |
+|---|---|
+| Within 150 kcal of the truth on day 28 / 56 / 90 | 57% / 77% / 84% |
+| Stays within 150 kcal from some day on | 86% of users, median day 45.0 |
+| Truth inside the shown ±1 SD / ±2 SD band (day 28 on) | 61% / 92% (nominal 68 % / 95 %) |
+| Weekly target changes in 120 days | median 8, median step 40 kcal, largest 150 (the cap) |
+
+**Predicting the next 14 days of weight.** The question: from day d, given the intake the user then logs, how much will their true weight change? Mean absolute error in kg:
+
+| From day | tdee-v1, honest | formula, honest | tdee-v1, under-reporting | formula, under-reporting |
+|---|---|---|---|---|
+| 28 | 0.298 | 0.386 | 0.293 | 0.491 |
+| 56 | 0.196 | 0.394 | 0.237 | 0.489 |
+
+tdee-v1's error is 22.8 % lower than the formula's from day 28 and 50.3 % lower from day 56 (honest). Under under-reporting it is 40.3 % and 51.5 % lower.
+
+![TDEE error by day](img/eval_diet_tdee.png)
+
+What this shows:
+
+- **The first two weeks are the formula's.** Up to about day 20, tdee-v1 is no better than the formula: median 165.2 vs 172.1 kcal at day 14. Water-weight swings are as large as the energy signal. This is why the app shows a range and keeps the formula target until the estimate settles.
+- **It then learns the person.** The median error falls to 129.9 kcal at day 28 and 82.8 at day 56. The formula's error grows to about 200 as weight moves.
+- **Not as fast as hoped.** The aim of 80 % of users within 150 kcal by day 28 is **not met**: 57% at day 28. It is close only by day 90 (84%).
+- **The band is a little narrow.** The ±1 SD band holds the truth 61% of the time, against a nominal 68 %.
+- **Under-reporting.** tdee-v1 then estimates the expenditure *as logged*, not the true one: its error against the true TDEE stays around 158.2 kcal, and the band is too narrow (30% within ±1 SD). That is still what the target needs. A target in logged calories that is computed from logged calories predicts the next 14 days of weight 51.5 % better than the formula. The number shown as "you burn" can be off by the user's under-reporting; the Why panel's formula says the estimate is read from logged intake.
+
+### 5.2 Weekly insights, 300 synthetic user-weeks
+
+Each user-week is 21 days of a user whose formula expenditure equals their true one. On-plan eating has 3 % daily noise. One pattern is injected, or none (40 %):
+
+- 18 % over the target, or 18 % under it;
+- protein at 60-75 % of its target;
+- +550 kcal on weekends;
+- a cut eaten at maintenance.
+
+Injected: none 128, intake_high 27, intake_low 31, protein_short 46, weekend_gap 30, cut_not_losing 38.
+
+- **Intake, protein and weekend rules** are scored against the injected pattern. A finding that is also true of it counts as correct; for example, a cut eaten at maintenance is also eating above target.
+- **`trend_vs_goal`** is scored against the true (water-free) weight's 14-day rate, judged by the same goal bands. 76 user-weeks had a real trend problem.
+
+| Rule | TP | FP | FN | Precision | Recall |
+|---|---|---|---|---|---|
+| intake_vs_target | 58 | 4 | 0 | 0.935 | 1.0 |
+| protein_short | 46 | 0 | 0 | 1.0 | 1.0 |
+| weekend_gap | 30 | 0 | 0 | 1.0 | 1.0 |
+| trend_vs_goal | 31 | 47 | 45 | 0.397 | 0.408 |
+
+Overall: precision 0.764, recall 0.786, 0.17 false findings per user-week. `tdee_vs_formula` and `logging_gap` did not fire in this set: 21 days is too short to settle, and logging was complete.
+
+- **The intake, protein and weekend rules work as designed.** They are simple averages over 7 complete days, so on clean injected patterns they are near perfect. Real logs are messier.
+- **The trend rule is weak.** Over 14 days, water weight of ±0.5 kg hides a rate difference of 0.1-0.3 kg a week. The first version compared two trend values and fired on many on-plan cuts and bulks. A first run scored it at precision 0.165, under an earlier scoring that counted every trend finding outside the injected pattern as false, so that figure is not directly comparable. The rule now uses the least-squares slope of the raw weigh-ins and speaks only when the slope is outside the goal's band by more than one standard error. That gives precision 0.397 and recall 0.408. Treat it as a hint. Each finding shows the slope and its error in the Why panel.
+
+### 5.3 Latency on a one-year history
+
+One synthetic user, 365 days of weigh-ins and meals. Same 4-CPU build machine, 30 runs.
+
+| Operation | p50 ms | p95 ms |
+|---|---|---|
+| tdee-v1 compute, 365 days (engine only) | 3.08 | 4.06 |
+| insights-v1 weekly (engine only) | 0.09 | 0.16 |
+| GET /intelligence/tdee | 17.26 | 21.08 |
+| GET /intelligence/insights | 28.23 | 51.75 |
+| GET /meals/day (now reads the adaptive target) | 23.3 | 34.89 |
+
+The filter over a year takes a few milliseconds. The endpoints' time is the database reads and the HTTP layer.
+
+## 6. Tests behind the engines
 
 - **Unit tests with hand-computed fixtures:** `tests/unit/test_recovery_v2.py`, `test_progression.py`, `test_recovery_personal.py`, `test_eval_metrics.py` (the evaluation's own metric code).
 - **Property tests (hypothesis):**
   - `test_recovery_properties.py`: outputs bounded and finite; another set never raises readiness; waiting never lowers it; harder sets dose more; slower recovery means lower readiness; worse sleep never raises it.
   - `test_progression_properties.py`: targets finite and non-negative; no jump over 10 % or one plate; deterministic; more reps never lower the next load; lower readiness never raises the target.
+  - `test_adaptive_tdee_properties.py`: estimates finite and inside the clamp on any history, gaps included; weekly steps never exceed the cap; a weigh-in never widens the expenditure's uncertainty.
+  - `test_diet_insights.py::test_findings_are_finite_bounded_and_explained`: for any week, at most three findings, finite numbers, each with a formula and inputs.
+- **Diet engines:** `tests/unit/test_adaptive_tdee.py` (cold start, convergence, missing days widening the SD, partly logged days, the 6-of-7 and 4-weigh-in gates, the cap, Monday-only changes, determinism) and `test_diet_insights.py` (each rule firing, staying quiet and short of data).
 - **API tests:** `tests/api/test_intelligence_*.py`.
 
-## 6. Reproduce
+## 7. Reproduce
 
 ```bash
 cd services/sidecar
 uv run python -m eval.recovery_eval --users 40 --seed 2026 --out eval/results/recovery.json
 uv run python -m eval.progression_eval --users 60 --seed 2026 --out eval/results/progression.json
 uv run python -m eval.latency --runs 30 --seed 2026 --out eval/results/latency.json
+uv run python -m eval.diet_eval --users 100 --seed 2026   # writes eval/results/diet.json
+uv run python -m eval.diet_tune                           # the tuning grids (seeds 7 and 11)
 MPLBACKEND=Agg uv run --group eval python -m eval.charts   # writes docs/ai/img/eval_*.png
 ```
 
 On the build machine the three runs took about 3, 2 and 1 minutes.
 
-## 7. Limitations, in one place
+## 8. Limitations, in one place
 
 - **Synthetic users only.** No result here comes from real people. Real training logs with consent are needed before any claim about real users.
 - **Recovery r is partly circular.** recovery-v2 reaches Pearson r 0.907-0.946 against the simulator's ground truth, but the simulator uses the same model family (exponential decay, capacity per muscle). Agreement of about 0.9 shows the estimation works under those assumptions; it does not show that people recover this way. The deliberate mismatches listed at the top reduce, but do not remove, that circularity.
 - **Stall detection is weak.** Precision 0.113 and recall 0.62 on synthetic stalls (103 of 166 found, 811 false alarms). A stall flag is a hint, not a diagnosis; one false alarm costs one 10 % reset of that lift.
 - **Real local-model phrasing is unverified.** No Ollama was available on the build machine, so no qwen3:4b sentence was produced or checked. Only the guard logic is tested, with a stub model. The app shows the template text whenever the model is missing.
+- **Adaptive TDEE is slower to learn than hoped.** 57% of synthetic users are within 150 kcal on day 28 (the aim was 80 %), and the first two weeks are no better than the formula. The ±1 SD band is slightly narrow (61% vs 68 %).
+- **Under-reporting is absorbed, not detected.** With 0-15 % under-logging, the "you burn" figure tracks logged intake, not the true expenditure. The target still works in logged calories, but the figure itself is off by the under-reporting.
+- **The trend insight is a hint.** Precision 0.397, recall 0.408 against the true weight: 14 days of weigh-ins cannot separate small rate differences from water weight.
 - **Latency is from one machine** (the 4-CPU build machine, Linux), not the target Windows laptop.
 - **Reproducibility checked.** On 2026-10-21 the recovery and progression commands below were rerun on the current main and produced JSON identical to `eval/results/recovery.json` and `eval/results/progression.json`.
