@@ -20,6 +20,8 @@ vi.mock("../api/client", () => ({
     measurements: vi.fn(),
     logMeasurement: vi.fn(),
     updateSettings: vi.fn(),
+    muscles: vi.fn(),
+    progression: vi.fn(),
   },
 }));
 
@@ -57,18 +59,42 @@ describe("ProgressPage", () => {
         algo_version: "pr-v1", achieved_at: "2026-10-15T08:00:00", set_id: 3 },
     ]);
     vi.mocked(api.measurements).mockResolvedValue([]);
+    vi.mocked(api.muscles).mockResolvedValue([
+      { key: "chest", label: "Chest", group: "push", map_slug: "chest", status: "recovering", es_7d: 12, weekly_low: 10, weekly_high: 20, readiness: 0.7, ready_at: null },
+      { key: "lats", label: "Lats", group: "pull", map_slug: "upper-back", status: "under", es_7d: 4, weekly_low: 10, weekly_high: 20, readiness: 1, ready_at: null },
+    ]);
+    vi.mocked(api.progression).mockResolvedValue({
+      exercise_id: 1, exercise: "Barbell Bench Press",
+      e1rm: { unit: "kg", current: 80, best: 80, last: 80, trend_pct_week: 1.2, series: [{ at: "2026-10-08T08:00:00", value: 77.5 }, { at: "2026-10-15T08:00:00", value: 80 }] },
+    } as never);
   });
 
   it("shows the trend weight, a PR and an empty ETA", async () => {
     renderPage();
-    expect(await screen.findByText("74.3 kg")).toBeInTheDocument();
-    expect(await screen.findByText("Barbell Bench Press")).toBeInTheDocument();
+    expect((await screen.findAllByText("74.3 kg")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Barbell Bench Press")).length).toBeGreaterThan(0);
     expect(screen.getByText("No goal weight set.")).toBeInTheDocument();
+  });
+
+  it("leads with a KPI strip and charts a key movement's estimated 1RM", async () => {
+    renderPage();
+    const strip = screen.getByRole("region", { name: "Headline numbers" });
+    expect(strip).toHaveTextContent("Trend weight");
+    expect(strip).toHaveTextContent("PRs · 30 days");
+    const lifts = await screen.findByRole("region", { name: "Key movements" });
+    await waitFor(() => expect(lifts).toHaveTextContent("80 kg"));
+    expect(api.progression).toHaveBeenCalledWith(1);
+  });
+
+  it("draws weekly sets against each muscle's band", async () => {
+    renderPage();
+    expect(await screen.findByLabelText("Chest: 12 sets, band 10 to 20, in band")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lats: 4 sets, band 10 to 20, under")).toBeInTheDocument();
   });
 
   it("suggests the last weigh-in as the placeholder for today's weight", async () => {
     renderPage();
-    await screen.findByText("74.3 kg");
+    await screen.findAllByText("74.3 kg");
     expect(screen.getByLabelText("Today's weight (kg)")).toHaveAttribute("placeholder", "73.8");
   });
 
