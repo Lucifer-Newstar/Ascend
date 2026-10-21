@@ -32,6 +32,8 @@ const SHORTCUTS: [string, string][] = [
 
 export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi: () => void; onChanged: () => void; onOpenData: () => void }) {
   const profile = useApi(api.profile, []);
+  // Fuel uses the adaptive weekly target once tdee-v1 has set one (ADR-0018); say so here too.
+  const tdee = useApi(() => api.tdee(7), [profile.data]);
   const toast = useToast();
   const { settings, update } = usePrefs();
   const aiEnabled = settings.ai_enabled;
@@ -69,6 +71,9 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
         <p className="mt-4 text-xs text-muted">
           Current estimate: BMR {kcal(p.energy.bmr)} · TDEE {kcal(p.energy.tdee)} · target {kcal(p.energy.kcal_target)} kcal ·
           protein {p.energy.protein_target_g} g <span>({p.energy.formula_version}, estimate)</span>
+          {tdee.data?.target_source === "adaptive" && (
+            <> · this week's adaptive target {kcal(tdee.data.target_kcal)} kcal ({tdee.data.algo_version}, from your weigh-ins and meals; see Fuel)</>
+          )}
         </p>
       </section>
       <div className="col-span-12 space-y-5 md:col-span-6 2xl:col-span-5">
