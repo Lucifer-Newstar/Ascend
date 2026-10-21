@@ -34,7 +34,7 @@ from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
 from app.modules.skills import service as skills_service
 from app.modules.skills.api import router as skills_router
-from app.modules.workouts.api import deload_router, exercises_router, prs_router
+from app.modules.workouts.api import deload_router, exercises_router, plans_router, prs_router
 from app.modules.workouts.api import router as workouts_router
 
 log = logging.getLogger("ascend")
@@ -212,6 +212,7 @@ def create_app(
         exercises_router,
         prs_router,
         deload_router,
+        plans_router,
         nutrition_router,
         game_router,
         progress_router,

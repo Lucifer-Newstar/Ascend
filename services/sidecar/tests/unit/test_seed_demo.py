@@ -35,6 +35,9 @@ def test_seed_demo_fills_progress_activity_and_checkins(
         assert c.get("/profile").json()["target_weight_kg"] == 72
         assert c.get("/settings").json()["sessions_per_week"] == 5
         assert c.get("/progress/eta").status_code == 200
+        plan = c.get("/plans/current").json()  # follows the PPL program it has been training
+        assert plan["program_key"] == "ppl_6" and plan["sessions_done"] == 10
+        assert plan["next"]["name"] == "Pull"
 
 
 def test_seed_demo_wipe_is_repeatable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

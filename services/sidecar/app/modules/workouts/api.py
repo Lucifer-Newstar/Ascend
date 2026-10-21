@@ -12,7 +12,7 @@ from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.skills import service as skills
-from app.modules.workouts import custom, deload_service, service
+from app.modules.workouts import custom, deload_service, programs_service, service
 from app.modules.workouts.activity_seed import SECTIONS
 from app.modules.workouts.models import Exercise, OnlineLookupLog
 from app.modules.workouts.schemas import (
@@ -27,7 +27,10 @@ from app.modules.workouts.schemas import (
     FinishedWorkout,
     LoggedSet,
     OnlineLogEntry,
+    PlanIn,
+    PlanOut,
     PreviousSession,
+    ProgramOut,
     PROut,
     ResearchCall,
     ResearchField,
@@ -407,4 +410,57 @@ def delete_set(
         service.delete_set(db, bus, workout_id, set_id)
     except service.NotFound as e:
         raise HTTPException(404, str(e)) from e
+    return Response(status_code=204)
+
+
+plans_router = APIRouter(prefix="/plans", tags=["workouts"])
+
+
+@plans_router.get("/programs", response_model=list[ProgramOut], summary="Built-in workout programs")
+def list_programs(db: Session = Depends(get_db)) -> list[ProgramOut]:
+    """The program catalog (programs-v1), each with its days and whether it fits the equipment
+    from onboarding."""
+    return programs_service.catalog(db)
+
+
+@plans_router.get(
+    "/current",
+    response_model=PlanOut,
+    summary="The active training plan",
+    responses={404: {"description": "No program chosen"}},
+)
+def current_plan(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> PlanOut:
+    """The program the user follows: its days, the next session with prog-v1 targets, sessions
+    done and the reason the next day is next."""
+    out = programs_service.plan(db, now)
+    if out is None:
+        raise HTTPException(status_code=404, detail="No program chosen yet")
+    return out
+
+
+@plans_router.put("/current", response_model=PlanOut, summary="Follow a program")
+def choose_plan(
+    body: PlanIn, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> PlanOut:
+    """Start following a built-in program from today; a previous choice ends. Choosing the
+    program already followed keeps its start date."""
+    try:
+        programs_service.enroll(db, body.program_key, now)
+    except programs_service.UnknownProgram as exc:
+        raise HTTPException(status_code=422, detail=f"Unknown program: {body.program_key}") from exc
+    out = programs_service.plan(db, now)
+    assert out is not None
+    return out
+
+
+@plans_router.delete(
+    "/current",
+    status_code=204,
+    summary="Stop following the program",
+    responses={404: {"description": "No program chosen"}},
+)
+def leave_plan(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> Response:
+    """Stop following the program. Logged workouts stay; only the plan ends."""
+    if not programs_service.leave(db, now):
+        raise HTTPException(status_code=404, detail="No program chosen yet")
     return Response(status_code=204)

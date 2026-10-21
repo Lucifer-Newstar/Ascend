@@ -146,3 +146,16 @@ class OnlineLookupLog(Base):
     def sources(self) -> list[dict[str, Any]]:
         value = json.loads(self.sources_json or "[]")
         return value if isinstance(value, list) else []
+
+
+class PlanEnrollment(Base):
+    """The workout program the user follows (programs-v1, ADR-0020). One row per choice;
+    the active one has no ended_at. The program itself lives in code (workouts/programs.py)."""
+
+    __tablename__ = "plan_enrollments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    program_key: Mapped[str] = mapped_column(String(40))
+    started_on: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)

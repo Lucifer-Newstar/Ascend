@@ -51,7 +51,7 @@ from app.modules.progress.schemas import (
     SettingsIn,
 )
 from app.modules.workouts import service as workouts
-from app.modules.workouts.models import Exercise, ExerciseMuscle
+from app.modules.workouts.models import Exercise, ExerciseMuscle, PlanEnrollment
 from app.modules.workouts.schemas import SetIn
 
 # Push / pull / legs split: (exercise, start kg, reps)
@@ -488,6 +488,15 @@ def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
                     if q.metric == "manual" and not q.completed_at and rng.random() < 0.75:
                         game.complete_manual(db, bus, q.id, at(21, 30))
             db.commit()
+        # The demo follows the push/pull/legs program it has been training (programs-v1).
+        db.add(
+            PlanEnrollment(
+                program_key="ppl_6",
+                started_on=(today - timedelta(days=days - 1)).date(),
+                created_at=today - timedelta(days=days - 1),
+            )
+        )
+        db.commit()
     print(
         f"seeded {days} days of demo data (+{history_weeks} earlier weeks, {earlier} gym sessions, "
         f"{diet_days} days of meals) into {url}"
