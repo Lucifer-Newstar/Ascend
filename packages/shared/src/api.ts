@@ -450,6 +450,8 @@ export interface DayLog {
   meals: Meal[];
   totals: Totals;
   kcal_target: number | null;
+  /** "adaptive" once tdee-v1 has set this week's target (ADR-0018), else "formula". */
+  kcal_target_source?: "formula" | "adaptive" | null;
   protein_target_g: number | null;
   values_are_approximate: boolean;
 }
@@ -874,4 +876,77 @@ export interface SystemNotice {
   title: string;
   text: string;
   at: string;
+}
+
+// ---- diet intelligence: adaptive TDEE and weekly insights (ADR-0018, ADR-0019) ----------
+
+/** One day of tdee-v1: the morning state after that day's weigh-in. */
+export interface TdeePoint {
+  day: string;
+  weight_kg: number | null;
+  intake_kcal: number | null;
+  intake_used: boolean;
+  trend_kg: number;
+  tdee_kcal: number;
+  sd_kcal: number;
+}
+
+export interface TdeeWeek {
+  week_start: string;
+  target_kcal: number;
+  tdee_kcal: number;
+  sd_kcal: number;
+  intake_days: number;
+  changed: boolean;
+  from_estimate: boolean;
+  reason: string;
+}
+
+/** GET /intelligence/tdee */
+export interface TdeeReport {
+  algo_version: string;
+  status: "cold_start" | "learning" | "adaptive";
+  tdee_kcal: number;
+  sd_kcal: number;
+  low_kcal: number;
+  high_kcal: number;
+  formula_tdee_kcal: number;
+  formula_target_kcal: number;
+  target_kcal: number;
+  target_source: "formula" | "adaptive";
+  target_week_start: string;
+  trend_kg: number | null;
+  days_of_data: number;
+  weigh_ins: number;
+  intake_days_7: number;
+  weigh_ins_7: number;
+  gate_days: number;
+  paused: boolean;
+  reason: string;
+  series: TdeePoint[];
+  weeks: TdeeWeek[];
+  why: Why;
+}
+
+export interface InsightFinding {
+  code: string;
+  title: string;
+  text: string;
+  severity: number;
+  numbers: Record<string, number | string>;
+  why: Why;
+}
+
+export interface InsightCheck {
+  code: string;
+  outcome: "fired" | "quiet" | "not_enough_data";
+  detail: string;
+}
+
+/** GET /intelligence/insights */
+export interface DietInsights {
+  algo_version: string;
+  week_end: string;
+  findings: InsightFinding[];
+  checks: InsightCheck[];
 }

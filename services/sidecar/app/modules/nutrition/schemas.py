@@ -67,6 +67,8 @@ class DayLog(BaseModel):
     meals: list[MealOut]
     totals: Totals
     kcal_target: int | None
+    #: "adaptive" once tdee-v1 has set this week's target (ADR-0018), else "formula".
+    kcal_target_source: Literal["formula", "adaptive"] | None = None
     protein_target_g: int | None
     values_are_approximate: bool = True
 

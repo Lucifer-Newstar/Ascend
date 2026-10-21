@@ -132,8 +132,15 @@ def prior_tdee(p: Profile) -> float:
 
 
 def goal_target(tdee_kcal: float, goal: str) -> int:
+    """Adaptive weekly target: expenditure + the goal adjustment, to the nearest 10 kcal."""
     adj = msj.GOAL_ADJUSTMENT.get(goal, 0)
     return int(max(1200, round((tdee_kcal + adj) / 10) * 10))
+
+
+def formula_target(prior_kcal: float, goal: str) -> int:
+    """The Mifflin-St Jeor target exactly as the profile shows it (no rounding to 10)."""
+    adj = msj.GOAL_ADJUSTMENT.get(goal, 0)
+    return int(max(1200, round(prior_kcal + adj)))
 
 
 def _monday(d: date) -> date:
@@ -235,7 +242,7 @@ def _settled(s: DayState, first_weigh_in: date | None) -> bool:
 
 
 def weekly_targets(
-    series: list[DayState], goal: str, formula_target: int, today: date
+    series: list[DayState], goal: str, start_target: int, today: date
 ) -> list[WeekTarget]:
     """Targets for every week from the first full week of data to the current week."""
     if not series:
@@ -243,7 +250,7 @@ def weekly_targets(
     first_weigh_in = next((s.day for s in series if s.weight_kg is not None), None)
     by_day = {s.day: s for s in series}
     weeks: list[WeekTarget] = []
-    current = formula_target
+    current = start_target
     monday = _monday(series[0].day) + timedelta(days=7)
     last_monday = _monday(today)
     while monday <= last_monday:
@@ -288,10 +295,10 @@ def weekly_targets(
 def compute(days: list[DayInput], profile: Profile, today: date) -> TdeeResult:
     """The whole report for ``today``: series, current estimate, weekly target and status."""
     prior = prior_tdee(profile)
-    formula_target = goal_target(prior, profile.goal)
+    start_target = formula_target(prior, profile.goal)
     usable = [d for d in days if d.day <= today]
     series = run_filter(usable, prior, profile.weight_kg)
-    weeks = weekly_targets(series, profile.goal, formula_target, today)
+    weeks = weekly_targets(series, profile.goal, start_target, today)
     weigh_ins = sum(1 for s in series if s.weight_kg is not None)
     last7 = [s for s in series if 1 <= (today - s.day).days <= 7]  # complete days only
     intake_7 = sum(1 for s in last7 if s.intake_used)
@@ -299,8 +306,8 @@ def compute(days: list[DayInput], profile: Profile, today: date) -> TdeeResult:
     first_weigh_in = next((s.day for s in series if s.weight_kg is not None), None)
     if not series:
         return TdeeResult(
-            ALGO_VERSION, "cold_start", round(prior, 1), formula_target, round(prior, 1),
-            PRIOR_SD_KCAL, None, 0, 0, 0, 0, formula_target, _monday(today), "formula", False,
+            ALGO_VERSION, "cold_start", round(prior, 1), start_target, round(prior, 1),
+            PRIOR_SD_KCAL, None, 0, 0, 0, 0, start_target, _monday(today), "formula", False,
             "no weigh-ins or meals yet: showing the formula estimate", [], [],
         )  # fmt: skip
     end = series[-1]
@@ -311,7 +318,7 @@ def compute(days: list[DayInput], profile: Profile, today: date) -> TdeeResult:
     else:
         status = "learning"
     this_week = weeks[-1] if weeks and weeks[-1].week_start == _monday(today) else None
-    target = this_week.target_kcal if this_week else formula_target
+    target = this_week.target_kcal if this_week else start_target
     source = "adaptive" if any(w.from_estimate for w in weeks) else "formula"
     paused = intake_7 < GATE_DAYS
     if status == "cold_start":
@@ -328,7 +335,7 @@ def compute(days: list[DayInput], profile: Profile, today: date) -> TdeeResult:
         algo_version=ALGO_VERSION,
         status=status,
         prior_tdee_kcal=round(prior, 1),
-        formula_target_kcal=formula_target,
+        formula_target_kcal=start_target,
         tdee_kcal=end.tdee_kcal,
         sd_kcal=end.sd_kcal,
         trend_kg=end.trend_kg,
