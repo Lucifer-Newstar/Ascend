@@ -6,6 +6,9 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Fixed
+- Opening the app on a new day could fail one request with a server error: two first requests both built today's quest, and the second hit the unique index. The second request now reads the quest the first one wrote.
+
 ### Added (v7 workout programs)
 - **Workout programs** (`programs-v1`, ADR-0020): full body 3 days, upper/lower 4 days, push/pull/legs 6 days, and home full body 3 days (dumbbells and a pull-up bar).
   - The **Program card** on Train shows the next session: each exercise with your progression target, using the program's sets (halved in a deload week), and the sets already logged today. Click an exercise to log it.

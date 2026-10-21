@@ -199,7 +199,7 @@ installed app, the dev Electron app or the sidecar on its own.
 
 Verified on Linux (CI-equivalent):
 
-- 532 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 and v7 engines, API tests with `TestClient`); ruff and mypy clean (105 source files).
+- 533 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 and v7 engines, API tests with `TestClient`); ruff and mypy clean (105 source files).
 - Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
 - tsc (renderer, Electron, shared), eslint and 294 vitest tests (47 files) pass; `vite build` succeeds.
 - The contract drift check passes (79 implemented operations match 9 contracts).
