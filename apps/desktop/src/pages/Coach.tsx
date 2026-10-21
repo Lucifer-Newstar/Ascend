@@ -1,10 +1,15 @@
-import type { CoachReply } from "@ascend/shared";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+/**
+ * Coach (12-column grid, spec §8.4 "System"): the AI status bar, the chat with ARC (8 columns)
+ * and, beside it, the weekly review, the deload check and the System log of engine notices.
+ */
+import type { CoachReply, SystemNotice } from "@ascend/shared";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 
 import { api } from "../api/client";
 import { PENDING_COACH_KEY } from "../components/CommandBar";
 import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { IconSpark } from "../components/Icons";
+import { PageGrid, Panel } from "../components/Page";
 import { useApi } from "../lib/useApi";
 
 interface Msg {
@@ -70,8 +75,8 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
 
   const s = status.data;
   return (
-    <div className="mx-auto flex h-full max-w-3xl flex-col gap-4">
-      <div className="card flex items-center justify-between p-4 text-sm">
+    <PageGrid label="Coach">
+      <div className="card rise-in col-span-12 flex flex-wrap items-center justify-between gap-2 p-4 text-sm" role="status">
         <div className="flex items-center gap-3">
           <span className={`h-2.5 w-2.5 rounded-full ${s?.ai_enabled && s.ollama_available ? "bg-good" : s?.ai_enabled ? "bg-warn" : "bg-faint"}`} />
           <span className="text-ink">
@@ -81,17 +86,13 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
         {status.error && !s ? (
           <button type="button" className="text-xs text-accent hover:underline" onClick={status.reload}>Retry</button>
         ) : (
-          <span className="text-xs text-faint">All numbers come from fixed formulas; the AI only explains them.</span>
+          <span className="text-xs text-muted">All numbers come from fixed formulas; the AI only explains them.</span>
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <WeeklyReviewCard refreshKey={refreshKey} />
-        <DeloadCard refreshKey={refreshKey} />
-      </div>
-
-      <div className="card flex min-h-[420px] flex-1 flex-col p-5">
-        <div className="flex-1 space-y-3 overflow-y-auto" aria-live="polite" aria-label="Conversation with the coach">
+      <section className="card rise-in col-span-12 flex h-[min(720px,calc(100vh-190px))] min-h-[460px] flex-col self-start p-5 xl:sticky xl:top-0 xl:col-span-8" style={{ ["--i" as string]: 1 } as CSSProperties} aria-labelledby="chat-title">
+        <h2 id="chat-title" className="card-title mb-3">Ask ARC</h2>
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto" aria-live="polite" aria-label="Conversation with the coach">
           {msgs.length === 0 && (
             <div className="grid h-full place-items-center text-center">
               <div>
@@ -138,7 +139,45 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
           <input ref={input} className="input" aria-label="Ask the coach" placeholder="Ask anything about your training…" value={q} onChange={(e) => setQ(e.target.value)} maxLength={1000} />
           <button className="btn-primary px-5" disabled={busy || !q.trim()}>Send</button>
         </form>
+      </section>
+      <div className="col-span-12 space-y-5 xl:col-span-4">
+        <WeeklyReviewCard refreshKey={refreshKey} />
+        <DeloadCard refreshKey={refreshKey} />
+        <SystemLog refreshKey={refreshKey} />
       </div>
-    </div>
+    </PageGrid>
   );
+}
+
+const NOTICE_CHIP: Record<SystemNotice["code"], string> = { deload: "Deload", raised: "Target raised", recovered: "Recovered" };
+
+/** The System notices the engines raised (deload, target raised, muscle recovered), newest first. */
+function SystemLog({ refreshKey }: { refreshKey: number }) {
+  const notices = useApi(api.notices, [refreshKey]);
+  const list = [...(notices.data ?? [])].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8);
+  return (
+    <Panel id="system-log" index={4} title="System log" hint="Notices raised by the engines' fixed rules"
+      loading={notices.loading && !notices.data} error={!notices.data ? notices.error ?? null : null} onRetry={notices.reload} skeletonLines={4}
+      empty={notices.data && list.length === 0 ? { title: "No System notices right now.", hint: "A deload, a raised target or a recovered muscle shows up here." } : null}>
+      <ol className="space-y-3">
+        {list.map((n) => (
+          <li key={n.id} className="rounded-md border border-line bg-panel-2 p-3 text-sm">
+            <div className="flex items-center justify-between gap-2">
+              <span className="chip">{NOTICE_CHIP[n.code] ?? n.code}</span>
+              <span className="text-[11px] text-muted">{timeAgo(n.at)}</span>
+            </div>
+            <div className="mt-1.5 font-medium text-ink">{n.title}</div>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted">{n.text}</p>
+          </li>
+        ))}
+      </ol>
+    </Panel>
+  );
+}
+
+function timeAgo(iso: string, now = Date.now()): string {
+  const mins = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60000));
+  if (mins < 60) return `${mins} min ago`;
+  const h = Math.round(mins / 60);
+  return h < 48 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
 }
