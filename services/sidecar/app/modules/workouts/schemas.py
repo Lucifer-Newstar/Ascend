@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.schemas import StrictIn
+from app.modules.intelligence.schemas import Why
 
 
 class MuscleWeight(BaseModel):
@@ -347,3 +348,71 @@ class OnlineLogEntry(BaseModel):
     outcome: str
     # setting | once
     consent: str
+
+
+# --- programs-v1 (ADR-0020) ---------------------------------------------------------------
+
+
+class PlanItemOut(BaseModel):
+    """One exercise of a program day; target and done_sets are filled for the next session."""
+
+    exercise_id: int | None
+    exercise: str
+    sets: int
+    rep_low: int
+    rep_high: int
+    target_rpe: float
+    rest_s: int
+    target: str | None = None
+    target_reason: str | None = None
+    done_sets: int = 0
+
+
+class PlanDayOut(BaseModel):
+    key: str
+    name: str
+    focus: str
+    weekday: int
+    items: list[PlanItemOut]
+
+
+class ProgramOut(BaseModel):
+    key: str
+    name: str
+    summary: str
+    level: str
+    equipment: str
+    days_per_week: int
+    fits_equipment: bool
+    days: list[PlanDayOut]
+
+
+class PlanDoneOut(BaseModel):
+    day: date
+    key: str
+    name: str
+
+
+class PlanOut(BaseModel):
+    """The program the user follows and its next session (programs-v1, ADR-0020)."""
+
+    id: int
+    source: str
+    algo_version: str
+    program_key: str
+    name: str
+    started_on: date
+    days_per_week: int
+    days: list[PlanDayOut]
+    next: PlanDayOut
+    sessions_done: int
+    this_week_done: int
+    last_trained: date | None
+    deload_week: bool
+    recent: list[PlanDoneOut]
+    reason: str
+    why: Why
+
+
+class PlanIn(StrictIn):
+    program_key: str = Field(min_length=1, max_length=40)

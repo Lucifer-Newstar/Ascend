@@ -438,21 +438,60 @@ paths:
   /plans/current:
     get:
       summary: The active training plan
-      operationId: current_plan
+      description: 'The program the user follows: its days, the next session with prog-v1 targets, sessions
+
+        done and the reason the next day is next.'
+      operationId: current_plan_plans_current_get
       responses:
         '200':
-          description: OK
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlanOut'
         '404':
-          description: Not found
+          description: No program chosen
+      x-status: implemented
+      tags:
+      - workouts
+    put:
+      summary: Follow a program
+      description: 'Start following a built-in program from today; a previous choice ends. Choosing the
+
+        program already followed keeps its start date.'
+      operationId: choose_plan_plans_current_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-      x-status: planned
+                $ref: '#/components/schemas/PlanOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
+    delete:
+      summary: Stop following the program
+      description: Stop following the program. Logged workouts stay; only the plan ends.
+      operationId: leave_plan_plans_current_delete
+      responses:
+        '204':
+          description: Successful Response
+        '404':
+          description: No program chosen
+      x-status: implemented
       tags:
       - workouts
   /deload:
@@ -641,6 +680,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - workouts
+  /plans/programs:
+    get:
+      summary: Built-in workout programs
+      description: 'The program catalog (programs-v1), each with its days and whether it fits the equipment
+
+        from onboarding.'
+      operationId: list_programs_plans_programs_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ProgramOut'
+                type: array
+                title: Response List Programs Plans Programs Get
       x-status: implemented
       tags:
       - workouts
@@ -1095,48 +1154,81 @@ components:
       - achieved_at
       - set_id
     PlanOut:
-      type: object
       properties:
         id:
           type: integer
+          title: Id
         source:
           type: string
-          enum:
-          - planner
-          - imported
-          - manual
+          title: Source
+        algo_version:
+          type: string
+          title: Algo Version
+        program_key:
+          type: string
+          title: Program Key
+        name:
+          type: string
+          title: Name
+        started_on:
+          type: string
+          format: date
+          title: Started On
+        days_per_week:
+          type: integer
+          title: Days Per Week
         days:
-          type: array
           items:
-            type: object
-            properties:
-              weekday:
-                type: integer
-                minimum: 0
-                maximum: 6
-              focus:
-                type: string
-              items:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    exercise_id:
-                      type: integer
-                    sets:
-                      type: integer
-                    rep_low:
-                      type: integer
-                    rep_high:
-                      type: integer
-                    target_rpe:
-                      type: number
-                    rest_s:
-                      type: integer
+            $ref: '#/components/schemas/PlanDayOut'
+          type: array
+          title: Days
+        next:
+          $ref: '#/components/schemas/PlanDayOut'
+        sessions_done:
+          type: integer
+          title: Sessions Done
+        this_week_done:
+          type: integer
+          title: This Week Done
+        last_trained:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Last Trained
+        deload_week:
+          type: boolean
+          title: Deload Week
+        recent:
+          items:
+            $ref: '#/components/schemas/PlanDoneOut'
+          type: array
+          title: Recent
+        reason:
+          type: string
+          title: Reason
+        why:
+          $ref: '#/components/schemas/Why'
+      type: object
       required:
       - id
       - source
+      - algo_version
+      - program_key
+      - name
+      - started_on
+      - days_per_week
       - days
+      - next
+      - sessions_done
+      - this_week_done
+      - last_trained
+      - deload_week
+      - recent
+      - reason
+      - why
+      title: PlanOut
+      description: The program the user follows and its next session (programs-v1, ADR-0020).
     Error:
       type: object
       required:
@@ -1920,3 +2012,169 @@ components:
       - sets
       title: PreviousSession
       description: 'GET /exercises/{id}/previous: the last finished session''s sets of one exercise.'
+    PlanDayOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        focus:
+          type: string
+          title: Focus
+        weekday:
+          type: integer
+          title: Weekday
+        items:
+          items:
+            $ref: '#/components/schemas/PlanItemOut'
+          type: array
+          title: Items
+      type: object
+      required:
+      - key
+      - name
+      - focus
+      - weekday
+      - items
+      title: PlanDayOut
+    PlanDoneOut:
+      properties:
+        day:
+          type: string
+          format: date
+          title: Day
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - day
+      - key
+      - name
+      title: PlanDoneOut
+    PlanIn:
+      properties:
+        program_key:
+          type: string
+          maxLength: 40
+          minLength: 1
+          title: Program Key
+      additionalProperties: false
+      type: object
+      required:
+      - program_key
+      title: PlanIn
+    PlanItemOut:
+      properties:
+        exercise_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Id
+        exercise:
+          type: string
+          title: Exercise
+        sets:
+          type: integer
+          title: Sets
+        rep_low:
+          type: integer
+          title: Rep Low
+        rep_high:
+          type: integer
+          title: Rep High
+        target_rpe:
+          type: number
+          title: Target Rpe
+        rest_s:
+          type: integer
+          title: Rest S
+        target:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target
+        target_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Reason
+        done_sets:
+          type: integer
+          title: Done Sets
+          default: 0
+      type: object
+      required:
+      - exercise_id
+      - exercise
+      - sets
+      - rep_low
+      - rep_high
+      - target_rpe
+      - rest_s
+      title: PlanItemOut
+      description: One exercise of a program day; target and done_sets are filled for the next session.
+    ProgramOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        summary:
+          type: string
+          title: Summary
+        level:
+          type: string
+          title: Level
+        equipment:
+          type: string
+          title: Equipment
+        days_per_week:
+          type: integer
+          title: Days Per Week
+        fits_equipment:
+          type: boolean
+          title: Fits Equipment
+        days:
+          items:
+            $ref: '#/components/schemas/PlanDayOut'
+          type: array
+          title: Days
+      type: object
+      required:
+      - key
+      - name
+      - summary
+      - level
+      - equipment
+      - days_per_week
+      - fits_equipment
+      - days
+      title: ProgramOut
+    Why:
+      properties:
+        formula:
+          type: string
+          title: Formula
+        inputs:
+          additionalProperties:
+            anyOf:
+            - type: number
+            - type: integer
+            - type: string
+            - type: 'null'
+          type: object
+          title: Inputs
+      type: object
+      required:
+      - formula
+      - inputs
+      title: Why
+      description: 'The "Why?" of one number: the formula in words and every input with its value.'
