@@ -5,8 +5,9 @@
 # Steps: build the sidecar with PyInstaller on Windows, build the renderer +
 # Electron code, then electron-builder packs both into an NSIS installer.
 #
-# STATUS: written but NOT yet run on real Windows / GitHub's windows runners.
-# Expect to fix small path or packaging issues on the first run.
+# On a version tag the installer is also published to a GitHub Release (the CD
+# step), so anyone can download ASCEND-Setup from the repo's Releases page.
+# On main and manual runs it stays a workflow artifact (Actions -> run -> Artifacts).
 name: Release (Windows installer)
 
 on:
@@ -26,7 +27,7 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 permissions:
-  contents: read
+  contents: write   # needed to create the GitHub Release on version tags
 
 jobs:
   windows-installer:
@@ -74,3 +75,16 @@ jobs:
           path: apps/desktop/release/*.exe
           if-no-files-found: error
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 90 || 14 }}
+
+      - name: Publish GitHub Release (version tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" apps/desktop/release/*.exe \
+            --repo "${{ github.repository }}" \
+            --title "ASCEND ${{ github.ref_name }}" \
+            --generate-notes \
+            || gh release upload "${{ github.ref_name }}" apps/desktop/release/*.exe \
+                 --repo "${{ github.repository }}" --clobber
