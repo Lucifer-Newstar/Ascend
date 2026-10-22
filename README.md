@@ -140,7 +140,7 @@ uv python install 3.12
 
 # 2. get the code
 git clone https://github.com/<you>/ascend.git      # or unzip ASCEND_repo.zip / clone the bundle
-cd ascend
+cd ascend                                           # the zip unpacks to ascend-repo: cd ascend-repo
 
 # 3. install everything (or run: powershell -ExecutionPolicy Bypass -File scripts\setup.ps1)
 cd services\sidecar; uv sync; uv run alembic upgrade head; cd ..\..
@@ -219,10 +219,10 @@ installed app, the dev Electron app or the sidecar on its own.
 
 Verified on Linux (CI-equivalent):
 
-- 533 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 and v7 engines, API tests with `TestClient`); ruff and mypy clean (105 source files).
+- 566 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 and v7 engines, API tests with `TestClient`); ruff and mypy clean (108 source files).
 - Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
-- tsc (renderer, Electron, shared), eslint and 294 vitest tests (47 files) pass; `vite build` succeeds.
-- The contract drift check passes (79 implemented operations match 9 contracts).
+- tsc (renderer, Electron, shared), eslint and 316 vitest tests (53 files) pass; `vite build` succeeds.
+- The contract drift check passes (81 implemented operations match 9 contracts).
 - The renderer was driven end to end against the running sidecar in headless Chromium
   (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
 - The PyInstaller sidecar binary builds, migrates and answers `/health` (Linux build).
