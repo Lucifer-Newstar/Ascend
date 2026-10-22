@@ -179,7 +179,7 @@ export function NotLoggedBanner({ onOpen }: { onOpen: () => void }) {
       <span>You haven't logged anything today.</span>
       <span className="flex items-center gap-3">
         <button type="button" className="text-sm font-medium text-accent hover:underline" onClick={onOpen}>Quick log →</button>
-        <button type="button" className="text-xs text-muted hover:text-ink" onClick={dismiss} aria-label="Hide this reminder for today">Not today</button>
+        <button type="button" className="text-xs text-muted hover:text-ink" onClick={dismiss} title="Hide this reminder for today">Not today</button>
       </span>
     </div>
   );

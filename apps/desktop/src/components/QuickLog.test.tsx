@@ -88,7 +88,7 @@ describe("Quick log", () => {
     expect(screen.getByTestId("not-logged-banner")).toHaveTextContent("You haven't logged anything today.");
     await userEvent.click(screen.getByRole("button", { name: "Quick log →" }));
     expect(open).toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("button", { name: "Hide this reminder for today" }));
+    await userEvent.click(screen.getByRole("button", { name: "Not today" }));
     expect(screen.queryByTestId("not-logged-banner")).toBeNull();
     localStorage.clear();
   });
