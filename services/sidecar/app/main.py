@@ -77,13 +77,44 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 interval,
             )
         )
+    daily = None
+    if interval > 0:
+        daily = asyncio.create_task(_daily_backups(app))
     try:
         yield
     finally:
-        if task is not None:
-            task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await task
+        for t in (task, daily):
+            if t is not None:
+                t.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await t
+
+
+DAILY_BACKUP_CHECK_S = 3600.0
+
+
+def daily_backup_once(app: FastAPI) -> None:
+    """Take today's automatic snapshot if it is due (never raises: a backup problem must
+    not take the app down; it is logged instead)."""
+    from app.modules.io import backup
+
+    try:
+        db_file = backup.sqlite_path(app.state.engine)
+        info = backup.backup_daily_if_due(
+            db_file, backup.backups_dir(app.state.settings.data_dir), app.state.clock()
+        )
+    except (OSError, backup.BackupError) as err:
+        log.warning("daily backup failed: %s", err)
+        return
+    if info is not None:
+        log.info("daily backup written to %s", info.path)
+
+
+async def _daily_backups(app: FastAPI) -> None:
+    """At start-up and then about hourly: one snapshot per calendar day, 14 kept."""
+    while True:
+        await asyncio.to_thread(daily_backup_once, app)
+        await asyncio.sleep(DAILY_BACKUP_CHECK_S)
 
 
 def _backup_before_migrating(settings: Settings, db_url: str, now: datetime) -> None:

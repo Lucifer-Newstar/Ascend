@@ -156,6 +156,9 @@ def restore_backup(
         backup.read_info(path)  # refuse a bad file before touching anything
         safety = backup.create_backup(db_file, folder, now, reason="pre-restore")
         info = backup.restore_backup(path, db_file, request.app.state.settings.resolved_db_url)
+        # Drop pooled connections that still hold pages of the replaced file, so every
+        # later request opens the restored database fresh (the in-process "restart").
+        request.app.state.engine.dispose()
     except backup.BackupError as err:
         raise HTTPException(422, str(err)) from err
     return RestoreOut(

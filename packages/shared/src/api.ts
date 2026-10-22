@@ -1007,3 +1007,22 @@ export interface Plan {
   reason: string;
   why: Why;
 }
+
+/** GET /backups, POST /backup. reason: manual | daily | pre-migration | pre-restore */
+export interface BackupInfo {
+  path: string;
+  size_bytes: number;
+  sha256: string;
+  created_at: string;
+  schema_revision: string;
+  app_version: string;
+  reason: string;
+}
+
+/** POST /restore */
+export interface RestoreResult {
+  restored_from: string;
+  backup_created_at: string;
+  schema_revision: string;
+  safety_backup: string;
+}

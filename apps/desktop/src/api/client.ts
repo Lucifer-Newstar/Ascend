@@ -8,6 +8,8 @@
  */
 import type {
   AscendBridge,
+  BackupInfo,
+  RestoreResult,
   BodyMetric,
   Checkin,
   CheckinIn,
@@ -132,6 +134,9 @@ async function call<T>(method: HttpMethod, path: string, body?: unknown): Promis
 }
 
 export const api = {
+  backups: () => call<BackupInfo[]>("GET", "/backups"),
+  backupNow: () => call<BackupInfo>("POST", "/backup"),
+  restoreBackup: (path: string) => call<RestoreResult>("POST", "/restore", { path }),
   dashboard: () => call<Dashboard>("GET", "/dashboard"),
   profile: () => call<Profile>("GET", "/profile"),
   saveProfile: (p: ProfileIn) => call<Profile>("PUT", "/profile", p),

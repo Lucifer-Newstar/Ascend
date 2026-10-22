@@ -6,6 +6,10 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Added (v8 hardening)
+- **Daily automatic backups.** While the app runs, the sidecar saves one `.ascendbak` snapshot per calendar day (checked at start-up and about hourly) and keeps the newest 14. They sit beside the existing pre-update and pre-restore safety copies, which keep their own rotation; manual backups are never deleted.
+- **Settings → Backups** lists every snapshot with its kind and size, has "Back up now", and restores one after a confirmation. The current data is backed up first, the database is reopened, and the window reloads.
+
 ### Changed (v8 exercise pictures)
 - **No more empty picture boxes.** Every exercise card shows a photo or a designed tile.
   - Photos are re-fetched from free-exercise-db (public domain) at 320 px wide instead of 224 px: 873 webp files, 5,307,910 bytes in total (was 2,774,240).
