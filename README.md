@@ -269,7 +269,9 @@ If you received `ASCEND.bundle` instead of the folder: `git clone ASCEND.bundle 
 | Jegatheesan ([@jegatheesank](https://github.com/jegatheesank)) | Backend | sidecar, engines, database |
 | Dhanush ([@dhanush-07-byte](https://github.com/dhanush-07-byte)) | Frontend | Electron + React UI, muscle map |
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules, and
+[SECURITY.md](SECURITY.md) for how to report a vulnerability and the status of the
+October 2026 security review.
 
 ## Credits and licences
 
