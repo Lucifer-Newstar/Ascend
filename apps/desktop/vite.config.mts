@@ -1,6 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 import pkg from "./package.json" with { type: "json" };
 
@@ -14,10 +14,12 @@ export default defineConfig({
   server: { port: 5173, strictPort: true },
   build: { outDir: "dist", emptyOutDir: true, chunkSizeWarningLimit: 900 },
   test: {
-    // Pure logic tests run in node; component tests (*.test.tsx) get a DOM from jsdom.
-    environment: "node",
-    environmentMatchGlobs: [["src/**/*.test.tsx", "jsdom"]],
-    include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["src/test/setup.ts"],
+    // Pure logic tests run in node; component tests (*.test.tsx) get a DOM from jsdom.
+    // (Vitest 3+ dropped environmentMatchGlobs; projects are the replacement.)
+    projects: [
+      { extends: true, test: { name: "logic", environment: "node", include: ["src/**/*.test.ts"] } },
+      { extends: true, test: { name: "dom", environment: "jsdom", include: ["src/**/*.test.tsx"] } },
+    ],
   },
-} as import("vite").UserConfig & { test?: unknown });
+});

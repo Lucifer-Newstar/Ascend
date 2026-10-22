@@ -43,7 +43,7 @@ describe("XpChip", () => {
     await screen.findByText("LV 1");
     rerender(renderChip(1));
     expect(await screen.findByText("LV 2")).toBeInTheDocument();
-    expect(screen.getByTestId("confetti")).toBeInTheDocument();
+    expect(await screen.findByTestId("confetti")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("You reached level 2");
   });
 
