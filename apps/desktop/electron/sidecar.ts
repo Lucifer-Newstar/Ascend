@@ -9,11 +9,14 @@
  *     the process list). The child gets a cleaned environment (sidecarEnv): no
  *     inherited ASCEND_* variable can replace the token, the bind address or the
  *     database (a leftover ASCEND_TOKEN=dev or ASCEND_HOST=0.0.0.0, for example)
- *  5. poll GET /health until 200 (timeout 30 s)
- *  6. on unexpected exit: restart with backoff, up to MAX_RESTARTS
+ *  5. poll GET /health until 200 (timeout 30 s) and check its `proof` (an HMAC under
+ *     the token): the token is only ever sent to a server that already knows it, not to
+ *     a process that grabbed the port between steps 1 and 3
+ *  6. on unexpected exit: restart with backoff, up to MAX_RESTARTS crashes in
+ *     RESTART_WINDOW_MS (a sidecar that ran fine for hours gets a fresh budget)
  */
 import { ChildProcess, spawn } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -21,7 +24,11 @@ import path from "node:path";
 import type { SidecarStatus } from "@ascend/shared";
 
 const HEALTH_TIMEOUT_MS = 30_000;
+const HEALTH_POLL_TIMEOUT_MS = 2_000;
+/** A renderer request that has not answered by then fails instead of hanging the IPC call. */
+const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_RESTARTS = 3;
+const RESTART_WINDOW_MS = 10 * 60_000;
 
 export interface SidecarOptions {
   isPackaged: boolean;
@@ -30,6 +37,19 @@ export interface SidecarOptions {
   devRoot: string;
   dataDir: string;
   log: (line: string) => void;
+  /** Overrides for tests. */
+  requestTimeoutMs?: number;
+  healthTimeoutMs?: number;
+}
+
+/** What /health returns as `proof`: HMAC-SHA256 of a fixed label under the token. */
+export function healthProof(token: string): string {
+  return createHmac("sha256", token).update("ascend-sidecar-health").digest("hex");
+}
+
+/** Crash times still inside the restart window. */
+export function recentCrashes(times: number[], now: number, windowMs = RESTART_WINDOW_MS): number[] {
+  return times.filter((t) => now - t < windowMs);
 }
 
 /**
@@ -82,6 +102,7 @@ export class SidecarManager {
   private child: ChildProcess | null = null;
   private stopping = false;
   private status: SidecarStatus = { state: "stopped", port: null, restarts: 0, lastError: null };
+  private crashes: number[] = [];
 
   constructor(private readonly opts: SidecarOptions) {}
 
@@ -129,13 +150,22 @@ export class SidecarManager {
   }
 
   private async waitHealthy(): Promise<void> {
-    const deadline = Date.now() + HEALTH_TIMEOUT_MS;
+    const deadline = Date.now() + (this.opts.healthTimeoutMs ?? HEALTH_TIMEOUT_MS);
+    const expected = healthProof(this.token);
     while (Date.now() < deadline) {
+      let body: unknown = null;
       try {
-        const res = await fetch(`${this.baseUrl}/health`);
-        if (res.ok) return;
+        const res = await fetch(`${this.baseUrl}/health`, { signal: AbortSignal.timeout(HEALTH_POLL_TIMEOUT_MS) });
+        if (res.ok) body = await res.json();
       } catch {
         /* not listening yet */
+      }
+      if (body !== null) {
+        if ((body as { proof?: unknown }).proof === expected) return;
+        // Something else answers on our port (it was taken after freePort()); never send
+        // it the token. Our sidecar cannot bind and exits, which triggers a restart on a
+        // new port.
+        throw new Error(`port ${this.status.port} is answered by another process`);
       }
       await new Promise((r) => setTimeout(r, 300));
     }
@@ -149,11 +179,14 @@ export class SidecarManager {
       return;
     }
     this.opts.log(`sidecar exited unexpectedly (code ${code})`);
-    if (this.status.restarts >= MAX_RESTARTS) {
+    // Count crashes in a sliding window: the old counter never reset, so three crashes
+    // spread over days left the fourth one fatal (review L9).
+    this.crashes = [...recentCrashes(this.crashes, Date.now()), Date.now()];
+    if (this.crashes.length > MAX_RESTARTS) {
       this.status = { ...this.status, state: "failed", lastError: `exited with code ${code}` };
       return;
     }
-    this.status = { ...this.status, restarts: this.status.restarts + 1, state: "restarting" };
+    this.status = { ...this.status, restarts: this.crashes.length, state: "restarting" };
     const backoff = 500 * 2 ** this.status.restarts;
     setTimeout(() => {
       this.start().catch((err: Error) => {
@@ -164,8 +197,14 @@ export class SidecarManager {
 
   async request(method: string, urlPath: string, body?: unknown): Promise<{ status: number; data: unknown }> {
     if (this.status.state !== "ready") throw new Error(`sidecar is ${this.status.state}`);
+    // /events is a never-ending stream; through IPC it would hold the call forever.
+    if (urlPath === "/events" || urlPath.startsWith("/events?")) throw new Error("/events is not available over IPC");
+    const timeoutMs = this.opts.requestTimeoutMs ?? REQUEST_TIMEOUT_MS;
+    // A hung sidecar used to leave the renderer's call (and its spinner) waiting forever
+    // (review L10).
     const res = await fetch(`${this.baseUrl}${urlPath}`, {
       method,
+      signal: AbortSignal.timeout(timeoutMs),
       headers: {
         Authorization: `Bearer ${this.token}`,
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
