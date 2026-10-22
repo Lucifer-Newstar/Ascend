@@ -157,6 +157,17 @@ Optional AI coach:
 ollama pull qwen3:4b        # ~2.5 GB; fits a 4 GB GPU
 ```
 
+**Tuning for 4 GB GPUs (e.g. RTX 3050 Laptop).** With default settings `ollama ps` showed `qwen3:4b`
+at 3.5 GB split 34%/66% CPU/GPU and 8.3 tokens/s. These three settings brought it to 21.3 tokens/s on
+the same laptop (measured with `ollama run qwen3:4b --verbose`, one prompt each, Oct 2026):
+
+```powershell
+setx OLLAMA_FLASH_ATTENTION 1
+setx OLLAMA_KV_CACHE_TYPE q8_0
+setx OLLAMA_CONTEXT_LENGTH 2048
+# then quit Ollama from the tray and start it again
+```
+
 Toggle **AI coach** in the top bar. With it off (or Ollama not running) the coach gives
 rule-based tips; nothing else changes.
 
