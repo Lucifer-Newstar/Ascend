@@ -8,6 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.core.schemas import StrictIn
 from app.modules.intelligence.schemas import Why
 
+# Most primary muscles one custom exercise may have (one set is a hard set for each).
+MAX_PRIMARY_MUSCLES = 4
+
 
 class MuscleWeight(BaseModel):
     muscle: str
@@ -205,7 +208,7 @@ class CustomExerciseIn(StrictIn):
             seen.add(m.muscle)
         if self.section not in ("meditation", "flexibility") and not self.muscles:
             raise ValueError("pick at least one muscle region")
-        if sum(1 for m in self.muscles if m.weight >= 1.0) > 4:
+        if sum(1 for m in self.muscles if m.weight >= 1.0) > MAX_PRIMARY_MUSCLES:
             # One set counts as a hard set for every primary muscle; more than 4 (the most
             # any library exercise has under taxonomy v2) would let a single custom exercise
             # tick every muscle quest at once.
