@@ -6,6 +6,16 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Changed (v8 detailed muscle map)
+- **54 muscles and heads instead of 19 regions** (taxonomy `muscles-v2`, ADR-0021, research in `docs/research/v8-anatomy.md`): the pectoralis major heads, pectoralis minor and serratus; lats, teres major, three trapezius parts, rhomboids, the rotator cuff, erectors and quadratus lumborum; the neck; three deltoids; biceps and triceps heads, brachialis, brachioradialis and the forearm groups; the abdominal layers; the glutes, TFL and hip flexors; the four quadriceps, sartorius, adductors, gracilis and the three hamstrings; calves, tibialis anterior and fibularis.
+- **New muscle map artwork**, drawn for ASCEND: front, back and a **Deep** layer (pectoralis minor, rotator cuff, rhomboids, transversus, iliopsoas, vastus intermedius...) that ghosts the surface muscles. "All muscles" is grouped by region and every muscle opens its drill-down. Exercise tiles without a photo now show the body with the exercise's muscles highlighted. react-muscle-highlighter is no longer a dependency.
+- **Every exercise re-mapped** by `muscle-map-v1`: free-exercise-db's muscle lists plus name rules (incline, decline, fly, dip, overhead, pushdown, hammer, preacher, seated calf...) from the research table in `docs/research/v8-exercise-muscle-mapping.md`. Custom exercises are split into heads the same way, from the rules, local AI or wger guess.
+- 17 small or deep muscles show recovery only and never raise an "under-trained" or volume warning, because there is no evidence for weekly set targets for them. They are never quest targets.
+- **Migration 0018** keeps a copy of the old rows, re-maps the library, translates hand-made weights, renames quest metrics and recomputes muscle load from your logged sets. No workout, set, meal, XP or quest is removed; a backup is written first and the downgrade restores the old rows. A test checks that a v7 history survives.
+- One set now counts on several heads, so weekly sets per muscle are not comparable with v7's 19 regions. The recovery evaluation was rerun: recovery-v2 Pearson r 0.842-0.926 on the 54 muscles (v7: 0.848-0.946), still far ahead of a fixed 48 h rule (0.552-0.579). See `docs/ai/evaluation.md`.
+- Custom exercises can list up to 40 muscles with at most 4 primary (was 8 and 3), since library exercises now carry more heads.
+- `MuscleState` gains `region`, `parent`, `deep` and `readiness_only`; `map_slug` is the muscle key.
+
 ### Added (v8 hardening)
 - **Daily automatic backups.** While the app runs, the sidecar saves one `.ascendbak` snapshot per calendar day (checked at start-up and about hourly) and keeps the newest 14. They sit beside the existing pre-update and pre-restore safety copies, which keep their own rotation; manual backups are never deleted.
 - **Settings → Backups** lists every snapshot with its kind and size, has "Back up now", and restores one after a confirmation. The current data is backed up first, the database is reopened, and the window reloads.
