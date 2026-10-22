@@ -63,7 +63,7 @@ describe("ProgressPage", () => {
     vi.mocked(api.measurements).mockResolvedValue([]);
     vi.mocked(api.muscles).mockResolvedValue([
       { key: "chest", label: "Chest", group: "push", map_slug: "chest", status: "recovering", es_7d: 12, weekly_low: 10, weekly_high: 20, readiness: 0.7, ready_at: null },
-      { key: "lats", label: "Lats", group: "pull", map_slug: "upper-back", status: "under", es_7d: 4, weekly_low: 10, weekly_high: 20, readiness: 1, ready_at: null },
+      { key: "latissimus_dorsi", label: "Lats", group: "pull", map_slug: "upper-back", status: "under", es_7d: 4, weekly_low: 10, weekly_high: 20, readiness: 1, ready_at: null },
     ]);
     vi.mocked(api.dietInsights).mockResolvedValue({
       algo_version: "insights-v1", week_end: "2026-10-20",

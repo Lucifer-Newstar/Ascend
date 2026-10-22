@@ -15,7 +15,7 @@ const analysis = (over: Partial<ExerciseAnalysis> = {}): ExerciseAnalysis => ({
   name: "Banded Pallof Hold",
   proposal: {
     section: "gym", equipment: "band", measure: "hold", pattern: "isometric", difficulty: "intermediate",
-    muscles: [{ muscle: "obliques", weight: 1 }, { muscle: "abs", weight: 0.5 }], rep_low: 10, rep_high: 30, met: null,
+    muscles: [{ muscle: "external_obliques", weight: 1 }, { muscle: "rectus_abdominis", weight: 0.5 }], rep_low: 10, rep_high: 30, met: null,
     instructions: [], aliases: [],
   },
   field_sources: { section: "rules", equipment: "rules", measure: "rules", pattern: "rules", difficulty: "rules", muscles: "local_ai", rep_low: "rules", rep_high: "rules" },
@@ -36,7 +36,7 @@ const researched = (): ExerciseAnalysis => {
   const base = analysis({ name: "Spoto Press" });
   return {
     ...base,
-    proposal: { ...base.proposal, equipment: "barbell", measure: "reps", pattern: "push", rep_low: 6, rep_high: 12, muscles: [{ muscle: "lower_chest", weight: 1 }, { muscle: "triceps", weight: 0.5 }], instructions: ["Lower the bar.", "Press up."] },
+    proposal: { ...base.proposal, equipment: "barbell", measure: "reps", pattern: "push", rep_low: 6, rep_high: 12, muscles: [{ muscle: "pec_major_sternal", weight: 1 }, { muscle: "triceps_lateral", weight: 0.5 }], instructions: ["Lower the bar.", "Press up."] },
     field_sources: { ...base.field_sources, equipment: "wger", muscles: "wger", instructions: "wger" },
     confidence: { ...base.confidence, equipment: "high", muscles: "high", instructions: "high" },
     attribution: [{ source: "wger", title: "wger exercise #77: Spoto Press", url: "https://wger.de/en/exercise/77/view/", license: "CC-BY-SA 4" }],
@@ -91,7 +91,7 @@ describe("AddExerciseView", () => {
     expect(body.field_sources.difficulty).toBe("user");
     expect(body.field_sources.muscles).toBe("user");
     expect(body.field_sources.equipment).toBe("rules");
-    expect(body.muscles).toEqual([{ muscle: "obliques", weight: 1 }, { muscle: "abs", weight: 1 }]);
+    expect(body.muscles).toEqual([{ muscle: "external_obliques", weight: 1 }, { muscle: "rectus_abdominis", weight: 1 }]);
     expect(onCreated).toHaveBeenCalledWith(99);
   });
 

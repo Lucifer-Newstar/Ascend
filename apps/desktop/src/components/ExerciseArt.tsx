@@ -7,7 +7,9 @@
 import { useState, type ReactNode } from "react";
 import type { Exercise, Section } from "@ascend/shared";
 
-import { muscleLabel } from "../lib/muscles";
+import { MUSCLE_PATHS } from "../lib/bodyMapPaths";
+import { muscleShort } from "../lib/muscles";
+import { BodySvg } from "./MuscleFigure";
 
 type ArtExercise = Pick<Exercise, "image" | "name" | "section"> & { muscles?: Exercise["muscles"] };
 
@@ -74,13 +76,27 @@ function mainMuscles(e: ArtExercise): string[] {
   return (e.muscles ?? [])
     .filter((m) => m.weight >= 1)
     .slice(0, 2)
-    .map((m) => muscleLabel(m.muscle));
+    .map((m) => muscleShort(m.muscle));
+}
+
+const BACK_KEYS = new Set(MUSCLE_PATHS.filter((p) => p.view === "back" && p.layer === "surface").map((p) => p.key));
+const FRONT_KEYS = new Set(MUSCLE_PATHS.filter((p) => p.view === "front" && p.layer === "surface").map((p) => p.key));
+
+/** Which side shows the exercise's main muscles best, and the fill for each muscle. */
+function tileBody(e: ArtExercise, hue: string): { view: "front" | "back"; fills: Map<string, string> } | null {
+  const ms = (e.muscles ?? []).filter((m) => m.weight >= 0.5);
+  if (!ms.length) return null;
+  const score = (keys: Set<string>) => ms.reduce((n, m) => n + (keys.has(m.muscle) ? m.weight : 0), 0);
+  const view = score(BACK_KEYS) > score(FRONT_KEYS) ? "back" : "front";
+  const fills = new Map(ms.map((m) => [m.muscle, m.weight >= 1 ? hue : `color-mix(in srgb, ${hue} 45%, var(--color-panel-3))`]));
+  return { view, fills };
 }
 
 /** The designed tile used when an exercise has no photo. */
 export function ExerciseTile({ exercise: e, className = "" }: { exercise: ArtExercise; className?: string }) {
   const hue = SECTION_HUE[e.section] ?? SECTION_HUE.gym;
   const muscles = mainMuscles(e);
+  const body = tileBody(e, hue);
   return (
     <div
       aria-hidden
@@ -88,9 +104,24 @@ export function ExerciseTile({ exercise: e, className = "" }: { exercise: ArtExe
       className={`exercise-tile relative w-full overflow-hidden ${className}`}
       style={{ ["--tile-hue" as string]: hue }}
     >
-      <svg viewBox="0 0 24 24" className="absolute left-1/2 top-[42%] h-[52%] -translate-x-1/2 -translate-y-1/2" style={{ color: hue }}>
-        {GLYPH[e.section] ?? GLYPH.gym}
-      </svg>
+      {body ? (
+        <>
+          <BodySvg
+            view={body.view}
+            fills={body.fills}
+            defaultFill="var(--color-panel-2)"
+            border="color-mix(in srgb, var(--color-ink) 22%, transparent)"
+            className="absolute left-1/2 top-[6%] h-[74%] -translate-x-1/2"
+          />
+          <svg viewBox="0 0 24 24" className="absolute right-2 top-2 h-5 w-5" style={{ color: hue }}>
+            {GLYPH[e.section] ?? GLYPH.gym}
+          </svg>
+        </>
+      ) : (
+        <svg viewBox="0 0 24 24" className="absolute left-1/2 top-[42%] h-[52%] -translate-x-1/2 -translate-y-1/2" style={{ color: hue }}>
+          {GLYPH[e.section] ?? GLYPH.gym}
+        </svg>
+      )}
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 px-2.5 pb-2">
         <span className="truncate font-display text-[11px] font-bold uppercase tracking-[0.12em] text-ink/90">
           {muscles.length ? muscles.join(" · ") : SECTION_NAME[e.section]}

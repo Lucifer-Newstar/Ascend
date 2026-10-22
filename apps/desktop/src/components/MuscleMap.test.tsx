@@ -16,16 +16,16 @@ const m = (key: string, label: string, map_slug: string, over: Partial<MuscleSta
   key, label, group: "", map_slug, status: "under", es_7d: 0, weekly_low: 10, weekly_high: 20, readiness: 1, ready_at: null, ...over,
 });
 const muscles = [
-  m("lower_chest", "Lower chest", "chest", { status: "recovering", es_7d: 9, readiness: 0.6, ready_at: "2026-10-21T08:00:00" }),
-  m("biceps", "Biceps", "biceps", { status: "optimal", es_7d: 12, readiness: 0.98 }),
-  m("quads", "Quads", "quadriceps", { status: "no_data" }),
-  m("lats", "Lats", "upper-back", { status: "under", es_7d: 3 }),
+  m("pec_major_sternal", "Lower chest", "pec_major_sternal", { status: "recovering", es_7d: 9, readiness: 0.6, ready_at: "2026-10-21T08:00:00" }),
+  m("biceps_long", "Biceps", "biceps_long", { status: "optimal", es_7d: 12, readiness: 0.98 }),
+  m("vastus_lateralis", "Vastus lateralis", "vastus_lateralis", { status: "no_data" }),
+  m("latissimus_dorsi", "Lats", "latissimus_dorsi", { status: "under", es_7d: 3 }),
 ];
 const activity = (days: number): MuscleActivity[] => [
-  { key: "lower_chest", sets: days === 30 ? 30 : 9, volume_kg: 4200, last_trained: new Date().toISOString() },
-  { key: "biceps", sets: days === 30 ? 40 : 12, volume_kg: 1800, last_trained: "2026-10-15T09:00:00" },
-  { key: "quads", sets: 0, volume_kg: 0, last_trained: null },
-  { key: "lats", sets: 3, volume_kg: 900, last_trained: "2026-10-17T09:00:00" },
+  { key: "pec_major_sternal", sets: days === 30 ? 30 : 9, volume_kg: 4200, last_trained: new Date().toISOString() },
+  { key: "biceps_long", sets: days === 30 ? 40 : 12, volume_kg: 1800, last_trained: "2026-10-15T09:00:00" },
+  { key: "vastus_lateralis", sets: 0, volume_kg: 0, last_trained: null },
+  { key: "latissimus_dorsi", sets: 3, volume_kg: 900, last_trained: "2026-10-17T09:00:00" },
 ];
 
 function renderMap(settings: Partial<Settings> = {}) {
@@ -37,13 +37,13 @@ function renderMap(settings: Partial<Settings> = {}) {
 }
 
 const figure = () => screen.getByTestId("muscle-figure");
-const pathOf = (slug: string) => figure().querySelector(`path[id="${slug}"]`) as SVGPathElement;
+const pathOf = (slug: string) => figure().querySelector(`path[data-key="${slug}"]`) as SVGPathElement;
 
 describe("MuscleMap", () => {
   beforeEach(() => {
     vi.mocked(api.muscleActivity).mockImplementation(async (days: number) => activity(days));
     vi.mocked(api.muscleHistory).mockResolvedValue({
-      code: "lower_chest", label: "Lower chest", days: 7, status: "recovering", es_7d: 9, target_low: 10, target_high: 20,
+      code: "pec_major_sternal", label: "Lower chest", days: 7, status: "recovering", es_7d: 9, target_low: 10, target_high: 20,
       readiness: 0.6, ready_at: null, daily: [], contributing_sets: [], suggestion: null, formula_version: "load-1.1.0",
     });
   });
@@ -64,14 +64,14 @@ describe("MuscleMap", () => {
     await waitFor(() => expect(api.muscleActivity).toHaveBeenCalledWith(7));
     await screen.findByText("Needs attention");
     await act(async () => {});
-    fireEvent.pointerMove(pathOf("chest"), { clientX: 40, clientY: 80 });
+    fireEvent.pointerMove(pathOf("pec_major_sternal"), { clientX: 40, clientY: 80 });
     const tip = await screen.findByTestId("muscle-tooltip");
-    expect(within(tip).getByText("Chest")).toBeInTheDocument();
+    expect(within(tip).getByText("Lower chest")).toBeInTheDocument();
     expect(within(tip).getByText("Recovering")).toBeInTheDocument();
     expect(within(tip).getByText("4,200 kg")).toBeInTheDocument();
     expect(within(tip).getByText("today")).toBeInTheDocument();
     // The hovered muscle is lifted by a generated rule scoped to this figure.
-    expect(figure().querySelector("style")?.textContent).toMatch(/path\[id="chest"\] \{ transform: scale\(1\.045\)/);
+    expect(figure().querySelector("style")?.textContent).toMatch(/path\[data-key="pec_major_sternal"\] \{ transform: scale\(1\.04\)/);
     fireEvent.pointerLeave(figure());
     await waitFor(() => expect(screen.queryByTestId("muscle-tooltip")).toBeNull());
   });
@@ -80,19 +80,19 @@ describe("MuscleMap", () => {
     renderMap();
     await screen.findByText("Ready again:", { exact: false });
     const css = figure().querySelector("style")?.textContent ?? "";
-    expect(css).toMatch(/path\[id="chest"\] \{ filter: url\(#mm[a-z0-9]+-glow\)/i);
-    expect(css).toMatch(/path\[id="biceps"\][^{]*\{ animation: asc-muscle-pulse/);
-    expect(css).not.toMatch(/path\[id="chest"\][^{]*\{ animation/);
-    expect(screen.getByText("Ready again:").parentElement).toHaveTextContent("Biceps, Upper back");
+    expect(css).toMatch(/path\[data-key="pec_major_sternal"\] \{ filter: drop-shadow/);
+    expect(css).toMatch(/path\[data-key="biceps_long"\][^{]*\{ animation: asc-muscle-pulse/);
+    expect(css).not.toMatch(/path\[data-key="pec_major_sternal"\][^{]*\{ animation/);
+    expect(screen.getByText("Ready again:").parentElement).toHaveTextContent("Biceps, Lats");
   });
 
   it("opens the drill-down when a muscle is clicked", async () => {
     renderMap();
     await act(async () => {});
-    fireEvent.click(pathOf("chest"));
+    fireEvent.click(pathOf("pec_major_sternal"));
     const panel = await screen.findByRole("region", { name: "Muscle details" });
     expect(panel).toHaveClass("panel-in");
-    expect(api.muscleHistory).toHaveBeenCalledWith("lower_chest", 7);
+    expect(api.muscleHistory).toHaveBeenCalledWith("pec_major_sternal", 7);
   });
 
   it("recolours by volume for the chosen range", async () => {
@@ -102,8 +102,8 @@ describe("MuscleMap", () => {
     await userEvent.click(screen.getByLabelText("30 days"));
     await waitFor(() => expect(api.muscleActivity).toHaveBeenLastCalledWith(30));
     // Biceps carry the most sets in 30 days, so they take the deepest colour; quads are untrained.
-    await waitFor(() => expect(pathOf("biceps").getAttribute("fill")).toBe("#2fd9f2"));
-    expect(pathOf("quadriceps").getAttribute("fill")).not.toBe("#2fd9f2");
+    await waitFor(() => expect(pathOf("biceps_long").getAttribute("fill")).toBe("#2fd9f2"));
+    expect(pathOf("vastus_lateralis").getAttribute("fill")).not.toBe("#2fd9f2");
     expect(screen.getByText(/More sets · last 30 days/)).toBeInTheDocument();
   });
 
@@ -111,11 +111,20 @@ describe("MuscleMap", () => {
     renderMap({ reduce_motion: true });
     await act(async () => {});
     const tilt = screen.getByTestId("muscle-flip").parentElement as HTMLElement;
-    fireEvent.pointerMove(pathOf("chest"), { clientX: 5, clientY: 5 });
+    fireEvent.pointerMove(pathOf("pec_major_sternal"), { clientX: 5, clientY: 5 });
     await act(async () => {
       await new Promise((r) => requestAnimationFrame(() => r(null)));
     });
     expect(tilt.style.getPropertyValue("--tx")).not.toMatch(/[1-9]/);
+  });
+
+  it("shows the deep layer on request", async () => {
+    renderMap();
+    await act(async () => {});
+    expect(figure().querySelector('path[data-key="pec_minor"]')).toBeNull();
+    await userEvent.click(screen.getByLabelText("Deep"));
+    expect(figure()).toHaveAttribute("data-layer", "deep");
+    expect(figure().querySelector('path[data-key="pec_minor"]')).not.toBeNull();
   });
 
   it("keeps the figure out of the accessibility tree and has no axe violations", async () => {

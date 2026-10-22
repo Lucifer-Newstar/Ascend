@@ -16,7 +16,7 @@
 | Styling | Tailwind CSS + shadcn/ui (Radix) | Tailwind 4 (v0.1) | Design tokens, accessible primitives |
 | Icons / fonts | lucide · Inter, Rajdhani (`@fontsource`) | — | Offline fonts bundled |
 | Charts | Recharts | — | Simple, SVG |
-| Muscle map | `react-muscle-highlighter` 1.2.0 paths, regrouped into 19 regions | 1.2.0 (v0.1) | MIT-licensed anatomical artwork |
+| Muscle map | Original SVG artwork, 54 muscles and heads with a deep layer (`lib/bodyMapPaths.ts`, v8); `react-muscle-highlighter` 1.2.0 up to v7 | v8 | MIT, see ADR-0021 |
 | Data fetching | TanStack Query | — | Caching, retries, invalidation on SSE events |
 | Validation | zod | — | IPC payload validation in main |
 | Tests | Vitest + Testing Library · Playwright for Electron | Vitest 2 (v0.1) | Unit + E2E |

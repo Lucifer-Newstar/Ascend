@@ -4,12 +4,12 @@
  * over 1, 7 or 30 days (Hevy-style distribution). Hover shows sets, volume and
  * when the region was last trained; click opens the drill-down.
  *
- * Body artwork: react-muscle-highlighter 1.2.0 (MIT licence,
- * https://github.com/soroojshehryar/react-muscle-highlighter). See README credits.
+ * v8: 54 muscles and heads (taxonomy v2) on ASCEND's own anatomical artwork, with a
+ * "deep" layer for the muscles hidden under others and a region-grouped list in which
+ * every muscle can be opened.
  */
 import type { MuscleState, MuscleStatus } from "@ascend/shared";
 import { useMemo, useState } from "react";
-import type { ExtendedBodyPart, Slug } from "react-muscle-highlighter";
 
 import { api } from "../api/client";
 import { readyAtLabel } from "../lib/format";
@@ -28,9 +28,10 @@ import {
 } from "../lib/muscleMap";
 import { usePrefsTheme } from "../lib/prefs";
 import { cssVar } from "../lib/theme";
+import { REGIONS } from "../lib/muscles";
 import { useApi } from "../lib/useApi";
 import { MuscleDrilldown } from "./MuscleDrilldown";
-import { MuscleFigure } from "./MuscleFigure";
+import { MuscleFigure, type BodyLayer, type BodyPart } from "./MuscleFigure";
 import { Segmented } from "./Segmented";
 
 const LEGEND: MuscleStatus[] = ["under", "optimal", "recovering", "over", "no_data"];
@@ -52,6 +53,7 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
   const [view, setView] = useState<View>("recovery");
   const [range, setRange] = useState<Range>("7");
   const [side, setSide] = useState<"front" | "back">("front");
+  const [layer, setLayer] = useState<BodyLayer>("surface");
   const [hovered, setHovered] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
@@ -63,17 +65,17 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
   const maxSets = Math.max(0, ...[...slugs.values()].map((s) => s.sets));
 
   const { parts, glow, pulse } = useMemo(() => {
-    const parts: ExtendedBodyPart[] = [];
+    const parts: BodyPart[] = [];
     const glow: string[] = [];
     const pulse: string[] = [];
     for (const s of slugs.values()) {
       if (view === "recovery") {
-        parts.push({ slug: s.slug as Slug, color: statusColor(s.status) });
+        parts.push({ slug: s.slug, color: statusColor(s.status) });
         if (s.fatigued) glow.push(s.slug);
         if (s.readyAgain) pulse.push(s.slug);
       } else {
         const share = maxSets > 0 ? s.sets / maxSets : 0;
-        parts.push({ slug: s.slug as Slug, color: heatColor(share, theme) ?? cssVar("--color-map-fill", "#1a2232") });
+        parts.push({ slug: s.slug, color: heatColor(share, theme) ?? cssVar("--color-map-fill", "#1a2232") });
         if (share >= 0.75) glow.push(s.slug);
       }
     }
@@ -120,6 +122,7 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
           <MuscleFigure
             parts={parts}
             side={side}
+            layer={layer}
             glow={glow}
             pulse={view === "recovery" ? pulse : []}
             interactive={interactive}
@@ -130,15 +133,23 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
             defaultFill={cssVar("--color-map-fill", "#1a2232")}
             tooltip={hoveredSummary && <MuscleTooltip s={hoveredSummary} view={view} rangeWords={RANGE_WORDS[view === "volume" ? range : "7"]} />}
           />
+          <div className="flex items-center gap-2">
           <button
-            type="button"
-            className="btn-ghost px-3 py-1.5 text-xs"
-            onClick={() => setSide((s) => (s === "front" ? "back" : "front"))}
-            aria-label={side === "front" ? "Show back of the body" : "Show front of the body"}
-            title="Flip the figure"
-          >
-            <FlipIcon /> {side === "front" ? "Show back" : "Show front"}
-          </button>
+              type="button"
+              className="btn-ghost px-3 py-1.5 text-xs"
+              onClick={() => setSide((s) => (s === "front" ? "back" : "front"))}
+              aria-label={side === "front" ? "Show back of the body" : "Show front of the body"}
+              title="Flip the figure"
+            >
+              <FlipIcon /> {side === "front" ? "Show back" : "Show front"}
+            </button>
+            <Segmented
+              label="Muscle layer"
+              value={layer}
+              onChange={setLayer}
+              options={[{ value: "surface", label: "Surface" }, { value: "deep", label: "Deep" }]}
+            />
+          </div>
         </div>
         <div className="min-w-0 flex-1 space-y-4">
           {view === "recovery" ? (
@@ -198,8 +209,14 @@ export function MuscleMap({ muscles, refreshKey = 0 }: { muscles: MuscleState[];
             <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-muted hover:text-ink">
               All muscles ({muscles.length})
             </summary>
-            <div className="mt-2 max-h-64 overflow-y-auto pr-1">
-              {muscles.map((m) => <RegionRow key={m.key} m={m} onOpen={setDetail} />)}
+            <div className="mt-2 max-h-80 overflow-y-auto pr-1">
+              {REGIONS.filter((r) => muscles.some((m) => m.region === r)).map((r) => (
+                <div key={r} className="mb-2">
+                  <div className="sticky top-0 bg-panel py-1 font-display text-[11px] font-bold uppercase tracking-[0.12em] text-faint">{r}</div>
+                  {muscles.filter((m) => m.region === r).map((m) => <RegionRow key={m.key} m={m} onOpen={setDetail} />)}
+                </div>
+              ))}
+              {muscles.filter((m) => !m.region).map((m) => <RegionRow key={m.key} m={m} onOpen={setDetail} />)}
             </div>
           </details>
         </div>
@@ -246,7 +263,7 @@ function FlipIcon() {
 }
 
 function RegionRow({ m, onOpen }: { m: MuscleState; onOpen: (code: string) => void }) {
-  const band = `${m.weekly_low}–${m.weekly_high}`;
+  const band = m.readiness_only ? "" : ` / ${m.weekly_low}–${m.weekly_high}`;
   return (
     <button
       type="button"
@@ -256,9 +273,10 @@ function RegionRow({ m, onOpen }: { m: MuscleState; onOpen: (code: string) => vo
       <span className="flex min-w-0 items-center gap-2">
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: statusVar(m.status) }} />
         <span className="truncate text-ink">{m.label}</span>
+        {m.deep && <span className="chip px-1 py-0 text-[9px]" title="Deep muscle: shown in the Deep layer">deep</span>}
       </span>
       <span className="shrink-0 text-right text-muted" title="Effective sets in the last 7 days vs the weekly target band (estimate)">
-        {m.es_7d} / {band} sets · {Math.round(m.readiness * 100)}%{m.status === "recovering" ? ` · ${readyAtLabel(m.ready_at)}` : ""}
+        {Math.round(m.es_7d * 10) / 10}{band} sets · {Math.round(m.readiness * 100)}%{m.status === "recovering" ? ` · ${readyAtLabel(m.ready_at)}` : ""}
       </span>
       <span className="sr-only">, {STATUS_LABELS[m.status]}. Open details</span>
     </button>

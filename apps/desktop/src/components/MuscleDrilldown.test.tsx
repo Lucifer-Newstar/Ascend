@@ -12,7 +12,7 @@ vi.mock("../api/client", () => ({
 }));
 
 const history: MuscleHistory = {
-  code: "quads", label: "Quads", days: 7, status: "optimal", es_7d: 12, target_low: 10, target_high: 20,
+  code: "vastus_lateralis", label: "Quads", days: 7, status: "optimal", es_7d: 12, target_low: 10, target_high: 20,
   readiness: 0.8, ready_at: null, daily: [], contributing_sets: [], suggestion: null, formula_version: "load-1.1.0",
 };
 
@@ -20,7 +20,7 @@ describe("MuscleDrilldown", () => {
   it("takes focus when it opens and closes on Escape", async () => {
     vi.mocked(api.muscleHistory).mockResolvedValue(history);
     const onClose = vi.fn();
-    render(<MuscleDrilldown code="quads" onClose={onClose} />);
+    render(<MuscleDrilldown code="vastus_lateralis" onClose={onClose} />);
     expect(await screen.findByRole("heading", { name: "Quads" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Muscle details" })).toHaveFocus();
     await userEvent.keyboard("{Escape}");
@@ -32,7 +32,7 @@ describe("MuscleDrilldown", () => {
 
   it("opens with the panel-in animation", async () => {
     vi.mocked(api.muscleHistory).mockResolvedValue(history);
-    render(<MuscleDrilldown code="quads" onClose={vi.fn()} />);
+    render(<MuscleDrilldown code="vastus_lateralis" onClose={vi.fn()} />);
     expect(await screen.findByRole("region", { name: "Muscle details" })).toHaveClass("panel-in");
   });
 
@@ -41,7 +41,7 @@ describe("MuscleDrilldown", () => {
     const onClose = vi.fn();
     render(
       <PrefsProvider initial={{ ...DEFAULT_SETTINGS, reduce_motion: true }} save={vi.fn()}>
-        <MuscleDrilldown code="quads" onClose={onClose} />
+        <MuscleDrilldown code="vastus_lateralis" onClose={onClose} />
       </PrefsProvider>,
     );
     await screen.findByRole("heading", { name: "Quads" });
@@ -51,16 +51,16 @@ describe("MuscleDrilldown", () => {
 
   it("asks for a new range when the day switch changes", async () => {
     vi.mocked(api.muscleHistory).mockResolvedValue(history);
-    render(<MuscleDrilldown code="quads" onClose={vi.fn()} />);
+    render(<MuscleDrilldown code="vastus_lateralis" onClose={vi.fn()} />);
     await screen.findByRole("heading", { name: "Quads" });
     await userEvent.click(screen.getByLabelText("30 days"));
-    expect(api.muscleHistory).toHaveBeenLastCalledWith("quads", 30);
+    expect(api.muscleHistory).toHaveBeenLastCalledWith("vastus_lateralis", 30);
   });
 });
 
 describe("RecoveryYou", () => {
   const muscle: MuscleRecovery = {
-    key: "quads", label: "Quads", group: "Legs", status: "recovering", readiness: 0.55, readiness_population: 0.63,
+    key: "vastus_lateralis", label: "Quads", group: "Legs", status: "recovering", readiness: 0.55, readiness_population: 0.63,
     fatigue: 5.4, capacity: 12, half_life_h: 57.6, prior_half_life_h: 48, k: 1.2, modifier: 1.1, es_7d: 8,
     ready_at: null, last_trained: null, top_sets: [],
     why: { formula: "readiness = 1 - min(1, M x F / C)", inputs: { fatigue_F: 5.4, capacity_C: 12, personal_k: 1.2 } },

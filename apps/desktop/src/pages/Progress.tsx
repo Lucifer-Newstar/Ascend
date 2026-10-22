@@ -267,7 +267,8 @@ function KeyLiftsPanel({ prs, loading, error, onRetry, units, refreshKey }: {
 /** Effective sets in the last 7 days per muscle, drawn against its weekly band (recovery-v2). */
 function MuscleBandPanel({ refreshKey }: { refreshKey: number }) {
   const muscles = useApi(api.muscles, [refreshKey], { cacheKey: "muscles" });
-  const list: MuscleState[] = [...(muscles.data ?? [])].sort((a, b) => b.es_7d - a.es_7d);
+  // readiness-only muscles (rotator cuff, neck...) have no weekly band to draw against
+  const list: MuscleState[] = [...(muscles.data ?? [])].filter((m) => !m.readiness_only).sort((a, b) => b.es_7d - a.es_7d);
   const trained = list.filter((m) => m.es_7d > 0).length;
   return (
     <Panel id="bands" index={7} className="col-span-12 xl:col-span-4" title="Weekly sets vs band"

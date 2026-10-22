@@ -529,7 +529,7 @@ function Muscles({ draft, source, confidence, onChange }: { draft: CustomExercis
           </li>
         ))}
       </ul>
-      {free.length > 0 && draft.muscles.length < 8 && (
+      {free.length > 0 && draft.muscles.length < 40 && (
         <button type="button" className="btn-ghost mt-2 px-2 py-1 text-xs" onClick={() => onChange([...draft.muscles, { muscle: free[0], weight: 1 }])}>
           <IconPlus width={14} className="mr-1 inline" /> Add muscle
         </button>
