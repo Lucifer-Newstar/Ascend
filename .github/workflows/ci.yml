@@ -108,7 +108,7 @@ jobs:
       # Optional: Codecov comments on PRs once the repo has a CODECOV_TOKEN secret.
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: services/sidecar/coverage.xml
           flags: sidecar
