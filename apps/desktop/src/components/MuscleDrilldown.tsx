@@ -13,6 +13,7 @@ import { useReducedMotion } from "../lib/motion";
 import { STATUS_LABELS } from "../lib/muscleMap";
 import { useApi } from "../lib/useApi";
 import { BarChart } from "./charts";
+import { RoughBadge } from "./RoughBadge";
 import { Segmented } from "./Segmented";
 import { ErrorState, Loading } from "./States";
 import { WhyButton } from "./WhyPanel";
@@ -133,7 +134,8 @@ export function RecoveryYou({ m, g, explain }: { m: MuscleRecovery; g: RecoveryG
   return (
     <div className="rounded-lg border border-line bg-panel px-3 py-2 text-xs" data-testid="recovery-you">
       <p className="text-ink">
-        Readiness: <span className="font-semibold">you {pct(m.readiness)}</span>
+        Readiness: <span className="font-semibold">you {pct(m.readiness)}</span>{" "}
+        <RoughBadge n={g.n} unit="sessions" enough={8} />
         <span className="text-muted"> · population {pct(m.readiness_population)}</span>
         {m.modifier > 1 && <span className="text-muted"> · today&apos;s check-in ×{m.modifier}</span>}
       </p>

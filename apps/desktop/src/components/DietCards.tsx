@@ -10,6 +10,7 @@ import { useCallback, useState } from "react";
 import { api } from "../api/client";
 import { LineChart } from "./charts";
 import { Panel } from "./Page";
+import { RoughBadge } from "./RoughBadge";
 import { WhyButton } from "./WhyPanel";
 import { kcal } from "../lib/format";
 import { useApi } from "../lib/useApi";
@@ -37,7 +38,7 @@ export function TdeePanel({ refreshKey = 0, index = 5, className = "col-span-12 
         <>
           <dl className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <dt className="text-xs text-muted">You burn about</dt>
+              <dt className="flex flex-wrap items-center gap-1.5 text-xs text-muted">You burn about {d.status !== "adaptive" && <RoughBadge n={d.days_of_data} unit="days" enough={14} />}</dt>
               <dd className="font-display text-2xl font-bold text-ink">{kcal(d.tdee_kcal)} <span className="text-xs font-normal text-muted">kcal/day</span></dd>
               <dd className="text-xs text-muted">likely {kcal(d.low_kcal)}–{kcal(d.high_kcal)}</dd>
             </div>

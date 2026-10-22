@@ -24,6 +24,10 @@ Formula and model versions are listed where a number you see could change.
 
 ### Added (v8 hardening)
 - **Daily automatic backups.** While the app runs, the sidecar saves one `.ascendbak` snapshot per calendar day (checked at start-up and about hourly) and keeps the newest 14. They sit beside the existing pre-update and pre-restore safety copies, which keep their own rotation; manual backups are never deleted.
+- **Quick log on Today:** log one set, one meal or a weigh-in without leaving Today. A set goes into today's open workout (or starts one). Any quick log now keeps the streak alive: an active day is a finished workout, a completed quest item, or any logged set, meal or weigh-in.
+- **"You haven't logged anything today."** A one-line banner on Today, shown only on days with nothing logged yet, jumps to Quick log.
+- **"rough · based on N" badges** mark numbers that rest on too little data: the energy estimate before tdee-v1 turns adaptive (based on N days; settles after about 14) and a muscle's recovery factor while it still uses the population value (based on N sessions; about 8). The thresholds are design choices, listed in Settings → Today's numbers.
+- **Settings → Today's numbers:** an audit table of every number on Today (level and rank, XP, streak, each quest item, the three rings, the five stats, the muscle map, energy burned) with the engine and version that computed it, how, and the data behind it.
 - **Settings → Backups** lists every snapshot with its kind and size, has "Back up now", and restores one after a confirmation. The current data is backed up first, the database is reopened, and the window reloads.
 
 ### Changed (v8 exercise pictures)

@@ -11,6 +11,7 @@ import { BackupsPanel } from "../components/BackupsPanel";
 import { IconDatabase } from "../components/Icons";
 import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
+import { TodaysNumbers } from "../components/TodaysNumbers";
 import { TrainerPortrait } from "../components/Trainer";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState } from "../components/States";
@@ -165,6 +166,11 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           <p className="mb-3 text-sm text-muted">Import history from Strong or Hevy, or export everything you logged.</p>
           <button type="button" className="btn-ghost" onClick={onOpenData}><IconDatabase width={16} height={16} /> Open Import & export</button>
         </section>
+        <section className="card rise-in p-5" style={stagger(5)} aria-labelledby="numbers-title" id="todays-numbers">
+          <h2 id="numbers-title" tabIndex={-1} className="card-title mb-1 outline-none">Today&apos;s numbers</h2>
+          <p className="mb-3 text-sm text-muted">Every number on Today, the engine that computed it and the data behind it. Numbers marked rough rest on too little data so far.</p>
+          <NumbersToggle />
+        </section>
         <BackupsPanel style={stagger(6)} />
         <section className="card rise-in p-5" style={stagger(6)} aria-labelledby="keys-title">
           <h2 id="keys-title" className="card-title mb-3">Keyboard shortcuts</h2>
@@ -198,10 +204,23 @@ const SECTIONS: [string, string][] = [
   ["appearance-title", "Appearance"],
   ["units-title", "Units & training"],
   ["data-title", "Your data"],
+  ["numbers-title", "Today's numbers"],
   ["backups-title", "Backups"],
   ["keys-title", "Keyboard shortcuts"],
   ["about-title", "About"],
 ];
+
+/** The audit table loads on request, so opening Settings stays one quick request. */
+function NumbersToggle() {
+  const [open, setOpen] = useState(false);
+  return open ? (
+    <TodaysNumbers />
+  ) : (
+    <button type="button" className="btn-ghost" onClick={() => setOpen(true)} aria-expanded={false}>
+      Show today&apos;s numbers
+    </button>
+  );
+}
 
 /** Section index (sticky on wide windows): jumps to a section and moves focus to its heading. */
 function SettingsNav() {
