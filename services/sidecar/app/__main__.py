@@ -49,7 +49,9 @@ def prepare_env(env: MutableMapping[str, str], stdin: IO[str], dev: bool, frozen
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ascend-sidecar")
-    parser.add_argument("--dev", action="store_true", help="port 8765, token 'dev', CORS for Vite")
+    parser.add_argument(
+        "--dev", action="store_true", help="port 8765, token 'dev' (Vite proxies /api)"
+    )
     parser.add_argument("--port", type=int, default=None)
     args = parser.parse_args()
 
@@ -59,7 +61,7 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     from app.core.config import load_settings
-    from app.main import create_app
+    from app.main import create_app, exit_via
 
     settings = load_settings()
     app = create_app(settings)
@@ -67,7 +69,13 @@ def main() -> None:
     print(f"ASCEND_SIDECAR_READY port={settings.port}", flush=True)
     # Always 127.0.0.1 in the packaged app (prepare_env); only the dev container sets
     # ASCEND_HOST=0.0.0.0, for `python -m app` inside Docker.
-    uvicorn.run(app, host=settings.host, port=settings.port, log_level="warning")
+    server = uvicorn.Server(
+        uvicorn.Config(app, host=settings.host, port=settings.port, log_level="warning")
+    )
+    # POST /shutdown asks this server to stop instead of signalling the process: on
+    # Windows a self-SIGTERM is TerminateProcess and skipped the lifespan shutdown.
+    app.state.request_exit = exit_via(server)
+    server.run()
 
 
 if __name__ == "__main__":
