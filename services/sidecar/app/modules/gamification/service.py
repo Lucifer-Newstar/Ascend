@@ -82,26 +82,47 @@ def award(
     return granted
 
 
-def reverse(db: Session, at: datetime, sources: Iterable[str], ref_id: int, note: str) -> int:
-    """Append a correction that cancels the XP paid for these refs (never below zero
-    overall for them). The ledger stays append-only: history shows the grant and the
-    reversal. Returns the XP taken back."""
+def _grant_day(db: Session, sources: Iterable[str], ref_id: int) -> date | None:
+    """The day the XP for these refs was first granted."""
+    return db.scalar(
+        select(func.min(XpEvent.day)).where(
+            XpEvent.source.in_(list(sources)), XpEvent.ref_id == ref_id, XpEvent.amount > 0
+        )
+    )
+
+
+def reverse(
+    db: Session,
+    at: datetime,
+    sources: Iterable[str],
+    ref_id: int,
+    note: str,
+    amount: int | None = None,
+) -> int:
+    """Append a correction that cancels the XP paid for these refs (all of it, or
+    `amount`; never below zero overall for them). The ledger stays append-only: history
+    shows the grant and the reversal. Returns the XP taken back.
+
+    The correction is booked on the day of the original grant, not today: booked today it
+    would lower today's total and so free room under today's daily cap (review L8)."""
+    sources = list(sources)
     paid = xp_for_refs(db, sources, ref_id)
-    if paid <= 0:
+    take = paid if amount is None else min(paid, amount)
+    if take <= 0:
         return 0
     db.add(
         XpEvent(
-            day=at.date(),
+            day=_grant_day(db, sources, ref_id) or at.date(),
             at=at,
-            source=next(iter(sources)),
+            source=sources[0],
             ref_id=ref_id,
-            amount=-paid,
+            amount=-take,
             formula_version=f.FORMULA_VERSION,
             note=note[:120],
         )
     )
     db.flush()
-    return paid
+    return take
 
 
 def xp_for_refs(db: Session, sources: Iterable[str], ref_id: int) -> int:
@@ -511,18 +532,59 @@ def _session_work(sets: list[Any]) -> tuple[int, float]:
     return len(sets), timed
 
 
+TIMED_SECTIONS = ("cardio", "martial_arts", "flexibility", "meditation")
+
+
+def _set_amount(
+    db: Session,
+    set_id: int,
+    exercise_id: int,
+    performed_at: datetime,
+    rpe: float | None,
+    duration_s: int | None,
+    section: str,
+) -> int:
+    """XP a set earns as logged now (before the daily cap)."""
+    if duration_s and section in TIMED_SECTIONS:
+        amount = f.timed_set_xp(duration_s, section)
+    else:
+        amount = f.set_xp(rpe)
+    if not f.set_xp_allowed(*_sets_before(db, set_id, exercise_id, performed_at.date())):
+        return 0  # diminishing returns: logging the 41st set of the day pays nothing
+    return amount
+
+
+def _reverse_lost_prs(db: Session, at: datetime, exercise_id: int) -> None:
+    """Take PR XP back from every set of this exercise that is no longer a PR after an
+    edit or delete re-derived the PR flags (recompute_prs)."""
+    from app.modules.workouts.models import WorkoutSet
+
+    lost = db.scalars(
+        select(WorkoutSet.id).where(
+            WorkoutSet.exercise_id == exercise_id, WorkoutSet.is_pr.is_(False)
+        )
+    ).all()
+    paid = {
+        int(ref)
+        for ref, total in db.execute(
+            select(XpEvent.ref_id, func.sum(XpEvent.amount))
+            .where(XpEvent.source == "pr", XpEvent.ref_id.in_(list(lost)))
+            .group_by(XpEvent.ref_id)
+        ).all()
+        if ref is not None and (total or 0) > 0
+    }
+    for set_id in sorted(paid):
+        reverse(db, at, ("pr",), set_id, note="no longer a PR after an edit")
+
+
 def make_handlers(bus: EventBus) -> None:
     def on_set_logged(db: Session, e: SetLogged) -> None:
         from app.modules.workouts.models import WorkoutSet
 
         day = e.performed_at.date()
-        before = _sets_before(db, e.set_id, e.exercise_id, day)
-        if e.duration_s and e.section in ("cardio", "martial_arts", "flexibility", "meditation"):
-            amount = f.timed_set_xp(e.duration_s, e.section)
-        else:
-            amount = f.set_xp(e.rpe)
-        if not f.set_xp_allowed(*before):
-            amount = 0  # diminishing returns: logging the 41st set of the day pays nothing
+        amount = _set_amount(
+            db, e.set_id, e.exercise_id, e.performed_at, e.rpe, e.duration_s, e.section
+        )
         if amount:
             award(db, e.performed_at, "set", e.set_id, amount)
         if e.is_pr:
@@ -534,13 +596,18 @@ def make_handlers(bus: EventBus) -> None:
         refresh_quest(db, bus, e.performed_at)
 
     def on_set_updated(db: Session, e: SetUpdated) -> None:
-        from app.modules.workouts.models import WorkoutSet
-
-        row = db.get(WorkoutSet, e.set_id)
-        # An edit can take PR XP away (the PR was a typo) but never pays it.
-        if row is not None and not row.is_pr:
-            reverse(db, bus.clock(), ("pr",), e.set_id, note="set edited: no longer a PR")
-        refresh_quest(db, bus, bus.clock())
+        now = bus.clock()
+        # An edit can take XP away (the set was easier or shorter than logged) but never
+        # adds any, so editing a set up after logging it earns nothing (review L8).
+        due = _set_amount(
+            db, e.set_id, e.exercise_id, e.performed_at, e.rpe, e.duration_s, e.section
+        )
+        paid = xp_for_refs(db, ("set",), e.set_id)
+        if paid > due:
+            reverse(db, now, ("set",), e.set_id, note="set edited", amount=paid - due)
+        # PR XP: the edit can end this set's PR or another set's (a heavier older set).
+        _reverse_lost_prs(db, now, e.exercise_id)
+        refresh_quest(db, bus, now)
 
     def on_set_deleted(db: Session, e: SetDeleted) -> None:
         from app.modules.workouts.models import Workout
@@ -548,6 +615,7 @@ def make_handlers(bus: EventBus) -> None:
         now = bus.clock()
         reverse(db, now, ("set",), e.set_id, note="set deleted")
         reverse(db, now, ("pr",), e.set_id, note="set deleted")
+        _reverse_lost_prs(db, now, e.exercise_id)
         workout = db.get(Workout, e.workout_id)
         if workout is not None and workout.finished_at is not None:
             remaining = [s for s in workout.sets if s.id != e.set_id]
