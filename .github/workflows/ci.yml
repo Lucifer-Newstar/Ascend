@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # commitlint needs the commits being checked
       - uses: wagoid/commitlint-github-action@v6
@@ -64,7 +64,7 @@ jobs:
       run:
         working-directory: services/sidecar
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # uv installs Python 3.12 itself (from .python-version) and caches packages.
       - uses: astral-sh/setup-uv@v5
@@ -139,7 +139,7 @@ jobs:
       # The Electron binary isn't needed to lint/test/build the renderer.
       ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -177,7 +177,7 @@ jobs:
       run:
         working-directory: services/sidecar
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
@@ -196,7 +196,7 @@ jobs:
     name: Docker images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Lint the Dockerfile (hadolint)
         uses: hadolint/hadolint-action@v3.1.0

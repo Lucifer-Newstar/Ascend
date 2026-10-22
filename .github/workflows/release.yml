@@ -35,7 +35,7 @@ jobs:
         os: [windows-latest]   # add windows-2022 etc. here to test more images
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: astral-sh/setup-uv@v5
         with:
