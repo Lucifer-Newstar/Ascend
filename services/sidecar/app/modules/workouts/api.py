@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from datetime import date, datetime
 from typing import Literal
 
@@ -286,6 +287,9 @@ def get_exercise(exercise_id: int, db: Session = Depends(get_db)) -> ExerciseDet
         raise HTTPException(404, str(e)) from e
 
 
+_START_LOCK = threading.Lock()
+
+
 @router.post("", response_model=WorkoutOut, status_code=201)
 def start(
     section: str = "gym", db: Session = Depends(get_db), now: datetime = Depends(get_now)
@@ -294,8 +298,13 @@ def start(
     first logged set decides it."""
     if section not in SECTIONS:
         raise HTTPException(422, f"unknown section '{section}'")
-    existing = service.active_workout(db)
-    workout = existing or service.start_workout(db, now, section)
+    # Check-then-insert under one lock, committed before it is released: two quick
+    # starts (a double click) used to create two active sessions (review L16). The
+    # sidecar is a single process, so a process-wide lock is enough.
+    with _START_LOCK:
+        existing = service.active_workout(db)
+        workout = existing or service.start_workout(db, now, section)
+        db.commit()
     return service.workout_out(workout)
 
 
@@ -303,13 +312,18 @@ def start(
 def list_workouts(
     limit: int = Query(default=20, ge=1, le=100),
     before: datetime | None = None,
+    before_id: int | None = Query(
+        default=None, ge=1, description="id of the last item (tie-break for `before`)"
+    ),
     section: str | None = None,
     source: Literal["app", "strong", "hevy"] | None = None,
     since: date | None = Query(default=None, description="First day to include"),
     until: date | None = Query(default=None, description="Last day to include"),
     db: Session = Depends(get_db),
 ) -> list[WorkoutSummary]:
-    """Newest first. Pass the last item's started_at as `before` for the next page.
+    """Newest first. Pass the last item's started_at as `before` and its id as
+    `before_id` for the next page (with `before` alone, sessions that started in the same
+    second as the last item are skipped).
     Optional filters: section, source (app or an import) and a day range."""
     if section is not None and section not in SECTIONS:
         raise HTTPException(422, f"unknown section {section!r}")
@@ -319,6 +333,7 @@ def list_workouts(
         db,
         limit=limit,
         before=before,
+        before_id=before_id,
         filters=service.WorkoutFilters(section=section, source=source, since=since, until=until),
     )
 
