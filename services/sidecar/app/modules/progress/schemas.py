@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.schemas import StrictIn
+from app.core.schemas import LocalDatetime, StrictIn
 
 
 class ProfileIn(BaseModel):
@@ -128,7 +128,7 @@ class SettingsIn(StrictIn):
 
 
 class BodyMetricIn(StrictIn):
-    measured_at: datetime | None = None
+    measured_at: LocalDatetime | None = None
     weight_kg: float = Field(ge=20, le=300)
     waist_cm: float | None = Field(default=None, ge=30, le=250)
     resting_hr: int | None = Field(default=None, ge=25, le=150)
@@ -147,7 +147,7 @@ MeasurementSite = Literal["waist", "hips", "chest", "arm", "thigh", "calf", "nec
 
 
 class MeasurementIn(StrictIn):
-    measured_at: datetime | None = None
+    measured_at: LocalDatetime | None = None
     site: MeasurementSite
     cm: float = Field(ge=10, le=250)
 
