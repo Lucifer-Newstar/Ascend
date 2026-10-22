@@ -19,6 +19,17 @@ OPEN_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "testserver"}
 
 
+HEALTH_PROOF_LABEL = b"ascend-sidecar-health"
+
+
+def health_proof(token: str) -> str:
+    """HMAC of a fixed label under this launch's token, returned by the open /health.
+    Electron compares it with its own before it sends the token anywhere: a process that
+    grabbed the port between freePort() and the sidecar's bind cannot produce it, so it
+    never receives the token (review L12)."""
+    return hmac.new(token.encode(), HEALTH_PROOF_LABEL, "sha256").hexdigest()
+
+
 class TokenAuthMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp, token: str) -> None:
         super().__init__(app)

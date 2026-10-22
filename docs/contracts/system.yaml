@@ -62,6 +62,10 @@ paths:
                   migration_head:
                     type: string
                     description: Newest revision shipped with this build
+                  proof:
+                    type: string
+                    description: HMAC-SHA256 of "ascend-sidecar-health" under this launch's
+                      token; the supervisor checks it before sending the token
                 required:
                 - status
                 - version
@@ -69,6 +73,7 @@ paths:
                 - db
                 - migration
                 - migration_head
+                - proof
       x-status: implemented
       security: []
       description: Open endpoint (no token) polled by the supervisor until ready.
