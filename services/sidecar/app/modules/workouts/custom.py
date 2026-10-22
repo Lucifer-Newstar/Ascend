@@ -341,7 +341,9 @@ def ask_model(
     }
     r = httpx.post(f"{host}/api/chat", json=payload, timeout=timeout)
     r.raise_for_status()
-    content = r.json().get("message", {}).get("content", "")
+    from app.modules.coach.ollama import reply_content  # local import, as in propose()
+
+    content = reply_content(r.json())
     data = json.loads(content)
     if not isinstance(data, dict):
         raise ValueError("reply is not a JSON object")

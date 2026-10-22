@@ -1,7 +1,9 @@
 """Minimal client for a local Ollama server (http://127.0.0.1:11434 by default).
 
-Only localhost is ever contacted. Every call has a short timeout; on any error
-the caller falls back to the rule-based tip, so the app works without AI.
+Only localhost is contacted unless the user opts in to a remote Ollama (the host
+comes from config.normalize_ollama_host; "" means off). Every call has a short
+timeout; on any error the caller falls back to the rule-based tip, so the app
+works without AI.
 """
 
 from __future__ import annotations
@@ -22,11 +24,27 @@ class OllamaUnavailable(Exception):
     pass
 
 
+def reply_content(body: object) -> str:
+    """message.content of an /api/chat reply. Raises ValueError for any other shape (a
+    list, a string, a message that isn't an object), so callers never see AttributeError."""
+    message = body.get("message") if isinstance(body, dict) else None
+    content = message.get("content", "") if isinstance(message, dict) else None
+    if not isinstance(content, str):
+        raise ValueError("unexpected reply from Ollama")
+    return content
+
+
 def is_available(host: str, model: str, timeout: float = 1.5) -> bool:
+    if not host:
+        return False
     try:
         r = httpx.get(f"{host}/api/tags", timeout=timeout)
         r.raise_for_status()
-        names = {m.get("name", "") for m in r.json().get("models", [])}
+        body = r.json()
+        models = body.get("models", []) if isinstance(body, dict) else []
+        if not isinstance(models, list):
+            return False
+        names = {m.get("name", "") for m in models if isinstance(m, dict)}
         return model in names or f"{model}:latest" in names
     except (httpx.HTTPError, ValueError):
         return False
@@ -40,6 +58,8 @@ def chat(
     timeout: float = 20.0,
     system: str = SYSTEM_PROMPT,
 ) -> str:
+    if not host:
+        raise OllamaUnavailable("no usable OLLAMA_HOST")
     payload = {
         "model": model,
         "stream": False,
@@ -56,7 +76,7 @@ def chat(
     try:
         r = httpx.post(f"{host}/api/chat", json=payload, timeout=timeout)
         r.raise_for_status()
-        content = r.json().get("message", {}).get("content", "")
+        content = reply_content(r.json())
     except (httpx.HTTPError, ValueError) as e:
         raise OllamaUnavailable(str(e)) from e
     text = THINK_RE.sub("", content).strip()
