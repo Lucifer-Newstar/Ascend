@@ -35,6 +35,11 @@ describe("trainer voice", () => {
     expect(trainerLine("same", "x", "proud")).toBe(trainerLine("same", "x", "proud"));
     expect(trainerLine("k", "Side delts under target", "neutral")).toMatch(/target\.$/);
     expect(trainerLine("k", "a", "warning", 0).split(".")[0]).not.toBe(trainerLine("k", "a", "warning", 1).split(".")[0]);
+    // neighbouring lines do not repeat a closer either
+    const closer = (s: string) => s.split(". ").pop();
+    for (const mood of ["proud", "warning", "hyped"] as const) {
+      expect(closer(trainerLine("k", "a", mood, 0))).not.toBe(closer(trainerLine("k", "a", mood, 1)));
+    }
   });
 
   it("picks the expression from the insight kind", () => {
