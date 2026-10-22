@@ -14,7 +14,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from app import __version__
 from app.core import outbox_worker, stream
@@ -168,6 +168,14 @@ def create_app(
     app.state.bus.clock = lambda: app.state.clock()
     # Tests replace this so POST /shutdown does not stop the test process.
     app.state.request_exit = _exit_soon
+
+    @app.exception_handler(OverflowError)
+    async def number_out_of_range(_request: Request, _exc: OverflowError) -> JSONResponse:
+        # SQLite integers are 64-bit; a path or query id above 2**63-1 used to surface as a
+        # 500 from the driver (review L4). No row can have such an id.
+        return JSONResponse(
+            status_code=422, content={"detail": "a number in the request is out of range"}
+        )
 
     app.add_middleware(TokenAuthMiddleware, token=settings.token)
     if settings.dev:

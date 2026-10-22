@@ -220,6 +220,8 @@ def log_set(
     exercise = db.get(Exercise, data.exercise_id)
     if exercise is None:
         raise NotFound(f"exercise {data.exercise_id} not found")
+    if exercise.archived:
+        raise Conflict(f"{exercise.name} is archived; pick another exercise")
     time_based = exercise.section in TIME_BASED_SECTIONS
     hold = exercise.measure == "hold" and not time_based
     if time_based and not data.duration_s:
@@ -291,6 +293,10 @@ def finish_workout(
         raise Conflict("workout already finished")
     if not workout.sets:
         raise Conflict("log at least one set before finishing")
+    # Like log_set: a clock that moved back (DST, NTP, a manual change) must not end the
+    # session before it started or before its last set (review L2).
+    latest = max((s.performed_at for s in workout.sets), default=workout.started_at)
+    now = max(now, workout.started_at, latest)
     workout.finished_at = now
     minutes = min(180.0, (now - workout.started_at).total_seconds() / 60)
     hard = sum(1 for s in workout.sets if s.rpe is None or s.rpe >= HARD_SET_RPE)
@@ -400,6 +406,10 @@ def update_set(
         changes.pop("reps", None)  # a hold is one effort per set
         if (changes.get("duration_s") or 0) > MAX_HOLD_S:
             raise Invalid(f"a hold longer than {MAX_HOLD_S // 60} minutes is not plausible")
+    timed = row.exercise.section in TIME_BASED_SECTIONS
+    if (timed or hold) and "duration_s" in changes and changes["duration_s"] is None:
+        # The time is the set for a cardio/hold set; nulling it left invalid data (L7).
+        raise Invalid(f"{row.exercise.name} is logged by time: duration_s can't be empty")
     for key, value in changes.items():
         if key in ("weight_kg", "reps") and value is None:
             continue  # cannot null a required field; ignore

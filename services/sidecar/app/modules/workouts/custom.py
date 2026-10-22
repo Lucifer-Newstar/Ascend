@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -43,6 +44,7 @@ from app.modules.progress.muscle_map import refine_legacy
 from app.modules.progress.taxonomy import LEGACY_REGIONS, MUSCLE_BY_KEY
 from app.modules.workouts import library as lib
 from app.modules.workouts.models import Exercise, ExerciseMuscle
+from app.modules.workouts.schemas import MAX_PRIMARY_MUSCLES
 
 FIELDS = (
     "section", "equipment", "measure", "pattern", "difficulty", "muscles",
@@ -568,7 +570,9 @@ def wikipedia_summary(
     name: str, client: httpx.Client, calls: list[SourceCall]
 ) -> tuple[str, str] | None:
     title = re.sub(r"\s+", "_", name.strip().capitalize())
-    url = f"{WIKIPEDIA_API}/{title}"
+    # One path segment: "90/90 stretch", "?" or "#" in a name, or "../" must not change
+    # which REST path is requested (review L5).
+    url = f"{WIKIPEDIA_API}/{quote(title, safe='')}"
     r = client.get(url, params={"redirect": "true"})
     if r.status_code == 404:
         calls.append(SourceCall("wikipedia", url, "not_found"))
@@ -585,7 +589,7 @@ def wikipedia_summary(
     sentences = re.split(r"(?<=[.!?])\s+", extract)
     summary = " ".join(sentences[:2])[:400]
     page = str(((data.get("content_urls") or {}).get("desktop") or {}).get("page") or "")
-    return summary, page or f"https://en.wikipedia.org/wiki/{title}"
+    return summary, page or f"https://en.wikipedia.org/wiki/{quote(title, safe='')}"
 
 
 def research(name: str, client: httpx.Client, consent: str) -> Research:
@@ -895,7 +899,8 @@ TIMED_SECTIONS = ("cardio", "martial_arts", "flexibility", "meditation")
 
 def _make_consistent(p: Proposal) -> None:
     """The stages can disagree (a model saying 'cardio' and 'reps'); fix the proposal so
-    it passes the same checks as create: measure follows section, at most 3 primaries."""
+    it passes the same checks as create: measure follows section, at most
+    MAX_PRIMARY_MUSCLES primaries (the create validator's limit; this said 3, review L19)."""
     v = p.values
     timed = v.get("section") in TIMED_SECTIONS
     if timed and v.get("measure") != "time":
@@ -912,10 +917,25 @@ def _make_consistent(p: Proposal) -> None:
         p.put("rep_high", high, "rules")
     muscles = dict(v.get("muscles") or {})
     primaries = [k for k, w in muscles.items() if w >= 1.0]
-    if len(primaries) > 3:
-        for k in primaries[3:]:
+    if len(primaries) > MAX_PRIMARY_MUSCLES:
+        for k in primaries[MAX_PRIMARY_MUSCLES:]:
             muscles[k] = 0.5
         v["muscles"] = muscles
+
+
+def _free_archived_name(db: Session, name: str) -> None:
+    """An archived exercise keeps its row (old sets point at it) and so its UNIQUE name.
+    find_duplicate() skips archived rows, so re-adding that name hit the constraint and
+    returned 500 (review L1). Rename the archived row out of the way instead."""
+    old = db.scalar(select(Exercise).where(Exercise.name == name, Exercise.archived.is_(True)))
+    if old is None:
+        return
+    base = f"{name[:60]} (archived {old.id})"
+    new, n = base, 2
+    while db.scalar(select(Exercise.id).where(Exercise.name == new)) is not None:
+        new, n = f"{base} {n}", n + 1
+    old.name = new
+    db.flush()
 
 
 def unique_slug(db: Session, name: str) -> str:
@@ -940,6 +960,7 @@ def create(
     dup = find_duplicate(db, name)
     if dup is not None:
         raise Duplicate(dup)
+    _free_archived_name(db, name)
     for alias in values.get("aliases") or []:
         clash = find_duplicate(db, alias)
         if clash is not None:
