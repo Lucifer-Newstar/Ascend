@@ -191,7 +191,12 @@ paths:
       summary: Restore from a .ascendbak (validates manifest + schema version first)
       description: 'Restore a .ascendbak over the current data. The current data is backed up first
 
-        (reason "pre-restore"), so a mistaken restore can itself be undone.'
+        (reason "pre-restore"), so a mistaken restore can itself be undone.
+
+
+        Only files in the backups folder are accepted (a bare file name means that folder);
+
+        the database inside must pass PRAGMA integrity_check and carry no triggers or views.'
       operationId: restore_backup_restore_post
       requestBody:
         content:
