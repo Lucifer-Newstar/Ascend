@@ -42,10 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # commitlint needs the commits being checked
-      - uses: wagoid/commitlint-github-action@v6
+      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
         with:
           configFile: commitlint.config.mjs
 
@@ -64,10 +64,10 @@ jobs:
       run:
         working-directory: services/sidecar
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # uv installs Python 3.12 itself (from .python-version) and caches packages.
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: services/sidecar/uv.lock
@@ -106,7 +106,7 @@ jobs:
         run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sidecar-coverage-${{ matrix.os }}-${{ steps.sha.outputs.short }}
           path: services/sidecar/coverage.xml
@@ -115,7 +115,7 @@ jobs:
       # Optional: Codecov comments on PRs once the repo has a CODECOV_TOKEN secret.
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: services/sidecar/coverage.xml
           flags: sidecar
@@ -139,9 +139,9 @@ jobs:
       # The Electron binary isn't needed to lint/test/build the renderer.
       ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -163,7 +163,7 @@ jobs:
 
       - name: Upload renderer build
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: renderer-dist-${{ github.sha }}
           path: apps/desktop/dist
@@ -177,8 +177,8 @@ jobs:
       run:
         working-directory: services/sidecar
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: services/sidecar/uv.lock
@@ -196,10 +196,10 @@ jobs:
     name: Docker images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Lint the Dockerfile (hadolint)
-        uses: hadolint/hadolint-action@v3.5.0
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
         with:
           dockerfile: docker/sidecar.Dockerfile
 
