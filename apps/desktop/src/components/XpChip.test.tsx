@@ -1,10 +1,11 @@
 import type { GameSummary } from "@ascend/shared";
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "../api/client";
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
-import { XpChip } from "./XpChip";
+import { segmentFills, XpChip } from "./XpChip";
 
 vi.mock("../api/client", () => ({ api: { game: vi.fn(), updateSettings: vi.fn() } }));
 
@@ -71,5 +72,38 @@ describe("XpChip", () => {
     await screen.findByText("LV 2");
     expect(screen.queryByTestId("confetti")).toBeNull();
     expect(screen.getByRole("status")).toHaveTextContent("You reached level 2");
+  });
+
+  it("shows the rank badge, a 10-segment XP bar and the streak in the top bar", async () => {
+    vi.mocked(api.game).mockResolvedValueOnce(summary(250, 3, 250));
+    render(renderChip(0, true));
+    expect(await screen.findByRole("img", { name: "Rank E, Novice" })).toHaveTextContent("E");
+    const segments = screen.getByTestId("xp-segments").querySelectorAll("[data-fill]");
+    expect(segments).toHaveLength(10);
+    // 250 of 500 XP: five full segments, five empty.
+    expect([...segments].map((s) => s.getAttribute("data-fill"))).toEqual(["1.00", "1.00", "1.00", "1.00", "1.00", "0.00", "0.00", "0.00", "0.00", "0.00"]);
+    expect(screen.getByTestId("top-streak")).toHaveAccessibleName("2-day streak, details");
+  });
+
+  it("explains the streak rules on click: freezes, and progress is never lost", async () => {
+    vi.mocked(api.game).mockResolvedValueOnce({ ...summary(250, 3, 250), streak: { current: 9, best: 12, freezes_held: 1, freezes_used: 1, active_today: false } });
+    render(renderChip(0, true));
+    const button = await screen.findByRole("button", { name: /9-day streak, details/ });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(button);
+    const pop = screen.getByRole("dialog", { name: "Streak" });
+    expect(pop).toHaveTextContent("Best 12 · today not counted yet");
+    expect(pop).toHaveTextContent("1 of 2 freezes held · 1 used so far");
+    expect(pop).toHaveTextContent("never removes XP, levels, ranks or unlocked skills");
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Streak" })).toBeNull();
+  });
+});
+
+describe("segmentFills", () => {
+  it("splits a fill across 10 segments with a partial last one", () => {
+    expect(segmentFills(0.37).map((k) => Math.round(k * 100) / 100)).toEqual([1, 1, 1, 0.7, 0, 0, 0, 0, 0, 0]);
+    expect(segmentFills(1.4)).toEqual(Array(10).fill(1));
+    expect(segmentFills(-1)).toEqual(Array(10).fill(0));
   });
 });

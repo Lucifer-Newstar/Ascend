@@ -10,7 +10,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 # xp-v2: adds minute-based XP for timed sets (lifting constants unchanged from xp-v1).
-FORMULA_VERSION = "xp-v2"
+# xp-v3: anti-farming. Set XP stops after 10 sets of one exercise or 40 sets in a day;
+#        PR XP at most once per exercise per day and 3 times a day, never for a jump of
+#        more than 25% over the previous best (a likely typo); the session bonus needs 3
+#        sets (or 10 timed minutes), counts at most 10 minutes per set, and is paid twice
+#        a day at most. Deleting a set reverses its XP; an edit can remove PR XP, never add it.
+FORMULA_VERSION = "xp-v3"
 
 # --- XP rules -------------------------------------------------------------
 HARD_SET_RPE = 7.0
@@ -25,6 +30,48 @@ PR_XP = 40
 DAILY_CAP = 600
 STREAK_BONUS_PER_DAY = 0.02
 STREAK_BONUS_MAX = 1.3
+
+
+# --- anti-farming (xp-v3) --------------------------------------------------
+SETS_PER_EXERCISE_DAY = 10
+SETS_PER_DAY = 40
+PR_PER_DAY = 3
+PR_MAX_JUMP = 0.25
+SESSION_MIN_SETS = 3
+SESSION_MIN_TIMED_MINUTES = 10
+SESSION_MINUTES_PER_SET = 10
+SESSIONS_PAID_PER_DAY = 2
+
+
+def set_xp_allowed(sets_of_exercise_before: int, sets_today_before: int) -> bool:
+    """Whether a set still earns XP today (diminishing returns: none past the limits)."""
+    return sets_of_exercise_before < SETS_PER_EXERCISE_DAY and sets_today_before < SETS_PER_DAY
+
+
+def pr_xp_allowed(
+    value: float | None,
+    previous_best: float | None,
+    prs_of_exercise_today: int,
+    prs_today: int,
+) -> bool:
+    """PR XP: once per exercise per day, PR_PER_DAY a day, and not for implausible jumps."""
+    if value is None or previous_best is None or previous_best <= 0:
+        return False
+    if value > previous_best * (1 + PR_MAX_JUMP):
+        return False
+    return prs_of_exercise_today == 0 and prs_today < PR_PER_DAY
+
+
+def session_minutes(wall_minutes: float, sets: int, timed_minutes: float) -> float:
+    """Minutes that earn session XP: wall time, but no more than the work shows."""
+    evidence = sets * SESSION_MINUTES_PER_SET + timed_minutes
+    return max(0.0, min(wall_minutes, evidence))
+
+
+def session_qualifies(sets: int, timed_minutes: float, paid_today: int) -> bool:
+    if paid_today >= SESSIONS_PAID_PER_DAY:
+        return False
+    return sets >= SESSION_MIN_SETS or timed_minutes >= SESSION_MIN_TIMED_MINUTES
 
 
 def set_xp(rpe: float | None) -> int:

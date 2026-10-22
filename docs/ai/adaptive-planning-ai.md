@@ -12,10 +12,10 @@
 
 | Piece | Status |
 |---|---|
-| Muscle load and recovery engine (effective sets, decay, readiness, status under / optimal / recovering / over) | **implemented** (v0.1, `progress/muscle_load.py`) |
+| Muscle load and recovery engine (effective sets, decay, readiness, status under / optimal / recovering / over) | **implemented**: `recovery-v2` with personal recovery factors (`intelligence/recovery.py`, `personal.py`, [ADR-0014](../architecture/adr/0014-recovery-engine-v2.md)); replaced load-v1 (`progress/muscle_load.py`) |
 | XP, levels, daily quest by rules, streak with freeze, ranks | **implemented** (v0.1, `gamification/`) |
 | Rule tips (`coach-rules-v1`) that react to load and nutrition | **implemented** |
-| Planner, progression, deloads, missed-session rules | deload triggers **implemented** (`deload-v1`); planner and progression planned · Phase 1 |
+| Planner, progression, deloads, missed-session rules | progression **implemented** (`prog-v1`, `intelligence/progression.py`, [ADR-0015](../architecture/adr/0015-progression-engine-prog-v1.md)); deload triggers **implemented** (`deload-v2`, adds stalled lifts); planner and missed-session rules planned · Phase 1 |
 | Proposals (Apply / Edit / Keep my plan) and the `propose_plan_change` tool | planned · Phase 2 |
 | Weekly review findings, diffs and summary | planned · Phase 2 |
 | Injury protocol | planned · Phase 2 |
@@ -29,7 +29,7 @@
 |---|---|---|
 | Plan generation | Split by days per week, weekly sets per muscle, exercise choice from equipment and injury flags, 48 h spacing (72 h for quads, hamstrings, lower back), session length cap | `P-06` explains the plan day by day |
 | Progressive overload | Double progression, RPE rule (±5% clamp), calisthenics ladders, cardio +10% per week max, stall detection | "Why?" on a progression (`P-04`) |
-| Deloads | Planned 3 + 1 blocks; reactive deload when two of four signals are true ([§5.1](#51-reactive-deload-signals-deload-v1)) | `P-07` one-line reason on the proposal |
+| Deloads | Planned 3 + 1 blocks; reactive deload when two of five signals are true ([§5.1](#51-reactive-deload-signals-deload-v2)) | `P-07` one-line reason on the proposal |
 | Missed sessions | Move within 48 h, else drop and redistribute up to +2 sets per remaining session, never > 1.5 × planned volume | Encouraging wording in chat |
 | Weekly review | Collect, score findings, pick the top 3, turn each into a plan diff | `P-05` three-sentence summary |
 | Injury adaptation | Red-flag triage, blocked patterns, substitutions, duration, return-to-load, escalation | `P-08` kind wording and one follow-up question |
@@ -144,7 +144,7 @@ Findings: `MUSCLE_UNDER` (chest, 6 and 7 effective sets vs target 10–20),
 
 Every number in both versions is present in the findings or facts.
 
-### 5.1 Reactive deload signals (deload-v1)
+### 5.1 Reactive deload signals (deload-v2)
 
 Implemented in `services/sidecar/app/modules/workouts/deload.py` and served by `GET /deload`.
 A reactive deload is recommended when **two or more** hold:
@@ -155,10 +155,11 @@ A reactive deload is recommended when **two or more** hold:
 | `HEAVY_SORENESS` | Soreness "a lot" on ≥ 3 of the last 7 check-ins |
 | `PERFORMANCE_DROP` | ≥ 2 key lifts (squat, bench, deadlift, overhead press) whose best e1RM in the last 14 days is ≥ 3 % below their best in the 21 days before |
 | `FATIGUE_BUILDUP` | ≥ 3 muscles over their weekly range or under 50 % readiness |
+| `STALLED_LIFTS` | ≥ 2 exercises trained in the last 14 days with no rep record in their last 3 sessions (prog-v1 stall detection, added in `deload-v2`). Stall precision on synthetic users is low (0.113, recall 0.62; [evaluation.md](evaluation.md)), which is why a stall alone never triggers a deload |
 
 The planned deload is due after 3 consecutive training weeks (≥ 2 finished sessions each) since
 the last accepted deload (`POST /deload/start`). The thresholds are coaching rules of thumb
-chosen for the MVP, not validated cut-offs; tune them with beta data and bump `deload-v1`.
+chosen for the MVP, not validated cut-offs; tune them with beta data and bump the version.
 
 ### 5.2 Implementation status
 

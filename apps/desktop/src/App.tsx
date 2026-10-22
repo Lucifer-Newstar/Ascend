@@ -1,29 +1,39 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
 import type { Settings } from "@ascend/shared";
 
 import { api } from "./api/client";
 import { Layout, type Page } from "./components/Layout";
+import { CommandBar, CommandButton, isCommandKey } from "./components/CommandBar";
 import { ErrorState, Loading } from "./components/States";
+import { SystemEvents } from "./components/SystemEvents";
 import { ToastProvider } from "./components/Toast";
-import { XpChip } from "./components/XpChip";
+import { XpStatus } from "./components/XpChip";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { usePageShortcuts } from "./lib/shortcuts";
-import { CoachPage } from "./pages/Coach";
+import { useApi } from "./lib/useApi";
 import { DashboardPage } from "./pages/Dashboard";
-import { DataPage } from "./pages/Data";
-import { DietPage } from "./pages/Diet";
-import { HistoryPage } from "./pages/History";
-import { ProgressPage } from "./pages/Progress";
-import { Onboarding } from "./pages/Onboarding";
-import { SettingsPage } from "./pages/Settings";
-import { WorkoutPage } from "./pages/Workout";
+
+// The Dashboard is the first screen, so it ships in the main chunk; every other page
+// (and first-run onboarding) is its own chunk, loaded from disk the first time it opens.
+const CoachPage = lazy(() => import("./pages/Coach").then((m) => ({ default: m.CoachPage })));
+const DataPage = lazy(() => import("./pages/Data").then((m) => ({ default: m.DataPage })));
+const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.DietPage })));
+const SkillsPage = lazy(() => import("./pages/Skills").then((m) => ({ default: m.SkillsPage })));
+const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default: m.LibraryPage })));
+const HistoryPage = lazy(() => import("./pages/History").then((m) => ({ default: m.HistoryPage })));
+const ProgressPage = lazy(() => import("./pages/Progress").then((m) => ({ default: m.ProgressPage })));
+const Onboarding = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.Onboarding })));
+const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
+const WorkoutPage = lazy(() => import("./pages/Workout").then((m) => ({ default: m.WorkoutPage })));
 
 const TITLES: Record<Page, string> = {
-  dashboard: "Dashboard",
-  workout: "Training",
+  dashboard: "Today",
+  workout: "Train",
+  library: "Exercises",
+  skills: "Skills",
   progress: "Progress",
-  diet: "Diet",
+  diet: "Fuel",
   coach: "Coach",
   history: "History",
   data: "Import & export",
@@ -48,7 +58,8 @@ async function waitForEngine(timeoutMs = 30_000): Promise<void> {
 }
 
 export function pageFromHash(hash: string): Page {
-  const fromHash = hash.replace("#", "") as Page;
+  // "#skills/front_lever" opens the Skills page; the page reads the rest itself.
+  const fromHash = hash.replace("#", "").split("/")[0] as Page;
   return fromHash in TITLES ? fromHash : "dashboard";
 }
 
@@ -94,7 +105,9 @@ export default function App() {
     <PrefsProvider initial={settings}>
       <ToastProvider>
         {!hasProfile ? (
-          <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
+          <Suspense fallback={<Loading label="Loading…" />}>
+            <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
+          </Suspense>
         ) : (
           <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} />
         )}
@@ -106,24 +119,47 @@ export default function App() {
 function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void }) {
   const { settings, update } = usePrefs();
   usePageShortcuts(navigate);
+  // Ctrl+K (Cmd+K on a Mac) opens the command bar from anywhere.
+  const [commandOpen, setCommandOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!isCommandKey(e)) return;
+      e.preventDefault();
+      setCommandOpen((o) => !o);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const toggleAi = async () => {
     await update({ ai_enabled: !settings.ai_enabled });
     bump();
   };
   const aiEnabled = settings.ai_enabled;
+  // Level, rank, streak and quest state: the top bar and the System notices share one fetch.
+  const game = useApi(api.game, [refreshKey]);
+  // Whether the local model is actually answering (for the AI status dot).
+  const coach = useApi(api.coachStatus, [aiEnabled]);
+  const aiState = !aiEnabled ? "off" : coach.data && !coach.data.ollama_available ? "rules" : "on";
   return (
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
-      status={<XpChip refreshKey={refreshKey} />}>
+      onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
+      aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}>
+      <SystemEvents game={game.data ?? undefined} notices={api.notices} />
+      <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} onChanged={bump} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
+      <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
       {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenCoach={() => navigate("coach")} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
+      {page === "library" && <LibraryPage onNavigate={navigate} refreshKey={refreshKey} />}
+      {page === "skills" && <SkillsPage onNavigate={navigate} onChanged={bump} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} />}
+      </Suspense>
       </div>
     </Layout>
   );

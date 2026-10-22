@@ -19,6 +19,38 @@ export interface ProfileIn {
   goal: Goal;
   activity: Activity;
   target_weight_kg?: number | null;
+  /** Onboarding answers (optional for older clients). */
+  focus?: Focus | null;
+  /** Equipment checklist; empty = not stated (nothing is filtered). */
+  equipment?: EquipmentChoice[];
+}
+
+export type Focus = "strength" | "muscle" | "skills" | "fat_loss";
+export type EquipmentChoice = "none" | "pullup_bar" | "rings" | "dumbbells" | "gym";
+
+/** POST /profile/baseline: the Awakening baseline test. 0 or null = not done. */
+export interface BaselineIn {
+  pushups?: number | null;
+  pullups?: number | null;
+  dead_hang_s?: number | null;
+  plank_s?: number | null;
+  squats_60s?: number | null;
+  bodyweight_kg?: number | null;
+}
+
+export interface BaselineResult extends BaselineIn {
+  taken_at: string;
+}
+
+export interface BaselineOut {
+  baseline: BaselineResult;
+  workout_id: number;
+  sets_logged: number;
+  xp_awarded: number;
+  level: number;
+  rank: string;
+  /** Skill-tree steps the baseline sets unlocked ("Skill: Step"); often none. */
+  steps_unlocked: string[];
 }
 
 export interface EnergyTargets {
@@ -32,6 +64,7 @@ export interface EnergyTargets {
 
 export interface Profile extends ProfileIn {
   energy: EnergyTargets;
+  baseline?: BaselineResult | null;
 }
 
 export interface MuscleState {
@@ -45,6 +78,15 @@ export interface MuscleState {
   weekly_high: number;
   readiness: number;
   ready_at: string | null;
+  /** recovery-v2 readiness with the population decay (k = 1): "population vs you". */
+  readiness_population?: number;
+  algo_version?: string;
+  /** taxonomy v2: region (Chest, Back...), the muscle a head belongs to, deep layer, and
+   * whether the muscle only shows recovery (no weekly set target). */
+  region?: string;
+  parent?: string;
+  deep?: boolean;
+  readiness_only?: boolean;
 }
 
 /** GET /muscles/activity?days=1..30: per-muscle load over a window (map hover card). */
@@ -60,6 +102,12 @@ export interface MuscleActivity {
 
 export type Section = "gym" | "calisthenics" | "cardio" | "martial_arts" | "flexibility" | "meditation";
 
+/** How a set of this exercise is measured: reps, seconds per isometric hold, or time. */
+export type Measure = "reps" | "hold" | "time";
+export type Difficulty = "beginner" | "intermediate" | "expert";
+/** Where an exercise (or one of its fields) came from. */
+export type FieldSource = "library" | "rules" | "local_ai" | "wger" | "wikipedia" | "user";
+
 export interface Exercise {
   id: number;
   name: string;
@@ -68,6 +116,43 @@ export interface Exercise {
   met: number | null;
   time_based: boolean;
   muscles: { muscle: string; weight: number }[];
+  slug?: string | null;
+  measure?: Measure;
+  difficulty?: Difficulty | null;
+  pattern?: string;
+  /** Thumbnail path relative to index.html, e.g. "exercises/pullups.webp". */
+  image?: string | null;
+  source?: "ascend" | "free-exercise-db" | "custom";
+  is_custom?: boolean;
+  aliases?: string[];
+}
+
+export interface SkillLink {
+  skill_key: string;
+  skill_name: string;
+  step_name: string | null;
+  /** "step": part of the tree itself; "feeder": builds strength for it. */
+  role: "step" | "feeder";
+}
+
+export interface Attribution {
+  source: string;
+  title: string;
+  url: string;
+  license: string;
+}
+
+export interface ExerciseDetail extends Exercise {
+  instructions: string[];
+  mechanic: string | null;
+  rep_low: number | null;
+  rep_high: number | null;
+  field_sources: Record<string, FieldSource>;
+  attribution: Attribution[];
+  source_ref: string | null;
+  created_at: string | null;
+  skills: SkillLink[];
+  sets_logged: number;
 }
 
 export interface WorkoutSet {
@@ -83,6 +168,8 @@ export interface WorkoutSet {
   e1rm: number | null;
   is_pr: boolean;
   performed_at: string;
+  /** The exercise's measure ("hold" sets keep their seconds in duration_s). */
+  measure?: Measure;
 }
 
 export interface SetIn {
@@ -113,10 +200,209 @@ export interface Workout {
   title: string;
 }
 
+/** GET /exercises/{id}/previous: the last finished session's sets (the logger's grey "last time"). */
+export interface PreviousSession {
+  workout_id: number;
+  day: string;
+  source: WorkoutSource;
+  sets: WorkoutSet[];
+}
+
 export interface LoggedSet {
   set: WorkoutSet;
   xp_awarded: number;
   previous_best_e1rm: number | null;
+  /** Skill-tree steps this set unlocked ("Skill acquired" moments); usually empty. */
+  unlocks?: SkillUnlock[];
+}
+
+// ---- custom exercises --------------------------------------------------------
+
+export interface ExerciseProposal {
+  section: Section;
+  equipment: string;
+  measure: Measure;
+  pattern: string;
+  difficulty: Difficulty | null;
+  muscles: { muscle: string; weight: number }[];
+  rep_low: number | null;
+  rep_high: number | null;
+  met: number | null;
+  instructions: string[];
+  aliases: string[];
+}
+
+export interface ExerciseMatch {
+  id: number;
+  name: string;
+  score: number;
+  via: "exact" | "alias" | "fuzzy";
+  section: Section;
+  image: string | null;
+}
+
+export interface StageStatus {
+  status: string;
+  detail: string;
+  model: string | null;
+  applied: string[];
+}
+
+export interface ExerciseAnalysis {
+  name: string;
+  proposal: ExerciseProposal;
+  field_sources: Record<string, FieldSource>;
+  attribution: Attribution[];
+  matches: ExerciseMatch[];
+  duplicate_of: ExerciseMatch | null;
+  /** local model: ok | off | unavailable | error | invalid */
+  ai: StageStatus;
+  /** Online research: off | not_requested | ok | not_found | offline | timeout | rate_limited | error */
+  online: StageStatus;
+  /** field -> how far the proposal can be trusted. */
+  confidence: Record<string, Confidence>;
+  /** Core fields the offline stages could not support: non-empty = "not enough offline data". */
+  insufficient: string[];
+  /** The proposal before online research changed it, to compare or keep the offline guess. */
+  offline: ExerciseProposal | null;
+  offline_sources: Record<string, FieldSource>;
+  research: ResearchReport | null;
+}
+
+export type Confidence = "high" | "medium" | "low";
+
+export interface ResearchCall {
+  source: "wger" | "wikipedia" | string;
+  url: string;
+  /** ok | not_found | offline | timeout | rate_limited | error | skipped */
+  status: string;
+}
+
+export interface ResearchField {
+  field: string;
+  label: string;
+  value: string;
+  source: string;
+  url: string;
+  offline_value: string;
+  offline_source: string;
+  conflict: boolean;
+}
+
+export interface ResearchReport {
+  query: string;
+  /** How the lookup was allowed: the Settings toggle, or allow once. */
+  consent: "setting" | "once";
+  outcome: string;
+  calls: ResearchCall[];
+  fields: ResearchField[];
+  summary: string;
+  summary_url: string;
+}
+
+export interface OnlineLogEntry {
+  id: number;
+  at: string;
+  query: string;
+  sources: ResearchCall[];
+  outcome: string;
+  consent: "setting" | "once";
+}
+
+export interface CustomExerciseIn extends ExerciseProposal {
+  name: string;
+  field_sources: Record<string, FieldSource>;
+  attribution: Attribution[];
+}
+
+// ---- skill trees ------------------------------------------------------------
+
+export type SkillFamily = "pull" | "push" | "core" | "balance" | "legs" | "levers";
+export type StepStatus = "unlocked" | "next" | "locked";
+
+export interface SkillCriterion {
+  text: string;
+  exercise: string;
+  exercise_id: number | null;
+  sets: number;
+  target: number;
+  unit: "reps" | "s";
+  added_kg: number;
+  per_side: boolean;
+  best_value: number | null;
+  best_score: number;
+  sessions_met: number;
+  sessions_needed: number;
+  pct: number;
+  met: boolean;
+  /** Holds beyond the plausibility limit, not counted. */
+  ignored_sets: number;
+}
+
+export interface SkillStep {
+  key: string;
+  name: string;
+  exercise: string;
+  exercise_id: number | null;
+  measure: Measure;
+  status: StepStatus;
+  pct: number;
+  unlocked_at: string | null;
+  criteria: SkillCriterion[];
+  requires: string[];
+  xp: number;
+  uncertain: boolean;
+  note: string;
+}
+
+export interface SkillSummary {
+  key: string;
+  name: string;
+  family: SkillFamily;
+  summary: string;
+  stretch: boolean;
+  current_step: string | null;
+  current_step_name: string | null;
+  next_step: string | null;
+  next_step_name: string | null;
+  pct_to_next: number | null;
+  steps_unlocked: number;
+  steps_total: number;
+  acquired: boolean;
+  last_trained: string | null;
+  sessions_28d: number;
+  rusty: boolean;
+}
+
+export interface SkillDetail extends SkillSummary {
+  steps: SkillStep[];
+  feeders: { exercise_id: number | null; name: string; measure: Measure; sets_28d: number }[];
+  /** Always an estimate; days is null when there is not enough data (reason says why). */
+  eta: { days: number | null; date: string | null; reason: string; is_estimate: boolean };
+  sources: { key: string; title: string; url: string }[];
+  engine_version: string;
+}
+
+export interface SkillUnlock {
+  id: number;
+  skill_key: string;
+  skill_name: string;
+  step_key: string;
+  step_name: string;
+  unlocked_at: string;
+  xp: number;
+  /** True when this completes the whole tree. */
+  final: boolean;
+  next_step_name: string | null;
+  source: string;
+}
+
+export interface SkillTrainResult {
+  skill_key: string;
+  added: number;
+  already_planned: number;
+  items: string[];
+  message: string;
 }
 
 export interface FinishedWorkout {
@@ -170,6 +456,8 @@ export interface DayLog {
   meals: Meal[];
   totals: Totals;
   kcal_target: number | null;
+  /** "adaptive" once tdee-v1 has set this week's target (ADR-0018), else "formula". */
+  kcal_target_source?: "formula" | "adaptive" | null;
   protein_target_g: number | null;
   values_are_approximate: boolean;
 }
@@ -219,6 +507,49 @@ export interface GameSummary {
   streak: StreakInfo;
   calm: CalmStreak;
   quest: QuestItem[];
+}
+
+/** GET /game/boss: this week's boss raid (boss-v1, ADR-0022). */
+export interface BossRaid {
+  week_start: string;
+  week_end: string;
+  name: string;
+  title: string;
+  hp: number;
+  damage: number;
+  hp_left: number;
+  days_left: number;
+  defeated: boolean;
+  defeated_at: string | null;
+  bonus_xp: number;
+  hp_source: "program" | "history" | "starter";
+  hp_note: string;
+  titles_earned: number;
+  algo_version: string;
+  why: Why;
+}
+
+/** GET /game/titles: a title earned by beating a weekly boss (the only title source). */
+export interface EarnedTitle {
+  title: string;
+  boss: string;
+  week_start: string;
+  earned_at: string;
+}
+
+/** GET /game/stats: one computed hunter stat (0-100) and the numbers behind it (stats-v1). */
+export interface Stat {
+  key: "str" | "agi" | "end" | "vit" | "int";
+  label: string;
+  value: number;
+  formula: string;
+  inputs: Record<string, number | string | null>;
+}
+
+export interface Stats {
+  stats: Stat[];
+  version: string;
+  window_days: number;
 }
 
 export interface Ring {
@@ -275,6 +606,10 @@ export interface Settings {
   sessions_per_week: number;
   /** Calm the interface: no tilt, flips, count-ups or celebrations (the OS setting is honoured as well). */
   reduce_motion: boolean;
+  /** Allow "Add your own exercise" to look names up on wger.de when asked. Off by default. */
+  online_lookup?: boolean;
+  /** v8: insights spoken by the trainer character; false = plain System mode. Default true. */
+  trainer?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------
@@ -446,4 +781,284 @@ export interface ImportReport {
   skipped_warmups: number;
   /** Source exercise name -> ASCEND library name. */
   matched_exercises: Record<string, string>;
+}
+
+// --- intelligence layer (docs/contracts/intelligence.yaml) ---------------------------
+
+/** The "Why?" of one number: the formula in words and every input with its value. */
+export interface Why {
+  formula: string;
+  inputs: Record<string, number | string | null>;
+}
+
+export interface MuscleRecovery {
+  key: string;
+  label: string;
+  group: string;
+  status: MuscleStatus;
+  readiness: number;
+  readiness_population: number;
+  fatigue: number;
+  capacity: number;
+  half_life_h: number;
+  prior_half_life_h: number;
+  k: number;
+  modifier: number;
+  es_7d: number;
+  ready_at: string | null;
+  last_trained: string | null;
+  top_sets: { exercise: string; dose_now: number; hours_ago: number }[];
+  why: Why;
+}
+
+export interface RecoveryGroup {
+  group: string;
+  k: number;
+  k_low: number;
+  k_high: number;
+  n: number;
+  personal: boolean;
+  alpha: number | null;
+  updated_at: string | null;
+}
+
+/** GET /intelligence/recovery */
+export interface RecoveryReport {
+  algo_version: string;
+  formula: string;
+  checkin: { sleep: number; soreness: string } | null;
+  groups: RecoveryGroup[];
+  muscles: MuscleRecovery[];
+}
+
+/** GET /intelligence/progression/{exercise_id}: prog-v1's next target for one exercise. */
+export interface ProgressionTarget {
+  exercise_id: number;
+  exercise: string;
+  kind: "reps" | "hold" | "none";
+  sets: number;
+  reps: number | null;
+  seconds: number | null;
+  weight_kg: number;
+  rpe: number | null;
+  /** first | up_load | up_reps | up_time | hold | down | reset | advance | none */
+  change: string;
+  reason: string;
+  why: string;
+  explanation: Why;
+  rep_range: number[] | null;
+  increment_kg: number | null;
+  e1rm: {
+    unit: "kg" | "reps" | "s";
+    current: number | null;
+    best: number | null;
+    last: number | null;
+    trend_pct_week: number | null;
+    series: { at: string; value: number }[];
+  } | null;
+  stalled: boolean;
+  stall_sessions: number;
+  skill: {
+    skill_name: string;
+    step_name: string;
+    criterion: string;
+    sessions_met: number;
+    confirm_sessions: number;
+  } | null;
+  readiness: number | null;
+  kept_until: string | null;
+  deload_week: boolean;
+  phrasing: "template" | "model";
+  algo_version: string;
+}
+
+/** POST /intelligence/progression/{exercise_id}/decision */
+export interface ProgressionDecision {
+  id: number;
+  exercise_id: number;
+  decided_at: string;
+  choice: "accepted" | "kept";
+  reason: string;
+  kept_until: string | null;
+  algo_version: string;
+}
+
+/** GET /intelligence/stalls */
+export interface StalledLift {
+  exercise_id: number;
+  exercise: string;
+  sessions_flat: number;
+  best: number | null;
+  unit: "kg" | "reps" | "s";
+}
+
+/** GET /intelligence/.../explanation: a plain-language sentence for one engine number.
+ * `text` is the local model's sentence only when it passed the number and phrase checks. */
+export interface Explanation {
+  text: string;
+  template: string;
+  phrasing: "model" | "template";
+  model: string | null;
+  fallback: string | null;
+  checks: Record<string, string> | null;
+  facts: string;
+  version: string;
+}
+
+/** GET /intelligence/notices: the System's rare notices; `id` is stable (show once). */
+export interface SystemNotice {
+  id: string;
+  code: "deload" | "raised" | "recovered";
+  title: string;
+  text: string;
+  at: string;
+}
+
+// ---- diet intelligence: adaptive TDEE and weekly insights (ADR-0018, ADR-0019) ----------
+
+/** One day of tdee-v1: the morning state after that day's weigh-in. */
+export interface TdeePoint {
+  day: string;
+  weight_kg: number | null;
+  intake_kcal: number | null;
+  intake_used: boolean;
+  trend_kg: number;
+  tdee_kcal: number;
+  sd_kcal: number;
+}
+
+export interface TdeeWeek {
+  week_start: string;
+  target_kcal: number;
+  tdee_kcal: number;
+  sd_kcal: number;
+  intake_days: number;
+  changed: boolean;
+  from_estimate: boolean;
+  reason: string;
+}
+
+/** GET /intelligence/tdee */
+export interface TdeeReport {
+  algo_version: string;
+  status: "cold_start" | "learning" | "adaptive";
+  tdee_kcal: number;
+  sd_kcal: number;
+  low_kcal: number;
+  high_kcal: number;
+  formula_tdee_kcal: number;
+  formula_target_kcal: number;
+  target_kcal: number;
+  target_source: "formula" | "adaptive";
+  target_week_start: string;
+  trend_kg: number | null;
+  days_of_data: number;
+  weigh_ins: number;
+  intake_days_7: number;
+  weigh_ins_7: number;
+  gate_days: number;
+  paused: boolean;
+  reason: string;
+  series: TdeePoint[];
+  weeks: TdeeWeek[];
+  why: Why;
+}
+
+export interface InsightFinding {
+  code: string;
+  title: string;
+  text: string;
+  severity: number;
+  numbers: Record<string, number | string>;
+  why: Why;
+}
+
+export interface InsightCheck {
+  code: string;
+  outcome: "fired" | "quiet" | "not_enough_data";
+  detail: string;
+}
+
+/** GET /intelligence/insights */
+export interface DietInsights {
+  algo_version: string;
+  week_end: string;
+  findings: InsightFinding[];
+  checks: InsightCheck[];
+}
+
+// ---- workout programs (programs-v1, ADR-0020) ------------------------------------------
+
+export interface PlanItem {
+  exercise_id: number | null;
+  exercise: string;
+  sets: number;
+  rep_low: number;
+  rep_high: number;
+  target_rpe: number;
+  rest_s: number;
+  /** prog-v1's target for the next session, e.g. "3 × 8 @ 60 kg, RPE 8". */
+  target?: string | null;
+  target_reason?: string | null;
+  done_sets?: number;
+}
+
+export interface PlanDay {
+  key: string;
+  name: string;
+  focus: string;
+  /** Suggested weekday, 0 = Monday. */
+  weekday: number;
+  items: PlanItem[];
+}
+
+/** GET /plans/programs */
+export interface ProgramSummary {
+  key: string;
+  name: string;
+  summary: string;
+  level: string;
+  equipment: string;
+  days_per_week: number;
+  fits_equipment: boolean;
+  days: PlanDay[];
+}
+
+/** GET /plans/current */
+export interface Plan {
+  id: number;
+  source: string;
+  algo_version: string;
+  program_key: string;
+  name: string;
+  started_on: string;
+  days_per_week: number;
+  days: PlanDay[];
+  next: PlanDay;
+  sessions_done: number;
+  this_week_done: number;
+  last_trained: string | null;
+  deload_week: boolean;
+  recent: { day: string; key: string; name: string }[];
+  reason: string;
+  why: Why;
+}
+
+/** GET /backups, POST /backup. reason: manual | daily | pre-migration | pre-restore */
+export interface BackupInfo {
+  path: string;
+  size_bytes: number;
+  sha256: string;
+  created_at: string;
+  schema_revision: string;
+  app_version: string;
+  reason: string;
+}
+
+/** POST /restore */
+export interface RestoreResult {
+  restored_from: string;
+  backup_created_at: string;
+  schema_revision: string;
+  safety_backup: string;
 }

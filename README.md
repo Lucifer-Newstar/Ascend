@@ -6,13 +6,71 @@ under-trained, recovering or overreached. Everything runs and is stored on your 
 optional local AI coach (Ollama + `qwen3:4b`) explains your numbers, and the app works fully
 without it.
 
-![Dashboard](docs/screenshots/ASCEND_MVP_Dashboard.png)
+![Today](docs/screenshots/ASCEND_v5_Today.png)
 
-| Workout logger | Diet log |
+| Train: three-pane logger | Skills: tree canvas |
 |---|---|
-| ![Workout logger](docs/screenshots/ASCEND_MVP_Workout_Logger.png) | ![Diet](docs/screenshots/ASCEND_MVP_Diet.png) |
+| ![Train](docs/screenshots/ASCEND_v5_Train.png) | ![Skills](docs/screenshots/ASCEND_v5_Skills.png) |
 
-> Screens use demo data from `app.devtools.seed_demo`.
+> Screens use demo data from `app.devtools.seed_demo`. The v0.1 MVP screens are kept in
+> [docs/screenshots](docs/screenshots/).
+
+## The v5 interface
+
+| What | How it works |
+|---|---|
+| **Today ("Hunter HQ")** | The daily quest as a System window with time left, a status panel (STR, AGI, END, VIT, INT) where every number has a "Why?", up to three insights spoken by the trainer, Instructor Iskra Vey (switchable to a plain mode), the weekly boss raid ([ADR-0022](docs/architecture/adr/0022-weekly-boss-raid.md)), Quick log, check-in, fuel and the muscle map on a 12-column grid. |
+| **Train** | Keyboard-first logger: last session's sets in grey next to today's, the next set pre-filled from last time (Enter logs it), a rest bar (Space pauses), muscles hit and the skills the exercise feeds. |
+| **Skills** | A zoomable, pannable tree canvas per family; arrow keys move along the edges; a drawer shows the criteria, the estimate (only with enough data) and "Train this skill". |
+| **Ctrl+K** | Command bar: `bench 80x5 @8`, `log 3x8 pull-up`, `plank 45s`, `weight 81.4`, `add 2 eggs`, `train front lever`, a page name, or any question for the Coach. Rule-based, no model. |
+| **Awakening** | Five-step first run with an equipment checklist (respected by quests and skill suggestions) and a baseline test logged as a real session. |
+| **Streaks** | Freezes cover missed days, and a missed day never removes XP, levels, ranks or skills; the next quest adds a short Comeback item instead. |
+| **Accessibility and motion** | WCAG AA colours in both themes (unit-tested), labelled controls, axe-clean screens, Reduce motion honoured everywhere, optional sound off by default. |
+
+Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages · **Enter** log the set shown ·
+**Space** pause rest · arrows on the skill canvas.
+
+## The v6 intelligence layer
+
+Two deterministic engines, pure Python on the CPU. The local model is optional and only ever
+phrases what the engines computed.
+
+| What | How it works |
+|---|---|
+| **Recovery (`recovery-v2`)** | Per-muscle readiness for all 54 muscles and heads (taxonomy v2, [ADR-0021](docs/architecture/adr/0021-detailed-muscle-taxonomy.md)) from each set's dose (muscle weight × effort from reps in reserve × volume; holds by seconds), decayed by the muscle's half-life × your personal factor, adjusted by today's check-in. Drives the muscle map, quests and the weekly review. [ADR-0014](docs/architecture/adr/0014-recovery-engine-v2.md) |
+| **Personal recovery factors** | One factor per muscle group, fitted after every workout from how your performance follows fatigue. Starts at the population value, moves only with evidence, shown with a 90 % interval and as **"you vs population"** on the muscle drill-down. |
+| **Progression (`prog-v1`)** | The logger's **suggestion card** (Use it / Keep mine / Why?): double progression in your rep zone, equipment-aware increments (never more than 10 % at once), RPE autoregulation, e1RM tracking, stall detection with a 10 % reset, hold progressions, and skill-tree criteria for calisthenics. No increase while the muscles are under 40 % recovered. [ADR-0015](docs/architecture/adr/0015-progression-engine-prog-v1.md) |
+| **"Why?" everywhere** | Every target and readiness shows its formula and inputs. With AI on, `qwen3:4b` may phrase one sentence, shown only if every number passes the coach guard; otherwise the template sentence. [ADR-0016](docs/architecture/adr/0016-explanations-and-system-voice.md) |
+| **The System speaks, rarely** | Three notices, each shown once: Deload advised, Target raised, Muscle recovered. |
+| **Evaluation** | A seeded synthetic-user simulator with baselines, in [docs/ai/evaluation.md](docs/ai/evaluation.md) ([ADR-0017](docs/architecture/adr/0017-evaluation-synthetic-users.md)). On synthetic users, prog-v1 targets were hit within 1 rep on 93.1 % of exposures (linear +2.5 kg with resets: 71.8 %) and too hard on 2.7 % (22.4 %); recovery-v2 readiness correlates with the simulated truth at Pearson r 0.842-0.926 on the 54-muscle taxonomy (fixed 48 h rule: 0.552-0.579). |
+
+**Honest limitations of v6**
+
+- **Synthetic users only.** Both engines were evaluated on simulated users, not real people.
+- **Recovery r ≈ 0.9 is partly circular.** It is measured against the simulator's own ground truth, which uses the same model family as the engine. It shows the estimation works under those assumptions, not that people recover this way.
+- **Stall detection is weak:** precision 0.113, recall 0.62 on synthetic stalls. That is why a stall alone never triggers a deload.
+- **Real local-model phrasing is unverified.** No Ollama was available on the build machine; the guard is tested with a stub model. Without a model the app shows template text and is fully functional.
+- Latency was measured on the 4-CPU Linux build machine (finishing a workout: p50 394.2 ms), not on the target Windows laptop.
+
+## v7: diet engines and the new layouts
+
+Every screen now uses one 12-column layout with consistent loading, error and empty states,
+and motion that respects Reduce motion. Two more deterministic engines feed Fuel and Progress, and Train can follow a workout program.
+
+| What | How it works |
+|---|---|
+| **Adaptive TDEE (`tdee-v1`)** | A two-state Kalman filter on trend weight and expenditure, fed by your weigh-ins and logged meals. It starts from Mifflin-St Jeor with a wide range and narrows as data comes in. Missing days widen the range instead of breaking it. The weekly calorie target moves only on Mondays, only after a week with 6 logged days and 4 weigh-ins, and by at most 150 kcal. Fuel shows the range, the target, completeness and the reason. [ADR-0018](docs/architecture/adr/0018-adaptive-tdee-kalman.md) |
+| **Weekly insights (`insights-v1`)** | Six fixed rules over the last 7 complete days: intake vs target, protein, weekend vs weekday, weight trend vs goal, adaptive vs formula, and logging gaps. Progress shows up to three findings, each with a "Why?", plus the list of rules that were checked. [ADR-0019](docs/architecture/adr/0019-weekly-diet-insights.md) |
+| **Workout programs (`programs-v1`)** | Four built-in programs: full body 3 days, upper/lower 4 days, push/pull/legs 6 days, and home full body 3 days. The Program card on Train shows the next session with each exercise's target from your progression and the sets you have done today. The plan reads your log: a finished workout that covers half of a program day counts as that day, so a missed day shifts the plan instead of skipping a session. [ADR-0020](docs/architecture/adr/0020-workout-programs.md) |
+| **Evaluation** | Synthetic users, seed 2026 ([docs/ai/evaluation.md §5](docs/ai/evaluation.md)). Median TDEE error at day 56 is 82.8 kcal (formula: 194.7), and the 14-day weight prediction from day 56 is 50.3 % more accurate than the formula's. The intake, protein and weekend insights have precision 0.935-1.0. tdee-v1 takes 3.08 ms on a one-year history. |
+
+**Honest limitations of v7**
+
+- **Slow to learn.** Only 57% of synthetic users are within 150 kcal of their true expenditure on day 28. The first two weeks are no better than the formula, which is why the target stays on the formula until the estimate settles.
+- **Under-logging is absorbed.** If meals are under-logged, "you burn" is the expenditure that matches what was logged. The target still works in logged calories.
+- **The trend insight is a hint:** precision 0.397, recall 0.408 on synthetic weeks.
+- **Programs are a fixed catalog.** You cannot edit them or build your own yet. The progression engine uses each exercise's own rep zone, so a target can sit outside the program's rep range.
+- Synthetic users only, as for v6.
 
 ## What's in the MVP (v0.1.0)
 
@@ -21,11 +79,14 @@ without it.
 | Onboarding: age, sex, height, weight, goal, activity → BMR/TDEE (Mifflin-St Jeor), shown as an **estimate** | `progress`, `nutrition/tdee.py` |
 | Workout logger: 41 seeded exercises with primary/secondary muscle weights, sets with kg / reps / RPE, **PR detection** (Epley e1RM), rest timer | `workouts` |
 | Gamification: XP per set and session, level curve `100 × L^1.3`, ranks E→S, rule-generated **daily quest**, streak with **freezes**; all formulas versioned | `gamification` |
-| Muscle recovery: per-muscle effective sets with recovery decay → under / optimal / recovering / over | `progress/muscle_load.py` |
-| Dashboard: three rings (quest tasks, kcal eaten, kcal burned), today's quest, XP bar, front/back muscle map | `apps/desktop/src/pages/Dashboard.tsx` |
+| Muscle recovery: per-muscle effective sets with recovery decay → under / optimal / recovering / over (replaced by recovery-v2 in v6) | `progress/muscle_load.py` |
+| Today (was Dashboard): three rings (quest tasks, kcal eaten, kcal burned), today's quest, XP bar, front/back muscle map with a deep layer | `apps/desktop/src/pages/Dashboard.tsx` |
 | Diet log: 31 approximate Indian foods (idli, dosa, sambar, chutneys, rice, chapati, dal, curd...) with katori/piece portions, daily totals | `nutrition` |
 | Coach: rule-based tips always; local Ollama `qwen3:4b` if running; **AI on/off toggle** | `coach` |
 | History by day (workouts + meals) and export to **JSON / CSV** | `progress/history.py` |
+| **Calisthenics skill trees** (12 trees, unlock criteria from logged sets, estimates only with enough data) | `skills`, `pages/Skills.tsx` |
+| **Exercise gallery**: 873 free-exercise-db exercises + calisthenics progressions, timed holds, search and filters; every card has a photo or a designed tile | `workouts/library.py`, `pages/Library.tsx` |
+| **Add your own exercise**: rules → local AI → optional online research (wger.de, Wikipedia), every field with its source and confidence, a research report to confirm, a local lookup log | `workouts/custom.py`, ADR-0013 |
 
 ## Architecture
 
@@ -79,7 +140,7 @@ uv python install 3.12
 
 # 2. get the code
 git clone https://github.com/<you>/ascend.git      # or unzip ASCEND_repo.zip / clone the bundle
-cd ascend
+cd ascend                                           # the zip unpacks to ascend-repo: cd ascend-repo
 
 # 3. install everything (or run: powershell -ExecutionPolicy Bypass -File scripts\setup.ps1)
 cd services\sidecar; uv sync; uv run alembic upgrade head; cd ..\..
@@ -89,11 +150,31 @@ npm install
 npm run dev:electron -w apps/desktop
 ```
 
+**If `npm run dev:electron` says "Electron failed to install correctly"** (seen on Windows with Node 26:
+the download finishes but the unzip step silently fails), unzip it yourself from the repo root:
+
+```powershell
+$zip = Get-ChildItem "$env:LOCALAPPDATA\electron\Cache" -Recurse -Filter "electron-v*-win32-x64.zip" | Select-Object -First 1
+Expand-Archive $zip.FullName -DestinationPath node_modules\electron\dist -Force
+Set-Content node_modules\electron\path.txt "electron.exe" -NoNewline
+```
+
 Optional AI coach:
 
 ```powershell
 # install Ollama from https://ollama.com, then:
 ollama pull qwen3:4b        # ~2.5 GB; fits a 4 GB GPU
+```
+
+**Tuning for 4 GB GPUs (e.g. RTX 3050 Laptop).** With default settings `ollama ps` showed `qwen3:4b`
+at 3.5 GB split 34%/66% CPU/GPU and 8.3 tokens/s. These three settings brought it to 21.3 tokens/s on
+the same laptop (measured with `ollama run qwen3:4b --verbose`, one prompt each, Oct 2026):
+
+```powershell
+setx OLLAMA_FLASH_ATTENTION 1
+setx OLLAMA_KV_CACHE_TYPE q8_0
+setx OLLAMA_CONTEXT_LENGTH 2048
+# then quit Ollama from the tray and start it again
 ```
 
 Toggle **AI coach** in the top bar. With it off (or Ollama not running) the coach gives
@@ -138,9 +219,10 @@ installed app, the dev Electron app or the sidecar on its own.
 
 Verified on Linux (CI-equivalent):
 
-- 95 sidecar tests pass (engine unit tests + API tests with `TestClient`); ruff and mypy clean.
+- 566 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 and v7 engines, API tests with `TestClient`); ruff and mypy clean (108 source files).
 - Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
-- tsc (renderer, Electron, shared), eslint and 12 vitest tests pass; `vite build` succeeds.
+- tsc (renderer, Electron, shared), eslint and 316 vitest tests (53 files) pass; `vite build` succeeds.
+- The contract drift check passes (81 implemented operations match 9 contracts).
 - The renderer was driven end to end against the running sidecar in headless Chromium
   (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
 - The PyInstaller sidecar binary builds, migrates and answers `/health` (Linux build).
@@ -153,7 +235,16 @@ Not yet verified:
 
 - Electron on real Windows (paths, `uv` on PATH, window behaviour) has not been run.
 - The Windows installer (electron-builder + PyInstaller `.exe`) has not been built.
-- The Ollama path is tested with a mocked server only; `qwen3:4b` answers are untested.
+- The Ollama path (coach, custom-exercise classifier and the v6 "Why?" phrasing) is tested with a
+  mocked server only; `qwen3:4b` answers are untested.
+- The v6 and v7 engines are evaluated on synthetic users only (docs/ai/evaluation.md); no real-user
+  validation exists yet. programs-v1's "half of a day's exercises" matching has not been checked
+  against real training logs.
+- Online research is tested against mocked wger.de and Wikipedia APIs. The live APIs were checked
+  by hand on 2026-10-20 from the dev machine: "pallof press" and "nordic curl" were found on wger
+  (via the Title Case variant), "Deadlift" got a Wikipedia summary only, "zercher squat" and
+  "spoto press" found nothing. wger's name filter is exact and case-sensitive and its search
+  endpoint answers 404.
 
 ## Push to a new GitHub repo
 
@@ -182,15 +273,32 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules.
 
 ## Credits and licences
 
-- Muscle map artwork: [react-muscle-highlighter](https://github.com/soroojshehryar/react-muscle-highlighter)
-  1.2.0, **MIT licence**, © 2024 My Muscle Contributors.
+- Trainer art (v8): Instructor Iskra Vey is an original character designed for ASCEND; how the images were made and their licence status are in `apps/desktop/src/assets/trainer/ART_PROVENANCE.md`.
+- Muscle map artwork (v8, redrawn as v2): ASCEND's own original drawing of 54 muscles and heads,
+  front, back and a deep layer, generated by `scripts/body_map/build_map.py` (MIT, like the rest of the
+  repo). Versions up to v7 used react-muscle-highlighter 1.2.0 (MIT, © 2024 My Muscle
+  Contributors), which is no longer a dependency.
 - Fonts: Inter and Rajdhani (SIL Open Font License), bundled via `@fontsource`.
 - Food values: approximate, rounded home-style figures in the style of IFCT 2017 (NIN) and the
   Indian Nutrient Databank (INDB). Not a substitute for a dietitian.
 - Formulas: Mifflin-St Jeor (BMR), Epley (e1RM), MET method (calorie burn) are standard
   estimation formulas; results are estimates.
+- Exercise library and exercise photos: [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+  (yuhonas), **Unlicense** (public domain). One photo per exercise is bundled as a 320 px webp
+  (873 files, about 5.1 MiB); 14 of ASCEND's own entries reuse the photo of a similar movement
+  and say so. Exercises without a photo get a designed tile drawn by the app.
+- Skill-tree progressions follow the r/bodyweightfitness Recommended Routine and wiki, Steven Low's
+  *Overcoming Gravity* (2nd ed.) and GMB Fitness tutorials. The thresholds are ASCEND's own choices
+  (see `docs/architecture/skill-trees.md`).
+- Optional online research: [wger](https://wger.de) exercise data (CC-BY-SA 4.0) and
+  [Wikipedia](https://en.wikipedia.org) summaries (CC BY-SA 4.0), only when you turn it on or allow a
+  single lookup; results are credited on the exercise with a link and licence.
 
 Parts of this codebase were written with AI assistance.
+
+**Feature freeze after v8.** v8 is the last release that adds features. From here a change
+has to fix something, reduce friction, or replace an existing feature; the reasons are in
+[docs/research/v8-gamified-engagement.md](docs/research/v8-gamified-engagement.md) §4.
 
 ## Licence
 

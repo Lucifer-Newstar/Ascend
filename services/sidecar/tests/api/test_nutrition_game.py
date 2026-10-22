@@ -57,7 +57,7 @@ def test_dashboard_has_three_rings_quest_and_muscles(client, profile):
     assert set(d["rings"]) == {"tasks", "kcal_in", "kcal_out"}
     assert len(d["game"]["quest"]) == 3
     assert d["game"]["xp"]["rank"] == "E"
-    assert len(d["muscles"]) == 19
+    assert len(d["muscles"]) == 54  # taxonomy v2
 
 
 def test_meals_quest_item_completes_automatically(client, profile):
@@ -106,3 +106,37 @@ def test_missed_day_gets_comeback_item(client, profile, clock):
     clock.now += timedelta(days=2)
     codes = [q["code"] for q in client.get("/game/summary").json()["quest"]]
     assert "comeback" in codes
+
+
+def test_quick_logs_keep_the_streak(client, profile, clock):
+    """v8 Quick log: a meal, a weigh-in or a single set each count as an active day."""
+    from tests.api.test_workouts import exercise_id
+
+    clock.now += timedelta(days=1)
+    s = client.get("/game/summary").json()["streak"]
+    assert s["active_today"] is False
+    start = s["current"]
+    client.post(
+        "/meals",
+        json={
+            "meal_type": "snack",
+            "items": [{"food_id": food_id(client, "Banana"), "portions": 1}],
+        },
+    )
+    assert client.get("/game/summary").json()["streak"] == {
+        **s,
+        "current": start + 1,
+        "best": max(s["best"], start + 1),
+        "active_today": True,
+    }
+
+    clock.now += timedelta(days=1)
+    assert client.post("/body-metrics", json={"weight_kg": 70.4}).status_code == 201
+    assert client.get("/game/summary").json()["streak"]["current"] == start + 2
+
+    clock.now += timedelta(days=1)
+    w = client.post("/workouts").json()["id"]  # one set, workout left open
+    bench = exercise_id(client, "Barbell Bench Press")
+    client.post(f"/workouts/{w}/sets", json={"exercise_id": bench, "weight_kg": 40, "reps": 8})
+    s = client.get("/game/summary").json()["streak"]
+    assert s["current"] == start + 3 and s["active_today"] is True

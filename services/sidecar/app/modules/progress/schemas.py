@@ -21,6 +21,44 @@ class ProfileIn(BaseModel):
     goal: Literal["cut", "maintain", "bulk"]
     activity: Literal["sedentary", "light", "moderate", "active", "very_active"] = "moderate"
     target_weight_kg: float | None = Field(default=None, ge=30, le=300)
+    # Onboarding answers. Equipment: an empty list means "not stated" (nothing filtered).
+    focus: Literal["strength", "muscle", "skills", "fat_loss"] | None = None
+    equipment: list[Literal["none", "pullup_bar", "rings", "dumbbells", "gym"]] = Field(
+        default_factory=list, max_length=5
+    )
+
+
+class BaselineIn(StrictIn):
+    """The Awakening baseline test. Zero or null means "not done"; at least one result."""
+
+    pushups: int | None = Field(default=None, ge=0, le=200)
+    pullups: int | None = Field(default=None, ge=0, le=60)
+    dead_hang_s: int | None = Field(default=None, ge=0, le=600)
+    plank_s: int | None = Field(default=None, ge=0, le=1800)
+    squats_60s: int | None = Field(default=None, ge=0, le=120)
+    bodyweight_kg: float | None = Field(default=None, ge=30, le=300)
+
+
+class BaselineResult(BaseModel):
+    pushups: int | None = None
+    pullups: int | None = None
+    dead_hang_s: int | None = None
+    plank_s: int | None = None
+    squats_60s: int | None = None
+    bodyweight_kg: float | None = None
+    taken_at: datetime
+
+
+class BaselineOut(BaseModel):
+    baseline: BaselineResult
+    workout_id: int
+    sets_logged: int
+    xp_awarded: int
+    level: int
+    rank: str
+    # Skill-tree steps the baseline sets unlocked ("Skill: Step"); often none, since most
+    # steps need two sessions.
+    steps_unlocked: list[str]
 
 
 class EnergyTargets(BaseModel):
@@ -35,6 +73,7 @@ class EnergyTargets(BaseModel):
 class ProfileOut(ProfileIn):
     model_config = ConfigDict(from_attributes=True)
     energy: EnergyTargets
+    baseline: BaselineResult | None = None
 
 
 class MuscleStateOut(BaseModel):
@@ -48,6 +87,15 @@ class MuscleStateOut(BaseModel):
     weekly_high: float
     readiness: float
     ready_at: datetime | None
+    # recovery-v2: the same muscle with the population decay (k = 1), for "population vs
+    # you", and the engine version that produced these numbers.
+    readiness_population: float = 1.0
+    algo_version: str = "recovery-v2"
+    # taxonomy v2 (muscles-v2): where the muscle sits and how the map draws it.
+    region: str = ""
+    parent: str = ""
+    deep: bool = False
+    readiness_only: bool = False
 
 
 Units = Literal["metric", "imperial"]
@@ -60,6 +108,11 @@ class SettingsOut(BaseModel):
     theme: Theme = "dark"
     sessions_per_week: int = 3
     reduce_motion: bool = False
+    # Off by default: when on, "Add your own exercise" may ask wger.de (the only
+    # feature that contacts the internet, and only when the user asks per exercise).
+    online_lookup: bool = False
+    # v8: insights spoken by the trainer character (Instructor Iskra Vey); off = plain mode.
+    trainer: bool = True
 
 
 class SettingsIn(StrictIn):
@@ -70,6 +123,8 @@ class SettingsIn(StrictIn):
     theme: Theme | None = None
     sessions_per_week: int | None = Field(default=None, ge=1, le=7)
     reduce_motion: bool | None = None
+    online_lookup: bool | None = None
+    trainer: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

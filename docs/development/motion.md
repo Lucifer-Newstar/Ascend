@@ -35,7 +35,7 @@ physical. The rules: **quick, quiet, compositor-only, and optional.**
 | Set logged, streak flame, skeleton shimmer, page transitions, card hover | Small confirmations and continuity | General platform conventions |
 
 No artwork, icons or code were taken from these products. Body artwork is
-react-muscle-highlighter (MIT, see the README credits).
+ASCEND's own body-map artwork (v8; react-muscle-highlighter up to v7).
 
 ## Building blocks
 
@@ -54,3 +54,36 @@ react-muscle-highlighter (MIT, see the README credits).
 - In the running app, a sweep of the cursor across the map, a flip and a range change
   held 16.7 ms frames in headless Chromium (no frame over 50 ms). Repeat on real Windows
   hardware before a release; headless Chromium is not a GPU.
+
+## v5: the System window and micro-interactions
+
+| Piece | Full motion | Reduce motion |
+|---|---|---|
+| System window entrance | 220 ms scale 0.98 → 1 + fade, `--ease-out` | 120 ms fade |
+| System window scan line | one 600 ms band down the window (transform + opacity) | not rendered |
+| System notices (level up, quest complete) | enter like the window; leave after 7 s | same timing, fade only |
+| Buttons | press scales to 0.97 for 150 ms | instant |
+
+The 120 ms fade under Reduce motion is the one animation that survives the global
+"0.01 ms" rule: it lives in `@layer components` with `!important`, which outranks the
+unlayered global rule.
+
+
+## v5: logger, canvas, command bar and sound
+
+All of these animate `transform` or `opacity` only and collapse under Reduce motion (the OS
+setting or Settings → Reduce motion), through the global rules in `index.css`.
+
+| Effect | Where | Duration | Reduce motion |
+|---|---|---|---|
+| Saved set flashes the accent | `.set-flash` (logger rows) | 150 ms opacity | not visible |
+| Rest bar shrinks under the active set | `RestBar` | 1 s linear steps, `scaleX` | jumps per second |
+| Current skill node glows | `.skill-node-current` | 2.4 s loop, opacity | static |
+| Canvas zoom and pan | `SkillTreeCanvas` | follows the pointer (no easing) | unchanged (user-driven) |
+| Command bar opens | `.dialog-in` | 150 ms rise + fade | appears |
+| Streak popover / step drawer | `.panel-in` | existing token | appears |
+
+**Sound** (`lib/sound.ts`) is separate from motion: off by default, a volume slider and a
+Test button in Settings. Effects are WebAudio tones under half a second (set, quest, level-up,
+skill), so there are no audio files in the bundle. The preference is stored in this browser
+profile (localStorage).

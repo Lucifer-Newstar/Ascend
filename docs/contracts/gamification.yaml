@@ -24,7 +24,8 @@ security:
 - launchToken: []
 tags:
 - name: gamification
-  description: Humane game layer — XP is never taken away
+  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own
+    grant (a deleted set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
 paths:
   /game/summary:
     get:
@@ -155,6 +156,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/StreakOut'
       x-status: planned
+      tags:
+      - gamification
+  /game/stats:
+    get:
+      summary: Hunter Stats
+      description: STR, AGI, END, VIT and INT (0-100), each with its formula and inputs (stats-v1).
+      operationId: hunter_stats_game_stats_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsOut'
+      x-status: implemented
+      tags:
+      - gamification
+  /game/boss:
+    get:
+      summary: "This week's boss raid: HP, damage from logged sets, reward and title (boss-v1, ADR-0022)"
+      operationId: boss_raid_game_boss_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BossOut'
+      x-status: implemented
+      tags:
+      - gamification
+  /game/titles:
+    get:
+      summary: Titles earned by beating weekly bosses, newest first (the only title source)
+      operationId: titles_game_titles_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TitleOut'
+                type: array
+                title: Response Titles Game Titles Get
+      x-status: implemented
       tags:
       - gamification
 components:
@@ -430,3 +477,170 @@ components:
       - current
       - best
       - active_today
+    StatOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        label:
+          type: string
+          title: Label
+        value:
+          type: integer
+          title: Value
+        formula:
+          type: string
+          title: Formula
+        inputs:
+          additionalProperties:
+            anyOf:
+            - type: number
+            - type: integer
+            - type: string
+            - type: 'null'
+          type: object
+          title: Inputs
+      type: object
+      required:
+      - key
+      - label
+      - value
+      - formula
+      - inputs
+      title: StatOut
+      description: One computed hunter stat (0-100) with the numbers behind it.
+    StatsOut:
+      properties:
+        stats:
+          items:
+            $ref: '#/components/schemas/StatOut'
+          type: array
+          title: Stats
+        version:
+          type: string
+          title: Version
+        window_days:
+          type: integer
+          title: Window Days
+      type: object
+      required:
+      - stats
+      - version
+      - window_days
+      title: StatsOut
+    BossOut:
+      properties:
+        week_start:
+          type: string
+          format: date
+          title: Week Start
+        week_end:
+          type: string
+          format: date
+          title: Week End
+        name:
+          type: string
+          title: Name
+        title:
+          type: string
+          title: Title
+        hp:
+          type: integer
+          title: Hp
+        damage:
+          type: integer
+          title: Damage
+        hp_left:
+          type: integer
+          title: Hp Left
+        days_left:
+          type: integer
+          title: Days Left
+        defeated:
+          type: boolean
+          title: Defeated
+        defeated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Defeated At
+        bonus_xp:
+          type: integer
+          title: Bonus Xp
+        hp_source:
+          type: string
+          title: Hp Source
+        hp_note:
+          type: string
+          title: Hp Note
+        titles_earned:
+          type: integer
+          title: Titles Earned
+        algo_version:
+          type: string
+          title: Algo Version
+        why:
+          $ref: '#/components/schemas/BossWhy'
+      type: object
+      required:
+      - week_start
+      - week_end
+      - name
+      - title
+      - hp
+      - damage
+      - hp_left
+      - days_left
+      - defeated
+      - defeated_at
+      - bonus_xp
+      - hp_source
+      - hp_note
+      - titles_earned
+      - algo_version
+      - why
+      title: BossOut
+      description: 'GET /game/boss: this week''s boss raid (boss-v1, ADR-0022).'
+    BossWhy:
+      properties:
+        formula:
+          type: string
+          title: Formula
+        inputs:
+          additionalProperties:
+            anyOf:
+            - type: integer
+            - type: string
+            - type: 'null'
+          type: object
+          title: Inputs
+      type: object
+      required:
+      - formula
+      - inputs
+      title: BossWhy
+    TitleOut:
+      properties:
+        title:
+          type: string
+          title: Title
+        boss:
+          type: string
+          title: Boss
+        week_start:
+          type: string
+          format: date
+          title: Week Start
+        earned_at:
+          type: string
+          format: date-time
+          title: Earned At
+      type: object
+      required:
+      - title
+      - boss
+      - week_start
+      - earned_at
+      title: TitleOut
+      description: 'A title earned by beating a weekly boss: the only source of titles.'

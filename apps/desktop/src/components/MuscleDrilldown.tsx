@@ -1,8 +1,11 @@
 /**
  * Drill-down for one muscle region: daily effective sets and readiness over 1, 7 or
  * 30 days, the sets that loaded it, and the rule-based suggestion from the sidecar.
+ * The recovery block compares your readiness with the population's (recovery-v2) and has a
+ * "Why?" with the formula and every input.
  */
-import { useEffect, useRef, useState } from "react";
+import type { Explanation, MuscleRecovery, RecoveryGroup } from "@ascend/shared";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import { readyAtLabel } from "../lib/format";
@@ -10,8 +13,10 @@ import { useReducedMotion } from "../lib/motion";
 import { STATUS_LABELS } from "../lib/muscleMap";
 import { useApi } from "../lib/useApi";
 import { BarChart } from "./charts";
+import { RoughBadge } from "./RoughBadge";
 import { Segmented } from "./Segmented";
 import { ErrorState, Loading } from "./States";
+import { WhyButton } from "./WhyPanel";
 
 type Range = "1" | "7" | "30";
 
@@ -25,6 +30,10 @@ export const CLOSE_MS = 160;
 export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onClose: () => void }) {
   const [range, setRange] = useState<Range>("7");
   const h = useApi(() => api.muscleHistory(code, Number(range)), [code, range]);
+  const rec = useApi(() => api.recovery(), [code]);
+  const mine = rec.data?.muscles.find((m) => m.key === code) ?? null;
+  const group = mine ? rec.data?.groups.find((g) => g.group === mine.group) ?? null : null;
+  const explainMuscle = useCallback(() => api.recoveryExplanation(code), [code]);
   const panel = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
   const [closing, setClosing] = useState(false);
@@ -66,10 +75,11 @@ export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onC
         <div className="space-y-4">
           <dl className="grid grid-cols-4 gap-3 text-xs">
             <div><dt className="text-muted">Status</dt><dd className="mt-0.5 text-sm text-ink">{STATUS_LABELS[h.data.status]}</dd></div>
-            <div><dt className="text-muted">Last 7 days</dt><dd className="mt-0.5 text-sm text-ink">{h.data.es_7d} sets</dd></div>
+            <div><dt className="text-muted">Last 7 days</dt><dd className="mt-0.5 text-sm text-ink">{Math.round(h.data.es_7d * 10) / 10} sets</dd></div>
             <div><dt className="text-muted">Weekly target</dt><dd className="mt-0.5 text-sm text-ink">{h.data.target_low}–{h.data.target_high} sets</dd></div>
             <div><dt className="text-muted">Readiness</dt><dd className="mt-0.5 text-sm text-ink">{Math.round(h.data.readiness * 100)}%{h.data.ready_at ? ` · ${readyAtLabel(h.data.ready_at)}` : ""}</dd></div>
           </dl>
+          {mine && group && <RecoveryYou m={mine} g={group} explain={explainMuscle} />}
           {h.data.suggestion && <p className="rounded-lg border border-line bg-panel px-3 py-2 text-xs text-ink">{h.data.suggestion}</p>}
           {h.data.daily.length > 1 && (
             <div>
@@ -111,5 +121,34 @@ export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onC
         </div>
       )}
     </section>
+  );
+}
+
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+
+/** "Population vs you": the same doses decayed with the population half-life and with yours. */
+export function RecoveryYou({ m, g, explain }: { m: MuscleRecovery; g: RecoveryGroup; explain?: () => Promise<Explanation> }) {
+  const slower = g.k > 1;
+  // Only call it slower or faster when the 90% interval excludes the population value.
+  const clear = g.k_low > 1 || g.k_high < 1;
+  return (
+    <div className="rounded-lg border border-line bg-panel px-3 py-2 text-xs" data-testid="recovery-you">
+      <p className="text-ink">
+        Readiness: <span className="font-semibold">you {pct(m.readiness)}</span>{" "}
+        <RoughBadge n={g.n} unit="sessions" enough={8} />
+        <span className="text-muted"> · population {pct(m.readiness_population)}</span>
+        {m.modifier > 1 && <span className="text-muted"> · today&apos;s check-in ×{m.modifier}</span>}
+      </p>
+      <p className="mt-1 text-muted">
+        {g.personal
+          ? clear
+            ? `Your ${g.group} muscles recover ${slower ? "slower" : "faster"} than the population: half-life ${m.half_life_h} h instead of ${m.prior_half_life_h} h (factor ${g.k}, 90% interval ${g.k_low}–${g.k_high}, from ${g.n} sessions).`
+            : `Your ${g.group} muscles recover about like the population so far: half-life ${m.half_life_h} h against ${m.prior_half_life_h} h (factor ${g.k}, but the 90% interval ${g.k_low}–${g.k_high} still includes 1, from ${g.n} sessions).`
+          : `Population recovery for ${g.group} until your sessions show a clear difference (${g.n} usable so far).`}
+      </p>
+      <div className="mt-1">
+        <WhyButton why={m.why} label={`Why is ${m.label} readiness ${pct(m.readiness)}?`} explain={explain} />
+      </div>
+    </div>
   );
 }

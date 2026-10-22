@@ -9,8 +9,10 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.modules.intelligence import progression_service
 from app.modules.progress import checkins
 from app.modules.progress import service as progress
+from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.workouts import deload
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
 
@@ -90,10 +92,15 @@ def advice(db: Session, now: datetime) -> DeloadOut:
     today = now.date()
     last = _last_deload_week(db)
     recent = checkins.recent(db, today, 7)
-    strained = sum(
-        1
-        for m in progress.muscle_states(db, now)
-        if m.status == "over" or (m.status != "no_data" and m.readiness < 0.5)
+    # Counted per v7 region (chest, quads...), not per head: under taxonomy v2 one tired
+    # quadriceps is four heads, and the threshold of 3 was set for regions (ADR-0021).
+    strained = len(
+        {
+            MUSCLE_BY_KEY[m.key].legacy if m.key in MUSCLE_BY_KEY else m.key
+            for m in progress.muscle_states(db, now)
+            if (m.status == "over" or (m.status != "no_data" and m.readiness < 0.5))
+            and not (m.key in MUSCLE_BY_KEY and MUSCLE_BY_KEY[m.key].readiness_only)
+        }
     )
     inputs = deload.DeloadInputs(
         weekly_sessions=_weekly_sessions(db, today, last),
@@ -102,6 +109,7 @@ def advice(db: Session, now: datetime) -> DeloadOut:
         lifts=_lift_trends(db, datetime.combine(today, time.max).replace(microsecond=0)),
         strained_muscles=strained,
         in_deload_week=last == deload.week_start(today),
+        stalled_lifts=[e.name for e, _ in progression_service.stalled_lifts(db, now)],
     )
     a = deload.advise(inputs)
     return DeloadOut(

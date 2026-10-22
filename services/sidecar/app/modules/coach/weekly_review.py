@@ -28,12 +28,11 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.modules.intelligence import recovery_service
 from app.modules.nutrition.service import day_totals, meal_count
 from app.modules.progress import body
 from app.modules.progress import service as progress
 from app.modules.progress import trend as trend_engine
-from app.modules.progress.models import MuscleLoadEvent
-from app.modules.progress.muscle_load import Contribution, compute_states
 from app.modules.workouts import deload, deload_service
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
 
@@ -86,10 +85,7 @@ def _planned(db: Session) -> int:
 
 
 def _muscle_states_at(db: Session, at: datetime) -> list[Any]:
-    rows = db.scalars(
-        select(MuscleLoadEvent).where(MuscleLoadEvent.at >= at - timedelta(days=28))
-    ).all()
-    return compute_states([Contribution(r.muscle, r.es, r.at) for r in rows], at)
+    return list(recovery_service.states(db, at, use_checkin=False))
 
 
 def _weekly_best(db: Session, exercise_id: int, start: date) -> float | None:
@@ -177,11 +173,15 @@ def _muscles(db: Session, now: datetime) -> list[Finding]:
                 "MUSCLE_UNDER",
                 2,
                 f"{worst.label} under its weekly target",
-                f"{worst.label}: {worst.es_7d:g} effective sets this week and "
-                f"{previous[worst.key].es_7d:g} last week "
+                f"{worst.label}: {round(worst.es_7d, 1):g} effective sets this week and "
+                f"{round(previous[worst.key].es_7d, 1):g} last week "
                 f"(target {worst.weekly_low:g}-{worst.weekly_high:g}).",
                 f"Add 2-4 sets for {worst.label.lower()} across the week.",
-                {"muscle": worst.key, "es_7d": worst.es_7d, "weekly_low": worst.weekly_low},
+                {
+                    "muscle": worst.key,
+                    "es_7d": round(worst.es_7d, 1),
+                    "weekly_low": worst.weekly_low,
+                },
             )
         )
     over = [m for m in current if m.es_7d > m.weekly_high]
@@ -192,10 +192,10 @@ def _muscles(db: Session, now: datetime) -> list[Finding]:
                 "MUSCLE_OVER",
                 2,
                 f"{top.label} above its weekly range",
-                f"{top.label}: {top.es_7d:g} effective sets this week "
+                f"{top.label}: {round(top.es_7d, 1):g} effective sets this week "
                 f"(range {top.weekly_low:g}-{top.weekly_high:g}).",
                 "Remove an overlapping accessory exercise next week.",
-                {"muscle": top.key, "es_7d": top.es_7d, "weekly_high": top.weekly_high},
+                {"muscle": top.key, "es_7d": round(top.es_7d, 1), "weekly_high": top.weekly_high},
             )
         )
     return found

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.modules.progress import muscle_load
+from app.modules.intelligence import recovery, recovery_service
 from app.modules.progress.models import MuscleLoadEvent
 from app.modules.progress.taxonomy import MUSCLES
 from app.modules.workouts.models import WorkoutSet
@@ -54,7 +54,7 @@ class MuscleHistory(BaseModel):
     formula_version: str
 
 
-def _suggestion(state: muscle_load.MuscleState) -> str | None:
+def _suggestion(state: recovery.MuscleRecovery) -> str | None:
     if state.status == "under":
         gap = max(1, round(state.weekly_low - state.es_7d))
         return f"About {gap} more hard sets this week reaches the {state.weekly_low:g}-set minimum."
@@ -80,17 +80,17 @@ def muscle_history(db: Session, code: str, days: int, now: datetime) -> MuscleHi
         .where(MuscleLoadEvent.muscle == code, MuscleLoadEvent.at >= since)
         .order_by(MuscleLoadEvent.at)
     ).all()
-    contribs = [muscle_load.Contribution(e.muscle, e.es, e.at) for e, _ in rows]
-
-    def state_at(at: datetime) -> muscle_load.MuscleState:
-        return next(s for s in muscle_load.compute_states(contribs, at) if s.key == code)
-
+    ends = [
+        min(now, datetime.combine(first_day + timedelta(days=i), time.max).replace(microsecond=0))
+        for i in range(days)
+    ]
+    series = recovery_service.states_at_many(db, ends, muscle=code)
     daily: list[MuscleDay] = []
-    for i in range(days):
+    for i, states in enumerate(series):
         d = first_day + timedelta(days=i)
-        end = min(now, datetime.combine(d, time.max).replace(microsecond=0))
-        es = sum(c.es for c in contribs if c.at.date() == d)
-        daily.append(MuscleDay(day=d, eff_sets=round(es, 2), readiness=state_at(end).readiness))
+        es = sum(e.es for e, _ in rows if e.at.date() == d)
+        mine = next(s for s in states if s.key == code)
+        daily.append(MuscleDay(day=d, eff_sets=round(es, 2), readiness=mine.readiness))
 
     window_start = datetime.combine(first_day, time.min)
     mapping = {}
@@ -111,7 +111,7 @@ def muscle_history(db: Session, code: str, days: int, now: datetime) -> MuscleHi
                 es=event.es,
             )
         )
-    current = state_at(now)
+    current = next(s for s in recovery_service.states(db, now) if s.key == code)
     return MuscleHistory(
         code=code,
         label=muscle.label,
@@ -125,5 +125,5 @@ def muscle_history(db: Session, code: str, days: int, now: datetime) -> MuscleHi
         daily=daily,
         contributing_sets=contributing,
         suggestion=_suggestion(current),
-        formula_version=muscle_load.FORMULA_VERSION,
+        formula_version=recovery.ALGO_VERSION,
     )

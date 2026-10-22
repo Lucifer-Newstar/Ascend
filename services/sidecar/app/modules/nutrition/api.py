@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
+from app.modules.intelligence import diet_service
 from app.modules.nutrition import service
 from app.modules.nutrition.schemas import DayLog, FoodOut, MealIn, MealLoggedOut
 from app.modules.progress import service as progress
@@ -51,10 +52,13 @@ def day_log(
     d = day or now.date()
     profile = progress.get_profile(db)
     energy = progress.energy_for(profile) if profile else None
+    # This week's adaptive target once tdee-v1 has set one (ADR-0018), else the formula's.
+    target = diet_service.calorie_target(db, d)
     return DayLog(
         day=d,
         meals=[service.meal_out(m) for m in service.meals_on(db, d)],
         totals=service.day_totals(db, d),
-        kcal_target=energy.kcal_target if energy else None,
+        kcal_target=target[0] if target else None,
+        kcal_target_source=target[1] if target else None,  # type: ignore[arg-type]
         protein_target_g=energy.protein_target_g if energy else None,
     )

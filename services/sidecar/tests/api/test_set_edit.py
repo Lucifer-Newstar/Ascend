@@ -34,9 +34,9 @@ def test_editing_rpe_rewrites_muscle_load(client, profile, clock):
     squat = exercise_id(client, "Back Squat")
     w = client.post("/workouts").json()["id"]
     s = _log(client, w, squat, 80, 5, rpe=6)
-    before = next(m for m in client.get("/muscles").json() if m["key"] == "quads")
+    before = next(m for m in client.get("/muscles").json() if m["key"] == "vastus_lateralis")
     client.patch(f"/workouts/{w}/sets/{s['id']}", json={"rpe": 9})
-    after = next(m for m in client.get("/muscles").json() if m["key"] == "quads")
+    after = next(m for m in client.get("/muscles").json() if m["key"] == "vastus_lateralis")
     assert after["es_7d"] > before["es_7d"]
 
 
@@ -45,7 +45,7 @@ def test_delete_set_removes_load_and_returns_204(client, profile):
     w = client.post("/workouts").json()["id"]
     s = _log(client, w, squat, 80, 5)
     assert client.delete(f"/workouts/{w}/sets/{s['id']}").status_code == 204
-    quads = next(m for m in client.get("/muscles").json() if m["key"] == "quads")
+    quads = next(m for m in client.get("/muscles").json() if m["key"] == "vastus_lateralis")
     assert quads["es_7d"] == 0
     assert client.get(f"/workouts/{w}").json()["sets"] == []
 

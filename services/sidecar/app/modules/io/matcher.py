@@ -75,7 +75,7 @@ ALIASES: dict[str, str] = {
     "hip thrust barbell": "Hip Thrust",
     "standing calf raise machine": "Standing Calf Raise",
     "calf raise standing": "Standing Calf Raise",
-    "plank": "Plank (60 s = 1 set)",
+    "plank": "Plank",
     "hanging leg raise": "Hanging Leg Raise",
     "russian twist": "Russian Twist",
     "running": "Running",

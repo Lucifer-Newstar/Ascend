@@ -1,0 +1,648 @@
+# ASCEND contract — skills
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — skills
+  version: 0.1.0
+  description: 'Calisthenics skill trees: progression steps, unlock criteria computed from logged sets, unlocks
+    and "train this skill". Owner: Jegatheesan (backend).
+
+
+    Thresholds are design choices documented in docs/architecture/skill-trees.md; time-to-unlock is always an estimate.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: skills
+  description: Skill trees fed by the workout logger
+paths:
+  /skills:
+    get:
+      summary: List Skills
+      description: Every calisthenics skill tree with the current step and % to the next.
+      operationId: list_skills_skills_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SkillSummary'
+                type: array
+                title: Response List Skills Skills Get
+      x-status: implemented
+      tags:
+      - skills
+  /skills/unlocks:
+    get:
+      summary: Recent Unlocks
+      description: Most recent unlocked steps, newest first.
+      operationId: recent_unlocks_skills_unlocks_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 10
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkillUnlockOut'
+                title: Response Recent Unlocks Skills Unlocks Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - skills
+  /skills/{skill_key}:
+    get:
+      summary: Get Skill
+      description: 'One tree: every step with its unlock criteria and progress, feeder exercises, an
+
+        estimated time to the next step (only with enough data) and the sources.'
+      operationId: get_skill_skills__skill_key__get
+      parameters:
+      - name: skill_key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Skill Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - skills
+  /skills/{skill_key}/train:
+    post:
+      summary: Train
+      description: 'Add today''s work for this skill (the next step''s exercises and a feeder) to
+
+        today''s quest. Idempotent; at most 4 skill items a day.'
+      operationId: train_skills__skill_key__train_post
+      parameters:
+      - name: skill_key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Skill Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - skills
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'
+  schemas:
+    CriterionOut:
+      properties:
+        text:
+          type: string
+          title: Text
+        exercise:
+          type: string
+          title: Exercise
+        exercise_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Id
+        sets:
+          type: integer
+          title: Sets
+        target:
+          type: integer
+          title: Target
+        unit:
+          type: string
+          title: Unit
+        added_kg:
+          type: number
+          title: Added Kg
+          default: 0
+        per_side:
+          type: boolean
+          title: Per Side
+          default: false
+        best_value:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Best Value
+        best_score:
+          type: number
+          title: Best Score
+        sessions_met:
+          type: integer
+          title: Sessions Met
+        sessions_needed:
+          type: integer
+          title: Sessions Needed
+        pct:
+          type: number
+          title: Pct
+        met:
+          type: boolean
+          title: Met
+        ignored_sets:
+          type: integer
+          title: Ignored Sets
+          default: 0
+      type: object
+      required:
+      - text
+      - exercise
+      - exercise_id
+      - sets
+      - target
+      - unit
+      - best_value
+      - best_score
+      - sessions_met
+      - sessions_needed
+      - pct
+      - met
+      title: CriterionOut
+    FeederOut:
+      properties:
+        exercise_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Id
+        name:
+          type: string
+          title: Name
+        measure:
+          type: string
+          title: Measure
+        sets_28d:
+          type: integer
+          title: Sets 28D
+      type: object
+      required:
+      - exercise_id
+      - name
+      - measure
+      - sets_28d
+      title: FeederOut
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    SkillDetail:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        family:
+          type: string
+          title: Family
+        summary:
+          type: string
+          title: Summary
+        stretch:
+          type: boolean
+          title: Stretch
+        current_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Step
+        current_step_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Step Name
+        next_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Step
+        next_step_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Step Name
+        pct_to_next:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Pct To Next
+        steps_unlocked:
+          type: integer
+          title: Steps Unlocked
+        steps_total:
+          type: integer
+          title: Steps Total
+        acquired:
+          type: boolean
+          title: Acquired
+        last_trained:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Trained
+        sessions_28d:
+          type: integer
+          title: Sessions 28D
+        rusty:
+          type: boolean
+          title: Rusty
+        steps:
+          items:
+            $ref: '#/components/schemas/StepOut'
+          type: array
+          title: Steps
+        feeders:
+          items:
+            $ref: '#/components/schemas/FeederOut'
+          type: array
+          title: Feeders
+        eta:
+          $ref: '#/components/schemas/SkillEtaOut'
+        sources:
+          items:
+            $ref: '#/components/schemas/SourceOut'
+          type: array
+          title: Sources
+        engine_version:
+          type: string
+          title: Engine Version
+      type: object
+      required:
+      - key
+      - name
+      - family
+      - summary
+      - stretch
+      - current_step
+      - current_step_name
+      - next_step
+      - next_step_name
+      - pct_to_next
+      - steps_unlocked
+      - steps_total
+      - acquired
+      - last_trained
+      - sessions_28d
+      - rusty
+      - steps
+      - feeders
+      - eta
+      - sources
+      - engine_version
+      title: SkillDetail
+    SkillEtaOut:
+      properties:
+        days:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Days
+        date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date
+        reason:
+          type: string
+          title: Reason
+        is_estimate:
+          type: boolean
+          title: Is Estimate
+          default: true
+      type: object
+      required:
+      - days
+      - date
+      - reason
+      title: SkillEtaOut
+      description: 'Days until the next step at the current trend. Always an estimate; None when
+
+        there is not enough data (the reason says what is missing).'
+    SkillSummary:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        family:
+          type: string
+          title: Family
+        summary:
+          type: string
+          title: Summary
+        stretch:
+          type: boolean
+          title: Stretch
+        current_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Step
+        current_step_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Step Name
+        next_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Step
+        next_step_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Step Name
+        pct_to_next:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Pct To Next
+        steps_unlocked:
+          type: integer
+          title: Steps Unlocked
+        steps_total:
+          type: integer
+          title: Steps Total
+        acquired:
+          type: boolean
+          title: Acquired
+        last_trained:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Trained
+        sessions_28d:
+          type: integer
+          title: Sessions 28D
+        rusty:
+          type: boolean
+          title: Rusty
+      type: object
+      required:
+      - key
+      - name
+      - family
+      - summary
+      - stretch
+      - current_step
+      - current_step_name
+      - next_step
+      - next_step_name
+      - pct_to_next
+      - steps_unlocked
+      - steps_total
+      - acquired
+      - last_trained
+      - sessions_28d
+      - rusty
+      title: SkillSummary
+    SkillUnlockOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        skill_key:
+          type: string
+          title: Skill Key
+        skill_name:
+          type: string
+          title: Skill Name
+        step_key:
+          type: string
+          title: Step Key
+        step_name:
+          type: string
+          title: Step Name
+        unlocked_at:
+          type: string
+          format: date-time
+          title: Unlocked At
+        xp:
+          type: integer
+          title: Xp
+        final:
+          type: boolean
+          title: Final
+        next_step_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Step Name
+        source:
+          type: string
+          title: Source
+          default: log
+      type: object
+      required:
+      - id
+      - skill_key
+      - skill_name
+      - step_key
+      - step_name
+      - unlocked_at
+      - xp
+      - final
+      title: SkillUnlockOut
+    SourceOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        title:
+          type: string
+          title: Title
+        url:
+          type: string
+          title: Url
+      type: object
+      required:
+      - key
+      - title
+      - url
+      title: SourceOut
+    StepOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        exercise:
+          type: string
+          title: Exercise
+        exercise_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Id
+        measure:
+          type: string
+          title: Measure
+        status:
+          type: string
+          title: Status
+        pct:
+          type: number
+          title: Pct
+        unlocked_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Unlocked At
+        criteria:
+          items:
+            $ref: '#/components/schemas/CriterionOut'
+          type: array
+          title: Criteria
+        requires:
+          items:
+            type: string
+          type: array
+          title: Requires
+        xp:
+          type: integer
+          title: Xp
+        uncertain:
+          type: boolean
+          title: Uncertain
+        note:
+          type: string
+          title: Note
+          default: ''
+      type: object
+      required:
+      - key
+      - name
+      - exercise
+      - exercise_id
+      - measure
+      - status
+      - pct
+      - unlocked_at
+      - criteria
+      - requires
+      - xp
+      - uncertain
+      title: StepOut
+    TrainOut:
+      properties:
+        skill_key:
+          type: string
+          title: Skill Key
+        added:
+          type: integer
+          title: Added
+        already_planned:
+          type: integer
+          title: Already Planned
+        items:
+          items:
+            type: string
+          type: array
+          title: Items
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - skill_key
+      - added
+      - already_planned
+      - items
+      - message
+      title: TrainOut
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

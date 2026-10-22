@@ -1,12 +1,31 @@
 import type { MuscleActivity, MuscleState, MuscleStatus } from "@ascend/shared";
 
-/** Status colours (same tokens as index.css), used by the map and its legend. */
+/**
+ * Each status has exactly one colour token (index.css), shared by the map, its legend,
+ * the hover card and the "ready to train" pulse. System blue (--color-accent) is never a
+ * status colour.
+ */
+export const STATUS_TOKEN: Record<MuscleStatus, string> = {
+  over: "--color-map-over",
+  recovering: "--color-map-recovering",
+  under: "--color-map-under",
+  optimal: "--color-map-optimal",
+  no_data: "--color-map-nodata",
+};
+
+/** A muscle that is ready to train again pulses in the "ready / recovered" colour. */
+export const READY_TOKEN = "--color-map-optimal";
+
+/** CSS colour for a status, as a var() reference (for style attributes and CSS rules). */
+export const statusVar = (status: MuscleStatus): string => `var(${STATUS_TOKEN[status]})`;
+
+/** Dark-theme values of the status tokens, used only when a token cannot be read (tests, SSR). */
 export const STATUS_COLORS: Record<MuscleStatus, string> = {
-  over: "#ef4444",
-  recovering: "#f5a524",
-  under: "#4f7bd9",
-  optimal: "#22c55e",
-  no_data: "#2a3345",
+  over: "#c2525d",
+  recovering: "#c9a440",
+  under: "#6f80b5",
+  optimal: "#3e9e7c",
+  no_data: "#26324a",
 };
 
 export const STATUS_LABELS: Record<MuscleStatus, string> = {
@@ -68,7 +87,7 @@ export const SLUG_LABELS: Record<string, string> = {
   calves: "Calves",
 };
 
-/** Over or still recovering: drawn with a soft glow. */
+/** Over or still recovering: drawn with a quiet outline. */
 export function isFatigued(m: MuscleState): boolean {
   return m.status === "over" || m.status === "recovering";
 }
@@ -135,8 +154,8 @@ export function primaryRegion(summary: SlugSummary): MuscleState {
 
 /** Volume heat ramp (Hevy-style distribution), light to deep, per theme. */
 export const HEAT: Record<"dark" | "light", string[]> = {
-  dark: ["#173a4c", "#1c5b73", "#1f7f99", "#22a8c4", "#2fd9f2"],
-  light: ["#cfeaf2", "#9cd5e5", "#61b9d2", "#2b95b3", "#0c6680"],
+  dark: ["#1d3442", "#25495a", "#2f6175", "#3c7a8f", "#5193a6"],
+  light: ["#d6e6ec", "#b0cdd8", "#86afbf", "#5e90a3", "#3d7286"],
 };
 
 /** Colour for a share of the busiest region's sets (0..1); null means untrained. */

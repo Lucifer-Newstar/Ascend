@@ -1,0 +1,1178 @@
+# ASCEND contract — intelligence
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — intelligence
+  version: 0.1.0
+  description: 'The intelligence layer: deterministic engines that decide numbers (recovery-v2, prog-v1) and return
+    every input of every number, so the app can show a Why for it. Owner: Jegatheesan (backend). The optional local
+    model only phrases explanations; see ADR-0014, ADR-0015 and ADR-0016.'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: intelligence
+  description: 'The intelligence layer: deterministic engines that decide numbers (recovery-v2, prog-v1) and return
+    every input of every number, so the app can show a Why for it'
+paths:
+  /intelligence/recovery:
+    get:
+      tags:
+      - intelligence
+      summary: Recovery
+      description: 'recovery-v2 per muscle with every input of its readiness, the check-in used and the
+
+        personal factor per muscle group (population value 1 until there is evidence).'
+      operationId: recovery_intelligence_recovery_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryOut'
+      x-status: implemented
+  /intelligence/progression/{exercise_id}:
+    get:
+      tags:
+      - intelligence
+      summary: Progression Target
+      description: 'prog-v1: the next session''s target for one exercise, with the reason, a one-line
+
+        why, the formula and every input.'
+      operationId: progression_target_intelligence_progression__exercise_id__get
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /intelligence/progression/{exercise_id}/decision:
+    post:
+      tags:
+      - intelligence
+      summary: Progression Decision
+      description: 'Record "use it" or "keep mine" for the current target. "Keep mine" stops new
+
+        targets for this exercise for 7 days (FT-1).'
+      operationId: progression_decision_intelligence_progression__exercise_id__decision_post
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /intelligence/stalls:
+    get:
+      tags:
+      - intelligence
+      summary: Stalls
+      description: Exercises trained in the last 14 days with no rep record in 3 sessions (prog-v1).
+      operationId: stalls_intelligence_stalls_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/StalledLiftOut'
+                type: array
+                title: Response Stalls Intelligence Stalls Get
+      x-status: implemented
+  /intelligence/progression/{exercise_id}/explanation:
+    get:
+      tags:
+      - intelligence
+      summary: Progression Explanation
+      description: 'The target''s "why" in plain words: the local model''s sentence when it passes the
+
+        number and phrase checks, else the template.'
+      operationId: progression_explanation_intelligence_progression__exercise_id__explanation_get
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Exercise Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplanationOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /intelligence/recovery/{muscle}/explanation:
+    get:
+      tags:
+      - intelligence
+      summary: Recovery Explanation
+      description: One muscle's readiness in plain words (same guard and fallback).
+      operationId: recovery_explanation_intelligence_recovery__muscle__explanation_get
+      parameters:
+      - name: muscle
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Muscle
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplanationOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /intelligence/notices:
+    get:
+      tags:
+      - intelligence
+      summary: System Notices
+      description: The System's current notices, most important first (at most one of each kind).
+      operationId: system_notices_intelligence_notices_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NoticeOut'
+                type: array
+                title: Response System Notices Intelligence Notices Get
+      x-status: implemented
+  /intelligence/tdee:
+    get:
+      summary: "Adaptive TDEE (tdee-v1): expenditure ± SD, trend weight and the weekly target (ADR-0018)"
+      description: 'tdee-v1: expenditure ± SD, trend weight, the weekly target and the last `days` days.'
+      operationId: tdee_estimate_intelligence_tdee_get
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 365
+          minimum: 7
+          default: 90
+          title: Days
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TdeeOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - intelligence
+  /intelligence/tdee/explanation:
+    get:
+      summary: The expenditure estimate in plain words (local model behind the coach guard, else the template)
+      description: 'The expenditure estimate in plain words (local model behind the coach guard, else
+
+        the template).'
+      operationId: tdee_explanation_intelligence_tdee_explanation_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplanationOut'
+      x-status: implemented
+      tags:
+      - intelligence
+  /intelligence/insights:
+    get:
+      summary: "Weekly diet insights (insights-v1): up to three findings with a Why, plus every rule checked (ADR-0019)"
+      description: 'insights-v1: at most three findings for the last 7 complete days, each with a Why.'
+      operationId: diet_insights_intelligence_insights_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightsOut'
+      x-status: implemented
+      tags:
+      - intelligence
+  /intelligence/insights/{code}/explanation:
+    get:
+      summary: One finding in plain words (local model behind the coach guard, else its own text)
+      description: One finding in plain words (local model behind the coach guard, else its own text).
+      operationId: insight_explanation_intelligence_insights__code__explanation_get
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Code
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplanationOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - intelligence
+components:
+  schemas:
+    CheckinUsed:
+      properties:
+        sleep:
+          type: integer
+          title: Sleep
+        soreness:
+          type: string
+          title: Soreness
+      type: object
+      required:
+      - sleep
+      - soreness
+      title: CheckinUsed
+    DecisionIn:
+      properties:
+        choice:
+          type: string
+          enum:
+          - accepted
+          - kept
+          title: Choice
+      type: object
+      required:
+      - choice
+      title: DecisionIn
+    DecisionOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        decided_at:
+          type: string
+          format: date-time
+          title: Decided At
+        choice:
+          type: string
+          title: Choice
+        reason:
+          type: string
+          title: Reason
+        kept_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Kept Until
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - id
+      - exercise_id
+      - decided_at
+      - choice
+      - reason
+      - kept_until
+      - algo_version
+      title: DecisionOut
+    E1rmOut:
+      properties:
+        unit:
+          type: string
+          enum:
+          - kg
+          - reps
+          - s
+          title: Unit
+        current:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Current
+        best:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Best
+        last:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Last
+        trend_pct_week:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Trend Pct Week
+        series:
+          items:
+            $ref: '#/components/schemas/E1rmPoint'
+          type: array
+          title: Series
+      type: object
+      required:
+      - unit
+      - current
+      - best
+      - last
+      - trend_pct_week
+      - series
+      title: E1rmOut
+      description: 'Session performance: RIR-adjusted e1RM (kg) for loaded lifts, best reps for
+
+        bodyweight moves, best seconds for holds.'
+    E1rmPoint:
+      properties:
+        at:
+          type: string
+          format: date-time
+          title: At
+        value:
+          type: number
+          title: Value
+      type: object
+      required:
+      - at
+      - value
+      title: E1rmPoint
+    ExplanationOut:
+      properties:
+        text:
+          type: string
+          title: Text
+        template:
+          type: string
+          title: Template
+        phrasing:
+          type: string
+          enum:
+          - model
+          - template
+          title: Phrasing
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model
+        fallback:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fallback
+        checks:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Checks
+        facts:
+          type: string
+          title: Facts
+        version:
+          type: string
+          title: Version
+      type: object
+      required:
+      - text
+      - template
+      - phrasing
+      - model
+      - fallback
+      - checks
+      - facts
+      - version
+      title: ExplanationOut
+      description: 'A plain-language sentence for one engine number. `text` is the local model''s
+
+        sentence only when it passed the coach guard; otherwise it is the template.'
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MuscleRecoveryOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        label:
+          type: string
+          title: Label
+        group:
+          type: string
+          title: Group
+        status:
+          type: string
+          title: Status
+        readiness:
+          type: number
+          title: Readiness
+        readiness_population:
+          type: number
+          title: Readiness Population
+        fatigue:
+          type: number
+          title: Fatigue
+        capacity:
+          type: number
+          title: Capacity
+        half_life_h:
+          type: number
+          title: Half Life H
+        prior_half_life_h:
+          type: number
+          title: Prior Half Life H
+        k:
+          type: number
+          title: K
+        modifier:
+          type: number
+          title: Modifier
+        es_7d:
+          type: number
+          title: Es 7D
+        ready_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ready At
+        last_trained:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Trained
+        top_sets:
+          items:
+            $ref: '#/components/schemas/TopSet'
+          type: array
+          title: Top Sets
+        why:
+          $ref: '#/components/schemas/Why'
+      type: object
+      required:
+      - key
+      - label
+      - group
+      - status
+      - readiness
+      - readiness_population
+      - fatigue
+      - capacity
+      - half_life_h
+      - prior_half_life_h
+      - k
+      - modifier
+      - es_7d
+      - ready_at
+      - last_trained
+      - top_sets
+      - why
+      title: MuscleRecoveryOut
+    NoticeOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        code:
+          type: string
+          enum:
+          - deload
+          - raised
+          - recovered
+          title: Code
+        title:
+          type: string
+          title: Title
+        text:
+          type: string
+          title: Text
+        at:
+          type: string
+          format: date-time
+          title: At
+      type: object
+      required:
+      - id
+      - code
+      - title
+      - text
+      - at
+      title: NoticeOut
+      description: 'A System notice (deload advised, target raised, muscle recovered); the id is stable
+
+        so the app shows each notice once.'
+    RecoveryGroupOut:
+      properties:
+        group:
+          type: string
+          title: Group
+        k:
+          type: number
+          title: K
+        k_low:
+          type: number
+          title: K Low
+        k_high:
+          type: number
+          title: K High
+        n:
+          type: integer
+          title: N
+        personal:
+          type: boolean
+          title: Personal
+        alpha:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Alpha
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+      type: object
+      required:
+      - group
+      - k
+      - k_low
+      - k_high
+      - n
+      - personal
+      - alpha
+      - updated_at
+      title: RecoveryGroupOut
+    RecoveryOut:
+      properties:
+        algo_version:
+          type: string
+          title: Algo Version
+        formula:
+          type: string
+          title: Formula
+        checkin:
+          anyOf:
+          - $ref: '#/components/schemas/CheckinUsed'
+          - type: 'null'
+        groups:
+          items:
+            $ref: '#/components/schemas/RecoveryGroupOut'
+          type: array
+          title: Groups
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleRecoveryOut'
+          type: array
+          title: Muscles
+      type: object
+      required:
+      - algo_version
+      - formula
+      - checkin
+      - groups
+      - muscles
+      title: RecoveryOut
+      description: 'GET /intelligence/recovery: every muscle with its inputs, and the personal factors.'
+    SkillGoalOut:
+      properties:
+        skill_name:
+          type: string
+          title: Skill Name
+        step_name:
+          type: string
+          title: Step Name
+        criterion:
+          type: string
+          title: Criterion
+        sessions_met:
+          type: integer
+          title: Sessions Met
+        confirm_sessions:
+          type: integer
+          title: Confirm Sessions
+      type: object
+      required:
+      - skill_name
+      - step_name
+      - criterion
+      - sessions_met
+      - confirm_sessions
+      title: SkillGoalOut
+    StalledLiftOut:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise:
+          type: string
+          title: Exercise
+        sessions_flat:
+          type: integer
+          title: Sessions Flat
+        best:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Best
+        unit:
+          type: string
+          enum:
+          - kg
+          - reps
+          - s
+          title: Unit
+      type: object
+      required:
+      - exercise_id
+      - exercise
+      - sessions_flat
+      - best
+      - unit
+      title: StalledLiftOut
+    TargetOut:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise:
+          type: string
+          title: Exercise
+        kind:
+          type: string
+          enum:
+          - reps
+          - hold
+          - none
+          title: Kind
+        sets:
+          type: integer
+          title: Sets
+        reps:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Reps
+        seconds:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Seconds
+        weight_kg:
+          type: number
+          title: Weight Kg
+        rpe:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Rpe
+        change:
+          type: string
+          title: Change
+        reason:
+          type: string
+          title: Reason
+        why:
+          type: string
+          title: Why
+        explanation:
+          $ref: '#/components/schemas/Why'
+        rep_range:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Rep Range
+        increment_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Increment Kg
+        e1rm:
+          anyOf:
+          - $ref: '#/components/schemas/E1rmOut'
+          - type: 'null'
+        stalled:
+          type: boolean
+          title: Stalled
+        stall_sessions:
+          type: integer
+          title: Stall Sessions
+        skill:
+          anyOf:
+          - $ref: '#/components/schemas/SkillGoalOut'
+          - type: 'null'
+        readiness:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Readiness
+        kept_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Kept Until
+        deload_week:
+          type: boolean
+          title: Deload Week
+        phrasing:
+          type: string
+          enum:
+          - template
+          - model
+          title: Phrasing
+          default: template
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - exercise_id
+      - exercise
+      - kind
+      - sets
+      - reps
+      - seconds
+      - weight_kg
+      - rpe
+      - change
+      - reason
+      - why
+      - explanation
+      - rep_range
+      - increment_kg
+      - e1rm
+      - stalled
+      - stall_sessions
+      - skill
+      - readiness
+      - kept_until
+      - deload_week
+      - algo_version
+      title: TargetOut
+    TopSet:
+      properties:
+        exercise:
+          type: string
+          title: Exercise
+        dose_now:
+          type: number
+          title: Dose Now
+        hours_ago:
+          type: number
+          title: Hours Ago
+      type: object
+      required:
+      - exercise
+      - dose_now
+      - hours_ago
+      title: TopSet
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    Why:
+      properties:
+        formula:
+          type: string
+          title: Formula
+        inputs:
+          additionalProperties:
+            anyOf:
+            - type: number
+            - type: integer
+            - type: string
+            - type: 'null'
+          type: object
+          title: Inputs
+      type: object
+      required:
+      - formula
+      - inputs
+      title: Why
+      description: 'The "Why?" of one number: the formula in words and every input with its value.'
+    InsightCheckOut:
+      properties:
+        code:
+          type: string
+          title: Code
+        outcome:
+          type: string
+          enum:
+          - fired
+          - quiet
+          - not_enough_data
+          title: Outcome
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - code
+      - outcome
+      - detail
+      title: InsightCheckOut
+    InsightFindingOut:
+      properties:
+        code:
+          type: string
+          title: Code
+        title:
+          type: string
+          title: Title
+        text:
+          type: string
+          title: Text
+        severity:
+          type: number
+          title: Severity
+        numbers:
+          additionalProperties:
+            anyOf:
+            - type: number
+            - type: integer
+            - type: string
+          type: object
+          title: Numbers
+        why:
+          $ref: '#/components/schemas/Why'
+      type: object
+      required:
+      - code
+      - title
+      - text
+      - severity
+      - numbers
+      - why
+      title: InsightFindingOut
+    InsightsOut:
+      properties:
+        algo_version:
+          type: string
+          title: Algo Version
+        week_end:
+          type: string
+          format: date
+          title: Week End
+        findings:
+          items:
+            $ref: '#/components/schemas/InsightFindingOut'
+          type: array
+          title: Findings
+        checks:
+          items:
+            $ref: '#/components/schemas/InsightCheckOut'
+          type: array
+          title: Checks
+      type: object
+      required:
+      - algo_version
+      - week_end
+      - findings
+      - checks
+      title: InsightsOut
+      description: 'GET /intelligence/insights: at most three findings for the last 7 complete days, plus
+
+        every rule that was checked and why it stayed quiet.'
+    TdeeOut:
+      properties:
+        algo_version:
+          type: string
+          title: Algo Version
+        status:
+          type: string
+          enum:
+          - cold_start
+          - learning
+          - adaptive
+          title: Status
+        tdee_kcal:
+          type: number
+          title: Tdee Kcal
+        sd_kcal:
+          type: number
+          title: Sd Kcal
+        low_kcal:
+          type: number
+          title: Low Kcal
+        high_kcal:
+          type: number
+          title: High Kcal
+        formula_tdee_kcal:
+          type: number
+          title: Formula Tdee Kcal
+        formula_target_kcal:
+          type: integer
+          title: Formula Target Kcal
+        target_kcal:
+          type: integer
+          title: Target Kcal
+        target_source:
+          type: string
+          enum:
+          - formula
+          - adaptive
+          title: Target Source
+        target_week_start:
+          type: string
+          format: date
+          title: Target Week Start
+        trend_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Trend Kg
+        days_of_data:
+          type: integer
+          title: Days Of Data
+        weigh_ins:
+          type: integer
+          title: Weigh Ins
+        intake_days_7:
+          type: integer
+          title: Intake Days 7
+        weigh_ins_7:
+          type: integer
+          title: Weigh Ins 7
+        gate_days:
+          type: integer
+          title: Gate Days
+        paused:
+          type: boolean
+          title: Paused
+        reason:
+          type: string
+          title: Reason
+        series:
+          items:
+            $ref: '#/components/schemas/TdeePointOut'
+          type: array
+          title: Series
+        weeks:
+          items:
+            $ref: '#/components/schemas/TdeeWeekOut'
+          type: array
+          title: Weeks
+        why:
+          $ref: '#/components/schemas/Why'
+      type: object
+      required:
+      - algo_version
+      - status
+      - tdee_kcal
+      - sd_kcal
+      - low_kcal
+      - high_kcal
+      - formula_tdee_kcal
+      - formula_target_kcal
+      - target_kcal
+      - target_source
+      - target_week_start
+      - trend_kg
+      - days_of_data
+      - weigh_ins
+      - intake_days_7
+      - weigh_ins_7
+      - gate_days
+      - paused
+      - reason
+      - series
+      - weeks
+      - why
+      title: TdeeOut
+      description: 'GET /intelligence/tdee: expenditure with its range, trend weight and weekly target.'
+    TdeePointOut:
+      properties:
+        day:
+          type: string
+          format: date
+          title: Day
+        weight_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Weight Kg
+        intake_kcal:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Intake Kcal
+        intake_used:
+          type: boolean
+          title: Intake Used
+        trend_kg:
+          type: number
+          title: Trend Kg
+        tdee_kcal:
+          type: number
+          title: Tdee Kcal
+        sd_kcal:
+          type: number
+          title: Sd Kcal
+      type: object
+      required:
+      - day
+      - weight_kg
+      - intake_kcal
+      - intake_used
+      - trend_kg
+      - tdee_kcal
+      - sd_kcal
+      title: TdeePointOut
+      description: 'One day of tdee-v1: the morning state after that day''s weigh-in.'
+    TdeeWeekOut:
+      properties:
+        week_start:
+          type: string
+          format: date
+          title: Week Start
+        target_kcal:
+          type: integer
+          title: Target Kcal
+        tdee_kcal:
+          type: number
+          title: Tdee Kcal
+        sd_kcal:
+          type: number
+          title: Sd Kcal
+        intake_days:
+          type: integer
+          title: Intake Days
+        changed:
+          type: boolean
+          title: Changed
+        from_estimate:
+          type: boolean
+          title: From Estimate
+        reason:
+          type: string
+          title: Reason
+      type: object
+      required:
+      - week_start
+      - target_kcal
+      - tdee_kcal
+      - sd_kcal
+      - intake_days
+      - changed
+      - from_estimate
+      - reason
+      title: TdeeWeekOut
+      description: The calorie target set on one Monday and why it changed or held.
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: 'Per-launch random token from Electron main (dev: "dev").'

@@ -94,7 +94,7 @@ def test_imported_sets_count_towards_muscle_load(client, profile, clock):
         f"{clock.now:%Y-%m-%d} 07:00:00,Legs,1h,Squat (Barbell),1,80,5,0,0,,,9\n"
     )
     client.post("/import/strong", json={"csv": text, "dry_run": False})
-    quads = next(m for m in client.get("/muscles").json() if m["key"] == "quads")
+    quads = next(m for m in client.get("/muscles").json() if m["key"] == "vastus_lateralis")
     assert quads["es_7d"] > 0
 
 

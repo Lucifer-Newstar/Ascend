@@ -1,0 +1,397 @@
+{
+  "users": 40,
+  "seed": 2026,
+  "days": 365,
+  "cohorts": {
+    "typical": {
+      "pairs": 191347,
+      "exposures": 27676,
+      "methods": {
+        "fixed 48 h": {
+          "pearson_r": 0.579,
+          "spearman_rho": 0.606,
+          "mae": 0.1296,
+          "calibration": {
+            "ece": 0.1212,
+            "bins": [
+              {
+                "bin": "0.2-0.3",
+                "n": 8804,
+                "mean_pred": 0.252,
+                "mean_true": 0.677
+              },
+              {
+                "bin": "0.4-0.5",
+                "n": 13253,
+                "mean_pred": 0.48,
+                "mean_true": 0.729
+              },
+              {
+                "bin": "0.5-0.6",
+                "n": 6194,
+                "mean_pred": 0.517,
+                "mean_true": 0.739
+              },
+              {
+                "bin": "0.6-0.7",
+                "n": 780,
+                "mean_pred": 0.697,
+                "mean_true": 0.753
+              },
+              {
+                "bin": "0.7-0.8",
+                "n": 21138,
+                "mean_pred": 0.745,
+                "mean_true": 0.786
+              },
+              {
+                "bin": "0.9-1.0",
+                "n": 141178,
+                "mean_pred": 0.997,
+                "mean_true": 0.899
+              }
+            ]
+          },
+          "capacity_pearson_r": 0.238
+        },
+        "recovery-v2 population": {
+          "pearson_r": 0.917,
+          "spearman_rho": 0.911,
+          "mae": 0.0397,
+          "calibration": {
+            "ece": 0.014,
+            "bins": [
+              {
+                "bin": "0.0-0.1",
+                "n": 117,
+                "mean_pred": 0.033,
+                "mean_true": 0.247
+              },
+              {
+                "bin": "0.1-0.2",
+                "n": 194,
+                "mean_pred": 0.158,
+                "mean_true": 0.347
+              },
+              {
+                "bin": "0.2-0.3",
+                "n": 477,
+                "mean_pred": 0.258,
+                "mean_true": 0.409
+              },
+              {
+                "bin": "0.3-0.4",
+                "n": 1436,
+                "mean_pred": 0.357,
+                "mean_true": 0.476
+              },
+              {
+                "bin": "0.4-0.5",
+                "n": 3059,
+                "mean_pred": 0.456,
+                "mean_true": 0.538
+              },
+              {
+                "bin": "0.5-0.6",
+                "n": 6418,
+                "mean_pred": 0.556,
+                "mean_true": 0.612
+              },
+              {
+                "bin": "0.6-0.7",
+                "n": 12146,
+                "mean_pred": 0.657,
+                "mean_true": 0.697
+              },
+              {
+                "bin": "0.7-0.8",
+                "n": 28043,
+                "mean_pred": 0.756,
+                "mean_true": 0.78
+              },
+              {
+                "bin": "0.8-0.9",
+                "n": 57036,
+                "mean_pred": 0.855,
+                "mean_true": 0.865
+              },
+              {
+                "bin": "0.9-1.0",
+                "n": 82421,
+                "mean_pred": 0.948,
+                "mean_true": 0.948
+              }
+            ]
+          },
+          "capacity_pearson_r": 0.499
+        },
+        "recovery-v2 personal": {
+          "pearson_r": 0.926,
+          "spearman_rho": 0.919,
+          "mae": 0.0402,
+          "calibration": {
+            "ece": 0.0214,
+            "bins": [
+              {
+                "bin": "0.0-0.1",
+                "n": 244,
+                "mean_pred": 0.034,
+                "mean_true": 0.279
+              },
+              {
+                "bin": "0.1-0.2",
+                "n": 239,
+                "mean_pred": 0.16,
+                "mean_true": 0.367
+              },
+              {
+                "bin": "0.2-0.3",
+                "n": 687,
+                "mean_pred": 0.26,
+                "mean_true": 0.426
+              },
+              {
+                "bin": "0.3-0.4",
+                "n": 1666,
+                "mean_pred": 0.357,
+                "mean_true": 0.487
+              },
+              {
+                "bin": "0.4-0.5",
+                "n": 3382,
+                "mean_pred": 0.455,
+                "mean_true": 0.553
+              },
+              {
+                "bin": "0.5-0.6",
+                "n": 6913,
+                "mean_pred": 0.554,
+                "mean_true": 0.624
+              },
+              {
+                "bin": "0.6-0.7",
+                "n": 13072,
+                "mean_pred": 0.656,
+                "mean_true": 0.707
+              },
+              {
+                "bin": "0.7-0.8",
+                "n": 29396,
+                "mean_pred": 0.755,
+                "mean_true": 0.788
+              },
+              {
+                "bin": "0.8-0.9",
+                "n": 57594,
+                "mean_pred": 0.855,
+                "mean_true": 0.871
+              },
+              {
+                "bin": "0.9-1.0",
+                "n": 78154,
+                "mean_pred": 0.948,
+                "mean_true": 0.951
+              }
+            ]
+          },
+          "capacity_pearson_r": 0.509
+        }
+      },
+      "k_mae_personal": 0.2,
+      "k_mae_prior": 0.218,
+      "groups_personalised": "172/240"
+    },
+    "frequent": {
+      "pairs": 247676,
+      "exposures": 38104,
+      "methods": {
+        "fixed 48 h": {
+          "pearson_r": 0.552,
+          "spearman_rho": 0.579,
+          "mae": 0.1911,
+          "calibration": {
+            "ece": 0.1774,
+            "bins": [
+              {
+                "bin": "0.2-0.3",
+                "n": 31729,
+                "mean_pred": 0.254,
+                "mean_true": 0.671
+              },
+              {
+                "bin": "0.4-0.5",
+                "n": 47044,
+                "mean_pred": 0.481,
+                "mean_true": 0.717
+              },
+              {
+                "bin": "0.5-0.6",
+                "n": 21094,
+                "mean_pred": 0.52,
+                "mean_true": 0.729
+              },
+              {
+                "bin": "0.6-0.7",
+                "n": 2404,
+                "mean_pred": 0.698,
+                "mean_true": 0.755
+              },
+              {
+                "bin": "0.7-0.8",
+                "n": 48681,
+                "mean_pred": 0.743,
+                "mean_true": 0.771
+              },
+              {
+                "bin": "0.9-1.0",
+                "n": 96724,
+                "mean_pred": 0.995,
+                "mean_true": 0.853
+              }
+            ]
+          },
+          "capacity_pearson_r": 0.506
+        },
+        "recovery-v2 population": {
+          "pearson_r": 0.842,
+          "spearman_rho": 0.846,
+          "mae": 0.0562,
+          "calibration": {
+            "ece": 0.023,
+            "bins": [
+              {
+                "bin": "0.1-0.2",
+                "n": 40,
+                "mean_pred": 0.185,
+                "mean_true": 0.376
+              },
+              {
+                "bin": "0.2-0.3",
+                "n": 520,
+                "mean_pred": 0.262,
+                "mean_true": 0.404
+              },
+              {
+                "bin": "0.3-0.4",
+                "n": 1577,
+                "mean_pred": 0.361,
+                "mean_true": 0.475
+              },
+              {
+                "bin": "0.4-0.5",
+                "n": 6558,
+                "mean_pred": 0.46,
+                "mean_true": 0.534
+              },
+              {
+                "bin": "0.5-0.6",
+                "n": 19758,
+                "mean_pred": 0.557,
+                "mean_true": 0.609
+              },
+              {
+                "bin": "0.6-0.7",
+                "n": 44420,
+                "mean_pred": 0.655,
+                "mean_true": 0.689
+              },
+              {
+                "bin": "0.7-0.8",
+                "n": 74596,
+                "mean_pred": 0.752,
+                "mean_true": 0.774
+              },
+              {
+                "bin": "0.8-0.9",
+                "n": 77224,
+                "mean_pred": 0.846,
+                "mean_true": 0.855
+              },
+              {
+                "bin": "0.9-1.0",
+                "n": 22983,
+                "mean_pred": 0.93,
+                "mean_true": 0.929
+              }
+            ]
+          },
+          "capacity_pearson_r": 0.712
+        },
+        "recovery-v2 personal": {
+          "pearson_r": 0.926,
+          "spearman_rho": 0.926,
+          "mae": 0.0515,
+          "calibration": {
+            "ece": 0.0418,
+            "bins": [
+              {
+                "bin": "0.0-0.1",
+                "n": 240,
+                "mean_pred": 0.045,
+                "mean_true": 0.304
+              },
+              {
+                "bin": "0.1-0.2",
+                "n": 465,
+                "mean_pred": 0.156,
+                "mean_true": 0.372
+              },
+              {
+                "bin": "0.2-0.3",
+                "n": 1457,
+                "mean_pred": 0.259,
+                "mean_true": 0.427
+              },
+              {
+                "bin": "0.3-0.4",
+                "n": 4190,
+                "mean_pred": 0.358,
+                "mean_true": 0.48
+              },
+              {
+                "bin": "0.4-0.5",
+                "n": 10573,
+                "mean_pred": 0.456,
+                "mean_true": 0.552
+              },
+              {
+                "bin": "0.5-0.6",
+                "n": 22673,
+                "mean_pred": 0.555,
+                "mean_true": 0.628
+              },
+              {
+                "bin": "0.6-0.7",
+                "n": 44951,
+                "mean_pred": 0.655,
+                "mean_true": 0.709
+              },
+              {
+                "bin": "0.7-0.8",
+                "n": 71872,
+                "mean_pred": 0.752,
+                "mean_true": 0.789
+              },
+              {
+                "bin": "0.8-0.9",
+                "n": 68868,
+                "mean_pred": 0.846,
+                "mean_true": 0.867
+              },
+              {
+                "bin": "0.9-1.0",
+                "n": 22387,
+                "mean_pred": 0.931,
+                "mean_true": 0.938
+              }
+            ]
+          },
+          "capacity_pearson_r": 0.806
+        }
+      },
+      "k_mae_personal": 0.149,
+      "k_mae_prior": 0.209,
+      "groups_personalised": "200/240"
+    }
+  }
+}

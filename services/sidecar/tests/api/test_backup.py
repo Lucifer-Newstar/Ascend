@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from app.core.migrate import head_revision
+
 PROFILE = {
     "name": "Before",
     "age": 21,
@@ -35,7 +37,7 @@ def test_backup_then_restore_brings_back_the_old_data(client, settings, profile)
     assert made.status_code == 201
     info = made.json()
     assert Path(info["path"]).parent == settings.data_dir / "backups"
-    assert info["schema_revision"] == "0009" and len(info["sha256"]) == 64
+    assert info["schema_revision"] == head_revision() and len(info["sha256"]) == 64
 
     client.put("/profile", json={**PROFILE, "name": "After"})
     restored = client.post("/restore", json={"path": info["path"]})

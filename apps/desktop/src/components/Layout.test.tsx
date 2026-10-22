@@ -15,6 +15,22 @@ function renderAt(page: Page, title: string, onNavigate = vi.fn()) {
 }
 
 describe("Layout", () => {
+  it("shows a visible indicator only while online research is on", async () => {
+    const nav = vi.fn();
+    const { rerender, container } = renderAt("dashboard", "Dashboard", nav);
+    expect(screen.queryByRole("button", { name: "Online research on" })).toBeNull();
+    expect(screen.getByText("Offline · data stays on this PC")).toBeInTheDocument();
+    rerender(
+      <Layout page="dashboard" onNavigate={nav} aiEnabled={false} onToggleAi={() => {}} title="Dashboard" onlineResearch>
+        <p>content</p>
+      </Layout>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Online research on" }));
+    expect(nav).toHaveBeenCalledWith("settings");
+    expect(screen.getByText(/only exercise names leave this PC/)).toBeInTheDocument();
+    await expectNoAxeViolations(container);
+  });
+
   it("marks the current page and navigates from the sidebar", async () => {
     const nav = vi.fn();
     renderAt("history", "History", nav);
@@ -34,6 +50,19 @@ describe("Layout", () => {
     );
     expect(document.title).toBe("Diet · ASCEND");
     expect(screen.getByRole("heading", { level: 1, name: "Diet" })).toHaveFocus();
+  });
+
+  it("starts a new page at the top instead of the previous page's scroll offset", () => {
+    const { rerender } = renderAt("settings", "Settings");
+    const main = document.getElementById("main")!;
+    main.scrollTop = 400;
+    expect(main.scrollTop).toBe(400);
+    rerender(
+      <Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Dashboard">
+        <p>content</p>
+      </Layout>,
+    );
+    expect(main.scrollTop).toBe(0);
   });
 
   it("does not grab focus on first load under StrictMode's double effects", () => {
@@ -72,5 +101,24 @@ describe("Layout", () => {
   it("has no axe violations", async () => {
     const { container } = renderAt("dashboard", "Dashboard");
     await expectNoAxeViolations(container);
+  });
+
+  it("labels the rail the v5 way and keeps Ctrl+1…0 in rail order", () => {
+    renderAt("dashboard", "Today");
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    const names = [...nav.querySelectorAll("button")].map((b) => b.textContent?.replace(/Ctrl \d/, "").trim());
+    expect(names).toEqual(["Today", "Train", "Exercises", "Skills", "Progress", "Fuel", "Coach", "History", "Import & export", "Settings"]);
+    expect(screen.getByRole("button", { name: "Skills" })).toHaveAttribute("aria-keyshortcuts", "Control+4");
+    expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-keyshortcuts", "Control+0");
+  });
+
+  it("shows the AI status: on, rules only (model not running) or off", () => {
+    const { rerender } = render(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled onToggleAi={() => {}} title="Today" aiState="on" aiModel="qwen3:4b"><p /></Layout>);
+    expect(screen.getByRole("switch", { name: "AI coach" })).toHaveAttribute("data-ai-state", "on");
+    expect(screen.getByText("AI on")).toBeInTheDocument();
+    rerender(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled onToggleAi={() => {}} title="Today" aiState="rules"><p /></Layout>);
+    expect(screen.getByRole("switch", { name: /model not running/ })).toHaveAttribute("aria-checked", "true");
+    rerender(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Today" aiState="rules"><p /></Layout>);
+    expect(screen.getByRole("switch", { name: "AI coach" })).toHaveAttribute("data-ai-state", "off");
   });
 });

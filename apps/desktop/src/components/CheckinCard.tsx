@@ -7,6 +7,7 @@ import type { Checkin, CheckinIn, Soreness } from "@ascend/shared";
 import { useState } from "react";
 
 import { api } from "../api/client";
+import { ErrorState } from "./States";
 import { useApi } from "../lib/useApi";
 import { Segmented } from "./Segmented";
 import { useToast } from "./Toast";
@@ -24,7 +25,7 @@ export function CheckinCard({ refreshKey, onSaved }: { refreshKey: number; onSav
   const [editing, setEditing] = useState(false);
 
   if (today.loading && today.data === undefined) return null;
-  if (today.error) return <p className="text-xs text-bad">{today.error}</p>;
+  if (today.error) return <ErrorState compact message={today.error} onRetry={today.reload} />;
   const done = today.data;
   if (done && !editing) return <CheckinSummary c={done} onRedo={() => setEditing(true)} />;
   return (

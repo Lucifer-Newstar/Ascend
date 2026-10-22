@@ -10,7 +10,11 @@ exactly what the real import will do. Rules:
 * warm-ups are skipped unless asked for; empty sets (no reps and no time) are dropped;
 * values outside what the logger accepts (e.g. 600 kg) are dropped with a warning;
 * PRs are recomputed for every touched exercise, oldest first, so an imported
-  best becomes the bar for future sets. Imported sets earn no XP.
+  best becomes the bar for future sets. Imported sets earn no XP;
+* workouts dated in the future are skipped (a wrong date or a clock problem);
+* a workout that overlaps one already logged in ASCEND (starts within 30 minutes of it
+  and shares an exercise) is skipped as a duplicate: the same session exported from
+  another app after it was logged here should not count twice.
 """
 
 from __future__ import annotations
@@ -40,19 +44,27 @@ MAX_WEIGHT_KG = 500
 MAX_REPS = 100
 MAX_WARNINGS = 20
 DEFAULT_SET_GAP = timedelta(minutes=3)
+MAX_HOLD_S = 3600
+OVERLAP = timedelta(minutes=30)
 
 
 def import_key(source: str, started_at: datetime, title: str) -> str:
     return f"{source}:{started_at.isoformat()}:{title.strip()[:100]}"
 
 
-def _valid(row: ImportedSet, time_based: bool) -> str | None:
+def _valid(row: ImportedSet, time_based: bool, hold: bool = False) -> str | None:
     """Why a row cannot be stored, or None if it is fine."""
     if time_based:
         if not row.duration_s:
             return "no duration"
         if row.duration_s > 6 * 3600:
             return "longer than 6 h"
+        return None
+    if hold:
+        if not row.duration_s:
+            return "no duration"
+        if row.duration_s > MAX_HOLD_S:
+            return "a hold longer than 1 h"
         return None
     if row.reps <= 0:
         return "no reps"
@@ -63,6 +75,20 @@ def _valid(row: ImportedSet, time_based: bool) -> str | None:
     return None
 
 
+def _overlaps_logged(db: Session, started: datetime, exercise_ids: set[int]) -> bool:
+    """A workout logged in the app (not imported) near this time with a shared exercise."""
+    stmt = (
+        select(WorkoutSet.exercise_id)
+        .join(Workout, Workout.id == WorkoutSet.workout_id)
+        .where(
+            Workout.import_key.is_(None),
+            Workout.started_at >= started - OVERLAP,
+            Workout.started_at <= started + OVERLAP,
+        )
+    )
+    return any(ex in exercise_ids for ex in db.scalars(stmt).all())
+
+
 def run_import(
     db: Session,
     bus: EventBus,
@@ -71,6 +97,7 @@ def run_import(
     *,
     dry_run: bool,
     include_warmups: bool = False,
+    now: datetime | None = None,
 ) -> ImportReport:
     source = SOURCE_BY_FORMAT[fmt]
     library = {e.name: e for e in db.scalars(select(Exercise)).all()}
@@ -89,10 +116,17 @@ def run_import(
     written: list[tuple[WorkoutSet, Exercise]] = []
     days = []
 
+    now = now or datetime.now()
     for (started, title), items in groups.items():
         key = import_key(source, started, title)
         if key in existing:
             report.skipped_duplicates += 1
+            continue
+        if started > now:
+            if len(report.warnings) < MAX_WARNINGS:
+                report.warnings.append(
+                    f"{started:%Y-%m-%d %H:%M} {title}: dated in the future, skipped"
+                )
             continue
         keep: list[tuple[ImportedSet, Exercise]] = []
         for row in items:
@@ -105,7 +139,8 @@ def run_import(
                 continue
             report.matched_exercises.setdefault(row.exercise, name)
             exercise = library[name]
-            problem = _valid(row, exercise.section in TIME_BASED_SECTIONS)
+            is_timed = exercise.section in TIME_BASED_SECTIONS
+            problem = _valid(row, is_timed, hold=exercise.measure == "hold" and not is_timed)
             if problem:
                 if len(report.warnings) < MAX_WARNINGS:
                     report.warnings.append(
@@ -114,6 +149,13 @@ def run_import(
                 continue
             keep.append((row, exercise))
         if not keep:
+            continue
+        if _overlaps_logged(db, started, {ex.id for _, ex in keep}):
+            report.skipped_duplicates += 1
+            if len(report.warnings) < MAX_WARNINGS:
+                report.warnings.append(
+                    f"{started:%Y-%m-%d %H:%M} {title}: already logged in ASCEND, skipped"
+                )
             continue
         report.workouts += 1
         report.sets += len(keep)
@@ -136,16 +178,18 @@ def run_import(
         span = max(finished - started, timedelta(minutes=1))
         for i, (row, exercise) in enumerate(keep):
             time_based = exercise.section in TIME_BASED_SECTIONS
+            # A plank or L-sit from Strong/Hevy keeps its seconds (and any added load).
+            hold = exercise.measure == "hold" and not time_based
             performed = started + span * (i / max(len(keep), 1))
             ws = WorkoutSet(
                 workout_id=workout.id,
                 exercise_id=exercise.id,
                 weight_kg=0.0 if time_based else row.weight_kg,
-                reps=1 if time_based else row.reps,
+                reps=1 if time_based or hold else row.reps,
                 rpe=row.rpe if row.rpe is None or 1 <= row.rpe <= 10 else None,
-                duration_s=row.duration_s if time_based else None,
+                duration_s=row.duration_s if time_based or hold else None,
                 distance_m=row.distance_m if time_based else None,
-                e1rm=None if time_based else pr.e1rm_or_none(row.weight_kg, row.reps),
+                e1rm=None if time_based or hold else pr.e1rm_or_none(row.weight_kg, row.reps),
                 performed_at=performed,
             )
             db.add(ws)

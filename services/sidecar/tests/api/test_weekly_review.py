@@ -39,7 +39,7 @@ def test_low_adherence_and_under_muscle_are_found_and_ranked(client, profile, cl
     assert codes[0] == "ADHERENCE_LOW"
     assert "MUSCLE_UNDER" in codes
     under = next(f for f in r["findings"] if f["code"] == "MUSCLE_UNDER")
-    assert under["numbers"]["muscle"] == "biceps"
+    assert under["numbers"]["muscle"] == "biceps_long"
     assert len(r["top"]) <= 3
     # Every number in the summary appears in a finding or the session count.
     assert "1 of 3" in r["findings"][0]["detail"]

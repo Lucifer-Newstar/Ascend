@@ -19,8 +19,8 @@ def _week_of_sessions(client, clock, ex, sessions):
 def test_no_deload_for_a_new_user(client, profile):
     d = client.get("/deload").json()
     assert d["recommended"] is False and d["kind"] == "none"
-    assert len(d["signals"]) == 4 and not any(s["active"] for s in d["signals"])
-    assert d["algo_version"] == "deload-v1"
+    assert len(d["signals"]) == 5 and not any(s["active"] for s in d["signals"])
+    assert d["algo_version"] == "deload-v2"
 
 
 def test_planned_deload_after_three_training_weeks_then_accept(client, profile, clock):
@@ -47,3 +47,21 @@ def test_reactive_deload_from_checkins(client, profile, clock):
     active = {s["code"] for s in d["signals"] if s["active"]}
     assert active == {"LOW_READINESS", "HEAVY_SORENESS"}
     assert (d["recommended"], d["kind"]) == (True, "reactive")
+
+
+def test_fatigue_buildup_counts_regions_not_heads(client, profile, clock):
+    # One heavy squat day tires four quadriceps heads, glutes and adductors: that is a few
+    # v7 regions, not a dozen strained "muscles" (taxonomy v2, ADR-0021).
+    squat = exercise_id(client, "Back Squat")
+    w = client.post("/workouts").json()["id"]
+    for _ in range(10):
+        client.post(
+            f"/workouts/{w}/sets",
+            json={"exercise_id": squat, "weight_kg": 100, "reps": 5, "rpe": 9},
+        )
+    clock.now += timedelta(hours=2)
+    buildup = next(
+        s for s in client.get("/deload").json()["signals"] if s["code"] == "FATIGUE_BUILDUP"
+    )
+    strained = int(buildup["detail"].split()[0])
+    assert 1 <= strained <= 5

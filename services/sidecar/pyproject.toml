@@ -20,9 +20,14 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.6",
     "mypy>=1.11",
+    "hypothesis>=6.100",
 ]
 build = [
     "pyinstaller>=6.10",
+]
+# Charts for docs/ai/evaluation.md only (eval/charts.py); the app never imports these.
+eval = [
+    "matplotlib>=3.8",
 ]
 
 [tool.ruff]
@@ -36,6 +41,7 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.lint.per-file-ignores]
 # Seed tables read better as one row per line.
 "app/modules/*/seed.py" = ["E501"]
+"app/modules/*/*_seed.py" = ["E501"]
 # FastAPI's Depends() in defaults is the documented pattern.
 "app/modules/*/api.py" = ["B008"]
 

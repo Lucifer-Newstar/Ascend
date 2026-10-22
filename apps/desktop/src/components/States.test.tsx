@@ -28,4 +28,15 @@ describe("shared states", () => {
     expect(screen.getByText("No sets yet")).toBeInTheDocument();
     expect(screen.getByText("Pick an exercise")).toBeInTheDocument();
   });
+
+  it("has a compact inline error with retry, and an empty state with an action", async () => {
+    const retry = vi.fn();
+    const act = vi.fn();
+    render(<><ErrorState compact message="timeout" onRetry={retry} /><Empty title="No meals" action={{ label: "Log a meal", onClick: act }} /></>);
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load: timeout");
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await userEvent.click(screen.getByRole("button", { name: "Log a meal" }));
+    expect(retry).toHaveBeenCalledOnce();
+    expect(act).toHaveBeenCalledOnce();
+  });
 });

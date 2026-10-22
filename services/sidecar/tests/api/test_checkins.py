@@ -42,7 +42,7 @@ def test_checkin_after_training_started_leaves_quest_alone(client, profile, cloc
         e
         for e in client.get("/exercises").json()
         if any(m["muscle"] == muscle and m["weight"] >= 1.0 for m in e["muscles"])
-        and not e["time_based"]
+        and e["measure"] == "reps"
     )
     w = client.post("/workouts").json()["id"]
     client.post(f"/workouts/{w}/sets", json={"exercise_id": ex["id"], "weight_kg": 20, "reps": 8})

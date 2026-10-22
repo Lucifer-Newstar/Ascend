@@ -1,0 +1,1168 @@
+{
+ "version": 1,
+ "scale": {
+  "primary": 1.0,
+  "secondary": 0.5
+ },
+ "floor": 0.2,
+ "combine": "max",
+ "zero_load": {
+  "categories": [
+   "stretching"
+  ],
+  "name_regex": "smr|stretch|foam roll"
+ },
+ "region_rules": {
+  "chest": [
+   {
+    "id": "C1-fly-incline",
+    "regex": "(incline|low[- ]?cable|low[- ]?pulley|upward).*(fly|flye|crossover)|(fly|flye|crossover).*(incline|low)",
+    "weights": {
+     "pec_major_clavicular": 1.0,
+     "pec_major_sternal": 0.5,
+     "deltoid_anterior": 0.25,
+     "biceps_short": 0.25
+    },
+    "source": "E"
+   },
+   {
+    "id": "C2-fly",
+    "regex": "\\b(fly|flye|flyes|flys|crossover|pec deck|butterfly)\\b",
+    "weights": {
+     "pec_major_sternal": 1.0,
+     "pec_major_clavicular": 0.75,
+     "deltoid_anterior": 0.25,
+     "biceps_short": 0.25
+    },
+    "source": "Campos2020,Solstad2020"
+   },
+   {
+    "id": "C3-pullover",
+    "regex": "pullover",
+    "weights": {
+     "pec_major_sternal": 1.0,
+     "latissimus_dorsi": 0.5,
+     "teres_major": 0.5,
+     "triceps_long": 0.5,
+     "serratus_anterior": 0.25
+    },
+    "source": "Marchetti2011,DiFonza2026"
+   },
+   {
+    "id": "C4-dip",
+    "regex": "\\bdips?\\b",
+    "weights": {
+     "pec_major_sternal": 1.0,
+     "pec_major_clavicular": 0.25,
+     "pec_minor": 0.5,
+     "deltoid_anterior": 0.5
+    },
+    "source": "E"
+   },
+   {
+    "id": "C5-pushup-plus",
+    "regex": "push[- ]?up plus|scap(ular)? push",
+    "weights": {
+     "serratus_anterior": 1.0,
+     "pec_major_sternal": 0.5
+    },
+    "source": "Ludewig2004"
+   },
+   {
+    "id": "C6-pushup-incline",
+    "regex": "incline push[- ]?up",
+    "weights": {
+     "pec_major_sternal": 1.0,
+     "pec_major_clavicular": 0.25,
+     "deltoid_anterior": 0.5,
+     "serratus_anterior": 0.5
+    },
+    "source": "E"
+   },
+   {
+    "id": "C7-pushup-decline",
+    "regex": "decline push[- ]?up|feet elevated|pike",
+    "weights": {
+     "pec_major_clavicular": 1.0,
+     "pec_major_sternal": 0.75,
+     "deltoid_anterior": 0.75,
+     "serratus_anterior": 0.5
+    },
+    "source": "E"
+   },
+   {
+    "id": "C8-pushup",
+    "regex": "push[- ]?ups?\\b|pushups?\\b|press[- ]?up",
+    "weights": {
+     "pec_major_sternal": 1.0,
+     "pec_major_clavicular": 0.5,
+     "deltoid_anterior": 0.5,
+     "serratus_anterior": 0.5,
+     "triceps_lateral": 0.5,
+     "triceps_medial": 0.5
+    },
+    "source": "Marcolin2015,Ludewig2004"
+   },
+   {
+    "id": "C9-incline",
+    "regex": "incline",
+    "weights": {
+     "pec_major_clavicular": 1.0,
+     "pec_major_sternal": 0.5,
+     "deltoid_anterior": 0.75
+    },
+    "source": "RodriguezRidao2020,Chaves2020"
+   },
+   {
+    "id": "C10-decline",
+    "regex": "decline",
+    "weights": {
+     "pec_major_sternal": 1.0,
+     "pec_major_clavicular": 0.25
+    },
+    "source": "RodriguezRidao2020(intro),GlassArmstrong1997[snippet]"
+   },
+   {
+    "id": "C11-closegrip",
+    "regex": "close[- ]?grip|narrow[- ]?grip",
+    "weights": {
+     "pec_major_sternal": 0.75,
+     "pec_major_clavicular": 0.5,
+     "deltoid_anterior": 0.5
+    },
+    "source": "Saeterbakken2021"
+   },
+   {
+    "id": "C0-default",
+    "regex": "",
+    "weights": {
+     "pec_major_sternal": 1.0,
+     "pec_major_clavicular": 0.75,
+     "pec_minor": 0.25
+    },
+    "source": "RodriguezRidao2020"
+   }
+  ],
+  "shoulders": [
+   {
+    "id": "S1-ext-rot",
+    "regex": "external rotation|\\bexternal rot",
+    "weights": {
+     "infraspinatus": 1.0,
+     "teres_minor": 1.0,
+     "deltoid_posterior": 0.5
+    },
+    "source": "Reinold2004"
+   },
+   {
+    "id": "S2-int-rot",
+    "regex": "internal rotation",
+    "weights": {
+     "subscapularis": 1.0,
+     "pec_major_sternal": 0.25,
+     "teres_major": 0.25
+    },
+    "source": "Decker2003,E"
+   },
+   {
+    "id": "S3-rear",
+    "regex": "rear|reverse.*fl[iy]|face pull|bent[- ]?over.*(raise|lateral|fly)|prone.*(raise|fly)|(raise|fly).*bent[- ]?over|lying rear|back fly|posterior",
+    "weights": {
+     "deltoid_posterior": 1.0,
+     "infraspinatus": 0.5,
+     "teres_minor": 0.5,
+     "trap_middle": 0.5,
+     "rhomboids": 0.5,
+     "deltoid_lateral": 0.25
+    },
+    "source": "Schoenfeld2013,Reinold2004"
+   },
+   {
+    "id": "S11-chest-press",
+    "regex": "bench|chest press|floor press|push[- ]?ups?|pushups?|\\bdips?\\b|\\bfly|flye|crossover|pec deck|guillotine",
+    "weights": {
+     "deltoid_anterior": 1.0
+    },
+    "source": "Campos2020,RodriguezRidao2020"
+   },
+   {
+    "id": "S4-upright",
+    "regex": "upright|high pull",
+    "weights": {
+     "deltoid_lateral": 1.0,
+     "trap_upper": 0.75,
+     "deltoid_anterior": 0.5,
+     "biceps_long": 0.25,
+     "biceps_short": 0.25
+    },
+    "source": "E"
+   },
+   {
+    "id": "S10-pull",
+    "regex": "\\brows?\\b|pull[- ]?downs?|pull[- ]?ups?|\\bchin|face pull|pullover",
+    "weights": {
+     "deltoid_posterior": 1.0,
+     "infraspinatus": 0.5,
+     "teres_minor": 0.5
+    },
+    "source": "Reinold2004,Youdas2010,E"
+   },
+   {
+    "id": "S5-lateral",
+    "regex": "lateral raise|side raise|side lateral|\\blateral\\b|\\bside\\b|iron cross",
+    "weights": {
+     "deltoid_lateral": 1.0,
+     "deltoid_anterior": 0.5,
+     "deltoid_posterior": 0.5,
+     "supraspinatus": 0.5,
+     "trap_upper": 0.5
+    },
+    "source": "Campos2020,Coratella2020,Reinold2007"
+   },
+   {
+    "id": "S6-front-raise",
+    "regex": "front raise|front .*raise|front plate|frontal raise",
+    "weights": {
+     "deltoid_anterior": 1.0,
+     "pec_major_clavicular": 0.5,
+     "deltoid_lateral": 0.25
+    },
+    "source": "Coratella2020"
+   },
+   {
+    "id": "S7-behind-neck",
+    "regex": "behind (the )?neck|back press",
+    "weights": {
+     "deltoid_anterior": 1.0,
+     "deltoid_lateral": 0.75,
+     "deltoid_posterior": 0.5,
+     "trap_upper": 0.25,
+     "supraspinatus": 0.25
+    },
+    "source": "Coratella2022"
+   },
+   {
+    "id": "S8-arnold",
+    "regex": "arnold",
+    "weights": {
+     "deltoid_anterior": 1.0,
+     "deltoid_lateral": 0.75,
+     "trap_upper": 0.25,
+     "supraspinatus": 0.25
+    },
+    "source": "E"
+   },
+   {
+    "id": "S9-olympic",
+    "regex": "clean|snatch|jerk",
+    "weights": {
+     "deltoid_anterior": 0.75,
+     "deltoid_lateral": 0.5,
+     "trap_upper": 0.75
+    },
+    "source": "E"
+   },
+   {
+    "id": "S0-default",
+    "regex": "",
+    "weights": {
+     "deltoid_anterior": 1.0,
+     "deltoid_lateral": 0.5,
+     "deltoid_posterior": 0.25,
+     "trap_upper": 0.25,
+     "supraspinatus": 0.25
+    },
+    "source": "Campos2020,Coratella2022"
+   }
+  ],
+  "triceps": [
+   {
+    "id": "T1-overhead",
+    "regex": "overhead|french|over ?head|above head|seated triceps press|standing .*triceps (press|extension)|tate|behind the head",
+    "weights": {
+     "triceps_long": 1.0,
+     "triceps_lateral": 0.75,
+     "triceps_medial": 0.75
+    },
+    "source": "Maeo2023,Kholinne2018"
+   },
+   {
+    "id": "T2-lying",
+    "regex": "lying|skull|nose|decline .*extension|incline .*extension|jm press",
+    "weights": {
+     "triceps_long": 1.0,
+     "triceps_lateral": 0.75,
+     "triceps_medial": 0.75
+    },
+    "source": "Kholinne2018,E"
+   },
+   {
+    "id": "T3-pushdown",
+    "regex": "pushdown|push[- ]?down|kickback|kick back|press[- ]?down",
+    "weights": {
+     "triceps_lateral": 1.0,
+     "triceps_medial": 1.0,
+     "triceps_long": 0.5
+    },
+    "source": "Maeo2023"
+   },
+   {
+    "id": "T4-press",
+    "regex": "bench press|close[- ]?grip|dips?\\b|push[- ]?up|board press|floor press|pin press",
+    "weights": {
+     "triceps_lateral": 1.0,
+     "triceps_medial": 1.0,
+     "triceps_long": 0.5
+    },
+    "source": "Saeterbakken2021,E"
+   },
+   {
+    "id": "T0-default",
+    "regex": "",
+    "weights": {
+     "triceps_lateral": 1.0,
+     "triceps_medial": 1.0,
+     "triceps_long": 0.75
+    },
+    "source": "E"
+   }
+  ],
+  "biceps": [
+   {
+    "id": "B1-reverse",
+    "regex": "reverse|pronated|palms?[- ]down|overhand",
+    "weights": {
+     "brachioradialis": 1.0,
+     "brachialis": 1.0,
+     "wrist_extensors": 0.5,
+     "biceps_long": 0.25,
+     "biceps_short": 0.25
+    },
+    "source": "Caufriez2018(partial),E"
+   },
+   {
+    "id": "B2-hammer",
+    "regex": "hammer|neutral|rope curl|cross[- ]?body|pinwheel|zottman",
+    "weights": {
+     "brachialis": 1.0,
+     "brachioradialis": 1.0,
+     "biceps_long": 0.5,
+     "biceps_short": 0.5
+    },
+    "source": "E"
+   },
+   {
+    "id": "B3-incline",
+    "regex": "incline|drag curl|behind",
+    "weights": {
+     "biceps_long": 1.0,
+     "biceps_short": 0.75,
+     "brachialis": 0.75,
+     "brachioradialis": 0.5
+    },
+    "source": "Oliveira2009,E"
+   },
+   {
+    "id": "B4-preacher",
+    "regex": "preacher|spider|concentration|scott|prone incline|high cable|overhead cable",
+    "weights": {
+     "biceps_short": 1.0,
+     "biceps_long": 0.75,
+     "brachialis": 1.0,
+     "brachioradialis": 0.5
+    },
+    "source": "ZabaletaKorta2023,Pedrosa2023,E"
+   },
+   {
+    "id": "B5-chin",
+    "regex": "\\bchin[- ]?up|\\bchin\\b|underhand|supinated (pull|row)",
+    "weights": {
+     "biceps_long": 1.0,
+     "biceps_short": 1.0,
+     "brachialis": 0.75,
+     "brachioradialis": 0.5
+    },
+    "source": "Youdas2010"
+   },
+   {
+    "id": "B0-default",
+    "regex": "",
+    "weights": {
+     "biceps_long": 1.0,
+     "biceps_short": 1.0,
+     "brachialis": 0.75,
+     "brachioradialis": 0.5
+    },
+    "source": "Caufriez2018,E"
+   }
+  ],
+  "forearms": [
+   {
+    "id": "F1-ext",
+    "regex": "(palms?[- ]?down|reverse|pronated|overhand).*wrist|wrist.*(extension|palms?[- ]?down)|wrist roller",
+    "weights": {
+     "wrist_extensors": 1.0,
+     "brachioradialis": 0.25
+    },
+    "source": "Ikeda2025"
+   },
+   {
+    "id": "F2-flex",
+    "regex": "wrist curl|palms?[- ]?up|finger curl|hand squeeze|gripper|grip",
+    "weights": {
+     "wrist_flexors": 1.0,
+     "wrist_extensors": 0.25
+    },
+    "source": "Ikeda2025"
+   },
+   {
+    "id": "F3-carry",
+    "regex": "carry|farmer|hang\\b|dead hang|towel|plate pinch|pinch",
+    "weights": {
+     "wrist_flexors": 1.0,
+     "wrist_extensors": 0.5,
+     "brachioradialis": 0.25
+    },
+    "source": "E"
+   },
+   {
+    "id": "F4-rot",
+    "regex": "supination|pronation|rotation",
+    "weights": {
+     "brachioradialis": 0.5,
+     "wrist_flexors": 0.5,
+     "wrist_extensors": 0.5,
+     "biceps_short": 0.25
+    },
+    "source": "E"
+   },
+   {
+    "id": "F0-default",
+    "regex": "",
+    "weights": {
+     "wrist_flexors": 1.0,
+     "wrist_extensors": 0.5,
+     "brachioradialis": 0.5
+    },
+    "source": "E"
+   }
+  ],
+  "lats": [
+   {
+    "id": "L1-straight-arm",
+    "regex": "straight[- ]?arm|pullover|lat pushdown",
+    "weights": {
+     "latissimus_dorsi": 1.0,
+     "teres_major": 0.75,
+     "triceps_long": 0.5,
+     "pec_major_sternal": 0.25
+    },
+    "source": "Marchetti2011,E"
+   },
+   {
+    "id": "L2-chin",
+    "regex": "\\bchin|underhand|reverse grip|supinated",
+    "weights": {
+     "latissimus_dorsi": 1.0,
+     "teres_major": 0.75,
+     "biceps_long": 0.75,
+     "biceps_short": 0.75,
+     "brachialis": 0.5,
+     "pec_major_sternal": 0.25,
+     "trap_lower": 0.5
+    },
+    "source": "Youdas2010,Lehman2004"
+   },
+   {
+    "id": "L3-row",
+    "regex": "\\brows?\\b|rowing",
+    "weights": {
+     "latissimus_dorsi": 1.0,
+     "trap_middle": 0.75,
+     "rhomboids": 0.75,
+     "teres_major": 0.5,
+     "deltoid_posterior": 0.5,
+     "trap_lower": 0.25
+    },
+    "source": "Lehman2004,DiFonza2026"
+   },
+   {
+    "id": "L0-default",
+    "regex": "",
+    "weights": {
+     "latissimus_dorsi": 1.0,
+     "teres_major": 0.75,
+     "trap_lower": 0.5,
+     "rhomboids": 0.5,
+     "trap_middle": 0.25,
+     "deltoid_posterior": 0.25,
+     "infraspinatus": 0.25
+    },
+    "source": "Youdas2010,Andersen2014,Lehman2004"
+   }
+  ],
+  "middle back": [
+   {
+    "id": "M1-shrug",
+    "regex": "shrug|scapular (retraction|pull)",
+    "weights": {
+     "trap_middle": 1.0,
+     "rhomboids": 1.0,
+     "trap_upper": 0.5
+    },
+    "source": "E"
+   },
+   {
+    "id": "M2-chin",
+    "regex": "\\bchin|pull[- ]?up|pulldown",
+    "weights": {
+     "latissimus_dorsi": 1.0,
+     "teres_major": 0.75,
+     "trap_lower": 0.5,
+     "rhomboids": 0.5,
+     "trap_middle": 0.5
+    },
+    "source": "Youdas2010"
+   },
+   {
+    "id": "M0-default",
+    "regex": "",
+    "weights": {
+     "trap_middle": 1.0,
+     "rhomboids": 1.0,
+     "latissimus_dorsi": 0.75,
+     "deltoid_posterior": 0.5,
+     "trap_lower": 0.5,
+     "teres_major": 0.5,
+     "infraspinatus": 0.25
+    },
+    "source": "Lehman2004,Ekstrom2003"
+   }
+  ],
+  "traps": [
+   {
+    "id": "P1-upright",
+    "regex": "upright|high pull",
+    "weights": {
+     "trap_upper": 1.0,
+     "deltoid_lateral": 0.75
+    },
+    "source": "E"
+   },
+   {
+    "id": "P2-lower",
+    "regex": "\\by[- ]?raise|prone.*overhead|scapular (pull|depression)|scap pull",
+    "weights": {
+     "trap_lower": 1.0,
+     "trap_middle": 0.5,
+     "serratus_anterior": 0.25
+    },
+    "source": "Ekstrom2003"
+   },
+   {
+    "id": "P3-shrug",
+    "regex": "shrug|clean|snatch|deadlift|rack pull",
+    "weights": {
+     "trap_upper": 1.0,
+     "trap_middle": 0.25
+    },
+    "source": "Ekstrom2003"
+   },
+   {
+    "id": "P0-default",
+    "regex": "",
+    "weights": {
+     "trap_upper": 1.0,
+     "trap_middle": 0.5,
+     "trap_lower": 0.25
+    },
+    "source": "E"
+   }
+  ],
+  "neck": [
+   {
+    "id": "N1-flex",
+    "regex": "face up|front|flexion|\\bchin to chest",
+    "weights": {
+     "sternocleidomastoid": 1.0
+    },
+    "source": "E(anatomy)"
+   },
+   {
+    "id": "N2-ext",
+    "regex": "face down|harness|extension|back\\b",
+    "weights": {
+     "splenius": 1.0,
+     "trap_upper": 0.25
+    },
+    "source": "Conley1997"
+   },
+   {
+    "id": "N3-side",
+    "regex": "side|lateral",
+    "weights": {
+     "sternocleidomastoid": 0.75,
+     "splenius": 0.75,
+     "trap_upper": 0.25
+    },
+    "source": "E(anatomy)"
+   },
+   {
+    "id": "N0-default",
+    "regex": "",
+    "weights": {
+     "sternocleidomastoid": 0.75,
+     "splenius": 0.75,
+     "trap_upper": 0.25
+    },
+    "source": "E"
+   }
+  ],
+  "lower back": [
+   {
+    "id": "Lb1-deadlift",
+    "regex": "deadlift|rack pull|atlas|stone|good morning",
+    "weights": {
+     "erector_spinae": 1.0,
+     "gluteus_maximus": 0.5,
+     "adductor_magnus": 0.5,
+     "quadratus_lumborum": 0.25,
+     "trap_upper": 0.25
+    },
+    "source": "Andersen2018,Andersen2021"
+   },
+   {
+    "id": "Lb2-ext",
+    "regex": "hyperextension|back extension|superman|reverse hyper|bird dog|roman chair",
+    "weights": {
+     "erector_spinae": 1.0,
+     "gluteus_maximus": 0.5,
+     "quadratus_lumborum": 0.25
+    },
+    "source": "Andersen2021,Ekstrom2007"
+   },
+   {
+    "id": "Lb3-bridge",
+    "regex": "bridge|pelvic tilt",
+    "weights": {
+     "erector_spinae": 0.5,
+     "gluteus_maximus": 1.0
+    },
+    "source": "E"
+   },
+   {
+    "id": "Lb0-default",
+    "regex": "",
+    "weights": {
+     "erector_spinae": 1.0,
+     "quadratus_lumborum": 0.5
+    },
+    "source": "E"
+   }
+  ],
+  "abdominals": [
+   {
+    "id": "A1-vacuum",
+    "regex": "vacuum|drawing[- ]?in|hollowing|draw[- ]?in",
+    "weights": {
+     "transversus_abdominis": 1.0,
+     "internal_obliques": 0.5
+    },
+    "source": "Lee2015,Pulkovski2012"
+   },
+   {
+    "id": "A2-side-plank",
+    "regex": "side (plank|bridge)|side bend|oblique bridge|suitcase",
+    "weights": {
+     "external_obliques": 1.0,
+     "internal_obliques": 0.75,
+     "quadratus_lumborum": 0.75,
+     "gluteus_medius": 0.5
+    },
+    "source": "Ekstrom2007,Imai2017"
+   },
+   {
+    "id": "A3-twist",
+    "regex": "twist|russian|wood ?chop|rotation|windmill|oblique|elbow to knee|bicycle|air bike|cross[- ]?body crunch|landmine|pallof|spell caster",
+    "weights": {
+     "external_obliques": 1.0,
+     "internal_obliques": 1.0,
+     "rectus_abdominis": 0.5
+    },
+    "source": "Escamilla2006b,E"
+   },
+   {
+    "id": "A4-legraise",
+    "regex": "leg raise|knee raise|knee[- ]?up|leg lift|hanging|reverse crunch|flutter|scissor|toes to bar|knee tuck|jackknife|v[- ]?up|l[- ]?sit|mountain climber",
+    "weights": {
+     "rectus_abdominis": 1.0,
+     "external_obliques": 0.75,
+     "internal_obliques": 0.5,
+     "iliopsoas": 0.75,
+     "rectus_femoris": 0.5
+    },
+    "source": "Escamilla2006a,Juan2024"
+   },
+   {
+    "id": "A5-rollout",
+    "regex": "roll[- ]?out|ab wheel|ab roller|ab slide|barbell rollout|body saw",
+    "weights": {
+     "rectus_abdominis": 1.0,
+     "external_obliques": 0.75,
+     "internal_obliques": 0.75,
+     "latissimus_dorsi": 0.25,
+     "transversus_abdominis": 0.5
+    },
+    "source": "Escamilla2006a,Escamilla2006b"
+   },
+   {
+    "id": "A6-plank",
+    "regex": "plank|front bridge|hollow|dead bug|stir the pot",
+    "weights": {
+     "rectus_abdominis": 1.0,
+     "transversus_abdominis": 0.75,
+     "external_obliques": 0.5,
+     "internal_obliques": 0.5,
+     "iliopsoas": 0.25
+    },
+    "source": "Imai2017,E"
+   },
+   {
+    "id": "A7-situp",
+    "regex": "sit[- ]?ups?|situp|jack ?knife|decline crunch",
+    "weights": {
+     "rectus_abdominis": 1.0,
+     "external_obliques": 0.5,
+     "internal_obliques": 0.5,
+     "iliopsoas": 0.5,
+     "rectus_femoris": 0.25
+    },
+    "source": "Escamilla2006a,Escamilla2006b"
+   },
+   {
+    "id": "A8-crunch",
+    "regex": "crunch|curl[- ]?up|cable crunch|rope crunch",
+    "weights": {
+     "rectus_abdominis": 1.0,
+     "external_obliques": 0.5,
+     "internal_obliques": 0.5,
+     "transversus_abdominis": 0.25
+    },
+    "source": "Escamilla2006b"
+   },
+   {
+    "id": "A0-default",
+    "regex": "",
+    "weights": {
+     "rectus_abdominis": 1.0,
+     "external_obliques": 0.5,
+     "internal_obliques": 0.5,
+     "transversus_abdominis": 0.25
+    },
+    "source": "E"
+   }
+  ],
+  "quadriceps": [
+   {
+    "id": "Q1-legext",
+    "regex": "leg extension|knee extension|sissy|reverse nordic",
+    "weights": {
+     "rectus_femoris": 1.0,
+     "vastus_lateralis": 1.0,
+     "vastus_medialis": 1.0,
+     "vastus_intermedius": 1.0
+    },
+    "source": "Stien2021,Ema2013"
+   },
+   {
+    "id": "Q2-lunge",
+    "regex": "lunge|split squat|step[- ]?up|bulgarian|pistol|single[- ]leg squat|one[- ]leg squat|skater",
+    "weights": {
+     "vastus_lateralis": 1.0,
+     "vastus_medialis": 1.0,
+     "vastus_intermedius": 1.0,
+     "rectus_femoris": 0.5,
+     "gluteus_maximus": 0.75,
+     "gluteus_medius": 0.5,
+     "adductor_magnus": 0.5
+    },
+    "source": "Neto2020,Muyor2020"
+   },
+   {
+    "id": "Q3-squat",
+    "regex": "squat|leg press|hack|thruster|wall sit|front squat|zercher|belt squat",
+    "weights": {
+     "vastus_lateralis": 1.0,
+     "vastus_medialis": 1.0,
+     "vastus_intermedius": 1.0,
+     "rectus_femoris": 0.5,
+     "gluteus_maximus": 0.5,
+     "adductor_magnus": 0.5
+    },
+    "source": "Kubo2019,Kojic2022,Plotkin2023"
+   },
+   {
+    "id": "Q4-hipflex",
+    "regex": "hip flexion|knee drive|march|high knee",
+    "weights": {
+     "rectus_femoris": 1.0,
+     "iliopsoas": 1.0,
+     "tensor_fasciae_latae": 0.25,
+     "sartorius": 0.25
+    },
+    "source": "Juan2024"
+   },
+   {
+    "id": "Q0-default",
+    "regex": "",
+    "weights": {
+     "vastus_lateralis": 1.0,
+     "vastus_medialis": 1.0,
+     "vastus_intermedius": 1.0,
+     "rectus_femoris": 0.75
+    },
+    "source": "E"
+   }
+  ],
+  "hamstrings": [
+   {
+    "id": "H1-nordic",
+    "regex": "nordic|glute[- ]?ham|natural ham|razor curl",
+    "weights": {
+     "semitendinosus": 1.0,
+     "biceps_femoris": 0.75,
+     "semimembranosus": 0.5,
+     "gastrocnemius": 0.25
+    },
+    "source": "Messer2018,Bourne2017,Maeo2024"
+   },
+   {
+    "id": "H2-legcurl",
+    "regex": "leg curl|hamstring curl|ball (leg )?curl|lying curl|seated curl|slider curl",
+    "weights": {
+     "biceps_femoris": 1.0,
+     "semitendinosus": 1.0,
+     "semimembranosus": 1.0,
+     "gastrocnemius": 0.25,
+     "sartorius": 0.25,
+     "gracilis": 0.25
+    },
+    "source": "Maeo2021"
+   },
+   {
+    "id": "H3-hinge",
+    "regex": "romanian|stiff[- ]?leg|straight[- ]?leg|good morning|\\brdl\\b|deadlift|hip extension|hyperextension|back extension|pull[- ]?through|kettlebell swing|\\bswing",
+    "weights": {
+     "biceps_femoris": 1.0,
+     "semimembranosus": 1.0,
+     "semitendinosus": 0.75,
+     "gluteus_maximus": 0.75,
+     "adductor_magnus": 0.75,
+     "erector_spinae": 0.5
+    },
+    "source": "Messer2018,Bourne2017,Andersen2021,Collings2026"
+   },
+   {
+    "id": "H4-knee-dominant",
+    "regex": "squat|leg press|lunge|step[- ]?up|hack|thruster",
+    "weights": {
+     "biceps_femoris": 0.5,
+     "semitendinosus": 0.5,
+     "semimembranosus": 0.5
+    },
+    "source": "Kubo2019,Plotkin2023"
+   },
+   {
+    "id": "H0-default",
+    "regex": "",
+    "weights": {
+     "biceps_femoris": 1.0,
+     "semitendinosus": 1.0,
+     "semimembranosus": 1.0
+    },
+    "source": "E"
+   }
+  ],
+  "glutes": [
+   {
+    "id": "G1-abduct",
+    "regex": "abduct|clam|side[- ]?lying|lateral (band )?walk|monster|sidestep|side step|fire hydrant|hip hike|pelvic drop|hip hitch",
+    "weights": {
+     "gluteus_medius": 1.0,
+     "gluteus_minimus": 0.75,
+     "gluteus_maximus": 0.5,
+     "tensor_fasciae_latae": 0.5
+    },
+    "source": "Distefano2009,Moore2020,Selkowitz2013"
+   },
+   {
+    "id": "G2-thrust",
+    "regex": "hip thrust|glute bridge|bridge|kickback|kick back|donkey kick|hip extension|pull[- ]?through|frog pump",
+    "weights": {
+     "gluteus_maximus": 1.0,
+     "biceps_femoris": 0.5,
+     "semitendinosus": 0.25,
+     "semimembranosus": 0.25,
+     "gluteus_medius": 0.25,
+     "erector_spinae": 0.25
+    },
+    "source": "Contreras2015,Andersen2018"
+   },
+   {
+    "id": "G3-single-bridge",
+    "regex": "single[- ]?leg (bridge|hip thrust)|one[- ]?leg (bridge|hip)",
+    "weights": {
+     "gluteus_maximus": 1.0,
+     "gluteus_medius": 0.5,
+     "biceps_femoris": 0.5
+    },
+    "source": "Moore2020"
+   },
+   {
+    "id": "G0-default",
+    "regex": "",
+    "weights": {
+     "gluteus_maximus": 1.0,
+     "gluteus_medius": 0.25,
+     "gluteus_minimus": 0.25
+    },
+    "source": "Neto2020,E"
+   }
+  ],
+  "abductors": [
+   {
+    "id": "Ab1-clam",
+    "regex": "clam",
+    "weights": {
+     "gluteus_medius": 1.0,
+     "gluteus_maximus": 0.5,
+     "gluteus_minimus": 0.5,
+     "tensor_fasciae_latae": 0.25
+    },
+    "source": "Selkowitz2013"
+   },
+   {
+    "id": "Ab0-default",
+    "regex": "",
+    "weights": {
+     "gluteus_medius": 1.0,
+     "gluteus_minimus": 0.75,
+     "tensor_fasciae_latae": 0.5,
+     "gluteus_maximus": 0.25
+    },
+    "source": "Distefano2009,Moore2020"
+   }
+  ],
+  "adductors": [
+   {
+    "id": "Ad1-copenhagen",
+    "regex": "copenhagen|side[- ]?lying adduction|adductor plank",
+    "weights": {
+     "adductor_longus": 1.0,
+     "adductor_magnus": 1.0,
+     "gracilis": 1.0
+    },
+    "source": "Collings2026"
+   },
+   {
+    "id": "Ad2-sumo",
+    "regex": "sumo|wide stance|plie|cossack|side lunge|lateral lunge",
+    "weights": {
+     "adductor_magnus": 1.0,
+     "adductor_longus": 0.75,
+     "gracilis": 0.5
+    },
+    "source": "E"
+   },
+   {
+    "id": "Ad0-default",
+    "regex": "",
+    "weights": {
+     "adductor_longus": 1.0,
+     "adductor_magnus": 0.75,
+     "gracilis": 0.5
+    },
+    "source": "Collings2026,E"
+   }
+  ],
+  "calves": [
+   {
+    "id": "Ca1-seated",
+    "regex": "seated.*(calf|heel)|bent[- ]?knee calf|soleus",
+    "weights": {
+     "soleus": 1.0,
+     "gastrocnemius": 0.25,
+     "fibularis": 0.25
+    },
+    "source": "Kinoshita2023"
+   },
+   {
+    "id": "Ca2-tib",
+    "regex": "tibialis|toe raise|dorsiflexion|tib raise|anterior tibialis",
+    "weights": {
+     "tibialis_anterior": 1.0
+    },
+    "source": "E(anatomy)"
+   },
+   {
+    "id": "Ca3-everse",
+    "regex": "eversion|peroneal|fibularis",
+    "weights": {
+     "fibularis": 1.0
+    },
+    "source": "E(anatomy)"
+   },
+   {
+    "id": "Ca0-default",
+    "regex": "",
+    "weights": {
+     "gastrocnemius": 1.0,
+     "soleus": 0.75,
+     "fibularis": 0.25
+    },
+    "source": "Kinoshita2023,HebertLosier2011"
+   }
+  ]
+ },
+ "addons": [
+  {
+   "id": "X1-bent-row",
+   "regex": "bent[- ]?over|\\bt[- ]?bar\\b|pendlay|yates|renegade",
+   "exclude": "seated|chest[- ]?supported|lying|incline|prone",
+   "weights": {
+    "erector_spinae": 0.5
+   },
+   "source": "E"
+  },
+  {
+   "id": "X2-barbell-axial",
+   "regex": "squat|deadlift|good morning|clean|snatch|rack pull|atlas",
+   "exclude": "machine|smith|leg press|hack|belt|goblet|bodyweight|jump|sissy|wall",
+   "weights": {
+    "erector_spinae": 0.5,
+    "rectus_abdominis": 0.25
+   },
+   "source": "Andersen2018,E"
+  },
+  {
+   "id": "X3-pushup",
+   "regex": "push[- ]?ups?\\b|pushups?\\b",
+   "exclude": null,
+   "weights": {
+    "serratus_anterior": 0.5,
+    "rectus_abdominis": 0.25
+   },
+   "source": "Ludewig2004,Marcolin2015"
+  },
+  {
+   "id": "X4-carry",
+   "regex": "carry|farmer|yoke|suitcase",
+   "exclude": null,
+   "weights": {
+    "wrist_flexors": 1.0,
+    "trap_upper": 0.75,
+    "quadratus_lumborum": 0.5,
+    "external_obliques": 0.5,
+    "internal_obliques": 0.5
+   },
+   "source": "E"
+  },
+  {
+   "id": "X5-standing-overhead",
+   "regex": "standing.*(press|military)|military press|push press|jerk",
+   "exclude": null,
+   "weights": {
+    "rectus_abdominis": 0.25,
+    "erector_spinae": 0.25
+   },
+   "source": "E"
+  },
+  {
+   "id": "X6-hang",
+   "regex": "pull[- ]?ups?|\\bchin[- ]?ups?|hanging|muscle[- ]?up",
+   "exclude": null,
+   "weights": {
+    "wrist_flexors": 0.25,
+    "rectus_abdominis": 0.25
+   },
+   "source": "Youdas2010"
+  },
+  {
+   "id": "X7-unilateral-leg",
+   "regex": "lunge|split squat|step[- ]?up|single[- ]leg squat|pistol|bulgarian",
+   "exclude": null,
+   "weights": {
+    "gluteus_medius": 0.5
+   },
+   "source": "Muyor2020"
+  },
+  {
+   "id": "X8-dip",
+   "regex": "\\bdips?\\b",
+   "exclude": null,
+   "weights": {
+    "pec_major_sternal": 0.5,
+    "deltoid_anterior": 0.5,
+    "pec_minor": 0.25
+   },
+   "source": "E"
+  }
+ ],
+ "keys": [
+  "pec_major_clavicular",
+  "pec_major_sternal",
+  "pec_minor",
+  "serratus_anterior",
+  "latissimus_dorsi",
+  "trap_upper",
+  "trap_middle",
+  "trap_lower",
+  "rhomboids",
+  "teres_major",
+  "teres_minor",
+  "infraspinatus",
+  "supraspinatus",
+  "subscapularis",
+  "erector_spinae",
+  "quadratus_lumborum",
+  "sternocleidomastoid",
+  "splenius",
+  "deltoid_anterior",
+  "deltoid_lateral",
+  "deltoid_posterior",
+  "biceps_long",
+  "biceps_short",
+  "brachialis",
+  "triceps_lateral",
+  "triceps_long",
+  "triceps_medial",
+  "brachioradialis",
+  "wrist_flexors",
+  "wrist_extensors",
+  "rectus_abdominis",
+  "external_obliques",
+  "internal_obliques",
+  "transversus_abdominis",
+  "iliopsoas",
+  "gluteus_maximus",
+  "gluteus_medius",
+  "gluteus_minimus",
+  "tensor_fasciae_latae",
+  "rectus_femoris",
+  "vastus_lateralis",
+  "vastus_medialis",
+  "vastus_intermedius",
+  "sartorius",
+  "adductor_longus",
+  "adductor_magnus",
+  "gracilis",
+  "biceps_femoris",
+  "semitendinosus",
+  "semimembranosus",
+  "gastrocnemius",
+  "soleus",
+  "tibialis_anterior",
+  "fibularis"
+ ],
+ "note": "54 keys: levator_scapulae is folded into trap_upper and coracobrachialis is left out, following docs/research/v8-anatomy.md (the research JSON had 56)."
+}

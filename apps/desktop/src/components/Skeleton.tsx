@@ -3,6 +3,8 @@
  * replace them so the layout does not jump. A light band sweeps across them (the
  * .skeleton shimmer in index.css); it stays still with reduced motion.
  */
+import { useEffect, useState } from "react";
+
 export function Skeleton({ className = "" }: { className?: string }) {
   return <span aria-hidden="true" className={`skeleton block rounded-md bg-line/70 ${className}`} />;
 }
@@ -16,6 +18,21 @@ export function SkeletonCard({ lines = 3, className = "", title = true }: { line
       ))}
     </div>
   );
+}
+
+/**
+ * Renders its children only once `ms` have passed. Local requests usually answer in
+ * well under that, and a skeleton that appears for a few frames and vanishes reads as
+ * a flash; a real wait still gets the skeleton.
+ */
+export function Delayed({ ms = 250, children }: { ms?: number; children: React.ReactNode }) {
+  const [shown, setShown] = useState(ms <= 0);
+  useEffect(() => {
+    if (ms <= 0) return;
+    const t = setTimeout(() => setShown(true), ms);
+    return () => clearTimeout(t);
+  }, [ms]);
+  return shown ? <>{children}</> : null;
 }
 
 /** Wraps skeletons with a screen-reader status so the wait is announced once. */

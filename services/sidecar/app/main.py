@@ -26,11 +26,15 @@ from app.core.security import TokenAuthMiddleware
 from app.modules.coach.api import router as coach_router
 from app.modules.gamification import service as gamification_service
 from app.modules.gamification.api import router as game_router
+from app.modules.intelligence import recovery_service
+from app.modules.intelligence.api import router as intelligence_router
 from app.modules.io.api import router as io_router
 from app.modules.nutrition.api import router as nutrition_router
 from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
-from app.modules.workouts.api import deload_router, exercises_router, prs_router
+from app.modules.skills import service as skills_service
+from app.modules.skills.api import router as skills_router
+from app.modules.workouts.api import deload_router, exercises_router, plans_router, prs_router
 from app.modules.workouts.api import router as workouts_router
 
 log = logging.getLogger("ascend")
@@ -53,7 +57,9 @@ def build_bus() -> EventBus:
     """Subscribe module handlers. Order matters: muscle load is written before XP/quests run."""
     bus = EventBus()
     progress_service.register(bus)
+    recovery_service.register(bus)
     gamification_service.register(bus)
+    skills_service.register(bus)
     return bus
 
 
@@ -71,13 +77,44 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 interval,
             )
         )
+    daily = None
+    if interval > 0:
+        daily = asyncio.create_task(_daily_backups(app))
     try:
         yield
     finally:
-        if task is not None:
-            task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await task
+        for t in (task, daily):
+            if t is not None:
+                t.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await t
+
+
+DAILY_BACKUP_CHECK_S = 3600.0
+
+
+def daily_backup_once(app: FastAPI) -> None:
+    """Take today's automatic snapshot if it is due (never raises: a backup problem must
+    not take the app down; it is logged instead)."""
+    from app.modules.io import backup
+
+    try:
+        db_file = backup.sqlite_path(app.state.engine)
+        info = backup.backup_daily_if_due(
+            db_file, backup.backups_dir(app.state.settings.data_dir), app.state.clock()
+        )
+    except (OSError, backup.BackupError) as err:
+        log.warning("daily backup failed: %s", err)
+        return
+    if info is not None:
+        log.info("daily backup written to %s", info.path)
+
+
+async def _daily_backups(app: FastAPI) -> None:
+    """At start-up and then about hourly: one snapshot per calendar day, 14 kept."""
+    while True:
+        await asyncio.to_thread(daily_backup_once, app)
+        await asyncio.sleep(DAILY_BACKUP_CHECK_S)
 
 
 def _backup_before_migrating(settings: Settings, db_url: str, now: datetime) -> None:
@@ -206,11 +243,14 @@ def create_app(
         exercises_router,
         prs_router,
         deload_router,
+        plans_router,
         nutrition_router,
         game_router,
         progress_router,
+        skills_router,
         coach_router,
         io_router,
+        intelligence_router,
     ):
         app.include_router(router)
     return app

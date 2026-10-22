@@ -10,10 +10,12 @@ from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.gamification.schemas import GameSummary
+from app.modules.intelligence import diet_service, recovery_service
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.schemas import Totals
 from app.modules.progress import (
     activity,
+    baseline,
     body,
     checkins,
     drilldown,
@@ -23,6 +25,8 @@ from app.modules.progress import (
     weekly,
 )
 from app.modules.progress.schemas import (
+    BaselineIn,
+    BaselineOut,
     BodyMetricIn,
     BodyMetricOut,
     CheckinIn,
@@ -36,6 +40,7 @@ from app.modules.progress.schemas import (
     SettingsIn,
     SettingsOut,
 )
+from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.workouts.models import Workout
 
 router = APIRouter(tags=["progress"])
@@ -54,6 +59,9 @@ def _profile_out(db: Session) -> ProfileOut:
         "goal",
         "activity",
         "target_weight_kg",
+        "focus",
+        "equipment",
+        "baseline",
     )
     data = {k: getattr(p, k) for k in fields}
     return ProfileOut.model_validate({**data, "energy": service.energy_for(p)})
@@ -70,6 +78,24 @@ def put_profile(body: ProfileIn, db: Session = Depends(get_db)) -> ProfileOut:
     return _profile_out(db)
 
 
+@router.post("/profile/baseline", response_model=BaselineOut, status_code=201)
+def post_baseline(
+    body_in: BaselineIn,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
+) -> BaselineOut:
+    """The onboarding baseline test: each result is logged as a max-effort set in one
+    finished "Baseline test" session (so it earns XP and feeds the skill trees like any
+    set), and the results are kept on the profile."""
+    if service.get_profile(db) is None:
+        raise HTTPException(409, "save the profile first")
+    try:
+        return baseline.run_baseline(db, bus, body_in, now)
+    except baseline.BaselineEmpty as e:
+        raise HTTPException(422, str(e)) from e
+
+
 @router.get("/settings", response_model=SettingsOut)
 def get_settings(db: Session = Depends(get_db)) -> SettingsOut:
     return service.read_settings(db)
@@ -81,11 +107,20 @@ def put_settings(body: SettingsIn, db: Session = Depends(get_db)) -> SettingsOut
     return service.update_settings(db, body)
 
 
+_TAXONOMY_FIELDS = ("region", "parent", "deep", "readiness_only")
+
+
 def _muscles(db: Session, now: datetime) -> list[MuscleStateOut]:
-    return [
-        MuscleStateOut(**{k: getattr(s, k) for k in MuscleStateOut.model_fields})
-        for s in service.muscle_states(db, now)
-    ]
+    out = []
+    for s in recovery_service.states(db, now):
+        m = MUSCLE_BY_KEY[s.key]
+        fields = {
+            k: getattr(s, k)
+            for k in MuscleStateOut.model_fields
+            if k != "algo_version" and k not in _TAXONOMY_FIELDS
+        }
+        out.append(MuscleStateOut(**fields, **{k: getattr(m, k) for k in _TAXONOMY_FIELDS}))
+    return out
 
 
 @router.get("/muscles", response_model=list[MuscleStateOut])
@@ -120,6 +155,7 @@ def dashboard(
     today = now.date()
     profile = service.get_profile(db)
     targets = service.energy_for(profile) if profile else None
+    adaptive = diet_service.calorie_target(db, today) if profile else None
     totals = nutrition.day_totals(db, today)
     g = game.summary(db, bus, now)
 
@@ -136,7 +172,7 @@ def dashboard(
             "tasks": Ring(value=done, target=max(1, len(g.quest)), label="Quest tasks"),
             "kcal_in": Ring(
                 value=totals.kcal,
-                target=targets.kcal_target if targets else 2000,
+                target=adaptive[0] if adaptive else targets.kcal_target if targets else 2000,
                 label="kcal eaten",
                 is_estimate=True,
             ),

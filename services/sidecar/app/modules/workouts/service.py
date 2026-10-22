@@ -3,6 +3,7 @@ event handlers owned by other modules, never here."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
 
@@ -11,14 +12,20 @@ from sqlalchemy.orm import Session
 
 from app.core.events import EventBus, SetDeleted, SetLogged, SetUpdated, WorkoutLogged
 from app.modules.gamification.formulas import HARD_SET_RPE
-from app.modules.workouts import pr
+from app.modules.workouts import library, pr
 from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
-from app.modules.workouts.models import Exercise, Workout, WorkoutSet
+from app.modules.workouts.models import Exercise, ExerciseMuscle, Workout, WorkoutSet
 from app.modules.workouts.schemas import (
+    AttributionOut,
+    ExerciseDetail,
+    ExerciseOut,
+    MuscleWeight,
+    PreviousSession,
     PROut,
     SetIn,
     SetOut,
     SetPatch,
+    SkillLinkOut,
     WorkoutOut,
     WorkoutSummary,
 )
@@ -36,13 +43,105 @@ class Invalid(Exception):
     """The request is well-formed but wrong for this exercise (mapped to 422)."""
 
 
-def list_exercises(db: Session, q: str = "", section: str | None = None) -> list[Exercise]:
+@dataclass(frozen=True)
+class ExerciseFilter:
+    q: str = ""
+    section: str | None = None
+    muscle: str | None = None
+    equipment: str | None = None
+    difficulty: str | None = None
+    custom: bool | None = None
+    include_archived: bool = False
+
+
+def list_exercises(
+    db: Session, q: str = "", section: str | None = None, f: ExerciseFilter | None = None
+) -> list[Exercise]:
+    """Library search. `q` matches the name or an alias, ignoring case, hyphens and
+    plurals ("pullups" finds "Pull-up")."""
+    f = f or ExerciseFilter(q=q, section=section)
     stmt = select(Exercise).order_by(Exercise.name)
-    if q:
-        stmt = stmt.where(Exercise.name.ilike(f"%{q}%"))
-    if section:
-        stmt = stmt.where(Exercise.section == section)
-    return list(db.scalars(stmt).all())
+    if f.section:
+        stmt = stmt.where(Exercise.section == f.section)
+    if f.equipment:
+        stmt = stmt.where(Exercise.equipment == f.equipment)
+    if f.difficulty:
+        stmt = stmt.where(Exercise.difficulty == f.difficulty)
+    if f.custom is not None:
+        stmt = stmt.where(Exercise.is_custom.is_(f.custom))
+    if not f.include_archived:
+        stmt = stmt.where(Exercise.archived.is_(False))
+    if f.muscle:
+        stmt = stmt.where(
+            Exercise.id.in_(
+                select(ExerciseMuscle.exercise_id).where(
+                    ExerciseMuscle.muscle == f.muscle, ExerciseMuscle.weight >= 0.5
+                )
+            )
+        )
+    rows = list(db.scalars(stmt).all())
+    if f.q.strip():
+        rows = [e for e in rows if library.matches_query(f.q, e.name, e.aliases)]
+    return rows
+
+
+def exercise_out(e: Exercise) -> ExerciseOut:
+    return ExerciseOut(
+        id=e.id,
+        name=e.name,
+        equipment=e.equipment,
+        section=e.section,
+        met=e.met,
+        time_based=e.section in TIME_BASED_SECTIONS,
+        muscles=[
+            MuscleWeight(muscle=m.muscle, weight=m.weight)
+            for m in sorted(e.muscles, key=lambda m: (-m.weight, m.muscle))
+        ],
+        slug=e.slug,
+        measure=e.measure,
+        difficulty=e.difficulty,
+        pattern=e.pattern,
+        image=e.image,
+        source=e.source,
+        is_custom=e.is_custom,
+        aliases=e.aliases,
+    )
+
+
+# Skill trees register a lookup here (exercise id -> links) so this module never imports
+# the skills module; see skills/service.py.
+SkillLinker = Callable[[Session, Exercise], list[SkillLinkOut]]
+_skill_linkers: list[SkillLinker] = []
+
+
+def register_skill_linker(fn: SkillLinker) -> None:
+    if fn not in _skill_linkers:
+        _skill_linkers.append(fn)
+
+
+def exercise_detail(db: Session, exercise_id: int) -> ExerciseDetail:
+    e = db.get(Exercise, exercise_id)
+    if e is None:
+        raise NotFound(f"exercise {exercise_id} not found")
+    links: list[SkillLinkOut] = []
+    for linker in _skill_linkers:
+        links.extend(linker(db, e))
+    logged = int(
+        db.scalar(select(func.count(WorkoutSet.id)).where(WorkoutSet.exercise_id == e.id)) or 0
+    )
+    return ExerciseDetail(
+        **exercise_out(e).model_dump(),
+        instructions=e.instructions,
+        mechanic=e.mechanic,
+        rep_low=e.rep_low,
+        rep_high=e.rep_high,
+        field_sources=e.field_sources,
+        attribution=[AttributionOut(**a) for a in e.attribution],
+        source_ref=e.source_ref,
+        created_at=e.created_at,
+        skills=links,
+        sets_logged=logged,
+    )
 
 
 def set_out(s: WorkoutSet) -> SetOut:
@@ -59,6 +158,7 @@ def set_out(s: WorkoutSet) -> SetOut:
         e1rm=s.e1rm,
         is_pr=s.is_pr,
         performed_at=s.performed_at,
+        measure=s.exercise.measure,
     )
 
 
@@ -94,8 +194,21 @@ def get_workout(db: Session, workout_id: int) -> Workout:
     return workout
 
 
+def best_hold(db: Session, exercise_id: int) -> float | None:
+    """Longest hold logged for an exercise, in seconds (None before the first)."""
+    best = db.scalar(
+        select(func.max(WorkoutSet.duration_s)).where(WorkoutSet.exercise_id == exercise_id)
+    )
+    return float(best) if best is not None else None
+
+
 def best_e1rm(db: Session, exercise_id: int) -> float | None:
     return db.scalar(select(func.max(WorkoutSet.e1rm)).where(WorkoutSet.exercise_id == exercise_id))
+
+
+# Longest believable isometric hold, in seconds (records for planks exceed this, but a
+# logged hold this long is almost always a minutes/seconds typo).
+MAX_HOLD_S = 3600
 
 
 def log_set(
@@ -108,26 +221,43 @@ def log_set(
     if exercise is None:
         raise NotFound(f"exercise {data.exercise_id} not found")
     time_based = exercise.section in TIME_BASED_SECTIONS
+    hold = exercise.measure == "hold" and not time_based
     if time_based and not data.duration_s:
         raise Invalid(f"{exercise.name} is logged by time: send duration_s")
+    if hold and not data.duration_s:
+        raise Invalid(f"{exercise.name} is a hold: send duration_s (seconds held)")
+    if hold and (data.duration_s or 0) > MAX_HOLD_S:
+        raise Invalid(
+            f"a hold longer than {MAX_HOLD_S // 60} minutes is not plausible: check the seconds"
+        )
     if not workout.sets and workout.section != exercise.section:
         # A session takes the section of its first set (a run started from Gym is cardio).
         workout.section = exercise.section
 
-    # e1RM/PR only make sense for loaded lifts.
-    e1rm = None if time_based else pr.e1rm_or_none(data.weight_kg, data.reps)
+    # Sets stay in order inside a session even if the wall clock jumps back (a time-zone
+    # change, a clock correction): a set is never earlier than the one before it.
+    latest = max((s.performed_at for s in workout.sets), default=None)
+    if latest is not None and now < latest:
+        now = latest
+    # e1RM/PR only make sense for loaded lifts; a hold's PR is its longest time.
+    e1rm = None if time_based or hold else pr.e1rm_or_none(data.weight_kg, data.reps)
     previous = best_e1rm(db, data.exercise_id)
+    if hold:
+        is_pr = pr.is_new_pr(float(data.duration_s or 0), best_hold(db, data.exercise_id))
+    else:
+        is_pr = pr.is_new_pr(e1rm, previous)
     row = WorkoutSet(
         workout_id=workout.id,
         exercise_id=data.exercise_id,
         weight_kg=data.weight_kg,
-        reps=data.reps,
+        # A hold is one effort per set; the time is in duration_s.
+        reps=1 if hold else data.reps,
         rpe=data.rpe,
         duration_s=data.duration_s,
         distance_m=data.distance_m,
         avg_hr=data.avg_hr,
         e1rm=e1rm,
-        is_pr=pr.is_new_pr(e1rm, previous),
+        is_pr=is_pr,
         performed_at=now,
     )
     # Append through the relationship so a session that already loaded `workout.sets`
@@ -239,17 +369,25 @@ def recompute_prs(db: Session, exercise_id: int) -> None:
     Needed after an edit or delete: fixing a typo (100 kg instead of 10 kg) must
     also clear the false PR it created and restore later PRs it masked.
     """
+    exercise = db.get(Exercise, exercise_id)
     rows = db.scalars(
         select(WorkoutSet)
         .where(WorkoutSet.exercise_id == exercise_id)
         .order_by(WorkoutSet.performed_at, WorkoutSet.id)
     ).all()
+    time_based = exercise is not None and exercise.section in TIME_BASED_SECTIONS
+    hold = exercise is not None and exercise.measure == "hold" and not time_based
     best: float | None = None
     for row in rows:
-        row.e1rm = pr.e1rm_or_none(row.weight_kg, row.reps)
-        row.is_pr = pr.is_new_pr(row.e1rm, best)
-        if row.e1rm is not None and (best is None or row.e1rm > best):
-            best = row.e1rm
+        if hold:
+            row.e1rm = None
+            value: float | None = float(row.duration_s) if row.duration_s else None
+        else:
+            row.e1rm = None if time_based else pr.e1rm_or_none(row.weight_kg, row.reps)
+            value = row.e1rm
+        row.is_pr = pr.is_new_pr(value, best)
+        if value is not None and (best is None or value > best):
+            best = value
 
 
 def update_set(
@@ -257,6 +395,11 @@ def update_set(
 ) -> WorkoutSet:
     row = _get_set(db, workout_id, set_id)
     changes = patch.model_dump(exclude_unset=True)
+    hold = row.exercise.measure == "hold" and row.exercise.section not in TIME_BASED_SECTIONS
+    if hold:
+        changes.pop("reps", None)  # a hold is one effort per set
+        if (changes.get("duration_s") or 0) > MAX_HOLD_S:
+            raise Invalid(f"a hold longer than {MAX_HOLD_S // 60} minutes is not plausible")
     for key, value in changes.items():
         if key in ("weight_kg", "reps") and value is None:
             continue  # cannot null a required field; ignore
@@ -315,3 +458,28 @@ def personal_records(db: Session, exercise_id: int | None = None) -> list[PROut]
         )
         for s in rows
     ]
+
+
+def previous_session(db: Session, exercise_id: int) -> PreviousSession | None:
+    """The most recent earlier session's sets of one exercise (the logger's grey "last
+    time" values). The session being logged right now (unfinished) is skipped, so the
+    ghost values never echo the sets you just did. Imported sessions count."""
+    if db.get(Exercise, exercise_id) is None:
+        raise NotFound(f"exercise {exercise_id} not found")
+    workout_id = db.scalar(
+        select(Workout.id)
+        .join(WorkoutSet, WorkoutSet.workout_id == Workout.id)
+        .where(WorkoutSet.exercise_id == exercise_id, Workout.finished_at.is_not(None))
+        .order_by(Workout.started_at.desc(), Workout.id.desc())
+        .limit(1)
+    )
+    if workout_id is None:
+        return None
+    w = db.get(Workout, workout_id)
+    assert w is not None
+    sets = sorted(
+        (s for s in w.sets if s.exercise_id == exercise_id), key=lambda s: (s.performed_at, s.id)
+    )
+    return PreviousSession(
+        workout_id=w.id, day=w.day, source=w.source, sets=[set_out(s) for s in sets]
+    )

@@ -132,6 +132,45 @@ class CheckinRecorded(Event):
 
 
 @dataclass(frozen=True)
+class ExerciseAdded(Event):
+    """The user added their own exercise. field_sources is JSON: field -> library |
+    rules | local_ai | wger | user, so later engines know which fields were guessed."""
+
+    exercise_id: int
+    name: str
+    source: str
+    field_sources: str
+    at: datetime
+
+
+@dataclass(frozen=True)
+class SkillStepUnlocked(Event):
+    """A skill-tree step was unlocked. Gamification pays `xp` (source "skill");
+    `source` is "log" for a set logged now, "edit" after an edit, "import" for history
+    (imports pay no XP)."""
+
+    unlock_id: int
+    skill_key: str
+    skill_name: str
+    step_key: str
+    step_name: str
+    at: datetime
+    xp: int
+    final: bool
+    source: str = "log"
+
+
+@dataclass(frozen=True)
+class SkillStepRevoked(Event):
+    """The sets behind an unlock were deleted or edited away; its XP is reversed."""
+
+    unlock_id: int
+    skill_key: str
+    step_key: str
+    at: datetime
+
+
+@dataclass(frozen=True)
 class QuestCompleted(Event):
     quest_item_id: int
     day: date

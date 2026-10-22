@@ -9,14 +9,16 @@ from app.core.db import Base
 
 
 class XpEvent(Base):
-    """Append-only XP ledger. Total XP = SUM(amount); nothing is ever subtracted."""
+    """Append-only XP ledger. Total XP = SUM(amount). Rows are never edited or deleted;
+    a correction (e.g. a skill step revoked because its sets were deleted) is a new row
+    with a negative amount that cancels an earlier grant."""
 
     __tablename__ = "xp_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     day: Mapped[date] = mapped_column(Date, index=True)
     at: Mapped[datetime] = mapped_column(DateTime)
-    source: Mapped[str] = mapped_column(String(16))  # set | session | meal | pr | quest
+    source: Mapped[str] = mapped_column(String(16))  # set | session | meal | pr | quest | skill
     ref_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     amount: Mapped[int] = mapped_column(Integer)
     formula_version: Mapped[str] = mapped_column(String(16))
@@ -39,3 +41,22 @@ class QuestItem(Base):
     xp: Mapped[int] = mapped_column(Integer)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     generator_version: Mapped[str] = mapped_column(String(16))
+
+
+class BossRaid(Base):
+    """One weekly boss raid (boss-v1, ADR-0022). Damage is never stored: it is counted from
+    the week's logged sets, so editing or deleting a set changes it like everything else."""
+
+    __tablename__ = "boss_raids"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    week_start: Mapped[date] = mapped_column(Date, unique=True)
+    name: Mapped[str] = mapped_column(String(40))
+    title: Mapped[str] = mapped_column(String(40))
+    hp: Mapped[int] = mapped_column(Integer)
+    hp_source: Mapped[str] = mapped_column(String(16))
+    hp_note: Mapped[str] = mapped_column(String(160))
+    algo_version: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    defeated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
