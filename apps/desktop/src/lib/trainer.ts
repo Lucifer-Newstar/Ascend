@@ -49,11 +49,11 @@ const OPENERS: Record<TrainerMood, string[]> = {
   hyped: ["Now we move, Hunter!", "This is it, Hunter!", "Up and at it, Hunter!"],
 };
 
-const CLOSERS: Record<TrainerMood, string> = {
-  neutral: "",
-  proud: " Keep that pace.",
-  warning: " Your call, but choose on purpose.",
-  hyped: " Go.",
+const CLOSERS: Record<TrainerMood, string[]> = {
+  neutral: [""],
+  proud: [" Keep that pace.", " Hold that standard.", " More of this."],
+  warning: [" Your call, but choose on purpose.", " Plan around it.", " Adjust, then train."],
+  hyped: [" Go.", " Move.", " Make it count."],
 };
 
 /** A small stable hash, so the same insight always gets the same opener. */
@@ -70,12 +70,14 @@ const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
  * opener and closer add no numbers. The closer is left out when the line would pass 40 words.
  */
 export function trainerLine(key: string, text: string, mood: TrainerMood, position = 0): string {
-  // `position` (the line's place in a list) keeps neighbouring lines from repeating an opener.
+  // `position` (the line's place in a list) keeps neighbouring lines from repeating an opener
+  // or a closer.
   const opener = OPENERS[mood][(pick(key, OPENERS[mood].length) + position) % OPENERS[mood].length];
   const raw = text.trim().replace(/\s+/g, " ");
   const body = /[.!?]$/.test(raw) ? raw : `${raw}.`;
   const line = `${opener} ${body}`;
-  const closer = CLOSERS[mood];
+  const closers = CLOSERS[mood];
+  const closer = closers[(pick(key, closers.length) + position) % closers.length];
   return closer && words(line) + words(closer) <= 40 ? `${line}${closer}` : line;
 }
 

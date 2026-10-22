@@ -21,10 +21,10 @@ export const statusVar = (status: MuscleStatus): string => `var(${STATUS_TOKEN[s
 
 /** Dark-theme values of the status tokens, used only when a token cannot be read (tests, SSR). */
 export const STATUS_COLORS: Record<MuscleStatus, string> = {
-  over: "#b86b6b",
-  recovering: "#b8995f",
+  over: "#c2525d",
+  recovering: "#c9a440",
   under: "#6f80b5",
-  optimal: "#5a9c7f",
+  optimal: "#3e9e7c",
   no_data: "#26324a",
 };
 

@@ -76,10 +76,10 @@ export function BodySvg({
       key={`${p.key}-${p.side ?? "c"}-${i}`}
       d={p.d}
       data-key={ghost ? undefined : p.key}
-      fill={ghost ? defaultFill : (fills.get(p.key) ?? defaultFill)}
+      fill={ghost ? `color-mix(in srgb, var(--color-ink) 16%, ${defaultFill})` : (fills.get(p.key) ?? defaultFill)}
       stroke={border}
       strokeWidth={0.6}
-      opacity={ghost ? 0.35 : 1}
+      opacity={ghost ? 0.6 : 1}
     />
   );
   return (
