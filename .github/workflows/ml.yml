@@ -27,6 +27,13 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # requirements.txt adds the PyTorch CPU index with --extra-index-url. uv's default
+  # (first-index) takes every package that index carries from it alone, and it carries an
+  # older pillow than requirements.txt asks for. unsafe-best-match picks the best version
+  # across both indexes, which is what pip does; torch still resolves to the +cpu build.
+  UV_INDEX_STRATEGY: unsafe-best-match
+
 defaults:
   run:
     working-directory: ml

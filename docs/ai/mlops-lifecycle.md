@@ -63,7 +63,7 @@ model 0.3.0?" to have an answer.
 
 ```bash
 cd ml
-uv venv --python 3.12 && uv pip install -r requirements.txt   # pin versions first
+uv venv --python 3.12 && uv pip install -r requirements.txt --index-strategy unsafe-best-match  # pin versions first
 dvc init --subdir
 dvc remote add -d localdrive E:/ascend-dvc                     # external drive, no cloud
 # put the downloaded sets under data/raw/<source>/<class>/*.jpg

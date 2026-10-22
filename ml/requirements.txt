@@ -1,6 +1,8 @@
 # ML pipeline dependencies (training machine only; the app ships ONNX Runtime alone).
 # CPU wheels are enough for the smoke pipeline; install the CUDA build of torch on the
 # training PC instead:  uv pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+# With uv, add --index-strategy unsafe-best-match (CI sets UV_INDEX_STRATEGY): the PyTorch
+# index also carries pillow, numpy and others, and uv's default would only look there.
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.5.1
 torchvision==0.20.1
