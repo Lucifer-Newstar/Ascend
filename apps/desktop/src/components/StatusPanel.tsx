@@ -65,7 +65,7 @@ function StatRow({ stat }: { stat: Stat }) {
   );
 }
 
-export function StatusPanel({ game, stats }: { game: GameSummary; stats: Stats | null }) {
+export function StatusPanel({ game, stats, title = null }: { game: GameSummary; stats: Stats | null; title?: string | null }) {
   const xp = game.xp;
   const fill = Math.min(1, xp.xp_into_level / Math.max(1, xp.xp_for_next));
   return (
@@ -78,6 +78,7 @@ export function StatusPanel({ game, stats }: { game: GameSummary; stats: Stats |
             <span className="font-display text-sm font-semibold uppercase tracking-[0.08em] text-muted">Level</span>
             <span className="text-display-xl text-ink"><CountUp value={xp.level} duration={600} /></span>
           </div>
+          {title && <p className="truncate text-xs text-accent" data-testid="hunter-title" title="Title from a beaten weekly boss">{title}</p>}
           <div className="truncate text-sm text-muted">{xp.rank_title}</div>
         </div>
       </div>

@@ -69,3 +69,38 @@ class StatsOut(BaseModel):
     stats: list[StatOut]
     version: str
     window_days: int
+
+
+class BossWhy(BaseModel):
+    formula: str
+    inputs: dict[str, int | str | None]
+
+
+class BossOut(BaseModel):
+    """GET /game/boss: this week's boss raid (boss-v1, ADR-0022)."""
+
+    week_start: date
+    week_end: date
+    name: str
+    title: str
+    hp: int
+    damage: int
+    hp_left: int
+    days_left: int
+    defeated: bool
+    defeated_at: datetime | None
+    bonus_xp: int
+    hp_source: str
+    hp_note: str
+    titles_earned: int
+    algo_version: str
+    why: BossWhy
+
+
+class TitleOut(BaseModel):
+    """A title earned by beating a weekly boss: the only source of titles."""
+
+    title: str
+    boss: str
+    week_start: date
+    earned_at: datetime

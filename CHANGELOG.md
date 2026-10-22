@@ -6,6 +6,12 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Added (v8 boss raid)
+- **Weekly boss raid** (`boss-v1`, ADR-0022). Each Monday a boss appears on Today with HP sized to a week of your training: your program's working sets (halved in a deload week), else your median sets per week over the last 4 weeks, else 20. Every training set you log that week deals 1 damage. Beat it by Sunday for **+150 XP** and the boss's **title** on your Hunter profile; if it survives, nothing is lost. The reward is shown before you earn it, and "Why?" explains the HP.
+- `GET /game/boss`, `GET /game/titles`; migration 0019 adds `boss_raids`.
+- **Dropped for v8:** achievements, login/check-in rewards and reminder notifications. The boss title is the only title source. The reasons are in `docs/research/v8-gamified-engagement.md` §4.
+- The "haven't logged today" banner can be hidden for the day.
+
 ### Added (v8 trainer)
 - **Instructor Iskra Vey**, an original anime-style drill instructor, speaks your insights on Today ("Iskra's briefing") and appears beside coach replies. Four expressions: calm, proud, stern (warnings) and fired up; the portrait crossfades between them (instant with Reduce motion).
 - **The numbers do not change.** Each line is a fixed opener around the engine's own sentence, chosen deterministically from the insight's kind; a tip worded by the local model has already passed the coach's number guard. At most 40 words, second person, "Hunter". **Why?** is still one tap away.

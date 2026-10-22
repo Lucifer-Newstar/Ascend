@@ -9,6 +9,8 @@
 import type {
   AscendBridge,
   BackupInfo,
+  BossRaid,
+  EarnedTitle,
   RestoreResult,
   BodyMetric,
   Checkin,
@@ -197,6 +199,8 @@ export const api = {
 
   game: () => call<GameSummary>("GET", "/game/summary"),
   stats: () => call<Stats>("GET", "/game/stats"),
+  boss: () => call<BossRaid>("GET", "/game/boss"),
+  titles: () => call<EarnedTitle[]>("GET", "/game/titles"),
   completeQuest: (id: number) => call<QuestItem>("POST", `/game/quests/${id}/complete`),
 
   coachStatus: () => call<CoachStatus>("GET", "/coach/status"),
