@@ -21,7 +21,11 @@
  * and GrantFileProtocolExtraPrivileges (the window loads dist/index.html over file://).
  */
 const path = require("node:path");
-const { flipFuses, getCurrentFuseWire, FuseState, FuseV1Options, FuseVersion } = require("@electron/fuses");
+const { flipFuses, getCurrentFuseWire, FuseV1Options, FuseVersion } = require("@electron/fuses");
+
+// Fuse wire bytes as @electron/fuses reads them: "0" = disabled, "1" = enabled.
+const DISABLED = "0".charCodeAt(0);
+const ENABLED = "1".charCodeAt(0);
 
 const FUSES = {
   version: FuseVersion.V1,
@@ -52,7 +56,7 @@ async function checkFuses(binary) {
   const wrong = [];
   for (const [key, want] of Object.entries(FUSES)) {
     if (key === "version") continue;
-    const expected = want ? FuseState.ENABLE : FuseState.DISABLE;
+    const expected = want ? ENABLED : DISABLED;
     const name = FuseV1Options[Number(key)];
     const ok = wire[key] === expected;
     console.log(`${ok ? "ok   " : "WRONG"} ${name} = ${want ? "Enabled" : "Disabled"}`);
