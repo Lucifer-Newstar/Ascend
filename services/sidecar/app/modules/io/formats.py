@@ -88,8 +88,18 @@ def _rows(text: str) -> list[dict[str, str]]:
     for raw in reader:
         if not any(cell.strip() for cell in raw):
             continue
-        out.append({header[i]: cell.strip() for i, cell in enumerate(raw) if i < len(header)})
+        out.append(
+            {header[i]: _undefuse(cell.strip()) for i, cell in enumerate(raw) if i < len(header)}
+        )
     return out
+
+
+def _undefuse(cell: str) -> str:
+    """Drop the "'" a spreadsheet-safe export puts before a leading = + - @ (ASCEND's own
+    CSV export does this; see progress.history.csv_text)."""
+    if len(cell) > 1 and cell[0] == "'" and cell[1] in "=+-@":
+        return cell[1:]
+    return cell
 
 
 def _num(value: str | None) -> float | None:

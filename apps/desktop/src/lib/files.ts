@@ -39,6 +39,9 @@ export function readTextFile(file: File, maxBytes = MAX_IMPORT_BYTES): Promise<s
   });
 }
 
+/** Today's date as YYYY-MM-DD in the user's own time zone, for export file names.
+ *  (toISOString() is UTC: in India an export made before 05:30 got yesterday's date.) */
 export function todayStamp(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
