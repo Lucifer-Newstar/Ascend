@@ -150,6 +150,15 @@ npm install
 npm run dev:electron -w apps/desktop
 ```
 
+**If `npm run dev:electron` says "Electron failed to install correctly"** (seen on Windows with Node 26:
+the download finishes but the unzip step silently fails), unzip it yourself from the repo root:
+
+```powershell
+$zip = Get-ChildItem "$env:LOCALAPPDATA\electron\Cache" -Recurse -Filter "electron-v*-win32-x64.zip" | Select-Object -First 1
+Expand-Archive $zip.FullName -DestinationPath node_modules\electron\dist -Force
+Set-Content node_modules\electron\path.txt "electron.exe" -NoNewline
+```
+
 Optional AI coach:
 
 ```powershell
