@@ -37,8 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: ml/requirements.txt
@@ -59,8 +59,8 @@ jobs:
     env:
       MLFLOW_DISABLE_AGENT_HINT: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: ml/requirements.txt
@@ -80,7 +80,7 @@ jobs:
           print(f"smoke top-1 {top1}")
           assert top1 >= 0.8, f"smoke top-1 {top1} < 0.8"
           EOF
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ml-smoke-${{ github.sha }}
           path: |
