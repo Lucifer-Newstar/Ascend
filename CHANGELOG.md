@@ -10,6 +10,8 @@ Formula and model versions are listed where a number you see could change.
 - **Moments:** level-up, rank-up and quest-clear notices now pop in with the trainer (or the rank badge in plain mode), a confetti burst and the new level; rank-up has its own title. A boss defeated while you watch plays its own moment on the raid card. All of it is transform/opacity only, and Reduce motion shows them still, without confetti.
 - **Hunter profile** (was Status): your name, rank, level, XP, streak and your newest boss title.
 - **Boss crest** on the raid card, which turns into a check mark once the boss is beaten.
+- **Muscle map v2 artwork:** a full redraw with 7.5-head athletic proportions, tapered limbs, organic muscle bellies and one even seam width; the deep layer now sits over the whole ghosted body. Same 54 keys, views and layers, so nothing else changed; the file is 44.5 KB (was 99 KB). Generator and notes: `scripts/body_map/`.
+- **Muted map colours:** the recovery and volume colours on the muscle map are desaturated (`--color-map-*` tokens) and fatigued muscles get a thin outline instead of a glow.
 
 ### Added (v8 boss raid)
 - **Weekly boss raid** (`boss-v1`, ADR-0022). Each Monday a boss appears on Today with HP sized to a week of your training: your program's working sets (halved in a deload week), else your median sets per week over the last 4 weeks, else 20. Every training set you log that week deals 1 damage. Beat it by Sunday for **+150 XP** and the boss's **title** on your Hunter profile; if it survives, nothing is lost. The reward is shown before you earn it, and "Why?" explains the HP.

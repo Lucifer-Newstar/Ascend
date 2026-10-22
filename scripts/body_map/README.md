@@ -1,102 +1,90 @@
-# ASCEND muscle map (bodyMapPaths.ts)
+# ASCEND muscle map (bodyMapPaths.ts), v2
 
-> In the repo: the generator lives here; its TypeScript output is committed as
-> `apps/desktop/src/lib/bodyMapPaths.ts`. Run `python3 scripts/body_map/build_map.py --no-png`
-> and copy `scripts/body_map/bodyMapPaths.ts` over it. Preview PNGs are not committed.
 > v8 ships 54 keys (levator scapulae folded into the upper trapezius, coracobrachialis left out; ADR-0021).
+> v2 redraws the v1 artwork with the same data interface, so no app code changed.
 
-An original, hand-authored anatomical muscle map for the ASCEND desktop app:
-front view, back view and a deep layer, with every muscle a separately fillable
-SVG path so its colour can show recovery state.
+`build_map.py` draws ASCEND's front, back and deep-layer muscle map and writes
+`bodyMapPaths.ts` (the app copy lives at `apps/desktop/src/lib/bodyMapPaths.ts`) plus preview PNGs
+in `previews/` (not committed). Each muscle is its own fillable path, so the app colours it by
+recovery or volume.
 
-## Files
+```sh
+pip install shapely cairosvg numpy pillow
+python3 scripts/body_map/build_map.py
+cp scripts/body_map/bodyMapPaths.ts apps/desktop/src/lib/bodyMapPaths.ts
+```
 
-| File | What it is |
-|---|---|
-| `bodyMapPaths.ts` | Generated TypeScript data module (no React dependency), 99 KB |
-| `build_map.py` | The generator: all shapes are defined here. Edit and re-run |
-| `front.png`, `back.png` | Surface views, dark theme (left) and light theme (right), sample recovery colours |
-| `deep_front.png`, `deep_back.png` | Deep layer drawn on top of a ghosted surface figure |
-| `check_labels.png` | Every region in a distinct colour with its key next to it (4 panels) |
-| `tile_check_1x.png`, `tile_check_x4.png` | The front view at 64 x 96 px with a few muscles highlighted (actual size and 4x zoom) |
+Set `V1_TS=<path to the v1 bodyMapPaths.ts>` to also render a v1/v2 side-by-side.
 
-Re-generate: `python3 build_map.py` (needs `shapely`, `cairosvg`, `pillow`).
-`python3 build_map.py --no-png` writes only the TypeScript file.
-
-## Data shape
+## Interface (unchanged from v1)
 
 ```ts
 export interface MusclePath { key: string; view: "front" | "back"; layer: "surface" | "deep"; d: string; side?: "left" | "right" }
-export const BODY_VIEWBOX = "0 0 200 430";               // shared by both views
-export const BODY_OUTLINE: { front: string; back: string }; // silhouette, drawn underneath
-export const MUSCLE_KEYS: readonly string[];             // the 54 keys, in drawing order
-export const MUSCLE_PATHS: MusclePath[];                 // 128 paths
+export const BODY_VIEWBOX = "0 0 200 430";          // same as v1, shared by both views
+export const BODY_OUTLINE: { front: string; back: string };
+export const MUSCLE_KEYS: readonly [...54 keys, same order as v1];
+export const MUSCLE_PATHS: MusclePath[];
 ```
 
-Rendering order: `BODY_OUTLINE[view]`, then the `surface` paths of that view. For the
-deep layer, draw the surface paths ghosted (e.g. opacity 0.3, neutral fill) and then the
-`deep` paths of that view on top. Deep muscles sit in their true anatomical position, so
-they line up with the ghosted surface.
+* The viewBox is unchanged: `0 0 200 430`, identical for both views. x = 100 is the midline.
+* Same 54 keys, and every key keeps exactly the same view/layer assignment as v1 (checked by comparing
+  the (key, view, layer) sets of both files: identical, 64 combinations). Same path count (128).
+* One path per key per side. Muscles drawn as several bellies (rectus abdominis blocks, the two calf
+  heads, wrist flexor/extensor bellies, rhomboid minor/major) are sub-paths of that one path.
+* `side` is the subject's own side: in the front view the subject's right is on the viewer's left; in
+  the back view the subject's right is on the viewer's right (same convention as v1).
+* `BODY_OUTLINE` is now the whole silhouette (head, neck, torso, arms, hands, legs, feet), drawn
+  underneath. The thin seams between muscles show the outline fill, which gives a quiet body silhouette
+  under everything. The front and back outlines are the same shape.
 
-## Coordinate system
+## What changed from v1
 
-* One viewBox for both views: `0 0 200 430` (about 1 : 2.15, so it fits 260 x 560 or
-  300 x 640 with `preserveAspectRatio="xMidYMid meet"`).
-* `x = 100` is the body midline. y grows downward: top of head about y 6, chin 56,
-  shoulders 85, navel level 162, crotch 220, knees about 308, soles 425.
-* `side` is the subject's own side. In the front view the subject's right is on the
-  viewer's left (x < 100); in the back view the subject's left is on the viewer's left.
-* Pose: relaxed anatomical stance, arms slightly away from the body, palms forward.
-  The silhouette is the same for both views.
-* Some keys use one compound path per side (several `M...z` subpaths), e.g. the
-  rectus abdominis segments, the serratus slips, the two gastrocnemius heads and the
-  brachialis slivers. Fill them as one region.
+* **Proportions.** A 7.5-head athletic figure: head 55.5 units of a 417-unit figure, shoulders about
+  2.1 heads wide tapering to a narrower waist, elbows at the bottom of the rib cage, wrists at the
+  crotch, knees at y 298. v1's head was small and the limbs were tubes and capsules.
+* **Limbs are tapered shapes.** Arms and legs are built from a smooth axis plus a width profile, with a
+  bulging deltoid, biceps and forearm, a narrow wrist, a quad sweep, a narrow knee, a calf bulge
+  (higher on the outer side, lower on the inner side) and a slim ankle. Limb muscles are authored in
+  limb coordinates, so they follow the taper.
+* **Organic muscle shapes.** Tapered bellies drawn with smooth splines: a fan-shaped pec split into
+  clavicular and sternal heads, a rounded deltoid cap with a V insertion, finger-like serratus slips,
+  a trapezius kite (upper, middle, lower), a lat wing, rounded glutes, two calf heads with the soleus
+  showing beside them and an open Achilles area. Tendon areas (knee, elbow, wrist, linea alba, Achilles)
+  are left as body colour.
+* **One seam width.** Muscles are carved in priority order with a fixed 1.1-unit seam and clipped to
+  the silhouette, so gaps are even and nothing floats outside the body.
+* **Deep layer in context.** The deep muscles sit over the full ghosted surface figure (the app draws
+  surface paths at 0.35 opacity in deep mode). The psoas now emerges from under the transversus band,
+  and the internal obliques sit on the upper flanks.
+* **Smaller file.** 44.5 KB against v1's 99 KB (polyline paths simplified to 0.09 units,
+  1-decimal coordinates).
 
-## How it was drawn
+## Colours
 
-1. Each muscle is a closed Catmull-Rom spline (equivalent to a chain of cubic Beziers)
-   through hand-placed control points on one side of the body. Arm muscles are placed in
-   a local frame along the upper arm and forearm bones (distance along the bone, offset
-   from it), so they follow the arm's angle.
-2. Shapes are clipped to the body silhouette, inset 0.7 units, so a thin rim of the
-   silhouette shows around the figure.
-3. Muscles are placed in a fixed order. Each one is trimmed against the ones placed before
-   it with a constant 0.85-unit gap, so neighbours share clean borders. Some groups (the
-   trapezius thirds, the pectoral heads, the deltoid heads, the posterior thigh) are drawn
-   as one mass and then cut into regions. This keeps the gaps consistent.
-4. Each finished shape is mirrored around x = 100. The figure is exactly symmetric.
-5. The outlines are written out again as compact relative cubic Bezier path data (`c`/`s`).
-   Sharp corners are kept where muscles meet, and coordinates are rounded to 0.1.
+The app colours the map with its own muted tokens (`--color-map-*` in `apps/desktop/src/index.css`):
+flat fills, about 35-50 % saturation, no glow.
 
-Muscle positions follow standard textbook anatomy: origins, insertions and the usual
-surface relief, as described in standard anatomy texts, e.g. the public-domain
-*Gray's Anatomy* (20th ed., 1918). No existing drawing, app artwork or SVG was traced or
-copied, and none was used as a base. All coordinates are hand-placed in `build_map.py`.
+## Small sizes (64 x 96 tiles)
 
-### Choices worth knowing
+At tile size the figure reads as a silhouette with the
+highlighted group in the accent colour, and the seams merge. The tile check uses the map's
+theme colours; `ExerciseArt` passes its own panel fill and border, which reads the same way.
 
-* **subscapularis** is drawn in the **front deep view**, at the armpit, lateral to pec minor and just
-  outside the ribcage edge. This is the part of the front of the shoulder blade you would see with the
-  pectorals removed. It reads better there than as a hidden region on the back.
-* **transversus_abdominis** is drawn as a horizontal band across the lower abdomen. **internal_obliques**
-  wraps around the band's ends on the flanks. In reality both span the whole abdominal wall.
-* **vastus_intermedius** is drawn slightly wider than rectus femoris, which covers it.
-* Optional surface keys that were drawn: latissimus_dorsi sliver (front), gastrocnemius inner-calf edge
-  (front), external_obliques flank sliver (back). Also brachioradialis and wrist_flexors edges and a
-  vastus_lateralis sliver in the back view, plus gracilis in both views.
-* The levator scapulae strip at the side of the neck is drawn as part of **trap_upper**. Coracobrachialis
-  has no key: that part of the inner upper arm is left as outline.
+## Compromises
 
-### Small sizes (64 x 96 tile)
-
-At tile size the 0.85-unit gaps are below one pixel, so the figure reads as a silhouette with
-highlighted regions (see `tile_check_x4.png`). For tiles:
-* Draw `BODY_OUTLINE` with a 1 px stroke using `vector-effect="non-scaling-stroke"`, so the
-  outline stays legible at any scale.
-* Give non-highlighted muscles a neutral fill close to the body colour. Use the accent only
-  for the few muscles you want to highlight.
+* **subscapularis** is drawn in the front deep view, at the armpit just lateral to pec minor, where the
+  front of the shoulder blade would be seen with the pectorals removed (same choice as v1).
+* **transversus_abdominis** is a horizontal band across the abdomen and **internal_obliques** sit above
+  it on the flanks. In reality both span the whole abdominal wall in layers.
+* **gracilis** and the back-view **vastus_lateralis** are thin edge strips; **adductor_magnus** is a
+  small upper-inner wedge in the back view. They are present and hoverable but small, as in most
+  commercial maps.
+* **levator scapulae** is part of `trap_upper` and **coracobrachialis** has no key (unchanged from v1).
+* The figure is gender-neutral and stylised: no face, simple mitten hands with a thumb, simple feet.
 
 ## Keys (54)
+
+Per view/layer: front/surface 26, back/surface 27, front/deep 6, back/deep 5.
 
 | key | view/layer | where |
 |---|---|---|
@@ -110,7 +98,7 @@ highlighted regions (see `tile_check_x4.png`). For tiles:
 | `biceps_short` | front/surface | medial half of the biceps |
 | `brachialis` | front/surface | slivers either side of the lower biceps |
 | `brachioradialis` | back/surface, front/surface | thumb-side top of the forearm (front), lateral strip (back) |
-| `wrist_flexors` | back/surface, front/surface | inner forearm (front), medial strip (back) |
+| `wrist_flexors` | back/surface, front/surface | inner forearm, two bellies separated by a short groove |
 | `serratus_anterior` | front/surface | four slips on the side ribs below the armpit |
 | `rectus_abdominis` | front/surface | abdominal column with three tendinous lines (one compound path per side) |
 | `external_obliques` | back/surface, front/surface | sides of the abdomen (front), flank sliver (back) |
@@ -135,7 +123,7 @@ highlighted regions (see `tile_check_x4.png`). For tiles:
 | `triceps_long` | back/surface | inner/back of the upper arm |
 | `teres_minor` | back/surface | thin strip below infraspinatus |
 | `teres_major` | back/surface | below teres minor, toward the armpit |
-| `wrist_extensors` | back/surface | back of the forearm |
+| `wrist_extensors` | back/surface | back of the forearm, two bellies separated by a short groove |
 | `erector_spinae` | back/surface | two columns along the lower spine |
 | `gluteus_maximus` | back/surface | buttock |
 | `gluteus_medius` | back/surface | upper outer buttock |
@@ -145,19 +133,28 @@ highlighted regions (see `tile_check_x4.png`). For tiles:
 | `adductor_magnus` | back/surface | inner back of the upper thigh |
 | `pec_minor` | front/deep | under the upper pec, ribs 3-5 to the coracoid |
 | `subscapularis` | front/deep | front deep view, at the armpit just outside the ribcage edge |
-| `transversus_abdominis` | front/deep | horizontal band across the lower abdomen |
-| `internal_obliques` | front/deep | sides of the abdomen, wrapping the end of transversus |
-| `iliopsoas` | front/deep | lumbar spine / iliac fossa through the groin to the inner femur |
+| `transversus_abdominis` | front/deep | horizontal band across the abdomen, below the internal obliques; the psoas emerges from beneath it |
+| `internal_obliques` | front/deep | upper flanks, lateral to the rectus, above the transversus band |
+| `iliopsoas` | front/deep | psoas from the lumbar spine plus the iliacus fan, converging through the groin to the inner femur |
 | `vastus_intermedius` | front/deep | under rectus femoris |
 | `supraspinatus` | back/deep | above the scapular spine |
-| `rhomboids` | back/deep | between the spine and the shoulder blade |
+| `rhomboids` | back/deep | between the spine and the shoulder blade, split into minor (upper) and major |
 | `quadratus_lumborum` | back/deep | deep low back, lowest rib to pelvis, lateral to the spine |
 | `gluteus_minimus` | back/deep | under gluteus medius |
 | `triceps_medial` | back/deep | lower back of the upper arm, around the triceps tendon |
 
-Per view/layer: front/surface 26, back/surface 27, front/deep 6, back/deep 5.
+## How it was drawn
+
+All shapes are hand-placed control points in `build_map.py`: centripetal Catmull-Rom splines for
+outlines, a limb frame (axis + lateral/medial width profile) for arms and legs, and shapely for the
+boolean carving, seams and clipping. Only the viewer's right half is authored; the left half is mirrored
+around x = 100. Proportions follow the classic 7.5-head canon. While
+authoring, the silhouette was overlaid once on Mikael Häggström's public-domain collage of Gray's Anatomy
+plates (https://commons.wikimedia.org/wiki/File:Muscles_anterior_labeled.png, public domain) to check
+landmark heights. Nothing was traced from it or from any app.
 
 ## Licence
 
 The artwork (`bodyMapPaths.ts`, the preview PNGs) and `build_map.py` are original work created for the
-ASCEND project. They are released under the project's MIT licence. No third-party artwork is included.
+ASCEND project and are released under the project's MIT licence. No third-party artwork is included.
+The only reference consulted for placement (Häggström / Gray's Anatomy 1918) is in the public domain.
