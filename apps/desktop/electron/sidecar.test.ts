@@ -11,6 +11,7 @@ const parent = {
   ASCEND_DEV: "1",
   ASCEND_PORT: "1",
   ASCEND_COACH_MODEL: "llama3.2:3b",
+  ASCEND_OLLAMA_ALLOW_REMOTE: "1",
   NODE_OPTIONS: "--require evil.js",
   ELECTRON_RUN_AS_NODE: "1",
   PYTHONPATH: "C:\\evil",
@@ -27,6 +28,7 @@ describe("sidecarEnv", () => {
     expect(env.ASCEND_PORT).toBe("50123");
     expect(env.ASCEND_DATA_DIR).toBe("D:\\data");
     expect(env.ASCEND_COACH_MODEL).toBe("llama3.2:3b");
+    expect(env.ASCEND_OLLAMA_ALLOW_REMOTE).toBe("1");
   });
 
   it("keeps the ordinary environment but not runtime-injection variables", () => {

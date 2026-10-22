@@ -33,11 +33,12 @@ export interface SidecarOptions {
 }
 
 /**
- * ASCEND_* settings a user may still set for the desktop app: harmless preferences.
+ * ASCEND_* settings a user may still set for the desktop app: the coach model, and the
+ * explicit opt-in to a non-local Ollama (the sidecar refuses one without it).
  * Everything else under ASCEND_ (token, host, port, database, dev mode, data dir) comes
  * from Electron or not at all.
  */
-const PASS_THROUGH = new Set(["ASCEND_COACH_MODEL"]);
+const PASS_THROUGH = new Set(["ASCEND_COACH_MODEL", "ASCEND_OLLAMA_ALLOW_REMOTE"]);
 /** Never handed to the child: they change how a runtime starts, not what ASCEND does. */
 const DROP = new Set(["NODE_OPTIONS", "ELECTRON_RUN_AS_NODE"]);
 
