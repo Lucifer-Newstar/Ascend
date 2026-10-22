@@ -33,7 +33,8 @@ dependency install. Expect a different time on other machines.
 
 ```bash
 cd ml
-uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
+uv venv --python 3.12 .venv
+uv pip install --python .venv/bin/python -r requirements.txt --index-strategy unsafe-best-match
 .venv/bin/python src/make_smoke_data.py      # synthetic shapes, NOT food photos
 PATH="$PWD/.venv/bin:$PATH" dvc repro         # prepare -> train -> export -> evaluate
 PATH="$PWD/.venv/bin:$PATH" dvc metrics show
