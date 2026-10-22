@@ -9,9 +9,10 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 
-import type { ExportSaveRequest, SidecarRequest } from "@ascend/shared";
+import type { SidecarRequest } from "@ascend/shared";
 
 import { IPC } from "./channels";
+import { validateExportSave } from "./ipc-validate";
 import { SidecarManager } from "./sidecar";
 
 // Same user-data folder (%APPDATA%\ASCEND) in dev and when installed.
@@ -84,7 +85,8 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC.sidecarStatus, () => sidecar.getStatus());
 
-  ipcMain.handle(IPC.exportSave, async (_e, req: ExportSaveRequest) => {
+  ipcMain.handle(IPC.exportSave, async (_e, raw: unknown) => {
+    const req = validateExportSave(raw); // throws: the renderer's promise rejects
     const result = await dialog.showSaveDialog({ defaultPath: req.defaultName });
     if (result.canceled || !result.filePath) return { saved: false, path: null };
     fs.writeFileSync(result.filePath, req.content, "utf8");

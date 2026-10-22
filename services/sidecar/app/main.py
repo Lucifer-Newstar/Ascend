@@ -22,7 +22,7 @@ from app.core.config import Settings, load_settings
 from app.core.db import checkpoint_wal, make_engine, make_session_factory
 from app.core.events import EventBus
 from app.core.migrate import current_revision, head_revision, run_migrations
-from app.core.security import TokenAuthMiddleware
+from app.core.security import TokenAuthMiddleware, health_proof
 from app.modules.coach.api import router as coach_router
 from app.modules.gamification import service as gamification_service
 from app.modules.gamification.api import router as game_router
@@ -188,6 +188,7 @@ def create_app(
     app.add_middleware(TokenAuthMiddleware, token=settings.token)
 
     head = head_revision()
+    proof = health_proof(settings.token)
 
     @app.get("/health", tags=["system"])
     def health() -> dict[str, str]:
@@ -210,6 +211,7 @@ def create_app(
             "db": db_status,
             "migration": current or "none",
             "migration_head": head,
+            "proof": proof,
         }
 
     @app.post("/shutdown", tags=["system"])
