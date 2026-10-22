@@ -62,16 +62,16 @@ describe("status colours (UI-4)", () => {
     expect(new Set(tokens).size).toBe(tokens.length);
     expect(tokens).not.toContain("--color-accent");
     expect(STATUS_TOKEN).toEqual({
-      over: "--color-bad",
-      recovering: "--color-warn",
-      under: "--color-under",
-      optimal: "--color-good",
-      no_data: "--color-nodata",
+      over: "--color-map-over",
+      recovering: "--color-map-recovering",
+      under: "--color-map-under",
+      optimal: "--color-map-optimal",
+      no_data: "--color-map-nodata",
     });
   });
 
   it("pulses ready muscles in the ready/recovered token, the same one the legend shows", () => {
-    expect(READY_TOKEN).toBe("--color-good");
+    expect(READY_TOKEN).toBe("--color-map-optimal");
     expect(READY_TOKEN).toBe(STATUS_TOKEN.optimal);
   });
 });

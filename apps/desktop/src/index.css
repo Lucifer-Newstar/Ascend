@@ -25,6 +25,13 @@
   --color-line-input: #52709e;
   --color-sidebar: #0a101c;
   --color-map-fill: #16213a;
+  /* Muscle-map recovery fills: the status meanings, desaturated (about 35-50 % saturation) so the
+     body reads as an anatomy chart rather than a neon sign. */
+  --color-map-over: #b86b6b;
+  --color-map-recovering: #b8995f;
+  --color-map-under: #6f80b5;
+  --color-map-optimal: #5a9c7f;
+  --color-map-nodata: #26324a;
   /* Ink */
   --color-ink: #e8f0ff;
   --color-muted: #9aa9c4;
@@ -87,6 +94,11 @@
   --color-line-input: #71839f;
   --color-sidebar: #ffffff;
   --color-map-fill: #e2e9f3;
+  --color-map-over: #b56a6a;
+  --color-map-recovering: #b39257;
+  --color-map-under: #7383b8;
+  --color-map-optimal: #5b977c;
+  --color-map-nodata: #d3dbe6;
   --color-ink: #0b1424;
   --color-muted: #46566e;
   --color-faint: #54627a;

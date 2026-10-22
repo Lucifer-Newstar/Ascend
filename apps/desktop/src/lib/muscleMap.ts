@@ -6,25 +6,25 @@ import type { MuscleActivity, MuscleState, MuscleStatus } from "@ascend/shared";
  * status colour.
  */
 export const STATUS_TOKEN: Record<MuscleStatus, string> = {
-  over: "--color-bad",
-  recovering: "--color-warn",
-  under: "--color-under",
-  optimal: "--color-good",
-  no_data: "--color-nodata",
+  over: "--color-map-over",
+  recovering: "--color-map-recovering",
+  under: "--color-map-under",
+  optimal: "--color-map-optimal",
+  no_data: "--color-map-nodata",
 };
 
 /** A muscle that is ready to train again pulses in the "ready / recovered" colour. */
-export const READY_TOKEN = "--color-good";
+export const READY_TOKEN = "--color-map-optimal";
 
 /** CSS colour for a status, as a var() reference (for style attributes and CSS rules). */
 export const statusVar = (status: MuscleStatus): string => `var(${STATUS_TOKEN[status]})`;
 
 /** Dark-theme values of the status tokens, used only when a token cannot be read (tests, SSR). */
 export const STATUS_COLORS: Record<MuscleStatus, string> = {
-  over: "#ff6b6b",
-  recovering: "#f5b83d",
-  under: "#6e8ef5",
-  optimal: "#34d399",
+  over: "#b86b6b",
+  recovering: "#b8995f",
+  under: "#6f80b5",
+  optimal: "#5a9c7f",
   no_data: "#26324a",
 };
 
@@ -87,7 +87,7 @@ export const SLUG_LABELS: Record<string, string> = {
   calves: "Calves",
 };
 
-/** Over or still recovering: drawn with a soft glow. */
+/** Over or still recovering: drawn with a quiet outline. */
 export function isFatigued(m: MuscleState): boolean {
   return m.status === "over" || m.status === "recovering";
 }
@@ -154,8 +154,8 @@ export function primaryRegion(summary: SlugSummary): MuscleState {
 
 /** Volume heat ramp (Hevy-style distribution), light to deep, per theme. */
 export const HEAT: Record<"dark" | "light", string[]> = {
-  dark: ["#173a4c", "#1c5b73", "#1f7f99", "#22a8c4", "#2fd9f2"],
-  light: ["#cfeaf2", "#9cd5e5", "#61b9d2", "#2b95b3", "#0c6680"],
+  dark: ["#1d3442", "#25495a", "#2f6175", "#3c7a8f", "#5193a6"],
+  light: ["#d6e6ec", "#b0cdd8", "#86afbf", "#5e90a3", "#3d7286"],
 };
 
 /** Colour for a share of the busiest region's sets (0..1); null means untrained. */

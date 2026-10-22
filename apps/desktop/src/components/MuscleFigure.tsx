@@ -6,7 +6,7 @@
  *    moving the mouse never re-renders React); both are skipped with Reduce motion;
  *  - a "deep" layer ghosts the surface muscles and draws the deep ones (pectoralis minor,
  *    rotator cuff, rhomboids, transversus, iliopsoas...) where they really sit;
- *  - colours change with a CSS fill transition; fatigued or heavy muscles get a soft glow
+ *  - colours change with a CSS fill transition; fatigued or heavy muscles get a quiet outline (no glow)
  *    and recovered ones breathe; the hovered muscle lifts and shows a tooltip.
  * Plain SVG, no lighting filters, so it stays light on a laptop GPU. The figure is
  * aria-hidden: the lists beside it carry the same information for keyboard and screen readers.
@@ -153,7 +153,7 @@ export function MuscleFigure(props: MuscleFigureProps) {
   const css = useMemo(() => {
     const s = `.${scope}`;
     const rules = [`${s} svg path { transition: fill 650ms ease, transform 180ms ease; transform-box: fill-box; transform-origin: center; }`];
-    if (glow.length) rules.push(`${sel(s, glow)} { filter: drop-shadow(0 0 3px currentColor); color: var(--color-ink); }`);
+    if (glow.length) rules.push(`${sel(s, glow)} { stroke: color-mix(in srgb, var(--color-ink) 55%, transparent); stroke-width: 1px; vector-effect: non-scaling-stroke; }`);
     if (pulse.length) rules.push(`${sel(s, pulse)} { animation: asc-muscle-pulse 2.8s ease-in-out infinite; stroke: var(${READY_TOKEN}); stroke-width: 1.4px; vector-effect: non-scaling-stroke; }`);
     const live = [...interactive];
     if (live.length) rules.push(`${sel(s, live)} { cursor: pointer; }`);
