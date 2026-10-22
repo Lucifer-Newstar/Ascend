@@ -14,6 +14,13 @@ export default tseslint.config(
     plugins: { "react-hooks": reactHooks },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // eslint-plugin-react-hooks 7 adds the React Compiler rules to "recommended" as errors.
+      // They flag patterns that are valid React but that the compiler can't optimise (setState
+      // in an effect, reading a ref during render, Date.now() in render). The app does not use
+      // the compiler, so they stay visible as warnings; the classic hook rules stay errors.
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/purity": "warn",
     },
   },
   {
