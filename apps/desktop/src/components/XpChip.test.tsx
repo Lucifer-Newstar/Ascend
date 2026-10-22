@@ -71,6 +71,8 @@ describe("XpChip", () => {
     rerender(renderChip(1, true));
     await screen.findByText("LV 2");
     expect(screen.queryByTestId("confetti")).toBeNull();
+    // The announcement is rendered together with "LV 2" (useRise derives it while
+    // rendering), so no timer or extra wait is involved here.
     expect(screen.getByRole("status")).toHaveTextContent("You reached level 2");
   });
 

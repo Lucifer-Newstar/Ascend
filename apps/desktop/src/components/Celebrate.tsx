@@ -4,7 +4,7 @@
  * transform/opacity and unmount when done. Positions are fixed per index, not
  * random, so renders stay pure and screenshots are repeatable.
  */
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 import { useReducedMotion } from "../lib/motion";
 
@@ -49,17 +49,25 @@ export function Flash({ className = "" }: { className?: string }) {
  * Remembers the last value seen and reports when it went up. Returns a key that
  * changes on each rise (use it to replay an animation) and the size of the rise.
  * The first value seen is a baseline, not a rise.
+ *
+ * Derived while rendering (React's "adjust state when a prop changes" pattern) rather
+ * than in an effect, so the render that shows the new value already carries the rise:
+ * no extra commit, and nothing for a screen reader or a test to wait for.
  */
 export function useRise(value: number | undefined): { riseKey: number; delta: number } {
-  const prev = useRef<number | undefined>(undefined);
-  const [state, setState] = useState({ riseKey: 0, delta: 0 });
-  useEffect(() => {
-    if (value === undefined) return;
-    const before = prev.current;
-    prev.current = value;
-    if (before !== undefined && value > before) setState((s) => ({ riseKey: s.riseKey + 1, delta: value - before }));
-  }, [value]);
-  return state;
+  const [state, setState] = useState<{ last: number | undefined; riseKey: number; delta: number }>({
+    last: value,
+    riseKey: 0,
+    delta: 0,
+  });
+  if (value !== undefined && value !== state.last) {
+    const before = state.last;
+    const rose = before !== undefined && value > before;
+    const next = { last: value, riseKey: rose ? state.riseKey + 1 : state.riseKey, delta: rose ? value - before : state.delta };
+    setState(next);
+    return { riseKey: next.riseKey, delta: next.delta };
+  }
+  return { riseKey: state.riseKey, delta: state.delta };
 }
 
 /** Shows `children` for `ms` after each change of `trigger` (0 = never shown). */
