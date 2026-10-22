@@ -1,117 +1,144 @@
 #!/usr/bin/env python3
-"""ASCEND anatomical muscle map generator.
+"""ASCEND muscle map v2: original artwork generator.
 
-Hand-authored, original artwork. Every muscle is defined below as a closed
-Catmull-Rom spline (converted to cubic Beziers) through hand-placed control
-points on ONE side of the body (viewer's left, x < 100). Shapes are then
-  1. clipped to the body silhouette (inset slightly, so a thin rim shows),
-  2. trimmed against the muscles placed before them with a constant gap,
-  3. mirrored around the centre line x = 100,
-and finally re-emitted as compact cubic-Bezier path data.
+Draws the front and back figure (surface + deep layer) from hand-placed control points and writes
+bodyMapPaths.ts plus preview PNGs next to this script.  Run:  python3 build_map.py
+(needs shapely, cairosvg, numpy, pillow), then copy bodyMapPaths.ts to apps/desktop/src/lib/.
 
-Run:  python3 build_map.py      (needs: shapely, cairosvg, pillow)
-Writes bodyMapPaths.ts and preview PNGs next to this script.
+Construction
+  * The body silhouette is built first: head, torso, arms and legs.  Arms and legs are "limbs":
+    a smooth axis with a width profile (lateral / medial half-width along the axis).
+  * Limb muscles are authored in limb coordinates (s = distance along the axis in viewBox units,
+    v = -1 medial edge .. +1 lateral edge), so they follow the limb's taper automatically.
+  * Torso muscles are authored in viewBox coordinates.
+  * Each region is carved in priority order: a muscle loses whatever a higher-priority neighbour
+    (grown by the seam width) already covers, and everything is clipped to the silhouette.  This
+    gives one consistent seam width everywhere.
+  * Only the viewer's right half is authored; the left half is mirrored around x = 100.
 """
-import math, os, sys
-from shapely.geometry import Polygon, MultiPolygon, LineString, box, GeometryCollection
+import math, os, re, sys, json
+import numpy as np
+from shapely.geometry import Polygon, MultiPolygon, LineString, Point, box
 from shapely.ops import unary_union
 from shapely import affinity
 
 OUT = os.path.dirname(os.path.abspath(__file__))
-W, H = 200, 430
+VB_W, VB_H = 200, 430
 CX = 100.0
-GAP = 0.85          # gap between neighbouring muscles (viewBox units)
-INSET = 0.7         # how far muscles sit inside the silhouette edge
-MIN_AREA = 1.2
+GAP = 1.1          # seam between neighbouring muscles (viewBox units)
+RIM = 0.55         # inset of muscles from the silhouette edge
 
-# ---------------------------------------------------------------- geometry helpers
-def _pt(p):
-    return (p[0], p[1]), (len(p) > 2 and p[2] == 'c')
-
-def _bez(p1, c1, c2, p2, n, out):
-    for k in range(n):
-        t = k/n; a = (1-t)**3; b = 3*(1-t)**2*t; c = 3*(1-t)*t*t; d = t**3
-        out.append((a*p1[0]+b*c1[0]+c*c2[0]+d*p2[0], a*p1[1]+b*c1[1]+c*c2[1]+d*p2[1]))
-
-def spline_closed(pts, n=14):
-    P, C = zip(*[_pt(p) for p in pts])
-    m = len(P); out = []
-    for i in range(m):
-        p0, p1, p2, p3 = P[i-1], P[i], P[(i+1) % m], P[(i+2) % m]
-        t1 = (0, 0) if C[i] else ((p2[0]-p0[0])/6, (p2[1]-p0[1])/6)
-        t2 = (0, 0) if C[(i+1) % m] else ((p3[0]-p1[0])/6, (p3[1]-p1[1])/6)
-        _bez(p1, (p1[0]+t1[0], p1[1]+t1[1]), (p2[0]-t2[0], p2[1]-t2[1]), p2, n, out)
-    return out
-
-def spline_open(pts, n=14):
-    P = [(p[0], p[1]) for p in pts]
-    P = [P[0]] + P + [P[-1]]
+# ---------------------------------------------------------------- curves
+def crs(pts, closed=True, n=10, alpha=0.5):
+    """Centripetal Catmull-Rom spline through pts, sampled n points per segment."""
+    P = [np.asarray(p, float) for p in pts]
+    if closed:
+        P = [P[-1]] + P + [P[0], P[1]]
+    else:
+        P = [2 * P[0] - P[1]] + P + [2 * P[-1] - P[-2]]
     out = []
-    for i in range(1, len(P)-2):
-        p0, p1, p2, p3 = P[i-1], P[i], P[i+1], P[i+2]
-        _bez(p1, (p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6),
-             (p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6), p2, n, out)
-    out.append(P[-2])
-    return out
+    for i in range(1, len(P) - 2):
+        p0, p1, p2, p3 = P[i - 1], P[i], P[i + 1], P[i + 2]
+        t0 = 0.0
+        t1 = t0 + max(np.linalg.norm(p1 - p0), 1e-6) ** alpha
+        t2 = t1 + max(np.linalg.norm(p2 - p1), 1e-6) ** alpha
+        t3 = t2 + max(np.linalg.norm(p3 - p2), 1e-6) ** alpha
+        for t in np.linspace(t1, t2, n, endpoint=False):
+            a1 = (t1 - t) / (t1 - t0) * p0 + (t - t0) / (t1 - t0) * p1
+            a2 = (t2 - t) / (t2 - t1) * p1 + (t - t1) / (t2 - t1) * p2
+            a3 = (t3 - t) / (t3 - t2) * p2 + (t - t2) / (t3 - t2) * p3
+            b1 = (t2 - t) / (t2 - t0) * a1 + (t - t0) / (t2 - t0) * a2
+            b2 = (t3 - t) / (t3 - t1) * a2 + (t - t1) / (t3 - t1) * a3
+            out.append((t2 - t) / (t2 - t1) * b1 + (t - t1) / (t2 - t1) * b2)
+    if not closed:
+        out.append(P[-2])
+    return np.array(out)
 
-def S(pts):
-    """Smooth closed shape through control points ('c' marks a sharp corner)."""
-    return Polygon(spline_closed(pts)).buffer(0)
+def poly(pts, n=10):
+    g = Polygon(crs(pts, True, n))
+    return g if g.is_valid else g.buffer(0)
 
-def strap(center, w0, w1, taper=0.08):
-    """A tapering band along a smooth centre line (sartorius, gracilis ...)."""
-    c = spline_open(center, 16)
-    L = [0.0]
-    for i in range(1, len(c)):
-        L.append(L[-1] + math.dist(c[i-1], c[i]))
-    tot = L[-1]; left = []; right = []
-    for i, p in enumerate(c):
-        a = c[max(i-1, 0)]; b = c[min(i+1, len(c)-1)]
-        dx, dy = b[0]-a[0], b[1]-a[1]; l = math.hypot(dx, dy) or 1
-        nx, ny = -dy/l, dx/l
-        s = L[i]/tot
-        w = (w0 + (w1-w0)*s) * min(1.0, (min(s, 1-s)/taper)) ** 0.5
-        left.append((p[0]+nx*w/2, p[1]+ny*w/2)); right.append((p[0]-nx*w/2, p[1]-ny*w/2))
-    return Polygon(left + right[::-1]).buffer(0)
+def pchip(xs, ys, x):
+    """Monotone cubic interpolation (Fritsch-Carlson), clamped outside the range."""
+    xs = np.asarray(xs, float); ys = np.asarray(ys, float); x = np.clip(np.asarray(x, float), xs[0], xs[-1])
+    h = np.diff(xs); d = np.diff(ys) / h
+    m = np.zeros_like(ys)
+    m[0], m[-1] = d[0], d[-1]
+    for k in range(1, len(xs) - 1):
+        if d[k - 1] * d[k] > 0:
+            w1, w2 = 2 * h[k] + h[k - 1], h[k] + 2 * h[k - 1]
+            m[k] = (w1 + w2) / (w1 / d[k - 1] + w2 / d[k])
+    i = np.clip(np.searchsorted(xs, x) - 1, 0, len(h) - 1)
+    t = (x - xs[i]) / h[i]
+    return ((2*t**3 - 3*t**2 + 1) * ys[i] + (t**3 - 2*t**2 + t) * h[i] * m[i]
+            + (-2*t**3 + 3*t**2) * ys[i+1] + (t**3 - t**2) * h[i] * m[i+1])
 
+# ---------------------------------------------------------------- limbs
 class Limb:
-    """Local frame along a limb segment: t in [0,1] along the bone, u = offset
-    (positive = lateral, i.e. away from the body's centre line)."""
-    def __init__(self, a, b):
-        self.a = a; dx, dy = b[0]-a[0], b[1]-a[1]
-        self.len = math.hypot(dx, dy); self.d = (dx/self.len, dy/self.len)
-        n = (-self.d[1], self.d[0])
-        if n[0] > 0: n = (-n[0], -n[1])
-        self.n = n
-    def __call__(self, t, u, *flag):
-        x = self.a[0] + self.d[0]*t*self.len + self.n[0]*u
-        y = self.a[1] + self.d[1]*t*self.len + self.n[1]*u
-        return (x, y) + flag
+    """A limb: smooth axis + width profile.  s = arc length from the first axis point."""
+    def __init__(self, axis, stations):
+        A = crs(axis, closed=False, n=60)
+        seg = np.hypot(*np.diff(A, axis=0).T)
+        self.A, self.d = A, np.r_[0, np.cumsum(seg)]
+        self.L = self.d[-1]
+        T = np.gradient(A, axis=0)
+        T /= np.linalg.norm(T, axis=1)[:, None]
+        k = 25  # smooth the tangent so the frame bends gently at joints
+        Ts = np.array([T[max(0, i - k):i + k + 1].mean(0) for i in range(len(T))])
+        self.T = Ts / np.linalg.norm(Ts, axis=1)[:, None]
+        st = np.array(stations, float)
+        self.ss, self.lat, self.med = st[:, 0], st[:, 1], st[:, 2]
 
-def ext_line(pts, k=300):
-    (x0, y0), (x1, y1) = pts[0], pts[1]
-    l = math.hypot(x1-x0, y1-y0); a = (x0-(x1-x0)/l*k, y0-(y1-y0)/l*k)
-    (x0, y0), (x1, y1) = pts[-2], pts[-1]
-    l = math.hypot(x1-x0, y1-y0); b = (x1+(x1-x0)/l*k, y1+(y1-y0)/l*k)
-    return [a] + list(pts) + [b]
+    def frame(self, s):
+        s = np.asarray(s, float)
+        sc = np.clip(s, 0, self.L)
+        x = np.interp(sc, self.d, self.A[:, 0]); y = np.interp(sc, self.d, self.A[:, 1])
+        tx = np.interp(sc, self.d, self.T[:, 0]); ty = np.interp(sc, self.d, self.T[:, 1])
+        n = np.hypot(tx, ty); tx, ty = tx / n, ty / n
+        ext = s - sc  # extrapolate past the ends along the tangent
+        return x + tx * ext, y + ty * ext, tx, ty
 
-def split(g, line, side='above', gap=GAP):
-    """Cut g along a polyline with a gap; returns (part on `side`, the rest)."""
-    pts = ext_line([(p[0], p[1]) for p in line])
-    far = 2000
-    if side == 'above':   cap = [(pts[-1][0], -far), (pts[0][0], -far)]
-    elif side == 'below': cap = [(pts[-1][0], far), (pts[0][0], far)]
-    elif side == 'left':  cap = [(-far, pts[-1][1]), (-far, pts[0][1])]
-    else:                 cap = [(far, pts[-1][1]), (far, pts[0][1])]
-    half = Polygon(pts + cap).buffer(0)
-    cut = LineString(pts).buffer(gap/2, cap_style=2)
-    return (g.intersection(half).difference(cut), g.difference(half).difference(cut))
+    def xy(self, s, v):
+        s = np.asarray(s, float); v = np.asarray(v, float)
+        x, y, tx, ty = self.frame(s)
+        w = np.where(v >= 0, pchip(self.ss, self.lat, s), pchip(self.ss, self.med, s))
+        return np.stack([x + ty * v * w, y - tx * v * w], -1)   # lateral normal = (ty, -tx)
 
-def split_region(g, region, gap=GAP):
-    """Cut g by a polygon region with a gap; returns (inside, outside)."""
-    R = Polygon(region).buffer(0)
-    cut = R.exterior.buffer(gap/2, cap_style=2)
-    return g.intersection(R).difference(cut), g.difference(R).difference(cut)
+    def outline(self, s0, s1, n=160):
+        s = np.linspace(s0, s1, n)
+        lat = self.xy(s, np.ones_like(s)); med = self.xy(s[::-1], -np.ones_like(s))
+        return np.vstack([lat, med])
+
+    def shape(self, sv, n=12):
+        """Closed spline authored in (s, v), sampled densely in limb space, mapped to the page."""
+        P = np.array(sv, float); P[:, 1] *= 12.0          # isotropic-ish space for the spline
+        D = crs(P, True, n); D[:, 1] /= 12.0
+        D = densify(D, 1.2)
+        g = Polygon(self.xy(D[:, 0], D[:, 1]))
+        return g if g.is_valid else g.buffer(0)
+
+    def strap(self, sv_line, half_w):
+        P = np.array(sv_line, float); P[:, 1] *= 12.0
+        D = crs(P, False, 14); D[:, 1] /= 12.0
+        return LineString(self.xy(D[:, 0], D[:, 1])).buffer(half_w, cap_style=1)
+
+def densify(D, step):
+    out = [D[0]]
+    for a, b in zip(D, np.vstack([D[1:], D[:1]])):
+        n = max(1, int(np.ceil(abs(b[0] - a[0]) / step)))
+        for k in range(1, n + 1):
+            out.append(a + (b - a) * k / n)
+    return np.array(out[:-1])
+
+def tri(a, b, w0, w1=0.0, n=40):
+    """Tapered teardrop from point a (width w0) to point b (width w1)."""
+    a, b = np.array(a, float), np.array(b, float)
+    L = np.linalg.norm(b - a); u = (b - a) / L; nrm = np.array([-u[1], u[0]])
+    t = np.linspace(0, 1, n)
+    w = (w0 * (1 - t) + w1 * t) * np.sin(np.pi * np.clip(t * 0.85 + 0.15, 0, 1)) ** 0.6
+    left = a + np.outer(t * L, u) + np.outer(w, nrm)
+    right = a + np.outer(t * L, u) - np.outer(w, nrm)
+    return Polygon(np.vstack([left, right[::-1]])).buffer(0)
 
 def mirror(g):
     return affinity.scale(g, xfact=-1, yfact=1, origin=(CX, 0))
@@ -119,600 +146,585 @@ def mirror(g):
 def parts(g):
     if g.is_empty: return []
     if isinstance(g, Polygon): return [g]
-    if isinstance(g, (MultiPolygon, GeometryCollection)):
-        return [p for q in g.geoms for p in parts(q)]
-    return []
+    return [p for p in getattr(g, "geoms", []) if isinstance(p, Polygon)]
 
-def clean(g):
-    ps = [p for p in parts(g.buffer(0)) if p.area >= MIN_AREA]
-    return unary_union(ps) if ps else Polygon()
+def tidy(g, r=0.38, min_area=1.2):
+    g = g.buffer(-r, join_style=1).buffer(r, join_style=1)
+    return unary_union([p for p in parts(g) if p.area >= min_area])
 
-# ---------------------------------------------------------------- skeleton frames
-U = Limb((63.0, 94.0), (45.0, 162.0))      # upper arm: shoulder joint -> elbow
-F = Limb((45.0, 162.0), (32.0, 222.0))     # forearm: elbow -> wrist
-Hd = Limb((32.0, 222.0), (32.0 - 0.2118*37, 222.0 + 0.9773*37))  # hand
+# ---------------------------------------------------------------- body (viewer's right half)
+# 7.5-head figure: top of head y 6, chin 61, shoulders 84, nipples 117, navel 167, pubis 212,
+# knee 300, ankle 400, sole 423.  One head = 55.5 units.
+ARM = Limb([(142.5, 90), (152.6, 127), (163.4, 163), (172, 192), (180.4, 220), (185, 242), (188.4, 264)],
+           # s, lateral half-width, medial half-width          (elbow s~77, wrist s~137)
+           [(-6, 12.5, 12.5), (0, 14.2, 13), (12, 15.4, 13.4), (26, 14.6, 13.6), (40, 13.8, 14.2),
+            (55, 13.0, 13.4), (68, 11.6, 11.4), (77, 10.8, 10.4), (86, 13.0, 11.0), (98, 12.8, 10.8),
+            (112, 10.0, 9.0), (126, 7.4, 6.8), (137, 6.4, 6.0), (145, 7.6, 7.2), (156, 8.1, 7.5),
+            (166, 7.2, 6.8), (174, 5.4, 5.4), (180, 2.0, 2.0)])
+LEG = Limb([(119, 190), (118.2, 245), (117, 298), (116.4, 350), (116, 398), (118, 416)],
+           # knee s~108, ankle s~208
+           [(0, 17.0, 17.6), (8, 20.5, 17.4), (16, 22.0, 17.0), (30, 21.6, 15.4), (50, 20.0, 13.4),
+            (70, 17.8, 12.2), (88, 15.2, 12.6), (100, 12.6, 11.8), (108, 11.6, 11.0), (116, 11.8, 11.2),
+            (128, 13.6, 13.0), (140, 13.4, 13.6), (156, 11.0, 11.4), (176, 7.9, 8.1), (192, 7.2, 7.3),
+            (204, 7.6, 8.0), (212, 8.0, 8.8), (220, 8.8, 9.6), (228, 7.6, 8.4), (232, 3.0, 3.5)])
+S_ELBOW, S_WRIST, S_KNEE, S_ANKLE = 77, 137, 108, 208
 
-# ---------------------------------------------------------------- silhouette
+HEAD = [(100, 6), (110.5, 8), (118, 15.5), (121, 27), (120, 38), (117.5, 47.5), (112.5, 55.5),
+        (106, 60), (100, 61.5)]
+TORSO = [(100, 50), (112, 54), (114, 62), (114.5, 70), (118, 74), (125, 77.6), (133, 80.6), (139, 83),
+         (143, 92), (142, 108), (139.5, 118.5), (138.2, 126), (138, 133), (136.6, 145),
+         (134.2, 157), (132.8, 167), (133.6, 178), (136.5, 189), (139.6, 199), (140.5, 207),
+         (130, 214), (112, 214), (101, 213.5)]
+DELT_CAP = [(129, 80.5), (141, 82.4), (151, 86.6), (157.6, 94), (160.4, 105), (160, 117), (157, 127),
+            (150, 124), (141, 100)]
+THUMB = None  # set in silhouette()
+
+def half_to_full(pts):
+    pts = list(pts)
+    return pts + [(2 * CX - x, y) for x, y in reversed(pts) if abs(x - CX) > 1e-6]
+
 def silhouette():
-    head = S([(100, 5.5), (108.5, 6.8), (115, 12), (117.5, 22), (117, 33), (115.3, 41),
-              (112, 48.5), (106.5, 54.5), (100, 56.5), (93.5, 54.5), (88, 48.5), (84.7, 41),
-              (83, 33), (82.5, 22), (85, 12), (91.5, 6.8)])
-    neck = S([(90, 44, 'c'), (110, 44, 'c'), (111.6, 60), (113, 72), (100, 78), (87, 72), (88.4, 60)])
-    torso = S([(100, 62, 'c'), (88.8, 63), (87.4, 69), (81.6, 74.5), (71, 78.5), (62, 82),
-               (57.5, 87), (58, 97), (62, 106), (66.5, 113), (68.8, 122), (69.6, 133),
-               (70.6, 146), (71.6, 158), (71.4, 168), (70.2, 178), (67.6, 189), (64.3, 200),
-               (62.6, 213), (62.2, 228), (63.0, 248), (65.4, 270), (68.8, 289), (71.0, 302),
-               (71.4, 313), (70.4, 326), (69.8, 340), (70.6, 355), (72.6, 370), (74.8, 386),
-               (75.8, 397), (74.6, 405), (72.4, 413), (71.8, 419.5), (74.5, 423.6), (83, 424.6),
-               (88.6, 422.8), (88.8, 415), (87.4, 406), (87.2, 398), (88.2, 386), (90.8, 368),
-               (93.3, 348), (93.4, 331), (91.8, 319), (92.6, 306), (93.6, 292), (94.2, 276),
-               (95.4, 258), (97.4, 240), (99.2, 226), (100, 221, 'c')])
-    arm = S([U(-0.16, -3), U(-0.12, 7.4), U(0.04, 14.4), U(0.2, 14.6), U(0.36, 11.6), U(0.55, 10.4),
-             U(0.78, 9.6), U(0.98, 9.4), F(0.13, 10.8), F(0.35, 8.9), F(0.62, 6.8), F(0.85, 5.8),
-             F(1.0, 5.6), F(1.0, -5.3), F(0.82, -5.7), F(0.55, -7.2), F(0.3, -8.8), F(0.1, -9.8),
-             U(0.93, -8.8), U(0.72, -9.8), U(0.5, -10.6), U(0.3, -10.2), U(0.14, -8), U(0.0, -4)])
-    hand = S([Hd(0.0, 5.6), Hd(0.12, 7.4), Hd(0.27, 9.2), Hd(0.42, 9.6), Hd(0.5, 8.3), Hd(0.42, 6.6),
-              Hd(0.6, 6.2), Hd(0.82, 5.0), Hd(0.97, 2.4), Hd(1.0, -0.6), Hd(0.93, -3.8),
-              Hd(0.7, -5.6), Hd(0.4, -6.2), Hd(0.15, -5.8), Hd(0.0, -5.3)])
-    left = unary_union([torso, arm, hand]).intersection(box(0, 0, CX, H))
-    body = unary_union([left, mirror(left), head, neck]).buffer(0)
-    body = body.buffer(1.6, join_style=1).buffer(-1.6, join_style=1)   # fillet armpits / crotch
-    body = body.buffer(-0.6, join_style=1).buffer(0.6, join_style=1)   # round sharp tips
+    head = Polygon(crs(half_to_full(HEAD), True, 10))
+    torso_half = Polygon(crs([(CX - 0.01, 48)] + TORSO[1:] + [(CX - 0.01, 213.5)], True, 10)).buffer(0)
+    torso = unary_union([torso_half, mirror(torso_half)]).buffer(0.3).buffer(-0.3)
+    arm = Polygon(ARM.outline(-6, 180)).buffer(0)
+    tip = Point(*ARM.xy(178.5, 0)).buffer(5.6)                    # rounded finger tips
+    # thumb: palms face forward, so the thumb sits on the lateral side of the hand
+    t0 = ARM.xy(141, 0.7); t1 = ARM.xy(160, 1.35)
+    thumb = LineString([t0, (t0 + t1) / 2 + np.array([0.8, 0.4]), t1]).buffer(2.7, cap_style=1)
+    leg = Polygon(LEG.outline(0, 230)).buffer(0)
+    toe = Point(*LEG.xy(226.5, 0.1)).buffer(8.0)
+    toe = affinity.scale(toe, 1.05, 0.62)
+    delt = poly(DELT_CAP)
+    right = unary_union([arm, tip, thumb, leg, toe, delt])
+    body = unary_union([head, torso, right, mirror(right)])
+    body = body.buffer(1.6, join_style=1).buffer(-1.6, join_style=1)   # blend joints
+    body = body.buffer(-0.8, join_style=1).buffer(0.8, join_style=1)
     return body
 
-SIL = silhouette()
-CLIP_L = SIL.buffer(-INSET).intersection(box(0, 0, CX - GAP/2, H))
+BODY = silhouette()
+# Regions used for clipping (viewer's right half only, generous)
+HALF = box(CX + 0.3, 0, VB_W, VB_H)
+ARM_REGION = Polygon(ARM.outline(-30, 180)).buffer(0).union(poly(DELT_CAP)).buffer(0.01)
+LEG_REGION = Polygon(LEG.outline(-40, 230)).buffer(0)
 
-class Layer:
-    """Collects muscles for one view/layer. Earlier muscles win overlaps;
-    later ones are trimmed so that a constant GAP separates neighbours."""
-    def __init__(self, view, layer):
-        self.view, self.layer = view, layer
-        self.occ = Polygon(); self.items = []   # (key, geometry on the x<100 side)
-    def add(self, key, g, gap=GAP):
-        g = g.intersection(CLIP_L)
-        others = unary_union([o for k, o in self.items if k != key]) if self.items else Polygon()
-        if not others.is_empty:                # same key merges seamlessly; others keep the gap
-            g = g.difference(others.buffer(gap, join_style=1))
-        g = clean(g)
-        if g.is_empty:
-            print('  ! empty', self.view, self.layer, key); return
-        self.occ = unary_union([self.occ, g])
-        for i, (k, old) in enumerate(self.items):
-            if k == key:                       # same key added twice: one compound region
-                self.items[i] = (k, unary_union([old, g])); return
-        self.items.append((key, g))
+# ---------------------------------------------------------------- helpers for authoring
+def P(pts, n=10):            # torso shape in page coordinates
+    return poly(pts, n)
+def A(sv):                   # arm shape in limb coordinates
+    return ARM.shape(sv)
+def L(sv):                   # leg shape in limb coordinates
+    return LEG.shape(sv)
+def side_of(curve, g, keep="left", far=60):
+    """Split g by an open curve (page coords, running top to bottom); keep the part on one side."""
+    C = crs(curve, False, 12)
+    sgn = -1 if keep == "left" else 1
+    region = Polygon(np.vstack([C, [C[-1] + [sgn * far, 0], C[0] + [sgn * far, 0]]])).buffer(0)
+    return g.intersection(region)
+def cut(g, curve, w=GAP, closed=False):
+    C = crs(curve, closed, 12)
+    return g.difference(LineString(C).buffer(w / 2, cap_style=2))
+def arm_band(v0, v1, s0=-40, s1=200):
+    return Polygon(np.vstack([ARM.xy(np.linspace(s0, s1, 80), np.full(80, v0)),
+                              ARM.xy(np.linspace(s1, s0, 80), np.full(80, v1))])).buffer(0)
+def leg_band(v0, v1, s0=-40, s1=240):
+    return Polygon(np.vstack([LEG.xy(np.linspace(s0, s1, 80), np.full(80, v0)),
+                              LEG.xy(np.linspace(s1, s0, 80), np.full(80, v1))])).buffer(0)
 
-# ================================================================= FRONT SURFACE
+# Shapes shared by both views
+DELTOID = P([(128.5, 82.4), (140, 82.6), (151, 85.4), (160, 92.5), (165, 104), (165, 116), (162, 123),
+             (158.4, 126.6), (154.6, 123.6), (148.6, 115), (141, 104.6), (135, 94.6), (130, 87.4)])
+DELT_SPLIT = [(141.5, 83), (150, 92.6), (155, 104), (157.6, 115), (158.4, 128)]
+
+# ---------------------------------------------------------------- FRONT, surface (priority order)
 def front_surface():
-    L = Layer('front', 'surface')
-    L.add('sternocleidomastoid', S([(89.6, 48.6), (92.8, 48.0), (95.6, 57), (98.2, 68), (99.6, 76.5, 'c'),
-                                    (99.6, 80.5, 'c'), (95.4, 80.6), (92.8, 72.5), (90.4, 62)]))
-    L.add('trap_upper', strap(  # levator scapulae strip, folded into trap_upper
-        [(89.2, 55.5), (89.6, 63), (88.6, 70.5)], 4.0, 3.4, 0.2))
-    L.add('trap_upper', S([(88.0, 66), (91.5, 70), (93.5, 75.5), (92.5, 79.2), (80, 80.4), (68, 83),
-                           (59, 86.5), (57, 82), (67, 77.5), (79, 72.8), (86, 67.5)]))
-    # deltoid (whole cap), split into anterior / lateral
-    delt = S([U(-0.17, -2.5), U(-0.13, 6.5), U(-0.02, 13.8), U(0.13, 15.4), U(0.28, 13.4),
-              U(0.38, 9.0), U(0.44, 6.0, 'c'), U(0.34, 1.6), U(0.22, -3.0), U(0.08, -7.4),
-              U(-0.06, -8.6)])
-    lat, ant = split(delt, [U(-0.4, 4.6), U(-0.1, 4.4), U(0.2, 5.8), U(0.6, 5.0)], side='left')
-    L.add('deltoid_anterior', ant); L.add('deltoid_lateral', lat)
-    pec = S([(99.0, 83.4, 'c'), (90, 82.6), (80, 83.6), (71, 86.4), (64.5, 91.5), (61.2, 99),
-             (62.0, 106), (65.6, 112.4), (71.6, 118.8), (78.6, 123.6), (86.6, 126.4), (94.0, 126.6),
-             (99.0, 125.2, 'c')])
-    up, low = split(pec, [(102, 99.6), (90, 97.6), (78, 95.0), (66, 92.6), (58, 91.8)], side='above')
-    L.add('pec_major_clavicular', up); L.add('pec_major_sternal', low)
-    bic = S([U(0.27, -1.5), U(0.33, -6.8), U(0.47, -9.6), U(0.64, -9.4), U(0.8, -6.8),
-             U(0.92, -2.6), U(0.97, 0.4, 'c'), U(0.9, 3.4), U(0.76, 6.9), U(0.58, 8.6),
-             U(0.44, 7.6), U(0.34, 4.4)])
-    blong, bshort = split(bic, [U(0.1, -0.2), U(0.5, -0.9), U(0.95, 0.2)], side='left')
-    L.add('biceps_long', blong); L.add('biceps_short', bshort)
-    L.add('brachialis', unary_union([
-        S([U(0.5, 8.0), U(0.66, 10.6), U(0.86, 9.6), U(1.0, 6.0), U(0.92, 3.0), U(0.75, 5.0)]),
-        S([U(0.58, -8.0), U(0.74, -10.6), U(0.9, -8.6), U(1.0, -4.2), U(0.9, -3.0), U(0.78, -6.0)])]))
-    L.add('brachioradialis', S([U(0.72, 11.2), F(-0.08, 12.0), F(0.12, 12.0), F(0.3, 10.0), F(0.5, 7.4),
-                                F(0.7, 5.6), F(0.9, 4.4, 'c'), F(0.72, 3.4), F(0.5, 2.6), F(0.3, 2.6),
-                                F(0.12, 3.4), U(0.92, 6.2)]))
-    L.add('wrist_flexors', S([F(0.04, 2.0), F(0.07, -5.0), F(0.14, -10.5), F(0.36, -9.2), F(0.62, -7.0),
-                              F(0.84, -5.0), F(0.92, -1.5), F(0.88, 3.0), F(0.7, 4.4), F(0.4, 4.4),
-                              F(0.18, 4.0)]))
-    ser = unary_union([S([(66.5, y-3.4), (72, y-1.4), (78.2, y+2.2), (79.8, y+3.6, 'c'), (77.4, y+4.3),
-                          (71.5, y+3.4), (66, y+2.2)]) for y in (113.5, 121.5, 129.5, 137.5)])
-    L.add('serratus_anterior', ser)
-    ra = S([(99.0, 122.0, 'c'), (92, 121.6), (86.8, 124.0), (85.6, 138), (85.4, 155), (85.9, 170),
-            (87.4, 187), (89.8, 199), (93.6, 207.5), (97.3, 212.6), (99.0, 213.6, 'c')])
-    for yl, yr in ((143.6, 144.8), (160.4, 161.8), (178.0, 179.4)):
-        a, b = split(ra, [(102, yr), (93, yr + 0.4), (84, yl)], side='above', gap=1.25)
-        ra = unary_union([a, b])
-    L.add('rectus_abdominis', ra)
-    L.add('external_obliques', S([(88, 136), (84, 128.6), (78.5, 126.4), (73, 128.5), (69.2, 137),
-                                  (69.6, 152), (71.0, 166), (70.8, 178), (72.6, 186), (79, 191.5),
-                                  (87.5, 199.5), (93.5, 206.5), (96.5, 212), (93, 190), (90, 165)]))
-    L.add('latissimus_dorsi', S([(63.5, 108), (69.8, 112), (70.4, 126), (71.2, 141), (72.6, 155),
-                                 (70.2, 157), (66.6, 138), (63.0, 120)]))
-    # hip & thigh
-    L.add('tensor_fasciae_latae', S([(73.4, 187), (69.4, 190), (65.4, 198), (63.6, 208), (64.4, 218),
-                                     (67.0, 221.5), (70.0, 212), (73.2, 200), (75.6, 192)]))
-    L.add('sartorius', strap([(74.0, 188.0), (77.4, 204), (82.0, 221), (86.6, 241), (90.2, 261),
-                              (92.6, 279), (93.6, 296), (92.6, 313)], 6.2, 4.4))
-    L.add('rectus_femoris', S([(77.6, 202), (74.2, 214), (73.0, 233), (74.4, 256), (77.6, 277),
-                               (81.0, 292.5, 'c'), (84.2, 279), (85.8, 257), (85.2, 234), (82.0, 215)]))
-    L.add('vastus_medialis', S([(84.2, 258), (89.0, 264), (92.2, 277), (93.0, 290), (90.6, 300.5),
-                                (85.4, 302.5), (81.4, 298), (81.0, 285), (82.2, 270)]))
-    L.add('vastus_lateralis', S([(68.0, 204), (63.4, 220), (62.6, 246), (64.8, 270), (68.6, 290),
-                                 (73.6, 302), (78.8, 301), (80.0, 292), (76.6, 270), (75.2, 245),
-                                 (75.6, 222), (72.0, 208)]))
-    L.add('gracilis', strap([(98.0, 217), (96.0, 238), (94.0, 258), (92.6, 278), (92.0, 296), (91.4, 316)], 4.8, 3.4))
-    L.add('adductor_longus', S([(99.2, 213.5), (93.5, 215), (88.0, 225), (85.4, 240), (86.4, 252),
-                                (90.4, 262), (95.4, 252), (98.4, 236)]))
+    S = []
+    S.append(("sternocleidomastoid", P([(116, 51), (113.6, 60), (108.2, 70.5), (103.2, 78.6), (105.6, 80.2),
+                                        (110.8, 73), (116.6, 63), (119.2, 53)])))
+    S.append(("deltoid_anterior", side_of(DELT_SPLIT, DELTOID, "left")))
+    S.append(("deltoid_lateral", side_of(DELT_SPLIT, DELTOID, "right")))
+    pec = P([(102.4, 82.6), (114, 80.8), (126, 82.2), (133.4, 85.6), (139.5, 95), (145.5, 104.5), (150, 110.5),
+             (147.4, 114), (141, 118.4), (132, 125.6), (122, 131.2), (112, 134.2), (105, 133.8), (102.4, 131)])
+    upper = [(100, 92.5), (114, 94.2), (128, 97.6), (141, 102.6), (156, 108.5)]
+    up = Polygon(np.vstack([crs(upper, False, 12), [(156, 60), (100, 60)]])).buffer(0)
+    S.append(("pec_major_clavicular", pec.intersection(up)))
+    S.append(("pec_major_sternal", pec.difference(up)))
+    S.append(("trap_upper", P([(112.5, 60), (114.6, 70), (124, 76.8), (139, 82.4), (136, 85.6), (124, 82.8),
+                               (114, 79.6), (110.8, 72)])))
+    bic = A([(14, 0.1), (20, 0.62), (36, 0.86), (54, 0.76), (66, 0.42), (72, 0.04), (67, -0.34), (56, -0.74),
+             (38, -0.88), (22, -0.74), (12, -0.3)])
+    S.append(("biceps_long", bic.intersection(arm_band(0.02, 3))))
+    S.append(("biceps_short", bic.intersection(arm_band(-3, 0.02))))
+    br = A([(46, 1.04), (64, 1.04), (76, 0.66), (80, 0.0), (76, -0.66), (64, -1.04), (48, -1.04), (54, 0)])
+    br = br.difference(A([(64, 0.0), (70, 0.34), (90, 0.4), (90, -0.4), (70, -0.34)]))
+    S.append(("brachialis", br))
+    S.append(("brachioradialis", A([(57, 0.86), (72, 1.05), (90, 1.07), (110, 0.8), (128, 0.42), (132, 0.2),
+                                    (114, 0.26), (94, 0.3), (80, 0.26), (68, 0.5)])))
+    wf = A([(80, 0.16), (94, 0.2), (114, 0.14), (132, -0.04), (134, -0.5), (118, -0.98), (98, -1.08),
+            (82, -1.0), (78, -0.4)])
+    wf = cut(wf, [ARM.xy(94, -0.36), ARM.xy(108, -0.42), ARM.xy(122, -0.34)], GAP * 0.9)
+    S.append(("wrist_flexors", wf))
+    ser = unary_union([tri((140, 119.4), (127, 130), 3.2, 1.0), tri((139.6, 127.4), (126.6, 139), 3.3, 1.0),
+                       tri((138.6, 135.4), (126.4, 147.6), 3.2, 1.0), tri((137.4, 143.4), (127, 154.6), 2.8, 0.8)])
+    S.append(("serratus_anterior", ser))
+    S.append(("latissimus_dorsi", P([(139.6, 118), (139.2, 130), (137.6, 146), (135.4, 158), (133.2, 161),
+                                     (134.4, 146), (135.6, 131), (136.4, 121)])))
+    rec = P([(101, 130), (110, 129.4), (116.6, 131.6), (117.6, 145), (116.8, 160), (115.6, 175), (113.6, 190),
+             (109, 203), (104.4, 211), (101, 211.6)])
+    for y in (144.5, 158, 171.5):
+        rec = cut(rec, [(98, y + 0.6), (108, y - 0.3), (120, y + 0.8)], 1.3)
+    S.append(("rectus_abdominis", rec))
+    S.append(("external_obliques", P([(117.8, 137), (127, 138), (137.4, 145), (134.4, 158), (133.2, 168),
+                                      (134.4, 180), (136, 189), (131, 195.5), (121, 201.6), (114.4, 203.6),
+                                      (114.8, 180), (116.4, 158)])))
+    # thigh
+    S.append(("sartorius", LEG.strap([(0, 0.62), (14, 0.42), (32, 0.06), (54, -0.42), (76, -0.76), (96, -0.95),
+                                      (116, -1.0)], 2.2)))
+    S.append(("tensor_fasciae_latae", L([(2, 0.72), (6, 1.06), (22, 1.1), (40, 1.0), (45, 0.86), (30, 0.72),
+                                          (12, 0.58)])))
+    S.append(("rectus_femoris", L([(4, 0.2), (16, 0.5), (38, 0.6), (62, 0.52), (84, 0.34), (98, 0.14), (102, 0.0),
+                                   (92, -0.22), (66, -0.42), (36, -0.44), (12, -0.16)])))
+    S.append(("vastus_medialis", L([(58, -0.46), (74, -0.32), (92, -0.16), (104, -0.1), (110, -0.34), (108, -0.8),
+                                    (98, -1.08), (82, -1.1), (66, -0.9)])))
+    S.append(("vastus_lateralis", L([(8, 0.85), (30, 1.1), (62, 1.1), (88, 1.04), (102, 0.8), (110, 0.46),
+                                     (100, 0.2), (80, 0.3), (48, 0.48), (22, 0.6)])))
+    S.append(("gracilis", L([(20, -0.76), (46, -0.74), (70, -0.84), (96, -1.0), (96, -1.16), (50, -1.16),
+                             (18, -1.16)])))
+    S.append(("adductor_longus", L([(10, -0.2), (22, -0.16), (38, -0.36), (54, -0.62), (62, -0.86), (52, -0.94),
+                                    (30, -0.98), (14, -0.9), (6, -0.6)])))
     # lower leg
-    L.add('tibialis_anterior', S([(78.6, 315.5), (75.2, 326), (74.6, 345), (76.8, 366), (81.0, 386),
-                                  (82.6, 393, 'c'), (82.8, 380), (82.0, 352), (81.4, 330), (81.2, 318)]))
-    L.add('fibularis', S([(74.0, 316.5), (70.6, 330), (70.4, 350), (72.6, 370), (75.6, 391),
-                          (77.6, 388), (77.2, 366), (75.8, 345), (76.4, 326), (77.2, 318)]))
-    L.add('gastrocnemius', S([(88.6, 316.5), (92.0, 326), (93.8, 342), (91.6, 360), (88.8, 364),
-                              (87.4, 348), (87.0, 330)]))
-    L.add('soleus', unary_union([
-        S([(87.6, 360), (91.2, 358), (91.0, 372), (88.6, 388), (86.8, 391), (86.8, 375)]),
-        S([(71.2, 348), (73.0, 360), (75.8, 382), (74.6, 386), (71.6, 372), (70.2, 358)])]))
-    return L
+    S.append(("tibialis_anterior", L([(116, 0.06), (118, 0.58), (136, 0.64), (158, 0.5), (178, 0.28),
+                                      (194, 0.12), (192, -0.04), (166, -0.1), (136, -0.14)])))
+    S.append(("fibularis", L([(114, 0.62), (132, 0.7), (158, 0.66), (182, 0.56), (196, 0.5), (192, 1.12),
+                              (158, 1.12), (124, 1.12)])))
+    S.append(("gastrocnemius", L([(116, -0.5), (134, -0.46), (152, -0.56), (164, -0.8), (160, -1.1),
+                                  (128, -1.1)])))
+    S.append(("soleus", L([(150, -0.5), (172, -0.56), (190, -0.7), (186, -1.1), (162, -1.1)])))
+    return S
 
-# ================================================================= BACK SURFACE
+# ---------------------------------------------------------------- BACK, surface
 def back_surface():
-    L = Layer('back', 'surface')
-    trap = S([(99.4, 45.5, 'c'), (97.6, 47.5), (96.6, 56), (95.0, 64), (90.6, 70.5), (81, 75.8),
-              (70, 80), (61.5, 83.5), (58.6, 87.6), (64, 90.6), (74.5, 93.4), (84.6, 96.6),
-              (87.6, 106), (89.8, 121), (93.0, 140), (96.6, 160), (99.4, 177, 'c')])
-    upper, rest = split(trap, [(102, 82.0), (88, 84.0), (74, 88.4), (58, 92.4)], side='above')
-    low, mid = split_region(rest, [(103, 111.5), (93, 105.6), (86.6, 99.0), (84.6, 97.2), (83.6, 150),
-                                   (83.6, 300), (103, 300)])
-    L.add('trap_upper', upper); L.add('trap_middle', mid); L.add('trap_lower', low)
-    L.add('splenius', S([(96.6, 47.4), (92.6, 47.6), (89.4, 52.4), (89.2, 58.6), (92.2, 61.6), (95.4, 58.4)]))
-    L.add('trap_upper', strap(  # levator scapulae strip, folded into trap_upper
-        [(89.8, 57.5), (89.8, 64), (88.4, 70.5), (85.4, 76.5)], 4.0, 3.2, 0.15))
-    delt = S([U(-0.17, -2.5), U(-0.13, 6.5), U(-0.02, 13.8), U(0.13, 15.4), U(0.28, 13.4),
-              U(0.38, 9.0), U(0.44, 6.0, 'c'), U(0.32, 0.6), U(0.18, -4.4), U(0.05, -8.6),
-              U(-0.07, -9.8)])
-    lat, post = split(delt, [U(-0.4, 4.6), U(-0.1, 4.4), U(0.2, 5.8), U(0.6, 5.0)], side='left')
-    L.add('deltoid_posterior', post); L.add('deltoid_lateral', lat)
-    L.add('infraspinatus', S([(87.6, 100.5), (79, 97.6), (69.6, 97.8), (64.8, 103), (66.0, 109.6),
-                              (71.6, 116.4), (79.0, 122.0), (85.0, 124.6), (87.8, 115)]))
-    L.add('triceps_lateral', S([U(0.24, 8.4), U(0.38, 11.2), U(0.58, 10.8), U(0.74, 7.8), U(0.81, 3.4),
-                                U(0.71, 1.0), U(0.55, 1.6), U(0.38, 4.4)]))
-    L.add('triceps_long', S([U(0.12, -2.0), U(0.25, -9.6), U(0.46, -11.4), U(0.68, -10.4), U(0.81, -6.0),
-                             U(0.84, -0.6), U(0.73, 0.4), U(0.55, -0.6), U(0.36, 1.0)]))
-    L.add('teres_minor', strap([(64.6, 113.6), (68.6, 118.8), (75.0, 124.0), (80.6, 127.2)], 5.8, 4.4, 0.15))
-    L.add('teres_major', strap([(62.6, 121.6), (67.0, 126.2), (74.0, 131.0), (81.6, 133.2), (85.2, 132.6)], 8.8, 7.0, 0.12))
-    L.add('brachioradialis', S([U(0.72, 10.8), F(-0.1, 11.6), F(0.12, 11.6), F(0.34, 9.6), F(0.3, 6.8),
-                                F(0.12, 7.6), U(0.95, 7.0)]))
-    L.add('wrist_flexors', S([F(0.05, -10.6), F(0.32, -9.6), F(0.62, -7.6), F(0.66, -4.4), F(0.34, -5.4),
-                              F(0.1, -5.8)]))
-    L.add('wrist_extensors', S([F(0.04, 8.0), F(0.18, 10.6), F(0.42, 8.8), F(0.7, 6.8), F(0.94, 4.8),
-                                F(0.97, -4.6), F(0.72, -6.4), F(0.4, -7.6), F(0.14, -9.6), F(0.06, -4.0),
-                                F(0.07, 3.0)]))
-    L.add('erector_spinae', S([(99.0, 146, 'c'), (96.0, 147.5), (93.4, 158), (92.2, 172), (91.8, 186),
-                               (92.2, 196), (94.6, 201.6), (99.0, 203, 'c')]))
-    L.add('latissimus_dorsi', S([(87.6, 127.6), (81.0, 134.0), (71.0, 132.6), (62.0, 124.0), (63.6, 137),
-                                 (65.6, 150), (68.6, 160), (71.6, 170), (76.4, 180.4), (83.4, 186.6),
-                                 (90.4, 185), (94.8, 170), (98.6, 152), (99.0, 134)]))
-    L.add('external_obliques', S([(69.0, 158), (67.6, 172), (68.6, 184), (75.6, 191.0), (82.4, 190.4),
-                                  (76.0, 181.6), (72.0, 170)]))
-    L.add('gluteus_maximus', S([(99.0, 224.0, 'c'), (96.6, 213.0), (93.4, 204.6), (87.6, 203.0), (80.0, 206.0),
-                                (73.4, 210.4), (68.6, 216.4), (67.0, 225.0), (68.0, 234.0), (72.4, 240.4),
-                                (80.0, 244.6), (89.0, 245.6), (95.4, 244.8), (99.0, 242.4, 'c')]))
-    L.add('gluteus_medius', S([(73.0, 185.0), (67.0, 191.0), (64.0, 200.0), (64.2, 212.0), (67.6, 218.0),
-                               (75.0, 211.0), (84.0, 205.0), (91.8, 200.6), (91.2, 191.6), (83.0, 187.0)]))
-    # posterior thigh: one mass, tiled into neighbouring muscles (shared borders, constant gaps)
-    L.add('gracilis', strap([(94.6, 247), (92.8, 262), (91.8, 280), (91.2, 298), (90.0, 316)], 4.6, 3.4))
-    mass = S([(99.2, 244, 'c'), (60, 238, 'c'), (61.5, 272), (66, 292), (72, 305), (77.4, 313.5, 'c'),
-              (80.2, 303), (83.4, 300.6), (86.8, 307), (90.8, 315.5, 'c'), (95, 300), (99.2, 280, 'c')])
-    regions = {
-        'vastus_lateralis': [(40, 220), (67.4, 236), (66.6, 262), (68.2, 285), (71.6, 305), (40, 330)],
-        'biceps_femoris': [(67.4, 236), (81.2, 240), (80.6, 270), (80.8, 298), (79, 330), (60, 330),
-                           (71.6, 305), (68.2, 285), (66.6, 262)],
-        'semitendinosus': [(81.2, 240), (88.4, 240), (87.8, 262), (87.2, 282), (86.2, 305), (84, 330),
-                           (79, 330), (80.8, 298), (80.6, 270)],
-        'adductor_magnus': [(88.4, 240), (101, 240), (101, 255), (88.6, 267.5), (87.8, 262)],
-        'semimembranosus': [(88.6, 267.5), (101, 255), (101, 330), (84, 330), (86.2, 305), (87.2, 282)],
-    }
-    for key in ('semitendinosus', 'biceps_femoris', 'semimembranosus', 'adductor_magnus', 'vastus_lateralis'):
-        L.add(key, mass.intersection(Polygon(regions[key])).buffer(-GAP/2, join_style=1))
-    L.add('gastrocnemius', unary_union([
-        S([(81.4, 312.4), (76.0, 316), (72.4, 328), (73.0, 344), (76.8, 357.4), (80.6, 354.6),
-           (82.2, 338), (82.6, 321)]),
-        S([(85.0, 312.4), (84.0, 326), (84.6, 345), (87.4, 362.6), (90.8, 357.6), (93.0, 342),
-           (92.6, 326), (89.4, 314.6)])]))
-    L.add('soleus', S([(71.6, 340), (70.6, 358), (73.8, 374), (78.0, 382.6), (84.0, 384), (88.4, 380.4),
-                       (91.0, 368), (92.0, 352), (89.0, 364.6), (84.0, 368.6), (79.6, 366), (75.4, 359)]))
-    return L
+    S = []
+    S.append(("splenius", P([(106.2, 50.6), (111.2, 52.6), (113.8, 60), (113.6, 67), (110.4, 66.4),
+                             (107.8, 58)])))
+    S.append(("trap_upper", P([(101, 50), (106, 51.5), (108, 60), (111, 68), (118, 74.5), (130, 79.6),
+                               (141.4, 83.2), (139, 86.8), (130, 86), (120, 84.6), (110, 83), (101, 82)])))
+    S.append(("trap_middle", P([(101, 82.4), (112, 83.6), (124, 85.4), (138.4, 87.6), (136, 91.6), (127, 95),
+                                (118, 99.5), (108, 103.5), (101, 105.5)])))
+    S.append(("trap_lower", P([(101, 104), (110, 101.5), (120, 97.6), (124.6, 99), (121.6, 106), (114, 122),
+                               (107, 138), (101, 152.6)])))
+    S.append(("deltoid_posterior", side_of(DELT_SPLIT, DELTOID, "left")))
+    S.append(("deltoid_lateral", side_of(DELT_SPLIT, DELTOID, "right")))
+    S.append(("infraspinatus", P([(119.6, 99), (128, 96.4), (137, 95.6), (140.2, 101), (138.6, 108),
+                                  (133, 115), (126, 122), (121, 124.6), (118.6, 112)])))
+    S.append(("teres_minor", P([(131.6, 115), (137.6, 107.4), (141.8, 104.4), (143.4, 109.4), (139.4, 114.8),
+                                (134.2, 119.4)])))
+    S.append(("teres_major", P([(122, 125.8), (130, 119.8), (138, 115.4), (143.8, 112.6), (146.4, 117.4),
+                                (140.4, 123.4), (131, 129.4), (124, 131.4)])))
+    S.append(("erector_spinae", P([(101.6, 140), (105, 138), (109, 150), (113, 168), (115, 184), (114, 196),
+                                   (110, 204), (104, 207), (101.6, 204)])))
+    S.append(("latissimus_dorsi", P([(101, 146), (106, 138), (113, 131), (121, 128), (130, 124), (138, 119),
+                                     (145, 117), (142.6, 124), (139.6, 135), (137, 150), (135, 165), (133, 178),
+                                     (129.6, 187), (122, 184), (112, 172), (104, 162), (101, 156)])))
+    S.append(("external_obliques", P([(133.8, 165), (137.6, 169.6), (139.4, 182), (139.6, 192.4), (134, 194.4),
+                                      (128.6, 189.4), (131.8, 178)])))
+    S.append(("triceps_lateral", A([(14, 0.3), (20, 1.04), (40, 1.08), (56, 0.9), (64, 0.46), (60, 0.14),
+                                    (44, 0.06), (26, 0.06)])))
+    S.append(("triceps_long", A([(10, -0.3), (18, 0.04), (40, 0.02), (58, 0.0), (68, -0.2), (66, -0.66),
+                                 (52, -1.04), (28, -1.1), (12, -0.96)])))
+    S.append(("brachioradialis", A([(60, 0.86), (76, 1.07), (98, 1.07), (116, 0.86), (108, 0.7), (86, 0.72),
+                                    (70, 0.66)])))
+    we = A([(80, 0.62), (96, 0.66), (116, 0.6), (132, 0.28), (134, -0.12), (118, -0.5), (96, -0.6),
+            (82, -0.48), (78, 0.1)])
+    we = cut(we, [ARM.xy(94, 0.12), ARM.xy(108, 0.08), ARM.xy(122, 0.08)], GAP * 0.9)
+    S.append(("wrist_extensors", we))
+    S.append(("wrist_flexors", A([(78, -0.62), (96, -0.72), (118, -0.66), (130, -0.6), (118, -1.08),
+                                  (96, -1.1), (80, -1.02)])))
+    S.append(("gluteus_medius", P([(112, 192.4), (124, 189.6), (134, 191), (139.8, 197), (141.6, 207.4),
+                                   (140, 215), (133.4, 208.6), (124.6, 203), (116.6, 199.4)])))
+    S.append(("gluteus_maximus", P([(102, 214), (103.4, 206), (108, 201.4), (116.4, 200.4), (125, 203),
+                                    (132.4, 208.4), (137.6, 216), (138.8, 226), (135.6, 235.6), (128.4, 242.4),
+                                    (118.4, 245.6), (109.6, 245), (104.2, 241.6), (102, 233)])))
+    S.append(("vastus_lateralis", L([(30, 0.9), (60, 0.92), (86, 0.94), (104, 0.92), (112, 1.2), (80, 1.2),
+                                     (34, 1.2)])))
+    S.append(("biceps_femoris", L([(44, 0.0), (56, 0.5), (76, 0.88), (98, 0.94), (112, 0.88), (118, 0.6),
+                                   (106, 0.36), (86, 0.1), (62, -0.06)])))
+    S.append(("adductor_magnus", L([(30, -0.46), (46, -0.5), (58, -0.62), (66, -0.9), (54, -0.98), (38, -0.98),
+                                    (28, -0.84)])))
+    S.append(("semitendinosus", L([(46, -0.08), (62, 0.02), (84, -0.06), (100, -0.22), (111, -0.46), (104, -0.62),
+                                   (86, -0.58), (66, -0.62), (48, -0.5)])))
+    S.append(("gracilis", L([(46, -0.9), (74, -0.9), (100, -0.93), (118, -0.96), (112, -1.2), (60, -1.2),
+                             (44, -1.2)])))
+    S.append(("semimembranosus", L([(58, -0.54), (84, -0.54), (104, -0.58), (116, -0.62), (119, -0.94), (102, -0.98),
+                                    (80, -0.98), (62, -0.94)])))
+    gl = L([(112, 0.1), (118, 0.64), (132, 0.94), (148, 0.88), (160, 0.54), (163, 0.12), (150, 0.04), (126, 0.03)])
+    gm = L([(112, -0.1), (120, -0.68), (134, -1.02), (152, -1.0), (168, -0.62), (173, -0.12), (160, -0.04),
+            (128, -0.04)])
+    S.append(("gastrocnemius", unary_union([gl, gm])))
+    sol = L([(140, -1.08), (156, -1.1), (176, -0.94), (194, -0.52), (199, -0.2), (199, 0.2), (194, 0.52),
+             (176, 0.94), (156, 1.1), (140, 1.08), (150, 0)])
+    sol = sol.difference(L([(178, -0.26), (210, -0.3), (210, 0.3), (178, 0.26), (172, 0)]))
+    S.append(("soleus", sol))
+    return S
 
-# ================================================================= DEEP LAYERS
+# ---------------------------------------------------------------- DEEP layers
 def front_deep():
-    L = Layer('front', 'deep')
-    L.add('pec_minor', S([(67.6, 94.0, 'c'), (75.6, 98.4), (83.4, 104.6), (88.0, 111.6), (87.6, 118.8),
-                          (82.6, 124.4), (76.6, 118.0), (71.0, 105.6)]))
-    L.add('subscapularis', S([(64.2, 99.2), (68.8, 104.0), (71.8, 113.4), (71.0, 124.2), (66.8, 127.0),
-                              (63.6, 117.0), (62.6, 106.4)]))
-    L.add('transversus_abdominis', S([(99.0, 168.0, 'c'), (91.0, 167.4), (83.0, 169.6), (77.0, 174.0),
-                                      (75.6, 178.6), (80.0, 183.6), (88.0, 188.4), (94.0, 191.0), (99.0, 191.6, 'c')]))
-    L.add('internal_obliques', S([(87.4, 127.6), (80.0, 129.4), (73.4, 133.0), (69.8, 142.0), (69.8, 156.0),
-                                  (71.0, 170.0), (72.4, 182.0), (76.6, 190.0), (84.0, 196.6), (90.4, 203.6),
-                                  (92.0, 196.0), (86.6, 180.0), (86.0, 160.0), (86.0, 142.0)]))
-    L.add('iliopsoas', S([(95.6, 177.0), (88.6, 178.4), (80.4, 183.0), (75.8, 191.0), (79.6, 201.6),
-                          (84.6, 213.0), (87.4, 225.6), (90.0, 233.4, 'c'), (93.0, 222.0), (93.8, 205.6),
-                          (95.8, 190.6)]))
-    L.add('vastus_intermedius', S([(78.0, 211.6), (72.6, 224.0), (70.4, 248.0), (72.6, 272.0), (78.0, 290.4),
-                                   (83.6, 289.6), (86.6, 270.0), (87.0, 245.0), (85.0, 222.0), (81.6, 212.4)]))
-    return L
+    S = []
+    S.append(("pec_minor", P([(138.6, 91), (134, 97), (126, 108), (120.6, 121), (116, 123.6), (113.6, 117),
+                              (116.6, 107), (124, 98), (132, 92.6)])))
+    S.append(("subscapularis", P([(135, 96.6), (141, 98.8), (144, 108), (142, 117), (138, 121.6), (134.4, 115),
+                                  (133.4, 105)])))
+    S.append(("internal_obliques", P([(116.6, 140), (126, 138.6), (137, 146), (134.6, 158), (133.6, 168.6),
+                                      (126, 172), (118.4, 168), (116.2, 155)])))
+    S.append(("transversus_abdominis", P([(101, 152), (114, 150.6), (126, 152.6), (134.4, 160), (135, 172),
+                                          (129, 182), (116, 186.6), (101, 188)])))
+    S.append(("iliopsoas", P([(102.8, 160), (106.8, 159.6), (109.6, 173), (113.4, 185), (118, 185.4),
+                              (124.4, 182.6), (130.2, 185), (130, 194), (125, 204.6), (119.8, 214), (117.6, 224),
+                              (116.4, 230), (112.6, 229.6), (111.8, 218), (108.4, 202), (104.8, 184),
+                              (103, 170)])))
+    S.append(("vastus_intermedius", L([(14, 0.26), (30, 0.62), (60, 0.62), (86, 0.4), (99, 0.1), (97, -0.14),
+                                       (80, -0.42), (50, -0.52), (24, -0.38), (12, -0.06)])))
+    return S
 
 def back_deep():
-    L = Layer('back', 'deep')
-    L.add('supraspinatus', S([(86.6, 89.4), (80.4, 86.4), (71.6, 85.8), (64.6, 87.2), (62.2, 90.0),
-                              (69.6, 92.4), (78.6, 94.6), (86.4, 96.8)]))
-    L.add('rhomboids', S([(99.0, 78.4, 'c'), (99.0, 121.0, 'c'), (93.0, 126.0), (86.8, 129.4), (85.0, 113.0),
-                          (85.6, 99.0), (86.6, 89.4)]))
-    L.add('quadratus_lumborum', S([(94.4, 166.4), (86.4, 167.0), (79.6, 174.0), (78.4, 185.4), (84.0, 192.4),
-                                   (92.6, 192.0), (94.8, 180.0)]))
-    L.add('gluteus_minimus', S([(73.6, 188.6), (68.2, 194.0), (66.6, 203.6), (72.6, 206.2), (81.0, 200.4),
-                                (86.4, 194.6), (80.4, 189.6)]))
-    L.add('triceps_medial', S([U(0.55, -4.6), U(0.66, -8.8), U(0.84, -8.4), U(0.96, -4.2), U(0.97, 3.2),
-                               U(0.86, 7.6), U(0.7, 7.4), U(0.6, 3.6), U(0.72, -0.4)]))
-    return L
+    S = []
+    S.append(("supraspinatus", P([(117.6, 88.6), (127, 86.8), (137, 86.6), (141.6, 88.4), (137, 92.2),
+                                  (127, 95.2), (119.6, 96.6)])))
+    rh = P([(101.8, 86.2), (108, 88), (116.6, 96), (119.8, 108), (121.2, 123), (117, 126.4), (110, 118.4),
+            (101.8, 108.4)])
+    rh = cut(rh, [(99, 92.6), (110, 96.6), (122, 101.6)], GAP)
+    S.append(("rhomboids", rh))
+    S.append(("quadratus_lumborum", P([(106.6, 162), (113, 161), (119, 166), (121.6, 176), (120.6, 187),
+                                       (115, 191), (108, 190), (106.2, 178)])))
+    S.append(("gluteus_minimus", P([(120.6, 198), (130, 195.6), (137.6, 199.6), (139.6, 207), (134, 212.4),
+                                    (125, 209.4)])))
+    S.append(("triceps_medial", A([(46, -0.56), (58, -0.66), (70, -0.56), (77, -0.28), (77, 0.3), (70, 0.56),
+                                   (58, 0.6), (48, 0.44), (42, 0)])))
+    return S
 
-# ================================================================= path output
-def _fmt(v):
-    s = ('%.1f' % v)
-    if s.endswith('.0'): s = s[:-2]
-    if s in ('-0',): s = '0'
-    if s.startswith('0.'): s = s[1:]
-    elif s.startswith('-0.'): s = '-' + s[2:]
+# ---------------------------------------------------------------- carving
+def carve(items, gap=GAP):
+    clip = BODY.buffer(-RIM, join_style=1).intersection(HALF)
+    taken, out = None, []
+    for key, g in items:
+        g = g.buffer(0).intersection(clip)
+        if taken is not None:
+            g = g.difference(taken.buffer(gap, join_style=1))
+        g = tidy(g)
+        if g.is_empty:
+            print("WARNING empty region:", key); continue
+        out.append((key, g))
+        taken = g if taken is None else unary_union([taken, g])
+    return out
+
+def build():
+    layers = {("front", "surface"): front_surface(), ("back", "surface"): back_surface(),
+              ("front", "deep"): front_deep(), ("back", "deep"): back_deep()}
+    paths = []
+    for (view, layer), items in layers.items():
+        for key, g in carve(items):
+            # viewer's right half: subject's left in the front view, subject's right in the back view
+            paths.append(dict(key=key, view=view, layer=layer, side="left" if view == "front" else "right", g=g))
+            paths.append(dict(key=key, view=view, layer=layer, side="right" if view == "front" else "left",
+                              g=mirror(g)))
+    return paths
+
+# ---------------------------------------------------------------- path encoding
+def _n(v):
+    s = f"{v:.1f}".rstrip("0").rstrip(".")
+    if s in ("-0", ""): s = "0"
+    if s.startswith("0."): s = s[1:]
+    elif s.startswith("-0."): s = "-" + s[2:]
     return s
 
-def _nums(vals):
-    out = ''
-    for v in vals:
-        f = _fmt(v)
-        out += f if (not out or f[0] == '-') else ' ' + f
-    return out
+def _pair(a, b):
+    sa, sb = _n(a), _n(b)
+    return sa + ("" if sb.startswith("-") else " ") + sb
 
-def _densify(pts, step):
-    out = []
-    n = len(pts)
-    for i in range(n):
-        a, b = pts[i], pts[(i+1) % n]
-        k = max(1, int(math.dist(a, b) / step))
-        for j in range(k):
-            out.append((a[0] + (b[0]-a[0])*j/k, a[1] + (b[1]-a[1])*j/k))
-    return out
+def ring_d(coords, tol=0.09):
+    ls = LineString(coords).simplify(tol, preserve_topology=False)
+    c = np.round(np.array(ls.coords) * 10).astype(int)
+    if len(c) > 1 and (c[0] == c[-1]).all(): c = c[:-1]
+    keep = [c[0]]
+    for p in c[1:]:
+        if (p != keep[-1]).any(): keep.append(p)
+    c = np.array(keep)
+    s = "M" + _pair(c[0][0] / 10, c[0][1] / 10) + "l"
+    prev = c[0]; chunks = []
+    for p in c[1:]:
+        d = p - prev; prev = p
+        chunks.append(_pair(d[0] / 10, d[1] / 10))
+    out = chunks[0] if chunks else ""
+    for ch in chunks[1:]:
+        out += ch if ch.startswith("-") else " " + ch
+    return s + out + "z"
 
-def _corners(pts, win=1.5, ang=42):
-    n = len(pts); cs = []
-    for i in range(n):
-        def walk(step):
-            d = 0; j = i
-            while d < win:
-                k = (j + step) % n; d += math.dist(pts[j], pts[k]); j = k
-                if j == i: break
-            return pts[j]
-        a, b = walk(-1), walk(1); p = pts[i]
-        v1 = (p[0]-a[0], p[1]-a[1]); v2 = (b[0]-p[0], b[1]-p[1])
-        l1 = math.hypot(*v1); l2 = math.hypot(*v2)
-        if l1 == 0 or l2 == 0: cs.append(0); continue
-        c = max(-1, min(1, (v1[0]*v2[0]+v1[1]*v2[1])/(l1*l2)))
-        cs.append(math.degrees(math.acos(c)))
-    idx = [i for i in range(n) if cs[i] > ang and cs[i] >= cs[i-1] and cs[i] >= cs[(i+1) % n]]
-    keep = []
-    for i in idx:
-        if keep and math.dist(pts[i], pts[keep[-1]]) < 1.0:
-            if cs[i] > cs[keep[-1]]: keep[-1] = i
-            continue
-        keep.append(i)
-    if len(keep) > 1 and math.dist(pts[keep[0]], pts[keep[-1]]) < 1.0: keep.pop()
-    return keep
-
-def _resample(chain, step):
-    L = [0.0]
-    for i in range(1, len(chain)): L.append(L[-1] + math.dist(chain[i-1], chain[i]))
-    tot = L[-1]
-    k = max(1, round(tot / step)); out = [chain[0]]; j = 0
-    for s in range(1, k):
-        target = tot * s / k
-        while L[j+1] < target: j += 1
-        seg = L[j+1] - L[j] or 1
-        f = (target - L[j]) / seg
-        out.append((chain[j][0] + (chain[j+1][0]-chain[j][0])*f, chain[j][1] + (chain[j+1][1]-chain[j][1])*f))
-    out.append(chain[-1])
-    return out
-
-def _cr_segments(P, closed):
-    """Catmull-Rom through P -> list of cubic segments (p1, c1, c2, p2)."""
-    segs = []; n = len(P)
-    rng = range(n) if closed else range(n-1)
-    for i in rng:
-        if closed:
-            p0, p1, p2, p3 = P[i-1], P[i], P[(i+1) % n], P[(i+2) % n]
-        else:
-            p0 = P[max(i-1, 0)]; p1 = P[i]; p2 = P[i+1]; p3 = P[min(i+2, n-1)]
-        c1 = (p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6)
-        c2 = (p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6)
-        segs.append((p1, c1, c2, p2, i > 0))
-    return segs
-
-def ring_d(coords, step=3.3):
-    pts = list(coords)[:-1]
-    dense = _densify(pts, 0.4)
-    cs = _corners(dense)
-    segs = []
-    if len(cs) < 1:
-        loop = _resample(dense + [dense[0]], step)[:-1]
-        if len(loop) < 3: loop = pts
-        segs = _cr_segments(loop, True)
-    else:
-        n = len(dense)
-        for a, b in zip(cs, cs[1:] + [cs[0] + n]):
-            chain = [dense[i % n] for i in range(a, b + 1)]
-            P = _resample(chain, step)
-            if len(P) == 2:
-                segs.append((P[0], P[0], P[1], P[1], False))
-            else:
-                segs.extend(_cr_segments(P, False))
-    start = (round(segs[0][0][0], 1), round(segs[0][0][1], 1))
-    d = 'M' + _nums(start); cur = start
-    prev_smooth_ok = False
-    for p1, c1, c2, p2, smooth in segs:
-        e = (round(p2[0], 1), round(p2[1], 1))
-        straight = (c1 == p1 and c2 == p2)
-        if straight:
-            if e == cur: continue
-            d += 'l' + _nums((e[0]-cur[0], e[1]-cur[1]))
-            prev_smooth_ok = False
-        else:
-            rc2 = (round(c2[0]-cur[0], 1), round(c2[1]-cur[1], 1))
-            if smooth and prev_smooth_ok:      # Catmull-Rom joints are C1: reflected control point
-                d += 's' + _nums((rc2[0], rc2[1], e[0]-cur[0], e[1]-cur[1]))
-            else:
-                d += 'c' + _nums((c1[0]-cur[0], c1[1]-cur[1], rc2[0], rc2[1], e[0]-cur[0], e[1]-cur[1]))
-            prev_smooth_ok = True
-        cur = e
-    return d + 'z'
-
-def geom_d(g, step=3.3):
-    out = []
+def geom_d(g):
+    s = ""
     for p in parts(g):
-        out.append(ring_d(p.exterior.coords, step))
+        p = p.buffer(0)
+        from shapely.geometry.polygon import orient
+        p = orient(p, 1.0)
+        s += ring_d(list(p.exterior.coords))
         for r in p.interiors:
-            out.append(ring_d(r.coords, step))
-    return ''.join(out)
+            s += ring_d(list(r.coords))
+    return s
 
-# ================================================================= assemble
-def build():
-    layers = [front_surface(), back_surface(), front_deep(), back_deep()]
-    paths = []
-    for L in layers:
-        for key, g in L.items:
-            near = 'right' if L.view == 'front' else 'left'     # x < 100 side, as the subject sees it
-            far = 'left' if near == 'right' else 'right'
-            paths.append(dict(key=key, view=L.view, layer=L.layer, side=near, d=geom_d(g), geom=g))
-            gm = mirror(g)
-            paths.append(dict(key=key, view=L.view, layer=L.layer, side=far, d=geom_d(gm), geom=gm))
-    outline = geom_d(SIL, 2.2)
-    return paths, outline
+V1_KEYS = ["sternocleidomastoid", "trap_upper", "deltoid_anterior", "deltoid_lateral",
+  "pec_major_clavicular", "pec_major_sternal", "biceps_long", "biceps_short",
+  "brachialis", "brachioradialis", "wrist_flexors", "serratus_anterior",
+  "rectus_abdominis", "external_obliques", "latissimus_dorsi", "tensor_fasciae_latae",
+  "sartorius", "rectus_femoris", "vastus_medialis", "vastus_lateralis",
+  "gracilis", "adductor_longus", "tibialis_anterior", "fibularis",
+  "gastrocnemius", "soleus", "trap_middle", "trap_lower",
+  "splenius", "deltoid_posterior", "infraspinatus", "triceps_lateral",
+  "triceps_long", "teres_minor", "teres_major", "wrist_extensors",
+  "erector_spinae", "gluteus_maximus", "gluteus_medius", "semitendinosus",
+  "biceps_femoris", "semimembranosus", "adductor_magnus", "pec_minor",
+  "subscapularis", "transversus_abdominis", "internal_obliques", "iliopsoas",
+  "vastus_intermedius", "supraspinatus", "rhomboids", "quadratus_lumborum",
+  "gluteus_minimus", "triceps_medial"]
 
-def write_ts(paths, outline):
-    keys = []
-    for p in paths:
-        if p['key'] not in keys: keys.append(p['key'])
-    lines = [
-        '// ASCEND anatomical muscle map: original artwork, generated by build_map.py.',
-        '// Do not edit by hand: change the shapes in build_map.py and re-run it.',
-        '// Coordinates: one shared viewBox for both views, x = 100 is the body midline.',
-        '// "side" is the subject\'s own side (front view: subject\'s right is on the viewer\'s left).',
-        '',
-        'export interface MusclePath {',
-        '  key: string;',
-        '  view: "front" | "back";',
-        '  layer: "surface" | "deep";',
-        '  d: string;',
-        '  side?: "left" | "right";',
-        '}',
-        '',
-        'export const BODY_VIEWBOX = "0 0 %d %d";' % (W, H),
-        '',
-        '/** Non-muscle body silhouette (head, neck, hands, feet, joints), drawn underneath. */',
-        'export const BODY_OUTLINE: { front: string; back: string } = {',
-        '  front: "%s",' % outline,
-        '  back: "%s",' % outline,
-        '};',
-        '',
-        'export const MUSCLE_KEYS = [',
-    ]
-    for i in range(0, len(keys), 4):
-        lines.append('  ' + ' '.join('"%s",' % k for k in keys[i:i+4]))
-    lines += ['] as const;', '', 'export const MUSCLE_PATHS: MusclePath[] = [']
-    for p in paths:
-        lines.append('  { key: "%s", view: "%s", layer: "%s", side: "%s", d: "%s" },'
-                     % (p['key'], p['view'], p['layer'], p['side'], p['d']))
-    lines += ['];', '']
-    path = os.path.join(OUT, 'bodyMapPaths.ts')
-    open(path, 'w').write('\n'.join(lines))
-    return path, keys
+def write_ts(paths):
+    outline = geom_d(BODY)
+    keys = "\n".join("  " + ", ".join(f'"{k}"' for k in V1_KEYS[i:i + 4]) + "," for i in range(0, len(V1_KEYS), 4))
+    rows = []
+    order = {k: i for i, k in enumerate(V1_KEYS)}
+    lay = {("front", "surface"): 0, ("back", "surface"): 1, ("front", "deep"): 2, ("back", "deep"): 3}
+    for p in sorted(paths, key=lambda p: (lay[(p["view"], p["layer"])], order[p["key"]], p["side"])):
+        rows.append(f'  {{ key: "{p["key"]}", view: "{p["view"]}", layer: "{p["layer"]}", side: "{p["side"]}", '
+                    f'd: "{geom_d(p["g"])}" }},')
+    ts = f"""// ASCEND anatomical muscle map (v2): original artwork, generated by build_map.py.
+// Do not edit by hand: change the shapes in build_map.py and re-run it.
+// Coordinates: one shared viewBox for both views, x = 100 is the body midline.
+// "side" is the subject's own side (front view: subject's right is on the viewer's left).
 
-# ================================================================= previews
+export interface MusclePath {{
+  key: string;
+  view: "front" | "back";
+  layer: "surface" | "deep";
+  d: string;
+  side?: "left" | "right";
+}}
+
+export const BODY_VIEWBOX = "0 0 {VB_W} {VB_H}";
+
+/** Whole-body silhouette (head, torso, limbs, hands, feet), drawn underneath the muscles. */
+export const BODY_OUTLINE: {{ front: string; back: string }} = {{
+  front: "{outline}",
+  back: "{outline}",
+}};
+
+export const MUSCLE_KEYS = [
+{keys}
+] as const;
+
+export const MUSCLE_PATHS: MusclePath[] = [
+{chr(10).join(rows)}
+];
+"""
+    open(os.path.join(OUT, "bodyMapPaths.ts"), "w").write(ts)
+    return ts, outline
+
+# ---------------------------------------------------------------- previews
 THEMES = {
-    'dark':  dict(bg='#0b1220', body='#18233a', stroke='#33445f', neutral='#2c3b55', deep='#4a6290',
-                  fresh='#22a57a', recovering='#e0a63a', fatigued='#e5545d', text='#e6edf7'),
-    'light': dict(bg='#f4f6fa', body='#e3e8f0', stroke='#b9c2d0', neutral='#bcc6d4', deep='#8c9bb3',
-                  fresh='#27b07f', recovering='#e8a62a', fatigued='#e24b52', text='#1b2433'),
+    "dark": dict(bg="#0b1220", fill="#16213a", border="#2c4470", ink="#e8f0ff", sub="#8fa3c4"),
+    "light": dict(bg="#f3f6fb", fill="#e2e9f3", border="#afc0d8", ink="#0b1424", sub="#5a6b86"),
 }
-DEMO = {  # a sample "day after push day" recovery state, for the previews only
-    'fatigued': {'pec_major_clavicular', 'pec_major_sternal', 'deltoid_anterior', 'triceps_lateral',
-                 'triceps_long', 'triceps_medial', 'pec_minor'},
-    'recovering': {'rectus_femoris', 'vastus_lateralis', 'vastus_medialis', 'vastus_intermedius',
-                   'deltoid_lateral', 'serratus_anterior', 'gluteus_maximus', 'adductor_longus'},
-    'fresh': {'latissimus_dorsi', 'biceps_long', 'biceps_short', 'brachialis', 'trap_middle',
-              'trap_lower', 'rhomboids', 'biceps_femoris', 'semitendinosus', 'semimembranosus',
-              'rectus_abdominis', 'external_obliques', 'gastrocnemius', 'soleus'},
-}
-def demo_state(key):
-    for s, ks in DEMO.items():
-        if key in ks: return s
-    return 'neutral'
+# Suggested muted recovery palette (HSL saturation 55-65 %, no glow)
+PALETTE = {"ready": "#3e9e7c", "light": "#c9a440", "moderate": "#d07a45", "heavy": "#c2525d"}
+DEMO = {"pec_major_sternal": "heavy", "pec_major_clavicular": "moderate", "deltoid_anterior": "moderate",
+        "triceps_lateral": "light", "triceps_long": "light", "rectus_femoris": "ready", "vastus_lateralis": "ready",
+        "vastus_medialis": "ready", "biceps_long": "ready", "biceps_short": "ready", "latissimus_dorsi": "moderate",
+        "teres_major": "light", "biceps_femoris": "heavy", "semitendinosus": "heavy", "semimembranosus": "moderate",
+        "gluteus_maximus": "light", "gastrocnemius": "ready", "rectus_abdominis": "light", "external_obliques": "ready",
+        "pec_minor": "moderate", "transversus_abdominis": "light", "iliopsoas": "ready", "rhomboids": "moderate",
+        "supraspinatus": "light", "quadratus_lumborum": "ready", "triceps_medial": "light", "vastus_intermedius": "ready",
+        "trap_middle": "moderate", "infraspinatus": "light", "deltoid_posterior": "light", "erector_spinae": "light",
+        "sartorius": "ready"}
 
-PAD = '-8 -5 216 440'
-
-def figure_svg(paths, outline, view, layer, theme, px_w, fill_of=None, stroke_px=None, extra=''):
+def figure_svg(paths, outline, view, layer, theme, w, fills=None, ghost_op=0.35, extra="", bg=True,
+               stroke_scale=1.0, h=None):
     T = THEMES[theme]
-    vb = [float(v) for v in PAD.split()]
-    scale = px_w / vb[2]; px_h = round(vb[3] * scale)
-    sw = (stroke_px / scale) if stroke_px else 0.55
-    s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s" width="%d" height="%d">' % (PAD, px_w, px_h),
-         '<rect x="-50" y="-50" width="400" height="600" fill="%s"/>' % T['bg'],
-         '<path d="%s" fill="%s" stroke="%s" stroke-width="%.2f" stroke-linejoin="round"/>'
-         % (outline, T['body'], T['stroke'], sw)]
-    fill_of = fill_of or (lambda k: T[demo_state(k)])
-    if layer == 'surface':
+    fills = fills if fills is not None else {k: PALETTE[v] for k, v in DEMO.items()}
+    h = h or w * VB_H / VB_W
+    s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {VB_W} {VB_H}" width="{w}" height="{h}">']
+    if bg: s.append(f'<rect x="-50" y="-50" width="400" height="600" fill="{T["bg"]}"/>')
+    s.append(f'<path d="{outline}" fill="{T["fill"]}" stroke="{T["border"]}" stroke-width="{0.8*stroke_scale}" opacity="0.9"/>')
+    def draw(p, ghost):
+        f = T["fill"] if ghost else fills.get(p["key"], T["fill"])
+        op = f' opacity="{ghost_op}"' if ghost else ""
+        return f'<path d="{p["d"]}" fill="{f}" stroke="{T["border"]}" stroke-width="{0.6*stroke_scale}"{op}/>'
+    for p in paths:
+        if p["view"] == view and p["layer"] == "surface": s.append(draw(p, layer == "deep"))
+    if layer == "deep":
         for p in paths:
-            if p['view'] == view and p['layer'] == 'surface':
-                s.append('<path d="%s" fill="%s"/>' % (p['d'], fill_of(p['key'])))
-    else:
-        for p in paths:
-            if p['view'] == view and p['layer'] == 'surface':
-                s.append('<path d="%s" fill="%s" opacity="0.32"/>' % (p['d'], T['neutral']))
-        for p in paths:
-            if p['view'] == view and p['layer'] == 'deep':
-                f = fill_of(p['key'])
-                s.append('<path d="%s" fill="%s"/>' % (p['d'], T['deep'] if f == T['neutral'] else f))
-    s.append(extra)
-    s.append('</svg>')
-    return '\n'.join(s)
+            if p["view"] == view and p["layer"] == "deep": s.append(draw(p, False))
+    s.append(extra + "</svg>")
+    return "".join(s)
 
-def render(svg, path):
+def render(svg, path, w=None):
     import cairosvg
     cairosvg.svg2png(bytestring=svg.encode(), write_to=path)
 
-def side_by_side(files, out, bg=(11, 18, 32)):
-    from PIL import Image
-    ims = [Image.open(f).convert('RGB') for f in files]
-    w = sum(i.width for i in ims); h = max(i.height for i in ims)
-    c = Image.new('RGB', (w, h), bg); x = 0
-    for i in ims:
-        c.paste(i, (x, 0)); x += i.width
-    c.save(out, optimize=True)
-    for f in files: os.remove(f)
+def panel_row(paths, outline, theme, w, views, fills=None, gap=16, label=True):
+    """Several views side by side in one PNG (via one SVG)."""
+    T = THEMES[theme]
+    h = w * VB_H / VB_W
+    W = len(views) * w + (len(views) + 1) * gap
+    H = h + (34 if label else 0) + gap
+    s = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
+         f'<rect width="{W}" height="{H}" fill="{T["bg"]}"/>']
+    for i, (view, layer, title) in enumerate(views):
+        x = gap + i * (w + gap)
+        inner = figure_svg(paths, outline, view, layer, theme, w, fills=fills, bg=False)
+        inner = inner.replace('<svg ', f'<svg x="{x}" y="{gap}" ', 1)
+        s.append(inner)
+        if label:
+            s.append(f'<text x="{x + w/2}" y="{gap + h + 24}" font-family="DejaVu Sans" font-size="15" '
+                     f'fill="{T["sub"]}" text-anchor="middle">{title}</text>')
+    s.append("</svg>")
+    return "".join(s)
 
-def previews(paths, outline):
-    for view, layer, name in (('front', 'surface', 'front'), ('back', 'surface', 'back'),
-                              ('front', 'deep', 'deep_front'), ('back', 'deep', 'deep_back')):
-        tmp = []
-        for theme in ('dark', 'light'):
-            f = os.path.join(OUT, '_%s_%s.png' % (name, theme))
-            render(figure_svg(paths, outline, view, layer, theme, 600), f); tmp.append(f)
-        side_by_side(tmp, os.path.join(OUT, name + '.png'))
 
-def _hues(n):
+def check_image(paths, outline, path, w=420):
     import colorsys
-    out = []
-    for i in range(n):
-        h = (i * 0.618034) % 1.0
-        r, g, b = colorsys.hls_to_rgb(h, 0.55 if i % 2 else 0.45, 0.75)
-        out.append('#%02x%02x%02x' % (int(r*255), int(g*255), int(b*255)))
-    return out
+    keys = V1_KEYS
+    cols = {}
+    for i, k in enumerate(keys):
+        h = (i * 0.61803) % 1.0
+        r, g, b = colorsys.hls_to_rgb(h, 0.55, 0.55)
+        cols[k] = "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
+    views = [("front", "surface", "FRONT"), ("back", "surface", "BACK"), ("front", "deep", "DEEP FRONT"),
+             ("back", "deep", "DEEP BACK")]
+    margin = 150
+    h = w * VB_H / VB_W
+    PW = w + 2 * margin
+    W, H = PW * len(views), h + 60
+    sc = w / VB_W
+    s = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
+         f'<rect width="{W}" height="{H}" fill="#ffffff"/>']
+    for i, (view, layer, title) in enumerate(views):
+        x0 = i * PW + margin
+        inner = figure_svg(paths, outline, view, layer, "light", w, fills=cols, bg=False, ghost_op=0.25)
+        s.append(inner.replace("<svg ", f'<svg x="{x0}" y="40" ', 1))
+        s.append(f'<text x="{x0 + w/2}" y="26" font-family="DejaVu Sans" font-weight="bold" font-size="18" '
+                 f'text-anchor="middle" fill="#0b1424">{title}</text>')
+        # one label per key, at the viewer's-right copy (largest part), leader line to the right margin
+        labs = []
+        for p in paths:
+            if p["view"] != view or p["layer"] != layer: continue
+            g = p["g"]
+            if g.centroid.x < CX: continue
+            big = max(parts(g), key=lambda q: q.area)
+            pt = big.representative_point()
+            labs.append([pt.y, pt.x, p["key"]])
+        labs.sort()
+        ys = [l[0] for l in labs]
+        step = 11.5 / sc
+        for j in range(1, len(ys)):
+            ys[j] = max(ys[j], ys[j - 1] + step)
+        over = ys[-1] - (VB_H - 4) if ys else 0
+        if over > 0: ys = [y - over for y in ys]
+        for j in range(len(ys) - 2, -1, -1):
+            ys[j] = min(ys[j], ys[j + 1] - step)
+        for (py, px, key), ly in zip(labs, ys):
+            X1, Y1 = x0 + px * sc, 40 + py * sc
+            X2, Y2 = x0 + w + 8, 40 + ly * sc
+            s.append(f'<circle cx="{X1}" cy="{Y1}" r="2.2" fill="#0b1424"/>')
+            s.append(f'<polyline points="{X1},{Y1} {X2 - 10},{Y2} {X2},{Y2}" fill="none" stroke="#0b1424" stroke-width="0.7"/>')
+            s.append(f'<text x="{X2 + 3}" y="{Y2 + 3.5}" font-family="DejaVu Sans" font-size="10.5" fill="{cols[key]}" '
+                     f'stroke="#000" stroke-width="0.25">{key}</text>')
+    s.append("</svg>")
+    render("".join(s), path)
 
-def check_image(paths, outline):
-    from PIL import Image
-    panels = []
-    for view, layer in (('front', 'surface'), ('back', 'surface'), ('front', 'deep'), ('back', 'deep')):
-        ps = [p for p in paths if p['view'] == view and p['layer'] == layer]
-        keys = []
-        for p in ps:
-            if p['key'] not in keys: keys.append(p['key'])
-        col = dict(zip(keys, _hues(len(keys))))
-        # one anchor per key: alternate columns by height order
-        anchors = []
-        for k in keys:
-            gl = [p['geom'] for p in ps if p['key'] == k]
-            left = min(gl, key=lambda g: g.centroid.x); right = max(gl, key=lambda g: g.centroid.x)
-            anchors.append((k, left, right, left.centroid.y))
-        anchors.sort(key=lambda a: a[3])
-        cols = {'L': [], 'R': []}
-        for i, a in enumerate(anchors):
-            cols['L' if i % 2 == 0 else 'R'].append(a)
-        txt = []
-        for side, items in cols.items():
-            ys = []; sp = 6.2
-            for a in items:
-                y = max(a[3], (ys[-1] + sp) if ys else -1e9); ys.append(y)
-            over = (ys[-1] - 425) if ys else 0
-            if over > 0:
-                ys = [y - over for y in ys]
-                for i in range(1, len(ys)):
-                    ys[i] = max(ys[i], ys[i-1] + sp)
-            for a, y in zip(items, ys):
-                g = a[1] if side == 'L' else a[2]
-                rp = g.representative_point()
-                lx = -4 if side == 'L' else 204
-                anchor = 'end' if side == 'L' else 'start'
-                txt.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width=".35"/>'
-                           % (lx + (1 if side == 'L' else -1), y - 1.2, rp.x, rp.y, col[a[0]]))
-                txt.append('<circle cx="%.1f" cy="%.1f" r=".9" fill="#fff" stroke="#000" stroke-width=".25"/>' % (rp.x, rp.y))
-                txt.append('<text x="%.1f" y="%.1f" font-family="DejaVu Sans" font-size="4.1" fill="%s" text-anchor="%s">%s</text>'
-                           % (lx, y, col[a[0]], anchor, a[0]))
-        T = THEMES['dark']
-        s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -14 400 448" width="1200" height="1344">',
-             '<rect x="-200" y="-200" width="800" height="900" fill="%s"/>' % T['bg'],
-             '<text x="100" y="-6" font-family="DejaVu Sans" font-size="6" fill="#fff" text-anchor="middle">%s / %s (%d keys)</text>'
-             % (view.upper(), layer.upper(), len(keys)),
-             '<path d="%s" fill="%s" stroke="%s" stroke-width=".5"/>' % (outline, T['body'], T['stroke'])]
-        if layer == 'deep':
-            for p in paths:
-                if p['view'] == view and p['layer'] == 'surface':
-                    s.append('<path d="%s" fill="#2c3b55" opacity=".35"/>' % p['d'])
-        for p in ps:
-            s.append('<path d="%s" fill="%s"/>' % (p['d'], col[p['key']]))
-        s += txt + ['</svg>']
-        f = os.path.join(OUT, '_check_%s_%s.png' % (view, layer))
-        render('\n'.join(s), f); panels.append(f)
-    ims = [Image.open(f).convert('RGB') for f in panels]
-    w, h = ims[0].size
-    c = Image.new('RGB', (w*2, h*2))
-    for i, im in enumerate(ims):
-        c.paste(im, ((i % 2)*w, (i//2)*h))
-    c.save(os.path.join(OUT, 'check_labels.png'), optimize=True)
-    for f in panels: os.remove(f)
 
-def tile_check(paths, outline):
-    """64x96 fallback-tile legibility: few muscles highlighted, 1 px outline."""
+def tile_check(paths, outline, path):
+    """64x96 tiles (as used for exercise art), shown at 1x and enlarged x4 (nearest neighbour)."""
     from PIL import Image
-    sets = [('chest', {'pec_major_clavicular', 'pec_major_sternal'}),
-            ('quads', {'rectus_femoris', 'vastus_lateralis', 'vastus_medialis'}),
-            ('biceps', {'biceps_long', 'biceps_short', 'brachialis'}),
-            ('abs', {'rectus_abdominis', 'external_obliques'})]
+    import io, cairosvg
+    acc = {"dark": "#3e9e7c", "light": "#2f8a6b"}
+    cases = [("front", {"pec_major_sternal": 1, "pec_major_clavicular": 1, "deltoid_anterior": .5, "triceps_lateral": .5}),
+             ("back", {"latissimus_dorsi": 1, "teres_major": .5, "biceps_long": .5, "trap_middle": .5, "rhomboids": .5}),
+             ("front", {"rectus_femoris": 1, "vastus_lateralis": 1, "vastus_medialis": 1, "gluteus_maximus": .5}),
+             ("back", {"biceps_femoris": 1, "semitendinosus": 1, "semimembranosus": 1, "gluteus_maximus": .5})]
     tiles = []
-    for theme in ('dark', 'light'):
+    for theme in ("dark", "light"):
         T = THEMES[theme]
-        for name, ks in sets:
-            def fill(k, ks=ks, T=T):
-                return T['fatigued'] if k in ks else T['neutral']
-            svg = figure_svg(paths, outline, 'front', 'surface', theme, 44, fill_of=fill, stroke_px=1.0)
-            svg = svg.replace('width="44" height="90"', 'width="64" height="96"')
-            svg = svg.replace('viewBox="%s"' % PAD, 'viewBox="-58 -8 316 440"', 1)
-            f = os.path.join(OUT, '_tile_%s_%s.png' % (theme, name))
-            render(svg, f); tiles.append(f)
-    ims = [Image.open(f).convert('RGB') for f in tiles]
-    big = Image.new('RGB', (len(sets) * (64*4 + 16) + 16, 2 * (96*4 + 16) + 16), (90, 90, 90))
-    small = Image.new('RGB', (len(sets) * 72 + 8, 2 * 104 + 8), (90, 90, 90))
-    for i, im in enumerate(ims):
-        r, cidx = divmod(i, len(sets))
-        big.paste(im.resize((256, 384), Image.NEAREST), (16 + cidx * 272, 16 + r * 400))
-        small.paste(im, (8 + cidx * 72, 8 + r * 104))
-    big.save(os.path.join(OUT, 'tile_check_x4.png'), optimize=True)
-    small.save(os.path.join(OUT, 'tile_check_1x.png'), optimize=True)
-    for f in tiles: os.remove(f)
+        for view, m in cases:
+            fills = {k: (acc[theme] if w >= 1 else ("#2a5b55" if theme == "dark" else "#9fcfbd")) for k, w in m.items()}
+            fig_h = 92; fig_w = fig_h * VB_W / VB_H
+            inner = figure_svg(paths, outline, view, "surface", theme, fig_w, fills=fills, bg=False)
+            svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="64" height="96"><rect width="64" height="96" rx="6" '
+                   f'fill="{T["bg"]}"/>' + inner.replace("<svg ", f'<svg x="{(64-fig_w)/2}" y="2" ', 1) + "</svg>")
+            tiles.append(Image.open(io.BytesIO(cairosvg.svg2png(bytestring=svg.encode()))).convert("RGB"))
+    W = 8 * 64 + 9 * 8
+    sheet = Image.new("RGB", (W * 4 // 4 + 0, 96 + 16 + 96 * 4 + 16), "#7f8a99")
+    for i, t in enumerate(tiles):
+        sheet.paste(t, (8 + i * 72, 8))
+        big = t.resize((64 * 4 // 2 * 1, 96 * 4 // 2 * 1), Image.NEAREST)
+    big_sheet = Image.new("RGB", (8 * (128 + 8) + 8, 192 + 16), "#7f8a99")
+    for i, t in enumerate(tiles):
+        big_sheet.paste(t.resize((128, 192), Image.NEAREST), (8 + i * 136, 8))
+    out = Image.new("RGB", (max(sheet.width, big_sheet.width), 96 + 16 + big_sheet.height), "#7f8a99")
+    out.paste(sheet.crop((0, 0, sheet.width, 112)), (0, 0)); out.paste(big_sheet, (0, 112))
+    out.save(path)
 
-if __name__ == '__main__':
-    paths, outline = build()
-    ts, keys = write_ts(paths, outline)
-    print('keys:', len(keys), ' paths:', len(paths), ' ts bytes:', os.path.getsize(ts))
-    if '--no-png' not in sys.argv:
-        previews(paths, outline); check_image(paths, outline); tile_check(paths, outline)
+
+def parse_ts(path):
+    t = open(path).read()
+    rows = re.findall(r'\{ key: "(\w+)", view: "(\w+)", layer: "(\w+)",(?: side: "\w+",)? d: "([^"]+)" \}', t)
+    of = re.search(r'front: "([^"]+)"', t).group(1); ob = re.search(r'back: "([^"]+)"', t).group(1)
+    return [dict(key=k, view=v, layer=l, d=d) for k, v, l, d in rows], {"front": of, "back": ob}
+
+def compare_image(paths, outline, path, v1_ts):
+    v1, v1o = parse_ts(v1_ts)
+    T = THEMES["dark"]; w = 260; h = w * VB_H / VB_W; gap = 18
+    views = [("front", "surface", "Front"), ("back", "surface", "Back"), ("front", "deep", "Deep front"),
+             ("back", "deep", "Deep back")]
+    W = 4 * w + 5 * gap; RH = h + 60
+    s = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{2*RH + 20}">',
+         f'<rect width="{W}" height="{2*RH + 20}" fill="{T["bg"]}"/>']
+    for r, (label, P_, O_) in enumerate([("v1", v1, None), ("v2", paths, outline)]):
+        y0 = 10 + r * RH
+        s.append(f'<text x="{gap}" y="{y0 + 26}" font-family="DejaVu Sans" font-weight="bold" font-size="20" fill="{T["ink"]}">{label}</text>')
+        for i, (view, layer, title) in enumerate(views):
+            x = gap + i * (w + gap)
+            o = O_ if O_ is not None else v1o[view]
+            inner = figure_svg(P_, o, view, layer, "dark", w, bg=False)
+            s.append(inner.replace("<svg ", f'<svg x="{x}" y="{y0 + 36}" ', 1))
+            s.append(f'<text x="{x + w/2}" y="{y0 + 36 + h + 18}" font-family="DejaVu Sans" font-size="13" fill="{T["sub"]}" text-anchor="middle">{title}</text>')
+    s.append("</svg>")
+    render("".join(s), path)
+
+def main():
+    paths = build()
+    ts, outline = write_ts(paths)
+    for p in paths: p["d"] = geom_d(p["g"])
+    size = len(ts.encode())
+    counts = {}
+    for p in paths:
+        counts.setdefault((p["view"], p["layer"]), set()).add(p["key"])
+    allkeys = set(p["key"] for p in paths)
+    print("TS bytes", size, "paths", len(paths), "keys", len(allkeys))
+    for k, v in counts.items(): print(k, len(v))
+    missing = set(V1_KEYS) - allkeys
+    assert not missing, missing
+    pv = os.path.join(OUT, "previews"); os.makedirs(pv, exist_ok=True)
+    views = [("front", "surface", "Front"), ("back", "surface", "Back"), ("front", "deep", "Deep front"),
+             ("back", "deep", "Deep back")]
+    for theme in ("dark", "light"):
+        for view, layer, title in views:
+            name = f"{'deep_' if layer == 'deep' else ''}{view}{'' if theme == 'dark' else '_light'}.png"
+            render(figure_svg(paths, outline, view, layer, theme, 260), os.path.join(pv, name))
+        render(panel_row(paths, outline, theme, 260, views), os.path.join(pv, f"all_{theme}.png"))
+    check_image(paths, outline, os.path.join(pv, "key_check.png"))
+    tile_check(paths, outline, os.path.join(pv, "tile_check_64x96.png"))
+    v1_ts = os.environ.get("V1_TS", "")  # optional: path to the v1 bodyMapPaths.ts for a side-by-side
+    if v1_ts and os.path.exists(v1_ts):
+        compare_image(paths, outline, os.path.join(pv, "compare_v1_v2.png"), v1_ts)
+    return paths, outline
+
+if __name__ == "__main__":
+    main()
+
