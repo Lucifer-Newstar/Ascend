@@ -36,10 +36,7 @@ def test_muscle_recovered_when_todays_quest_trains_it(client, profile, clock):
     notices = client.get("/intelligence/notices").json()
     rec = next(n for n in notices if n["code"] == "recovered")
     assert rec["title"] == "Muscle recovered"
-    assert (
-        rec["text"].startswith("Mid/lower chest (sternal head) is ")
-        and "Today's quest:" in rec["text"]
-    )
+    assert rec["text"].startswith("Mid and lower chest is ") and "Today's quest:" in rec["text"]
     clock.now += timedelta(days=3)  # trained too long ago to be news
     assert "recovered" not in codes(client)
 

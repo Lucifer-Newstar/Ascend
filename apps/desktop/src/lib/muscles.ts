@@ -12,11 +12,11 @@ export interface MuscleInfo {
 }
 
 export const MUSCLES: MuscleInfo[] = [
-  { key: "pec_major_clavicular", label: "Upper chest (clavicular head)", short: "Upper chest", region: "Chest", parent: "Pectoralis major", deep: false },
-  { key: "pec_major_sternal", label: "Mid/lower chest (sternal head)", short: "Lower chest", region: "Chest", parent: "Pectoralis major", deep: false },
+  { key: "pec_major_clavicular", label: "Upper chest", short: "Upper chest", region: "Chest", parent: "Pectoralis major", deep: false },
+  { key: "pec_major_sternal", label: "Mid and lower chest", short: "Lower chest", region: "Chest", parent: "Pectoralis major", deep: false },
   { key: "pec_minor", label: "Pectoralis minor", short: "Pectoralis minor", region: "Chest", parent: "", deep: true },
   { key: "serratus_anterior", label: "Serratus anterior", short: "Serratus anterior", region: "Chest", parent: "", deep: false },
-  { key: "latissimus_dorsi", label: "Lats (latissimus dorsi)", short: "Lats", region: "Back", parent: "", deep: false },
+  { key: "latissimus_dorsi", label: "Lats", short: "Lats", region: "Back", parent: "", deep: false },
   { key: "teres_major", label: "Teres major", short: "Teres major", region: "Back", parent: "", deep: false },
   { key: "trap_upper", label: "Upper trapezius", short: "Upper trapezius", region: "Back", parent: "Trapezius", deep: false },
   { key: "trap_middle", label: "Middle trapezius", short: "Middle trapezius", region: "Back", parent: "Trapezius", deep: false },
@@ -29,7 +29,7 @@ export const MUSCLES: MuscleInfo[] = [
   { key: "erector_spinae", label: "Erector spinae", short: "Lower back (erectors)", region: "Back", parent: "", deep: false },
   { key: "quadratus_lumborum", label: "Quadratus lumborum", short: "Quadratus lumborum", region: "Back", parent: "", deep: true },
   { key: "sternocleidomastoid", label: "Sternocleidomastoid", short: "Sternocleidomastoid", region: "Neck", parent: "", deep: false },
-  { key: "splenius", label: "Splenius (neck extensors)", short: "Neck extensors", region: "Neck", parent: "", deep: false },
+  { key: "splenius", label: "Neck extensors", short: "Neck extensors", region: "Neck", parent: "", deep: false },
   { key: "deltoid_anterior", label: "Front delts", short: "Front delts", region: "Shoulders", parent: "Deltoid", deep: false },
   { key: "deltoid_lateral", label: "Side delts", short: "Side delts", region: "Shoulders", parent: "Deltoid", deep: false },
   { key: "deltoid_posterior", label: "Rear delts", short: "Rear delts", region: "Shoulders", parent: "Deltoid", deep: false },
@@ -42,11 +42,11 @@ export const MUSCLES: MuscleInfo[] = [
   { key: "brachioradialis", label: "Brachioradialis", short: "Brachioradialis", region: "Arms", parent: "Forearm", deep: false },
   { key: "wrist_flexors", label: "Wrist flexors", short: "Wrist flexors", region: "Arms", parent: "Forearm", deep: false },
   { key: "wrist_extensors", label: "Wrist extensors", short: "Wrist extensors", region: "Arms", parent: "Forearm", deep: false },
-  { key: "rectus_abdominis", label: "Abs (rectus abdominis)", short: "Abs", region: "Core", parent: "", deep: false },
+  { key: "rectus_abdominis", label: "Abs", short: "Abs", region: "Core", parent: "", deep: false },
   { key: "external_obliques", label: "External obliques", short: "External obliques", region: "Core", parent: "Obliques", deep: false },
   { key: "internal_obliques", label: "Internal obliques", short: "Internal obliques", region: "Core", parent: "Obliques", deep: true },
   { key: "transversus_abdominis", label: "Transversus abdominis", short: "Transversus abdominis", region: "Core", parent: "", deep: true },
-  { key: "iliopsoas", label: "Hip flexors (iliopsoas)", short: "Hip flexors", region: "Hips", parent: "", deep: true },
+  { key: "iliopsoas", label: "Hip flexors", short: "Hip flexors", region: "Hips", parent: "", deep: true },
   { key: "gluteus_maximus", label: "Gluteus maximus", short: "Glute max", region: "Hips", parent: "Glutes", deep: false },
   { key: "gluteus_medius", label: "Gluteus medius", short: "Glute med", region: "Hips", parent: "Glutes", deep: false },
   { key: "gluteus_minimus", label: "Gluteus minimus", short: "Glute min", region: "Hips", parent: "Glutes", deep: true },
@@ -56,7 +56,7 @@ export const MUSCLES: MuscleInfo[] = [
   { key: "vastus_medialis", label: "Vastus medialis", short: "Vastus medialis", region: "Thighs", parent: "Quadriceps", deep: false },
   { key: "vastus_intermedius", label: "Vastus intermedius", short: "Vastus intermedius", region: "Thighs", parent: "Quadriceps", deep: true },
   { key: "sartorius", label: "Sartorius", short: "Sartorius", region: "Thighs", parent: "", deep: false },
-  { key: "adductor_longus", label: "Adductor longus (and brevis)", short: "Adductor longus", region: "Thighs", parent: "Adductors", deep: false },
+  { key: "adductor_longus", label: "Adductor longus", short: "Adductor longus", region: "Thighs", parent: "Adductors", deep: false },
   { key: "adductor_magnus", label: "Adductor magnus", short: "Adductor magnus", region: "Thighs", parent: "Adductors", deep: false },
   { key: "gracilis", label: "Gracilis", short: "Gracilis", region: "Thighs", parent: "Adductors", deep: false },
   { key: "biceps_femoris", label: "Biceps femoris", short: "Biceps femoris", region: "Thighs", parent: "Hamstrings", deep: false },
@@ -65,7 +65,7 @@ export const MUSCLES: MuscleInfo[] = [
   { key: "gastrocnemius", label: "Gastrocnemius", short: "Gastrocnemius", region: "Lower legs", parent: "Calves", deep: false },
   { key: "soleus", label: "Soleus", short: "Soleus", region: "Lower legs", parent: "Calves", deep: false },
   { key: "tibialis_anterior", label: "Tibialis anterior", short: "Tibialis anterior", region: "Lower legs", parent: "", deep: false },
-  { key: "fibularis", label: "Fibularis (peroneals)", short: "Peroneals", region: "Lower legs", parent: "", deep: false },
+  { key: "fibularis", label: "Fibularis", short: "Peroneals", region: "Lower legs", parent: "", deep: false },
 ];
 
 export const REGIONS = ["Chest", "Back", "Neck", "Shoulders", "Arms", "Core", "Hips", "Thighs", "Lower legs"] as const;

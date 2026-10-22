@@ -111,6 +111,8 @@ class SettingsOut(BaseModel):
     # Off by default: when on, "Add your own exercise" may ask wger.de (the only
     # feature that contacts the internet, and only when the user asks per exercise).
     online_lookup: bool = False
+    # v8: insights spoken by the trainer character (Instructor Iskra Vey); off = plain mode.
+    trainer: bool = True
 
 
 class SettingsIn(StrictIn):
@@ -122,6 +124,7 @@ class SettingsIn(StrictIn):
     sessions_per_week: int | None = Field(default=None, ge=1, le=7)
     reduce_motion: bool | None = None
     online_lookup: bool | None = None
+    trainer: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

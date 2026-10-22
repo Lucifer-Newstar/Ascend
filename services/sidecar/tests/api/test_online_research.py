@@ -136,7 +136,7 @@ def test_allow_once_researches_without_turning_the_setting_on(client, no_ai, web
     assert by_field["equipment"]["url"] == "https://wger.de/en/exercise/77/view/"
     assert by_field["equipment"]["offline_value"] == "Other"
     assert by_field["equipment"]["value"] == "Barbell"
-    assert by_field["muscles"]["value"].startswith("Mid/lower chest (sternal head) (also ")
+    assert by_field["muscles"]["value"].startswith("Mid and lower chest (also ")
     assert "more)" in by_field["muscles"]["value"]  # small helpers are counted, not listed
     assert by_field["equipment"]["conflict"] is True
     # The offline guess travels with it, so the user can keep it instead.

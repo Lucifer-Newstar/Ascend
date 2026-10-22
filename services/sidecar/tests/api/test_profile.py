@@ -26,6 +26,7 @@ def test_ai_toggle_round_trip(client):
         "sessions_per_week": 3,
         "reduce_motion": False,
         "online_lookup": False,
+        "trainer": True,
     }
     assert client.get("/settings").json() == defaults
     assert client.put("/settings", json={"ai_enabled": False}).json() == {
@@ -45,6 +46,7 @@ def test_settings_partial_update_keeps_other_values(client):
         "sessions_per_week": 4,
         "reduce_motion": False,
         "online_lookup": False,
+        "trainer": True,
     }
 
 
@@ -54,6 +56,12 @@ def test_reduce_motion_round_trip(client):
     # Other updates leave it alone; it switches back off explicitly.
     assert client.put("/settings", json={"theme": "light"}).json()["reduce_motion"] is True
     assert client.put("/settings", json={"reduce_motion": False}).json()["reduce_motion"] is False
+
+
+def test_trainer_toggle_is_persisted(client):
+    assert client.put("/settings", json={"trainer": False}).json()["trainer"] is False
+    assert client.get("/settings").json()["trainer"] is False  # plain mode survives a restart
+    assert client.put("/settings", json={"trainer": True}).json()["trainer"] is True
 
 
 def test_settings_validation(client):

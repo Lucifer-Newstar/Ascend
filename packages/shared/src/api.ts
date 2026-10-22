@@ -580,6 +580,8 @@ export interface Settings {
   reduce_motion: boolean;
   /** Allow "Add your own exercise" to look names up on wger.de when asked. Off by default. */
   online_lookup?: boolean;
+  /** v8: insights spoken by the trainer character; false = plain System mode. Default true. */
+  trainer?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------

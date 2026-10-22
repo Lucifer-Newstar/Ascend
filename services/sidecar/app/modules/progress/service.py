@@ -91,6 +91,7 @@ def read_settings(db: Session) -> SettingsOut:
         sessions_per_week=int(get_setting(db, "sessions_per_week", "3")),
         reduce_motion=get_setting(db, "reduce_motion", "false") == "true",
         online_lookup=online_lookup(db),
+        trainer=get_setting(db, "trainer", "true") == "true",
     )
 
 

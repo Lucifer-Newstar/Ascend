@@ -11,12 +11,14 @@ import { BackupsPanel } from "../components/BackupsPanel";
 import { IconDatabase } from "../components/Icons";
 import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
+import { TrainerPortrait } from "../components/Trainer";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
 import { kcal } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { play, setSoundPrefs, soundPrefs, type SoundPrefs } from "../lib/sound";
+import { TRAINER_NAME } from "../lib/trainer";
 import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
@@ -110,6 +112,22 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
               onChange={(e) => save({ reduce_motion: e.target.checked }, e.target.checked ? "Reduce motion: on" : "Reduce motion: off")}
             />
           </label>
+          <label className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-3 text-sm text-ink">
+              <TrainerPortrait mood="neutral" size={40} />
+              <span>
+                Trainer
+                <br />
+                <span className="text-xs text-muted">{TRAINER_NAME} speaks your insights. Off shows the same facts in plain System style.</span>
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              className="h-5 w-5 shrink-0 accent-accent"
+              checked={settings.trainer !== false}
+              onChange={(e) => save({ trainer: e.target.checked }, e.target.checked ? "Trainer: on" : "Trainer: off (plain mode)")}
+            />
+          </label>
           <SoundSettings />
         </section>
       </div>
@@ -163,6 +181,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           <h2 id="about-title" className="card-title mb-2">About</h2>
           ASCEND {__APP_VERSION__} · MIT licence · © the ASCEND team.<br />
           Muscle map: ASCEND's own anatomical artwork (54 muscles and heads).<br />
+          Trainer: Instructor Iskra Vey, an original character made for ASCEND (see ART_PROVENANCE.md).<br />
           Food values: approximate, IFCT 2017 / INDB-style.<br />
           TDEE (Mifflin-St Jeor), e1RM (Epley) and burn (MET) are estimates.
         </section>

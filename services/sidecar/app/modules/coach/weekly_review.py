@@ -173,11 +173,15 @@ def _muscles(db: Session, now: datetime) -> list[Finding]:
                 "MUSCLE_UNDER",
                 2,
                 f"{worst.label} under its weekly target",
-                f"{worst.label}: {worst.es_7d:g} effective sets this week and "
-                f"{previous[worst.key].es_7d:g} last week "
+                f"{worst.label}: {round(worst.es_7d, 1):g} effective sets this week and "
+                f"{round(previous[worst.key].es_7d, 1):g} last week "
                 f"(target {worst.weekly_low:g}-{worst.weekly_high:g}).",
                 f"Add 2-4 sets for {worst.label.lower()} across the week.",
-                {"muscle": worst.key, "es_7d": worst.es_7d, "weekly_low": worst.weekly_low},
+                {
+                    "muscle": worst.key,
+                    "es_7d": round(worst.es_7d, 1),
+                    "weekly_low": worst.weekly_low,
+                },
             )
         )
     over = [m for m in current if m.es_7d > m.weekly_high]
@@ -188,10 +192,10 @@ def _muscles(db: Session, now: datetime) -> list[Finding]:
                 "MUSCLE_OVER",
                 2,
                 f"{top.label} above its weekly range",
-                f"{top.label}: {top.es_7d:g} effective sets this week "
+                f"{top.label}: {round(top.es_7d, 1):g} effective sets this week "
                 f"(range {top.weekly_low:g}-{top.weekly_high:g}).",
                 "Remove an overlapping accessory exercise next week.",
-                {"muscle": top.key, "es_7d": top.es_7d, "weekly_high": top.weekly_high},
+                {"muscle": top.key, "es_7d": round(top.es_7d, 1), "weekly_high": top.weekly_high},
             )
         )
     return found
