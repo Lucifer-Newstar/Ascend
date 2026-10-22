@@ -1,5 +1,5 @@
 import type { GameSummary } from "@ascend/shared";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -50,18 +50,25 @@ describe("XpChip", () => {
   it("starts a new level's count from zero instead of counting down from the old level", async () => {
     vi.mocked(api.game).mockResolvedValueOnce(summary(490, 1, 490)).mockResolvedValueOnce(summary(530, 2, 30));
     vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"] });
-    const { rerender } = render(renderChip(0));
-    await screen.findByText("LV 1");
-    await act(async () => { vi.advanceTimersByTime(1000); });
-    expect(screen.getByTestId("count-up")).toHaveTextContent("490");
-    rerender(renderChip(1));
-    await screen.findByText("LV 2");
-    await act(async () => { vi.advanceTimersByTime(100); });
-    // Mid-animation the number is on its way up from 0, not down from 490.
-    expect(Number(screen.getByTestId("count-up").textContent)).toBeLessThan(30);
-    await act(async () => { vi.advanceTimersByTime(1000); });
-    expect(screen.getByTestId("count-up")).toHaveTextContent("30");
-    vi.useRealTimers();
+    // Only animation frames and the clock are fake; React runs effects on its own real
+    // schedule. Each waitFor poll advances one frame and checks again, so the test does
+    // not depend on whether the count-up effect has started by the time it advances (it
+    // failed under load when it advanced 1000 ms once, before the effect existed).
+    const frame = () => act(() => { vi.advanceTimersByTime(16); });
+    const shown = () => Number(screen.getByTestId("count-up").textContent);
+    try {
+      const { rerender } = render(renderChip(0));
+      await screen.findByText("LV 1");
+      await waitFor(() => { frame(); expect(shown()).toBe(490); });
+      rerender(renderChip(1));
+      await screen.findByText("LV 2");
+      // Mid-animation the number is on its way up from 0, not down from 490 (which would
+      // only ever show values above 30).
+      await waitFor(() => { frame(); expect(shown()).toBeGreaterThan(0); expect(shown()).toBeLessThan(30); });
+      await waitFor(() => { frame(); expect(shown()).toBe(30); });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps the announcement but drops the confetti with reduced motion", async () => {
