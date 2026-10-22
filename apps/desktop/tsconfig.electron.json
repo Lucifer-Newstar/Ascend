@@ -4,6 +4,9 @@
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "Node",
+    // TypeScript 6 deprecates node10 resolution; it still works and emits the same CommonJS.
+    // Moving to Node16 means ESM-style imports in packages/shared, so it is a separate change.
+    "ignoreDeprecations": "6.0",
     "lib": ["ES2022"],
     "outDir": "dist-electron",
     "rootDir": "electron",

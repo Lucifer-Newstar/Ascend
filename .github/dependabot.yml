@@ -42,6 +42,10 @@ updates:
       # Electron majors change the security model; upgrade them deliberately.
       - dependency-name: electron
         update-types: ["version-update:semver-major"]
+      # typescript-eslint 8 only supports TypeScript below 6.1 (its peer range), so
+      # TypeScript 7 can't install cleanly yet. Drop this once typescript-eslint allows it.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
 
   # Base images in docker/ (python slim, uv). Monthly: base images move often and
   # each bump rebuilds every layer.
