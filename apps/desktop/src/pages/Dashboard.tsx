@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CoachReply, WeeklyReview } from "@ascend/shared";
 
 import { api } from "../api/client";
+import { BossRaidCard } from "../components/BossRaid";
 import { CheckinCard } from "../components/CheckinCard";
 import { FirstSteps } from "../components/FirstSteps";
 import { InsightsCard } from "../components/Insights";
@@ -33,6 +34,8 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
 }) {
   const { data, error, status, loading, reload } = useApi(api.dashboard, [refreshKey], { cacheKey: "dashboard" });
   const stats = useApi(api.stats, [refreshKey], { cacheKey: "stats" });
+  const boss = useApi(api.boss, [refreshKey], { cacheKey: "boss" });
+  const titles = useApi(api.titles, [refreshKey], { cacheKey: "titles" });
   const [tip, setTip] = useState<CoachReply | null>(null);
   const [review, setReview] = useState<WeeklyReview | null>(null);
   const toast = useToast();
@@ -76,8 +79,10 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
         <QuestWindow items={data.game.quest} rank={data.game.xp.rank} onComplete={complete} onStart={onNavigate ? () => onNavigate("workout") : undefined} />
       </div>
       <div className="col-span-12 lg:col-span-4">
-        <StatusPanel game={data.game} stats={stats.data} />
+        <StatusPanel game={data.game} stats={stats.data} title={titles.data?.[0]?.title ?? null} />
       </div>
+
+      {boss.data && <div className="col-span-12"><BossRaidCard boss={boss.data} /></div>}
 
       <DeloadCard refreshKey={refreshKey} onlyWhenRecommended className="col-span-12" />
 

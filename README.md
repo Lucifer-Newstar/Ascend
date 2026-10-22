@@ -19,7 +19,7 @@ without it.
 
 | What | How it works |
 |---|---|
-| **Today ("Hunter HQ")** | The daily quest as a System window with time left, a status panel (STR, AGI, END, VIT, INT) where every number has a "Why?", up to three insights spoken by the trainer, Instructor Iskra Vey (switchable to a plain mode), check-in, fuel and the muscle map on a 12-column grid. |
+| **Today ("Hunter HQ")** | The daily quest as a System window with time left, a status panel (STR, AGI, END, VIT, INT) where every number has a "Why?", up to three insights spoken by the trainer, Instructor Iskra Vey (switchable to a plain mode), the weekly boss raid ([ADR-0022](docs/architecture/adr/0022-weekly-boss-raid.md)), Quick log, check-in, fuel and the muscle map on a 12-column grid. |
 | **Train** | Keyboard-first logger: last session's sets in grey next to today's, the next set pre-filled from last time (Enter logs it), a rest bar (Space pauses), muscles hit and the skills the exercise feeds. |
 | **Skills** | A zoomable, pannable tree canvas per family; arrow keys move along the edges; a drawer shows the criteria, the estimate (only with enough data) and "Train this skill". |
 | **Ctrl+K** | Command bar: `bench 80x5 @8`, `log 3x8 pull-up`, `plank 45s`, `weight 81.4`, `add 2 eggs`, `train front lever`, a page name, or any question for the Coach. Rule-based, no model. |
@@ -295,6 +295,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules.
   single lookup; results are credited on the exercise with a link and licence.
 
 Parts of this codebase were written with AI assistance.
+
+**Feature freeze after v8.** v8 is the last release that adds features. From here a change
+has to fix something, reduce friction, or replace an existing feature; the reasons are in
+[docs/research/v8-gamified-engagement.md](docs/research/v8-gamified-engagement.md) §4.
 
 ## Licence
 

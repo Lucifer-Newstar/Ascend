@@ -509,6 +509,34 @@ export interface GameSummary {
   quest: QuestItem[];
 }
 
+/** GET /game/boss: this week's boss raid (boss-v1, ADR-0022). */
+export interface BossRaid {
+  week_start: string;
+  week_end: string;
+  name: string;
+  title: string;
+  hp: number;
+  damage: number;
+  hp_left: number;
+  days_left: number;
+  defeated: boolean;
+  defeated_at: string | null;
+  bonus_xp: number;
+  hp_source: "program" | "history" | "starter";
+  hp_note: string;
+  titles_earned: number;
+  algo_version: string;
+  why: Why;
+}
+
+/** GET /game/titles: a title earned by beating a weekly boss (the only title source). */
+export interface EarnedTitle {
+  title: string;
+  boss: string;
+  week_start: string;
+  earned_at: string;
+}
+
 /** GET /game/stats: one computed hunter stat (0-100) and the numbers behind it (stats-v1). */
 export interface Stat {
   key: "str" | "agi" | "end" | "vit" | "int";

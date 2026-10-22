@@ -41,3 +41,22 @@ class QuestItem(Base):
     xp: Mapped[int] = mapped_column(Integer)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     generator_version: Mapped[str] = mapped_column(String(16))
+
+
+class BossRaid(Base):
+    """One weekly boss raid (boss-v1, ADR-0022). Damage is never stored: it is counted from
+    the week's logged sets, so editing or deleting a set changes it like everything else."""
+
+    __tablename__ = "boss_raids"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    week_start: Mapped[date] = mapped_column(Date, unique=True)
+    name: Mapped[str] = mapped_column(String(40))
+    title: Mapped[str] = mapped_column(String(40))
+    hp: Mapped[int] = mapped_column(Integer)
+    hp_source: Mapped[str] = mapped_column(String(16))
+    hp_note: Mapped[str] = mapped_column(String(160))
+    algo_version: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    defeated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
