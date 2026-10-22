@@ -21,8 +21,10 @@
 
 | Threat | Example | Mitigation |
 |---|---|---|
-| **Spoofing** | Another local process or a web page calls the sidecar API | Random port, 32-byte token via stdin, `Host` header check (DNS rebinding), CORS off, bind `127.0.0.1` only |
-| **Tampering** | Malicious model file or update | SHA-256 verified downloads, atomic rename; updates only over HTTPS from GitHub Releases; ASAR integrity fuse |
+| **Spoofing** | Another local process or a web page calls the sidecar API | Random port, 32-byte token via stdin, `Host` header check (DNS rebinding), no CORS (also not in dev mode: Vite proxies `/api`), bind `127.0.0.1` only, inherited `ASCEND_*` variables ignored |
+| | A process grabs the sidecar's port first and receives the token | `/health` returns an HMAC proof under the token; Electron sends the token only after the proof matches |
+| **Tampering** | Malicious model file or update | SHA-256 verified downloads, atomic rename; updates only over HTTPS from GitHub Releases; ASAR integrity fuse; training checkpoints loaded with `torch.load(weights_only=True)` |
+| | A crafted file restored as the database | Restore only from the backups folder, no UNC paths, size cap, `integrity_check`, no triggers or views, `trusted_schema` off |
 | **Repudiation** | "I didn't change my plan" | Proposals table records who/when applied; local only |
 | **Information disclosure** | Renderer XSS reads files | Sandbox, contextIsolation, no Node in renderer, strict CSP, no remote content, Markdown rendered without raw HTML |
 | | Photos readable by other Windows users | Per-user install under `%APPDATA%`; optional AES-256-GCM (v1.1) |
@@ -32,13 +34,24 @@
 
 ## 3. Electron hardening checklist
 
-- [ ] `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, `webSecurity: true`
-- [ ] CSP: `default-src 'self'; img-src 'self' data: blob:; connect-src 'self'` (renderer never talks to the network)
-- [ ] `will-navigate` and `setWindowOpenHandler` deny everything
-- [ ] IPC allow-list + zod validation in main; no `remote` module
-- [ ] Fuses set at build time (Gokul, `build/fuses.js`)
-- [ ] `app.requestSingleInstanceLock()`
-- [ ] Electron kept within the supported versions; Dependabot on
+Checked against the code in October 2026 (external review, see [SECURITY.md](../../SECURITY.md)).
+
+- [x] `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true` (`webSecurity`
+  left at its default, true)
+- [x] Production CSP `connect-src 'self'`: the renderer reaches the sidecar only through
+  IPC; the dev server widens it for Vite alone (`src/lib/csp.ts`)
+- [x] `will-navigate` blocked; `setWindowOpenHandler` denies all, `https://` links open
+  in the system browser
+- [x] IPC allow-list with hand-written shape checks in main (method, path,
+  `export:save` payload in `electron/ipc-validate.ts`); no `remote` module. Not zod.
+- [x] Fuses set at build time by `apps/desktop/build/fuses.cjs` (afterPack) and checked
+  in release.yml with `fuses.cjs --check`: RunAsNode, NODE_OPTIONS and CLI inspect off,
+  cookie encryption, embedded ASAR integrity and OnlyLoadAppFromAsar on. Electron 45's
+  ninth fuse is not named by `@electron/fuses` 1.8 and stays at its default.
+- [x] `app.requestSingleInstanceLock()`
+- [x] Electron within the supported versions (45.0.0); Dependabot on
+- [x] The sidecar gets a cleaned environment and its token on stdin; requests from the
+  renderer time out after 30 s
 
 ## 4. Privacy commitments
 
@@ -69,13 +82,16 @@
 
 ## 6. Supply chain
 
-| Control | Where |
+| Control | Status |
 |---|---|
-| `npm audit` / `npm audit`, `pip-audit` | CI on every PR |
-| gitleaks (pre-commit + CI) | No secrets in git |
-| CycloneDX SBOM per release | Release assets |
-| SHA-256 checksums for installer and models | Release assets + model manifest |
-| Pinned GitHub Actions by commit SHA | Workflows |
+| gitleaks | Pre-commit hook (`.pre-commit-config.yaml`); not in CI yet |
+| `npm audit`, `pip-audit` in CI | Not in CI yet; run by hand for releases (October 2026: 8 moderate, all in electron-builder's packaging tool chain) |
+| CycloneDX SBOM per release | Not yet |
+| SHA-256 checksums for models | Model manifest (`models-manifest.json`) |
+| GitHub Actions pinned by commit SHA | Done, version in a comment; Dependabot bumps both |
+| Least-privilege workflow token | Read-only everywhere; `contents: write` only on the tag-only publish job in release.yml |
+| Electron fuses verified on every release build | Done (`fuses.cjs --check`) |
+| ML dependencies | Exact pins; torch 2.14.1. `--extra-index-url` for the PyTorch CPU index remains (training machine and CI only); hash-locking is the next step |
 | Dependabot weekly | Repo settings |
 | Code signing | Unsigned until decided; Azure Artifact Signing (Basic $9.99/month per Microsoft's pricing page) — **eligibility for an individual in India unverified** |
 
