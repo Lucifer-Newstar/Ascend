@@ -25,15 +25,15 @@ export function Rings({ tasks, kcalIn, kcalOut }: { tasks: Ring; kcalIn: Ring; k
   const allDone = specs.every((s) => pct(s.ring.value, s.ring.target) >= 1);
   // Rings draw in from empty on first paint (Apple Fitness style); reduced motion starts full.
   const reduce = useReducedMotion();
-  const [drawn, setDrawn] = useState(reduce);
+  // No animation: drawn from the first render (derived, not set from an effect).
+  const instant = reduce || typeof requestAnimationFrame !== "function";
+  const [animated, setAnimated] = useState(false);
+  const drawn = instant || animated;
   useEffect(() => {
-    if (reduce || typeof requestAnimationFrame !== "function") {
-      setDrawn(true);
-      return;
-    }
-    const raf = requestAnimationFrame(() => setDrawn(true));
+    if (instant) return;
+    const raf = requestAnimationFrame(() => setAnimated(true));
     return () => cancelAnimationFrame(raf);
-  }, [reduce]);
+  }, [instant]);
 
   return (
     <div className="flex items-center gap-6">

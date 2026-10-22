@@ -72,13 +72,19 @@ export function useRise(value: number | undefined): { riseKey: number; delta: nu
 
 /** Shows `children` for `ms` after each change of `trigger` (0 = never shown). */
 export function Transient({ trigger, ms = 1400, children }: { trigger: number; ms?: number; children: React.ReactNode }) {
-  const [shown, setShown] = useState(0);
+  // A new trigger shows the children during render (no setState in an effect); the
+  // effect only schedules hiding them again.
+  const [seen, setSeen] = useState(trigger);
+  const [shown, setShown] = useState(trigger);
+  if (trigger !== seen) {
+    setSeen(trigger);
+    if (trigger) setShown(trigger);
+  }
   const reduce = useReducedMotion();
   useEffect(() => {
-    if (!trigger) return;
-    setShown(trigger);
+    if (!shown) return;
     const t = setTimeout(() => setShown(0), reduce ? Math.min(ms, 2500) : ms);
     return () => clearTimeout(t);
-  }, [trigger, ms, reduce]);
+  }, [shown, ms, reduce]);
   return shown ? <>{children}</> : null;
 }
