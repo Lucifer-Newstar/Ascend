@@ -7,8 +7,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.events import EventBus, SetDeleted, SetLogged, SetUpdated, WorkoutLogged
 from app.modules.gamification.formulas import HARD_SET_RPE
@@ -323,13 +323,27 @@ def list_workouts(
     limit: int = 20,
     before: datetime | None = None,
     filters: WorkoutFilters | None = None,
+    before_id: int | None = None,
 ) -> list[WorkoutSummary]:
-    """Finished and active workouts, newest first. `before` is the started_at of the
-    last item on the previous page (keyset pagination: stable while new rows arrive)."""
-    from app.modules.gamification import service as game
+    """Finished and active workouts, newest first. `before` (and `before_id`) are the
+    started_at and id of the last item on the previous page: keyset pagination on
+    (started_at, id), stable while new rows arrive and exact when start times tie."""
+    from app.modules.gamification.models import XpEvent
 
-    stmt = select(Workout).order_by(Workout.started_at.desc(), Workout.id.desc()).limit(limit)
-    if before is not None:
+    stmt = (
+        select(Workout)
+        .options(selectinload(Workout.sets))
+        .order_by(Workout.started_at.desc(), Workout.id.desc())
+        .limit(limit)
+    )
+    if before is not None and before_id is not None:
+        stmt = stmt.where(
+            or_(
+                Workout.started_at < before,
+                and_(Workout.started_at == before, Workout.id < before_id),
+            )
+        )
+    elif before is not None:
         stmt = stmt.where(Workout.started_at < before)
     f = filters or WorkoutFilters()
     if f.section is not None:
@@ -340,11 +354,25 @@ def list_workouts(
         stmt = stmt.where(Workout.day >= f.since)
     if f.until is not None:
         stmt = stmt.where(Workout.day <= f.until)
+    workouts = db.scalars(stmt).all()
+
+    # XP per page in two grouped queries; this was one query per workout and per set
+    # (review L17).
+    def xp_by_ref(sources: tuple[str, ...], refs: list[int]) -> dict[int, int]:
+        if not refs:
+            return {}
+        rows = db.execute(
+            select(XpEvent.ref_id, func.sum(XpEvent.amount))
+            .where(XpEvent.source.in_(sources), XpEvent.ref_id.in_(refs))
+            .group_by(XpEvent.ref_id)
+        ).all()
+        return {int(ref): int(total or 0) for ref, total in rows if ref is not None}
+
+    session_xp = xp_by_ref(("session",), [w.id for w in workouts])
+    set_xp = xp_by_ref(("set", "pr"), [s.id for w in workouts for s in w.sets])
     out: list[WorkoutSummary] = []
-    for w in db.scalars(stmt).all():
-        xp = game.xp_for_refs(db, sources=("session",), ref_id=w.id) + sum(
-            game.xp_for_refs(db, sources=("set", "pr"), ref_id=s.id) for s in w.sets
-        )
+    for w in workouts:
+        xp = session_xp.get(w.id, 0) + sum(set_xp.get(s.id, 0) for s in w.sets)
         out.append(
             WorkoutSummary(
                 id=w.id,

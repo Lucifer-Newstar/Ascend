@@ -77,6 +77,17 @@ paths:
             format: date-time
           - type: 'null'
           title: Before
+      - name: before_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+          - type: 'null'
+          description: id of the last item (tie-break for `before`)
+          title: Before Id
+        description: id of the last item (tie-break for `before`)
       - name: section
         in: query
         required: false

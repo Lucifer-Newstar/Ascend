@@ -107,7 +107,7 @@ token on stdin and waits for `/health`.
 
 ```powershell
 # terminal 1
-cd services/sidecar; uv run python -m app --dev    # 127.0.0.1:8765, token "dev", CORS for Vite
+cd services/sidecar; uv run python -m app --dev    # 127.0.0.1:8765, token "dev"; Vite proxies /api to it
 # terminal 2
 npm run dev                                        # Vite on http://localhost:5173
 ```

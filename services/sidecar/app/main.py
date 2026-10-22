@@ -11,9 +11,9 @@ import threading
 from collections.abc import AsyncIterator, Callable
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, Header, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from app import __version__
@@ -39,17 +39,22 @@ from app.modules.workouts.api import router as workouts_router
 
 log = logging.getLogger("ascend")
 
-# Vite dev server origins. Only used with --dev (browser development without Electron).
-DEV_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
-]
+
+def exit_via(server: Any) -> Callable[[], None]:
+    """request_exit for a uvicorn.Server: ask it to stop. It finishes the response in
+    flight, runs the lifespan shutdown and returns from run(). The SIGTERM fallback below
+    is TerminateProcess on Windows (no shutdown at all), which is why __main__ wires this
+    one (review L20)."""
+
+    def request_exit() -> None:
+        server.should_exit = True
+
+    return request_exit
 
 
 def _exit_soon() -> None:
-    """SIGTERM ourselves after the response is sent; uvicorn then exits cleanly."""
+    """Fallback when the app is not run by __main__: SIGTERM ourselves after the response
+    is sent (uvicorn exits cleanly on POSIX)."""
     threading.Timer(0.2, lambda: os.kill(os.getpid(), signal.SIGTERM)).start()
 
 
@@ -177,11 +182,10 @@ def create_app(
             status_code=422, content={"detail": "a number in the request is out of range"}
         )
 
+    # No CORS, also not with --dev: the Vite dev/preview server proxies /api to the
+    # sidecar, so the renderer is same-origin. Allowing http://localhost:5173 let any
+    # other project served on that port read the dev database (review L22).
     app.add_middleware(TokenAuthMiddleware, token=settings.token)
-    if settings.dev:
-        app.add_middleware(
-            CORSMiddleware, allow_origins=DEV_ORIGINS, allow_methods=["*"], allow_headers=["*"]
-        )
 
     head = head_revision()
 
