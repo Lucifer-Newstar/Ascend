@@ -88,7 +88,7 @@ def _m(
 MUSCLES: tuple[Muscle, ...] = (
     _m(
         "pec_major_clavicular",
-        "Upper chest (clavicular head)",
+        "Upper chest",
         "Chest",
         "Push",
         36,
@@ -100,7 +100,7 @@ MUSCLES: tuple[Muscle, ...] = (
     ),
     _m(
         "pec_major_sternal",
-        "Mid/lower chest (sternal head)",
+        "Mid and lower chest",
         "Chest",
         "Push",
         36,
@@ -124,9 +124,7 @@ MUSCLES: tuple[Muscle, ...] = (
         readiness_only=True,
     ),
     _m("serratus_anterior", "Serratus anterior", "Chest", "Push", 24, 0, 0, 8, readiness_only=True),
-    _m(
-        "latissimus_dorsi", "Lats (latissimus dorsi)", "Back", "Pull", 36, 10, 18, 10, legacy="lats"
-    ),
+    _m("latissimus_dorsi", "Lats", "Back", "Pull", 36, 10, 18, 10, legacy="lats"),
     _m("teres_major", "Teres major", "Back", "Pull", 36, 8, 16, 8, legacy="lats"),
     _m(
         "trap_upper",
@@ -243,7 +241,7 @@ MUSCLES: tuple[Muscle, ...] = (
         8,
         readiness_only=True,
     ),
-    _m("splenius", "Splenius (neck extensors)", "Neck", "Pull", 24, 0, 0, 8, readiness_only=True),
+    _m("splenius", "Neck extensors", "Neck", "Pull", 24, 0, 0, 8, readiness_only=True),
     _m(
         "deltoid_anterior",
         "Front delts",
@@ -378,7 +376,7 @@ MUSCLES: tuple[Muscle, ...] = (
         parent="Forearm",
         legacy="forearms",
     ),
-    _m("rectus_abdominis", "Abs (rectus abdominis)", "Core", "Core", 24, 6, 12, 8, legacy="abs"),
+    _m("rectus_abdominis", "Abs", "Core", "Core", 24, 6, 12, 8, legacy="abs"),
     _m(
         "external_obliques",
         "External obliques",
@@ -419,7 +417,7 @@ MUSCLES: tuple[Muscle, ...] = (
     ),
     _m(
         "iliopsoas",
-        "Hip flexors (iliopsoas)",
+        "Hip flexors",
         "Hips",
         "Legs",
         36,
@@ -531,7 +529,7 @@ MUSCLES: tuple[Muscle, ...] = (
     _m("sartorius", "Sartorius", "Thighs", "Legs", 36, 0, 0, 8, readiness_only=True),
     _m(
         "adductor_longus",
-        "Adductor longus (and brevis)",
+        "Adductor longus",
         "Thighs",
         "Legs",
         48,
@@ -626,9 +624,7 @@ MUSCLES: tuple[Muscle, ...] = (
         8,
         readiness_only=True,
     ),
-    _m(
-        "fibularis", "Fibularis (peroneals)", "Lower legs", "Legs", 24, 0, 0, 8, readiness_only=True
-    ),
+    _m("fibularis", "Fibularis", "Lower legs", "Legs", 24, 0, 0, 8, readiness_only=True),
 )
 
 MUSCLE_BY_KEY: dict[str, Muscle] = {m.key: m for m in MUSCLES}

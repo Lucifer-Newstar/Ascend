@@ -64,7 +64,7 @@ def facts_text(ctx: CoachContext, tip: Tip) -> str:
     for m in ctx.muscles:
         if m.status != "no_data":
             lines.append(
-                f"{m.label}: {m.status}, {m.es_7d} effective sets this week "
+                f"{m.label}: {m.status}, {round(m.es_7d, 1):g} effective sets this week "
                 f"(target {m.weekly_low:g}-{m.weekly_high:g}), "
                 f"readiness {round(m.readiness * 100)}%"
             )

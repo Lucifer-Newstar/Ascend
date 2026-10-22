@@ -89,8 +89,7 @@ def test_muscle_readiness_explanation(client, profile, clock, monkeypatch):
     e = client.get("/intelligence/recovery/pec_major_sternal/explanation").json()
     assert e["phrasing"] == "template"
     assert (
-        e["text"].startswith("Mid/lower chest (sternal head) is ")
-        and "effective sets of fatigue" in e["text"]
+        e["text"].startswith("Mid and lower chest is ") and "effective sets of fatigue" in e["text"]
     )
     assert "readiness pct:" in e["facts"]
     assert client.get("/intelligence/recovery/elbows/explanation").status_code == 404
