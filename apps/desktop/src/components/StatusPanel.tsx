@@ -1,5 +1,6 @@
 /**
- * The Status panel on Today: level, rank, XP and the five computed hunter stats.
+ * The Hunter profile on Today (v8; was the Status panel): name, rank, level, XP, the
+ * newest boss title and the five computed hunter stats.
  *
  * It is a normal card (the System window is kept for System events). Each stat has a
  * "Why?" button that lists the formula and the exact numbers it used (stats-v1), so no
@@ -65,12 +66,23 @@ function StatRow({ stat }: { stat: Stat }) {
   );
 }
 
-export function StatusPanel({ game, stats, title = null }: { game: GameSummary; stats: Stats | null; title?: string | null }) {
+export function StatusPanel({ game, stats, title = null, name = null, titlesEarned = 0 }: {
+  game: GameSummary;
+  stats: Stats | null;
+  /** The newest title from a beaten weekly boss (the only title source). */
+  title?: string | null;
+  name?: string | null;
+  titlesEarned?: number;
+}) {
   const xp = game.xp;
   const fill = Math.min(1, xp.xp_into_level / Math.max(1, xp.xp_for_next));
   return (
-    <section className="card h-full p-5" aria-labelledby="status-title" data-testid="status-panel">
-      <h2 id="status-title" className="card-title">Status</h2>
+    <section className={`card hunter-card rank-${xp.rank.toLowerCase()} h-full p-5`} aria-labelledby="status-title" data-testid="status-panel">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 id="status-title" className="card-title">Hunter profile</h2>
+        {game.streak.current > 0 && <span className="text-xs text-muted" title="Days in a row with something logged">🔥 {game.streak.current}-day streak</span>}
+      </div>
+      {name && <p className="mt-1 truncate font-display text-lg font-bold uppercase tracking-[0.06em] text-ink">{name}</p>}
       <div className="mt-3 flex items-center gap-4">
         <RankBadge rank={xp.rank} title={xp.rank_title} size={56} />
         <div className="min-w-0">
@@ -78,7 +90,11 @@ export function StatusPanel({ game, stats, title = null }: { game: GameSummary; 
             <span className="font-display text-sm font-semibold uppercase tracking-[0.08em] text-muted">Level</span>
             <span className="text-display-xl text-ink"><CountUp value={xp.level} duration={600} /></span>
           </div>
-          {title && <p className="truncate text-xs text-accent" data-testid="hunter-title" title="Title from a beaten weekly boss">{title}</p>}
+          {title && (
+            <p className="truncate text-xs text-accent" data-testid="hunter-title" title={`Title from a beaten weekly boss${titlesEarned > 1 ? ` (${titlesEarned} earned)` : ""}`}>
+              « {title} »
+            </p>
+          )}
           <div className="truncate text-sm text-muted">{xp.rank_title}</div>
         </div>
       </div>

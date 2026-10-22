@@ -15,7 +15,10 @@ import type { GameSummary, SystemNotice } from "@ascend/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { play } from "../lib/sound";
+import { Confetti } from "./Celebrate";
 import { SystemWindow, type SystemVariant } from "./SystemWindow";
+import { TrainerPortrait, useTrainerOn } from "./Trainer";
+import { RankBadge } from "./XpBar";
 
 export interface SystemEvent {
   id: number;
@@ -44,7 +47,7 @@ export function eventsBetween(prev: Snapshot | null, g: GameSummary): Omit<Syste
   if (next.level > prev.level) {
     out.push({
       variant: "levelup",
-      title: "Level up",
+      title: next.rank !== prev.rank ? "Rank up" : "Level up",
       text: next.rank !== prev.rank
         ? `Level ${next.level} reached. Rank up: ${prev.rank} → ${next.rank} (${g.xp.rank_title}).`
         : `Level ${next.level} reached. Rank ${next.rank} · ${g.xp.rank_title}.`,
@@ -132,13 +135,39 @@ export function SystemEvents({ game, notices }: { game: GameSummary | undefined;
     <div className="pointer-events-none fixed right-6 top-20 z-40 flex w-[340px] flex-col gap-3" data-testid="system-events">
       <div role="status" className="sr-only">{events.length ? `${events[events.length - 1].title}. ${events[events.length - 1].text}` : ""}</div>
       {events.map((e) => (
-        <Notice key={e.id} event={e} rank={game?.xp.rank} onClose={() => dismiss(e.id)} />
+        <Notice key={e.id} event={e} rank={game?.xp.rank} level={game?.xp.level} onClose={() => dismiss(e.id)} />
       ))}
     </div>
   );
 }
 
-function Notice({ event, rank, onClose }: { event: SystemEvent; rank?: string; onClose: () => void }) {
+/**
+ * v8 moments: level-up, rank-up and quest-clear notices carry the trainer (or the rank
+ * badge in plain mode), a confetti burst and a pop-in (transform/opacity only; Reduce
+ * motion shows them still, without confetti).
+ */
+function MomentBody({ event, rank, level }: { event: SystemEvent; rank?: string; level?: number }) {
+  const trainer = useTrainerOn();
+  const rankUp = event.title === "Rank up";
+  return (
+    <div className="moment-pop relative flex items-center gap-3" data-testid={`moment-${rankUp ? "rankup" : event.variant}`}>
+      <Confetti pieces={rankUp ? 22 : 14} spread={rankUp ? 110 : 80} />
+      {trainer ? (
+        <TrainerPortrait mood={event.variant === "levelup" ? "hyped" : "proud"} size={64} />
+      ) : (
+        rank && <RankBadge rank={rank} size={56} />
+      )}
+      <div className="min-w-0">
+        {event.variant === "levelup" && level !== undefined && (
+          <p className="font-display text-2xl font-bold leading-none text-xp">LV {level}{rankUp && rank ? ` · ${rank}` : ""}</p>
+        )}
+        <p className="mt-1 text-sm text-ink">{event.text}</p>
+      </div>
+    </div>
+  );
+}
+
+function Notice({ event, rank, level, onClose }: { event: SystemEvent; rank?: string; level?: number; onClose: () => void }) {
   const [held, setHeld] = useState(false);
   useEffect(() => {
     if (held) return;
@@ -150,7 +179,11 @@ function Notice({ event, rank, onClose }: { event: SystemEvent; rank?: string; o
       onFocus={() => setHeld(true)} onBlur={() => setHeld(false)}>
       <SystemWindow variant={event.variant} title={event.title} rank={rank} testId={`system-event-${event.variant}`}
         actions={<button type="button" className="btn-ghost px-3 py-1.5 text-xs" onClick={onClose}>Close</button>}>
-        <p className="text-sm text-ink">{event.text}</p>
+        {event.variant === "levelup" || event.variant === "quest" ? (
+          <MomentBody event={event} rank={rank} level={level} />
+        ) : (
+          <p className="text-sm text-ink">{event.text}</p>
+        )}
       </SystemWindow>
     </div>
   );

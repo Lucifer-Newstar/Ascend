@@ -36,6 +36,7 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
   const stats = useApi(api.stats, [refreshKey], { cacheKey: "stats" });
   const boss = useApi(api.boss, [refreshKey], { cacheKey: "boss" });
   const titles = useApi(api.titles, [refreshKey], { cacheKey: "titles" });
+  const profile = useApi(api.profile, [], { cacheKey: "profile" });
   const [tip, setTip] = useState<CoachReply | null>(null);
   const [review, setReview] = useState<WeeklyReview | null>(null);
   const toast = useToast();
@@ -79,7 +80,7 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
         <QuestWindow items={data.game.quest} rank={data.game.xp.rank} onComplete={complete} onStart={onNavigate ? () => onNavigate("workout") : undefined} />
       </div>
       <div className="col-span-12 lg:col-span-4">
-        <StatusPanel game={data.game} stats={stats.data} title={titles.data?.[0]?.title ?? null} />
+        <StatusPanel game={data.game} stats={stats.data} title={titles.data?.[0]?.title ?? null} titlesEarned={titles.data?.length ?? 0} name={profile.data?.name ?? null} />
       </div>
 
       {boss.data && <div className="col-span-12"><BossRaidCard boss={boss.data} /></div>}
