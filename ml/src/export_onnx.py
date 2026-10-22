@@ -63,7 +63,9 @@ def parity(onnx_path: Path, model: torch.nn.Module, images: list[np.ndarray]) ->
 def export(
     models_dir: Path = MODELS_DIR, processed: Path = PROCESSED_DIR, version: str = "0.0.0-smoke"
 ) -> dict:
-    ckpt = torch.load(models_dir / "food_clf.pt", map_location="cpu", weights_only=False)
+    # weights_only=True: the checkpoint is a DVC artefact, so a replaced file must not be able
+    # to run code on load. train.py saves only tensors, strings and ints, which this allows.
+    ckpt = torch.load(models_dir / "food_clf.pt", map_location="cpu", weights_only=True)
     classes: list[str] = ckpt["classes"]
     model = build_model(ckpt["backbone"], len(classes), pretrained=False)
     model.load_state_dict(ckpt["state_dict"])
