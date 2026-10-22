@@ -80,7 +80,9 @@ declare global {
   }
 }
 
-const DEV_URL: string = import.meta.env.VITE_SIDECAR_URL ?? "http://127.0.0.1:8765";
+// Browser dev mode: the Vite dev/preview server proxies /api to the sidecar, so requests
+// are same-origin and the sidecar needs no CORS (see vite.config.mts).
+const DEV_URL: string = import.meta.env.VITE_SIDECAR_URL ?? "/api";
 const DEV_TOKEN: string = import.meta.env.VITE_SIDECAR_TOKEN ?? "dev";
 
 export class ApiError extends Error {
@@ -164,8 +166,15 @@ export const api = {
   trainSkill: (key: string) => call<SkillTrainResult>("POST", `/skills/${encodeURIComponent(key)}/train`),
   activeWorkout: () => call<Workout | null>("GET", "/workouts/active"),
   startWorkout: (section: Section = "gym") => call<Workout>("POST", `/workouts?section=${section}`),
-  workouts: (limit = 20, before?: string) =>
-    call<WorkoutSummary[]>("GET", `/workouts?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ""}`),
+  /** Next page: pass the last item's started_at and id (ids break ties between sessions
+   *  that started in the same second). */
+  workouts: (limit = 20, before?: string, beforeId?: number) =>
+    call<WorkoutSummary[]>(
+      "GET",
+      `/workouts?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ""}${
+        before && beforeId ? `&before_id=${beforeId}` : ""
+      }`,
+    ),
   logSet: (workoutId: number, s: SetIn) => call<LoggedSet>("POST", `/workouts/${workoutId}/sets`, s),
   editSet: (workoutId: number, setId: number, patch: SetPatch) =>
     call<WorkoutSet>("PATCH", `/workouts/${workoutId}/sets/${setId}`, patch),

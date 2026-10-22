@@ -59,7 +59,7 @@ services:
     command: sh -c "npm ci --no-audit --no-fund && npm run dev -w apps/desktop -- --host 0.0.0.0"
     environment:
       ELECTRON_SKIP_BINARY_DOWNLOAD: "1"   # the renderer does not need Electron
-      VITE_SIDECAR_URL: http://127.0.0.1:8765
+      ASCEND_SIDECAR_PROXY: http://sidecar:8765   # Vite proxies /api there (same-origin)
     ports:
       - "127.0.0.1:5173:5173"
     volumes:
