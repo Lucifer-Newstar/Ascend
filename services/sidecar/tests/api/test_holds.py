@@ -53,7 +53,7 @@ def test_a_hold_counts_as_a_set_for_muscle_load(client, profile):
     lever = ex(client, "Tuck Front Lever")
     w = client.post("/workouts").json()["id"]
     log(client, w, lever["id"], duration_s=12, rpe=9)
-    lats = next(m for m in client.get("/muscles").json() if m["key"] == "lats")
+    lats = next(m for m in client.get("/muscles").json() if m["key"] == "latissimus_dorsi")
     # recovery-v2: a hold counts seconds / 30 of a set, so 12 s is 0.4 (weight 1.0, RPE 9)
     assert lats["es_7d"] == 0.4
 

@@ -8,7 +8,7 @@ import { HoldSetForm } from "./HoldSetForm";
 
 const lsit: Exercise = {
   id: 7, name: "L-sit", equipment: "parallettes", section: "calisthenics", met: null, time_based: false,
-  muscles: [{ muscle: "abs", weight: 1 }], measure: "hold",
+  muscles: [{ muscle: "rectus_abdominis", weight: 1 }], measure: "hold",
 };
 
 afterEach(() => vi.useRealTimers());

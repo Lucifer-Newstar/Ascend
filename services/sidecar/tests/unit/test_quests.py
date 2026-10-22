@@ -10,9 +10,9 @@ from app.modules.progress.muscle_load import Contribution, compute_states
 DAY = date(2026, 10, 20)
 NOW = datetime(2026, 10, 20, 9, 0)
 EXERCISES = [
-    ExerciseRef(1, "Back Squat", {"quads": 1.0, "glutes": 1.0}),
-    ExerciseRef(2, "Barbell Curl", {"biceps": 1.0}),
-    ExerciseRef(3, "Bench Press", {"lower_chest": 1.0}),
+    ExerciseRef(1, "Back Squat", {"vastus_lateralis": 1.0, "gluteus_maximus": 1.0}),
+    ExerciseRef(2, "Barbell Curl", {"biceps_long": 1.0}),
+    ExerciseRef(3, "Bench Press", {"pec_major_sternal": 1.0}),
 ]
 
 
@@ -29,11 +29,21 @@ def test_quest_is_deterministic_for_same_day():
 
 
 def test_training_item_avoids_recovering_muscles():
-    contribs = [Contribution("quads", 1.0, NOW - timedelta(hours=6)) for _ in range(9)]
-    contribs += [Contribution("glutes", 1.0, NOW - timedelta(hours=6)) for _ in range(9)]
-    contribs += [Contribution("lower_chest", 1.0, NOW - timedelta(hours=6)) for _ in range(9)]
-    items = generate_daily_quest(DAY, compute_states(contribs, NOW), EXERCISES, 120)
-    assert items[0].metric == "sets:biceps"
+    contribs = [Contribution("vastus_lateralis", 1.0, NOW - timedelta(hours=6)) for _ in range(9)]
+    contribs += [Contribution("gluteus_maximus", 1.0, NOW - timedelta(hours=6)) for _ in range(9)]
+    contribs += [Contribution("pec_major_sternal", 1.0, NOW - timedelta(hours=6)) for _ in range(9)]
+    contribs += [Contribution("biceps_long", 1.0, NOW - timedelta(days=5))]  # trained, under
+    states = compute_states(contribs, NOW)
+    items = generate_daily_quest(DAY, states, EXERCISES, 120)
+    assert items[0].metric == "sets:biceps_long"
+    recovering = {"sets:vastus_lateralis", "sets:gluteus_maximus", "sets:pec_major_sternal"}
+    assert generate_daily_quest(DAY, states, EXERCISES, 120)[0].metric not in recovering
+
+
+def test_readiness_only_muscles_are_never_quest_targets():
+    rotator = [ExerciseRef(9, "External Rotation", {"infraspinatus": 1.0, "teres_minor": 1.0})]
+    items = generate_daily_quest(DAY, compute_states([], NOW), rotator, 120)
+    assert items[0].metric == "manual"
 
 
 def test_missed_day_adds_gentle_comeback_item():
@@ -55,10 +65,10 @@ def test_apply_readiness_resizes_only_training_items():
 
     item = QuestItemSpec(
         "training",
-        "train_quads",
+        "train_vastus_lateralis",
         "3 hard sets for quads",
         "Suggested: Back Squat.",
-        "sets:quads",
+        "sets:vastus_lateralis",
         3,
         40,
     )

@@ -18,18 +18,23 @@ def test_activity_sums_sets_volume_and_last_trained_per_window(client, profile, 
     clock.now += timedelta(days=3)
 
     week = _by_key(client.get("/muscles/activity", params={"days": 7}).json())
-    assert week["lower_chest"]["sets"] == 2.0
-    assert week["lower_chest"]["volume_kg"] == 1000
+    assert week["pec_major_sternal"]["sets"] == 2.0
+    assert week["pec_major_sternal"]["volume_kg"] == 1000
     # Secondary movers get their share of sets and volume.
-    assert week["triceps"]["sets"] == 1.0
-    assert week["triceps"]["volume_kg"] == 500
-    assert week["quads"] == {"key": "quads", "sets": 0.0, "volume_kg": 0, "last_trained": None}
+    assert week["triceps_lateral"]["sets"] == 1.0
+    assert week["triceps_lateral"]["volume_kg"] == 500
+    assert week["vastus_lateralis"] == {
+        "key": "vastus_lateralis",
+        "sets": 0.0,
+        "volume_kg": 0,
+        "last_trained": None,
+    }
 
     # Outside the 1-day window: no sets, but "last trained" still looks back.
     day = _by_key(client.get("/muscles/activity", params={"days": 1}).json())
-    assert day["lower_chest"]["sets"] == 0.0 and day["lower_chest"]["volume_kg"] == 0
-    assert day["lower_chest"]["last_trained"] is not None
-    assert day["lower_chest"]["last_trained"] <= trained_at.isoformat()
+    assert day["pec_major_sternal"]["sets"] == 0.0 and day["pec_major_sternal"]["volume_kg"] == 0
+    assert day["pec_major_sternal"]["last_trained"] is not None
+    assert day["pec_major_sternal"]["last_trained"] <= trained_at.isoformat()
 
 
 def test_activity_lists_every_muscle_and_validates_days(client):
@@ -48,5 +53,7 @@ def test_timed_sets_load_muscles_without_volume(client, profile):
         json={"exercise_id": plank, "weight_kg": 0, "reps": 1, "duration_s": 120},
     )
     assert r.status_code == 201, r.text
-    abs_row = _by_key(client.get("/muscles/activity", params={"days": 1}).json())["abs"]
+    abs_row = _by_key(client.get("/muscles/activity", params={"days": 1}).json())[
+        "rectus_abdominis"
+    ]
     assert abs_row["sets"] > 0 and abs_row["volume_kg"] == 0

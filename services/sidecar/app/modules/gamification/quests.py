@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from app.modules.progress.muscle_load import MuscleState
+from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 
 GENERATOR_VERSION = "quest-v2"
 
@@ -98,7 +99,14 @@ def apply_readiness(item: QuestItemSpec, band: str | None) -> QuestItemSpec:
 def _training_item(
     states: Sequence[MuscleState], exercises: Sequence[ExerciseRef], mult: float, rng: random.Random
 ) -> QuestItemSpec:
-    ready = [s for s in states if s.status in ("under", "no_data", "optimal")]
+    # readiness-only muscles (rotator cuff, neck, hip flexors...) have no weekly set target
+    # in taxonomy v2, so they are never a quest target.
+    ready = [
+        s
+        for s in states
+        if s.status in ("under", "no_data", "optimal")
+        and not getattr(MUSCLE_BY_KEY.get(s.key), "readiness_only", False)
+    ]
     # Prefer muscles furthest below their weekly band, then never-trained ones.
     ready.sort(key=lambda s: (s.status != "under", s.es_7d - s.weekly_low, s.key))
     for target in ready[:4] if ready else []:

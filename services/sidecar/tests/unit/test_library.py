@@ -1,4 +1,4 @@
-from app.modules.progress.taxonomy import MUSCLE_BY_KEY
+from app.modules.progress.taxonomy import LEGACY_REGIONS, MUSCLE_BY_KEY
 from app.modules.workouts import library
 from app.modules.workouts.calisthenics_seed import CALISTHENICS
 
@@ -18,6 +18,7 @@ def test_search_matches_word_prefixes_and_aliases():
 
 
 def test_shoulder_and_chest_heads_follow_the_name():
+    # v7 coarse mapping, still used to seed the library rows migrations read
     assert library.map_muscles("Side Lateral Raise", ["shoulders"], []) == {"side_delts": 1.0}
     assert library.map_muscles("Reverse Flyes", ["shoulders"], []) == {"rear_delts": 1.0}
     press = library.map_muscles("Dumbbell Shoulder Press", ["shoulders"], ["triceps"])
@@ -52,7 +53,8 @@ def test_calisthenics_rows_use_known_muscles_and_measures():
     names = [r["name"] for r in CALISTHENICS]
     assert len(names) == len(set(names))
     for row in CALISTHENICS:
-        assert set(row["muscles"]) <= set(MUSCLE_BY_KEY), row["name"]
+        # the hand-made rows are written in the 19 v7 regions; migration 0018 translates them
+        assert set(row["muscles"]) <= set(LEGACY_REGIONS), row["name"]
         assert row["measure"] in ("reps", "hold")
         assert row["instructions"], row["name"]
 

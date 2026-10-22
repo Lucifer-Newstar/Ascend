@@ -74,7 +74,7 @@ export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onC
         <div className="space-y-4">
           <dl className="grid grid-cols-4 gap-3 text-xs">
             <div><dt className="text-muted">Status</dt><dd className="mt-0.5 text-sm text-ink">{STATUS_LABELS[h.data.status]}</dd></div>
-            <div><dt className="text-muted">Last 7 days</dt><dd className="mt-0.5 text-sm text-ink">{h.data.es_7d} sets</dd></div>
+            <div><dt className="text-muted">Last 7 days</dt><dd className="mt-0.5 text-sm text-ink">{Math.round(h.data.es_7d * 10) / 10} sets</dd></div>
             <div><dt className="text-muted">Weekly target</dt><dd className="mt-0.5 text-sm text-ink">{h.data.target_low}–{h.data.target_high} sets</dd></div>
             <div><dt className="text-muted">Readiness</dt><dd className="mt-0.5 text-sm text-ink">{Math.round(h.data.readiness * 100)}%{h.data.ready_at ? ` · ${readyAtLabel(h.data.ready_at)}` : ""}</dd></div>
           </dl>

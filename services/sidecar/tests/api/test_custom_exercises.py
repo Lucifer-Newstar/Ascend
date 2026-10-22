@@ -44,7 +44,7 @@ def test_rules_only_proposal_with_every_source_named(client, no_ai):
     a = analyze(client, "Banded Pallof Hold")
     p = a["proposal"]
     assert (p["equipment"], p["measure"], p["section"]) == ("band", "hold", "gym")
-    assert {m["muscle"]: m["weight"] for m in p["muscles"]}["obliques"] == 1.0
+    assert {m["muscle"]: m["weight"] for m in p["muscles"]}["external_obliques"] == 1.0
     assert a["ai"]["status"] == "off" and a["online"]["status"] == "off"
     assert set(a["field_sources"].values()) == {"rules"}
     assert {"section", "equipment", "measure", "muscles"} <= set(a["field_sources"])
@@ -86,10 +86,13 @@ def test_model_reply_is_validated_field_by_field(client, monkeypatch):
     a = analyze(client, "Zercher Squat")
     assert a["ai"]["status"] == "ok" and a["ai"]["model"] == "qwen3:4b"
     assert a["field_sources"]["muscles"] == "local_ai"
-    assert {m["muscle"]: m["weight"] for m in a["proposal"]["muscles"]} == {
-        "quads": 1.0,
-        "abs": 0.5,
-    }
+    got = {m["muscle"]: m["weight"] for m in a["proposal"]["muscles"]}
+    # the model's coarse regions (quads primary, abs secondary) are split into heads by
+    # muscle-map-v1's name rules; "neck" is not one of the 19 regions and is dropped
+    assert {k: got[k] for k in ("vastus_lateralis", "vastus_medialis", "vastus_intermedius")} == {
+        "vastus_lateralis": 1.0, "vastus_medialis": 1.0, "vastus_intermedius": 1.0,
+    }  # fmt: skip
+    assert got["rectus_abdominis"] == 0.5 and "sternocleidomastoid" not in got
     assert a["field_sources"]["difficulty"] != "local_ai"
     assert a["proposal"]["difficulty"] != "space-cadet"
     assert a["proposal"]["equipment"] == "barbell" and a["field_sources"]["equipment"] == "local_ai"
@@ -132,7 +135,7 @@ def test_create_log_stats_quests_and_outbox(client, profile, settings, no_ai):
     )
     logged = client.post(f"/workouts/{w}/sets", json={"exercise_id": e["id"], "duration_s": 30})
     assert logged.status_code == 201 and logged.json()["set"]["duration_s"] == 30
-    oblique = next(m for m in client.get("/muscles").json() if m["key"] == "obliques")
+    oblique = next(m for m in client.get("/muscles").json() if m["key"] == "external_obliques")
     assert oblique["es_7d"] > 0
     con = sqlite3.connect(settings.db_url.removeprefix("sqlite:///"))
     row = con.execute("select payload from events_outbox where type = 'ExerciseAdded'").fetchone()

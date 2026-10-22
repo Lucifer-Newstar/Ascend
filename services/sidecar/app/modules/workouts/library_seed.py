@@ -205,7 +205,7 @@ def upgrade(conn: sa.Connection) -> None:
 
     # 4: free-exercise-db
     taken_slugs = {slugify(n) for n in by_name}
-    for entry in fedb_entries():
+    for entry in fedb_entries(legacy=True):  # 0010 wrote v7 regions; 0018 re-maps them
         target = FEDB_DUPLICATES.get(entry.source_id or "")
         if target and target in by_name:
             ex_id = by_name[target]

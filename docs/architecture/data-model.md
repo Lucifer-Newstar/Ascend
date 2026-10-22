@@ -162,8 +162,8 @@ erDiagram
 
 | Data | Source | Licence | Notes |
 |---|---|---|---|
-| Exercises (~800) | yuhonas/free-exercise-db | Public domain (per repo) | Muscle names mapped onto the 19 regions |
+| Exercises (~800) | yuhonas/free-exercise-db | Public domain (per repo) | Muscle names mapped onto 54 muscles and heads by muscle-map-v1 (v8; 19 regions up to v7) |
 | Indian recipes (1,014) | INDB (Vijayakumar et al., 2024) | Check terms before redistribution — **unverified** | Per 100 g and per serving |
 | Raw foods (528 key foods) | IFCT 2017, National Institute of Nutrition | Check terms — **unverified** | Raw ingredients |
 | Packaged foods | Open Food Facts India subset | ODbL (attribution) | Barcode later |
-| Muscle map artwork | react-muscle-highlighter 1.2.0 | MIT | Notice in About page |
+| Muscle map artwork | ASCEND original (v8; react-muscle-highlighter 1.2.0 up to v7) | MIT | About page, README credits |

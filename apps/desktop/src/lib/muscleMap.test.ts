@@ -8,11 +8,11 @@ function m(key: string, map_slug: string, status: MuscleState["status"]): Muscle
 }
 
 const states = [
-  m("front_delts", "deltoids", "optimal"),
-  m("side_delts", "deltoids", "recovering"),
-  m("rear_delts", "deltoids", "under"),
-  m("quads", "quadriceps", "over"),
-  m("calves", "calves", "no_data"),
+  m("deltoid_anterior", "deltoids", "optimal"),
+  m("deltoid_lateral", "deltoids", "recovering"),
+  m("deltoid_posterior", "deltoids", "under"),
+  m("vastus_lateralis", "quadriceps", "over"),
+  m("gastrocnemius", "gastrocnemius", "no_data"),
 ];
 
 describe("statusBySlug", () => {
@@ -24,7 +24,7 @@ describe("statusBySlug", () => {
 
 describe("helpers", () => {
   it("lists regions for a slug", () => {
-    expect(regionsForSlug(states, "deltoids").map((s) => s.key)).toEqual(["front_delts", "side_delts", "rear_delts"]);
+    expect(regionsForSlug(states, "deltoids").map((s) => s.key)).toEqual(["deltoid_anterior", "deltoid_lateral", "deltoid_posterior"]);
   });
   it("counts statuses", () => {
     expect(countByStatus(states)).toEqual({ over: 1, recovering: 1, under: 1, optimal: 1, no_data: 1 });
@@ -33,9 +33,9 @@ describe("helpers", () => {
 
 describe("summarizeSlugs", () => {
   const activity = [
-    { key: "front_delts", sets: 4, volume_kg: 1200, last_trained: "2026-10-18T09:00:00" },
-    { key: "side_delts", sets: 2.5, volume_kg: 300, last_trained: "2026-10-19T18:00:00" },
-    { key: "rear_delts", sets: 0, volume_kg: 0, last_trained: null },
+    { key: "deltoid_anterior", sets: 4, volume_kg: 1200, last_trained: "2026-10-18T09:00:00" },
+    { key: "deltoid_lateral", sets: 2.5, volume_kg: 300, last_trained: "2026-10-19T18:00:00" },
+    { key: "deltoid_posterior", sets: 0, volume_kg: 0, last_trained: null },
   ];
 
   it("sums sets and volume per figure region and keeps the latest training", () => {
@@ -48,16 +48,16 @@ describe("summarizeSlugs", () => {
 
   it("opens the most urgent region of a figure region", () => {
     const d = summarizeSlugs(states).get("deltoids");
-    expect(d && primaryRegion(d).key).toBe("side_delts");
+    expect(d && primaryRegion(d).key).toBe("deltoid_lateral");
   });
 
   it("marks recovered, recently trained regions as ready again", () => {
-    const fresh = { ...m("biceps", "biceps", "optimal"), es_7d: 8, readiness: 0.97 };
+    const fresh = { ...m("biceps_long", "biceps_long", "optimal"), es_7d: 8, readiness: 0.97 };
     expect(isReadyAgain(fresh)).toBe(true);
     expect(isReadyAgain({ ...fresh, readiness: 0.6 })).toBe(false);
     expect(isReadyAgain({ ...fresh, es_7d: 0 })).toBe(false);
     expect(isReadyAgain({ ...fresh, status: "over" })).toBe(false);
-    expect(summarizeSlugs([fresh]).get("biceps")?.readyAgain).toBe(true);
+    expect(summarizeSlugs([fresh]).get("biceps_long")?.readyAgain).toBe(true);
   });
 });
 

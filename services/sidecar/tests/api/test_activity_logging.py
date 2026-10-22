@@ -65,12 +65,12 @@ def test_run_loads_calves_and_stretch_loads_nothing(client, profile):
     stretch = ex(client, "Standing Hamstring Stretch")
     w = client.post("/workouts").json()
     client.post(f"/workouts/{w['id']}/sets", json={"exercise_id": stretch["id"], "duration_s": 90})
-    hams = next(m for m in client.get("/muscles").json() if m["key"] == "hamstrings")
+    hams = next(m for m in client.get("/muscles").json() if m["key"] == "biceps_femoris")
     assert hams["es_7d"] == 0
     client.post(
         f"/workouts/{w['id']}/sets", json={"exercise_id": run["id"], "duration_s": 1800, "rpe": 7}
     )
-    calves = next(m for m in client.get("/muscles").json() if m["key"] == "calves")
+    calves = next(m for m in client.get("/muscles").json() if m["key"] == "gastrocnemius")
     assert calves["es_7d"] == 3.0  # weight 1.0 x min(3, 30/10) x effort 1.0
 
 

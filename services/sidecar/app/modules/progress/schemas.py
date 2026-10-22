@@ -91,6 +91,11 @@ class MuscleStateOut(BaseModel):
     # you", and the engine version that produced these numbers.
     readiness_population: float = 1.0
     algo_version: str = "recovery-v2"
+    # taxonomy v2 (muscles-v2): where the muscle sits and how the map draws it.
+    region: str = ""
+    parent: str = ""
+    deep: bool = False
+    readiness_only: bool = False
 
 
 Units = Literal["metric", "imperial"]

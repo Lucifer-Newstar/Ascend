@@ -16,7 +16,7 @@ import { Segmented } from "../components/Segmented";
 import { SkeletonCard } from "../components/Skeleton";
 import { ErrorState, Loading } from "../components/States";
 import { setPendingExercise } from "../lib/pending";
-import { MUSCLE_LABEL, muscleLabel } from "../lib/muscles";
+import { MUSCLES, REGIONS, muscleLabel } from "../lib/muscles";
 import { ExerciseArt } from "../components/ExerciseArt";
 import { useApi } from "../lib/useApi";
 
@@ -140,7 +140,11 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
             Muscle
             <select className="input w-40 py-1.5" value={filters.muscle} onChange={(e) => set("muscle", e.target.value)}>
               <option value="">Any</option>
-              {Object.entries(MUSCLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              {REGIONS.map((r) => (
+                <optgroup key={r} label={r}>
+                  {MUSCLES.filter((m) => m.region === r).map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+                </optgroup>
+              ))}
             </select>
           </label>
           <label className="flex items-center gap-2 text-muted">

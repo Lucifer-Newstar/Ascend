@@ -33,11 +33,11 @@ vi.mock("../api/client", () => ({
 
 const bench: Exercise = {
   id: 1, name: "Barbell Bench Press", equipment: "barbell", section: "gym", met: null, time_based: false,
-  muscles: [{ muscle: "lower_chest", weight: 1 }],
+  muscles: [{ muscle: "pec_major_sternal", weight: 1 }],
 };
 const run: Exercise = {
   id: 50, name: "Running", equipment: "none", section: "cardio", met: 9.8, time_based: true,
-  muscles: [{ muscle: "calves", weight: 1 }],
+  muscles: [{ muscle: "gastrocnemius", weight: 1 }],
 };
 const session = (sets: Workout["sets"]): Workout => ({
   id: 9, day: "2026-10-20", section: "cardio", started_at: "2026-10-20T07:00:00", finished_at: null, sets,
@@ -188,7 +188,7 @@ describe("Training page", () => {
   it("logs a plank as a hold and shows seconds in the session, opened from the gallery", async () => {
     const plank: Exercise = {
       id: 39, name: "Plank", equipment: "bodyweight", section: "calisthenics", met: null, time_based: false,
-      muscles: [{ muscle: "abs", weight: 1 }], measure: "hold",
+      muscles: [{ muscle: "rectus_abdominis", weight: 1 }], measure: "hold",
     };
     vi.mocked(api.exercises).mockResolvedValue([plank]);
     sessionStorage.setItem("ascend.pendingExercise", JSON.stringify({ id: 39, section: "calisthenics" }));
@@ -215,7 +215,7 @@ describe("Training page", () => {
   it("bodyweight moves start at no added load, and an unlocking set shows the Skill acquired moment", async () => {
     const pullup: Exercise = {
       id: 3, name: "Pull-up", equipment: "bodyweight", section: "calisthenics", met: null, time_based: false,
-      muscles: [{ muscle: "lats", weight: 1 }], measure: "reps",
+      muscles: [{ muscle: "latissimus_dorsi", weight: 1 }], measure: "reps",
     };
     vi.mocked(api.exercises).mockResolvedValue([pullup]);
     sessionStorage.setItem("ascend.pendingExercise", JSON.stringify({ id: 3, section: "calisthenics" }));
@@ -282,7 +282,7 @@ describe("Training page", () => {
   });
 
   it("pre-fills a hold with last time's seconds", async () => {
-    const plank = { id: 30, name: "Plank", equipment: "body only", section: "calisthenics", met: null, time_based: false, measure: "hold", muscles: [{ muscle: "abs", weight: 1 }] } as Exercise;
+    const plank = { id: 30, name: "Plank", equipment: "body only", section: "calisthenics", met: null, time_based: false, measure: "hold", muscles: [{ muscle: "rectus_abdominis", weight: 1 }] } as Exercise;
     vi.mocked(api.exercises).mockResolvedValue([plank]);
     vi.mocked(api.previousSession).mockResolvedValue({
       workout_id: 3, day: "2026-10-18", source: "app",

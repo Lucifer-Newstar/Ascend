@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { ExerciseArt } from "./ExerciseArt";
 
-const base = { name: "Front Lever", section: "calisthenics" as const, muscles: [{ muscle: "lats", weight: 1 }] };
+const base = { name: "Front Lever", section: "calisthenics" as const, muscles: [{ muscle: "latissimus_dorsi", weight: 1 }, { muscle: "teres_major", weight: 0.75 }] };
 
 describe("ExerciseArt", () => {
   it("shows the bundled photo when there is one", () => {
@@ -16,6 +16,8 @@ describe("ExerciseArt", () => {
     render(<ExerciseArt exercise={{ ...base, image: null }} />);
     const tile = screen.getByTestId("exercise-tile");
     expect(tile.querySelector("svg")).not.toBeNull();
+    // the lats sit on the back: the tile draws the back view with them filled
+    expect(tile.querySelectorAll('path[data-key="latissimus_dorsi"]').length).toBeGreaterThan(0);
     expect(tile).toHaveTextContent("Lats");
   });
 

@@ -123,7 +123,10 @@ def test_allow_once_researches_without_turning_the_setting_on(client, no_ai, web
     assert names[:2] == ["spoto press", "Spoto Press"]
     p = a["proposal"]
     muscles = {m["muscle"]: m["weight"] for m in p["muscles"]}
-    assert muscles == {"lower_chest": 1.0, "upper_chest": 0.5, "triceps": 0.5, "front_delts": 0.5}
+    # wger's coarse regions, split into heads by muscle-map-v1 (a flat press: sternal head first)
+    assert muscles["pec_major_sternal"] == 1.0
+    assert {"pec_major_clavicular", "triceps_lateral", "deltoid_anterior"} <= set(muscles)
+    assert max(w for k, w in muscles.items() if k != "pec_major_sternal") < 1.0
     assert p["equipment"] == "barbell" and a["field_sources"]["equipment"] == "wger"
     assert a["confidence"]["muscles"] == "high"
     r = a["research"]
@@ -133,7 +136,8 @@ def test_allow_once_researches_without_turning_the_setting_on(client, no_ai, web
     assert by_field["equipment"]["url"] == "https://wger.de/en/exercise/77/view/"
     assert by_field["equipment"]["offline_value"] == "Other"
     assert by_field["equipment"]["value"] == "Barbell"
-    assert by_field["muscles"]["value"].startswith("Lower chest")
+    assert by_field["muscles"]["value"].startswith("Mid/lower chest (sternal head) (also ")
+    assert "more)" in by_field["muscles"]["value"]  # small helpers are counted, not listed
     assert by_field["equipment"]["conflict"] is True
     # The offline guess travels with it, so the user can keep it instead.
     assert a["offline"]["equipment"] == "other" and a["offline_sources"]["equipment"] == "rules"

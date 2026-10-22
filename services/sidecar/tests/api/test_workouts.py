@@ -10,7 +10,7 @@ def exercise_id(client, name):
 def test_exercise_search_returns_muscle_weights(client):
     squat = client.get("/exercises", params={"q": "back squat"}).json()[0]
     assert squat["muscles"][0]["weight"] == 1.0
-    assert {m["muscle"] for m in squat["muscles"]} >= {"quads", "glutes"}
+    assert {m["muscle"] for m in squat["muscles"]} >= {"vastus_lateralis", "gluteus_maximus"}
 
 
 def test_log_sets_awards_xp_and_detects_pr(client, profile, clock):
@@ -49,7 +49,7 @@ def test_finish_awards_session_xp_and_updates_muscles(client, profile, clock):
     assert r.json()["hard_sets"] == 4
     # 20 base + 0.5 x 40 min = 40, x 1.02 streak bonus (today is now an active day) = 41
     assert r.json()["xp_awarded"] == 41
-    quads = next(m for m in client.get("/muscles").json() if m["key"] == "quads")
+    quads = next(m for m in client.get("/muscles").json() if m["key"] == "vastus_lateralis")
     assert quads["es_7d"] == 4.0
     assert quads["status"] == "recovering"
 

@@ -57,7 +57,7 @@ def test_dashboard_has_three_rings_quest_and_muscles(client, profile):
     assert set(d["rings"]) == {"tasks", "kcal_in", "kcal_out"}
     assert len(d["game"]["quest"]) == 3
     assert d["game"]["xp"]["rank"] == "E"
-    assert len(d["muscles"]) == 19
+    assert len(d["muscles"]) == 54  # taxonomy v2
 
 
 def test_meals_quest_item_completes_automatically(client, profile):

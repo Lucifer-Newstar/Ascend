@@ -40,6 +40,7 @@ from app.modules.progress.schemas import (
     SettingsIn,
     SettingsOut,
 )
+from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 from app.modules.workouts.models import Workout
 
 router = APIRouter(tags=["progress"])
@@ -106,13 +107,20 @@ def put_settings(body: SettingsIn, db: Session = Depends(get_db)) -> SettingsOut
     return service.update_settings(db, body)
 
 
+_TAXONOMY_FIELDS = ("region", "parent", "deep", "readiness_only")
+
+
 def _muscles(db: Session, now: datetime) -> list[MuscleStateOut]:
-    return [
-        MuscleStateOut(
-            **{k: getattr(s, k) for k in MuscleStateOut.model_fields if k != "algo_version"}
-        )
-        for s in recovery_service.states(db, now)
-    ]
+    out = []
+    for s in recovery_service.states(db, now):
+        m = MUSCLE_BY_KEY[s.key]
+        fields = {
+            k: getattr(s, k)
+            for k in MuscleStateOut.model_fields
+            if k != "algo_version" and k not in _TAXONOMY_FIELDS
+        }
+        out.append(MuscleStateOut(**fields, **{k: getattr(m, k) for k in _TAXONOMY_FIELDS}))
+    return out
 
 
 @router.get("/muscles", response_model=list[MuscleStateOut])

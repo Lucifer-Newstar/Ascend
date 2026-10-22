@@ -8,7 +8,14 @@ from hypothesis import strategies as st
 from app.modules.intelligence import recovery as rec
 
 NOW = datetime(2026, 10, 20, 18, 0)
-MUSCLE_KEYS = ["lower_chest", "triceps", "quads", "lats", "abs", "calves"]
+MUSCLE_KEYS = [
+    "pec_major_sternal",
+    "triceps_lateral",
+    "vastus_lateralis",
+    "latissimus_dorsi",
+    "rectus_abdominis",
+    "gastrocnemius",
+]
 
 set_strategy = st.builds(
     lambda hours, ms, kind, reps, w, rpe, dur, ref: rec.SetInput(
@@ -72,7 +79,7 @@ def test_waiting_never_lowers_readiness(sets, hours) -> None:
 @given(st.floats(1, 10), st.floats(1, 10))
 def test_harder_sets_dose_more(rpe_a, rpe_b) -> None:
     lo, hi = sorted([rpe_a, rpe_b])
-    base = {"at": NOW, "muscles": {"quads": 1.0}, "reps": 8, "weight_kg": 80.0}
+    base = {"at": NOW, "muscles": {"vastus_lateralis": 1.0}, "reps": 8, "weight_kg": 80.0}
     assert rec.dose(rec.SetInput(rpe=lo, **base)).es <= rec.dose(rec.SetInput(rpe=hi, **base)).es
 
 

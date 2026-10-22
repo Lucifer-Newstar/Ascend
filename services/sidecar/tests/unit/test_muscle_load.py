@@ -30,36 +30,38 @@ def test_decay_matches_plan_worked_example():
 def test_no_data_when_nothing_logged():
     states = compute_states([], NOW)
     assert all(s.status == "no_data" for s in states)
-    assert len(states) == 19
+    assert len(states) == 54  # taxonomy v2
 
 
 def test_hard_session_yesterday_is_recovering():
-    c = [Contribution("quads", 1.0, NOW - timedelta(hours=12)) for _ in range(8)]
-    quads = state(compute_states(c, NOW), "quads")
+    c = [Contribution("vastus_lateralis", 1.0, NOW - timedelta(hours=12)) for _ in range(8)]
+    quads = state(compute_states(c, NOW), "vastus_lateralis")
     assert quads.status == "recovering"
     assert quads.readiness < 0.7
     assert quads.ready_at is not None and quads.ready_at > NOW
 
 
 def test_light_old_volume_is_under():
-    c = [Contribution("biceps", 1.0, NOW - timedelta(days=5))]
-    assert state(compute_states(c, NOW), "biceps").status == "under"
+    c = [Contribution("biceps_long", 1.0, NOW - timedelta(days=5))]
+    assert state(compute_states(c, NOW), "biceps_long").status == "under"
 
 
 def test_volume_inside_band_and_recovered_is_optimal():
     c = [
-        Contribution("biceps", 1.0, NOW - timedelta(days=d, hours=1))
+        Contribution("biceps_long", 1.0, NOW - timedelta(days=d, hours=1))
         for d in range(1, 6)
         for _ in range(2)
     ]
-    assert state(compute_states(c, NOW), "biceps").status == "optimal"
+    assert state(compute_states(c, NOW), "biceps_long").status == "optimal"
 
 
 def test_too_much_weekly_volume_is_over():
     c = [
-        Contribution("calves", 1.0, NOW - timedelta(days=d)) for d in range(1, 7) for _ in range(3)
+        Contribution("gastrocnemius", 1.0, NOW - timedelta(days=d))
+        for d in range(1, 7)
+        for _ in range(3)
     ]
-    assert state(compute_states(c, NOW), "calves").status == "over"
+    assert state(compute_states(c, NOW), "gastrocnemius").status == "over"
 
 
 def test_worst_status_precedence():

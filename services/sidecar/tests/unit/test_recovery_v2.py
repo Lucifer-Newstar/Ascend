@@ -7,7 +7,12 @@ import pytest
 from app.modules.intelligence import recovery as rec
 
 NOW = datetime(2026, 10, 20, 18, 0)
-BENCH = {"lower_chest": 1.0, "upper_chest": 0.5, "front_delts": 0.5, "triceps": 0.5}
+BENCH = {
+    "pec_major_sternal": 1.0,
+    "pec_major_clavicular": 0.5,
+    "deltoid_anterior": 0.5,
+    "triceps_lateral": 0.5,
+}
 
 
 def s(hours_ago: float, **kw: object) -> rec.SetInput:
@@ -56,21 +61,21 @@ def test_volume_rules() -> None:
 def test_dose_is_weight_times_intensity_times_volume() -> None:
     c = rec.contributions([s(0, rpe=7.0)])  # RIR 3 -> I = 0.9
     by = {x.muscle: x.es for x in c}
-    assert by["lower_chest"] == pytest.approx(0.9)
-    assert by["triceps"] == pytest.approx(0.45)
+    assert by["pec_major_sternal"] == pytest.approx(0.9)
+    assert by["triceps_lateral"] == pytest.approx(0.45)
 
 
 def test_timed_bouts_keep_the_load_time_v1_effort() -> None:
-    run = s(0, kind="time", duration_s=1800, rpe=7.0, muscles={"calves": 1.0})
+    run = s(0, kind="time", duration_s=1800, rpe=7.0, muscles={"gastrocnemius": 1.0})
     assert rec.dose(run).es == pytest.approx(3.0)
-    easy = s(0, kind="time", duration_s=1800, rpe=5.5, muscles={"calves": 1.0})
+    easy = s(0, kind="time", duration_s=1800, rpe=5.5, muscles={"gastrocnemius": 1.0})
     assert rec.dose(easy).es == pytest.approx(1.5)
 
 
 def test_one_half_life_halves_the_fatigue() -> None:
     # lower chest: half-life 36 h, capacity 10; one RPE-7 set = 0.9 ES
-    fresh = state(rec.compute([s(0, rpe=7.0)], NOW), "lower_chest")
-    later = state(rec.compute([s(36, rpe=7.0)], NOW), "lower_chest")
+    fresh = state(rec.compute([s(0, rpe=7.0)], NOW), "pec_major_sternal")
+    later = state(rec.compute([s(36, rpe=7.0)], NOW), "pec_major_sternal")
     assert fresh.fatigue == pytest.approx(0.9)
     assert later.fatigue == pytest.approx(0.45)
     assert later.readiness == pytest.approx(1 - 0.045)
@@ -78,7 +83,7 @@ def test_one_half_life_halves_the_fatigue() -> None:
 
 def test_personal_k_stretches_the_half_life() -> None:
     k = {"Push": 1.5}
-    m = state(rec.compute([s(54, rpe=7.0)], NOW, k), "lower_chest")
+    m = state(rec.compute([s(54, rpe=7.0)], NOW, k), "pec_major_sternal")
     assert m.half_life_h == pytest.approx(54.0)
     assert m.fatigue == pytest.approx(0.45)
     assert m.k == 1.5
@@ -87,7 +92,7 @@ def test_personal_k_stretches_the_half_life() -> None:
 
 
 def test_k_is_clamped() -> None:
-    m = state(rec.compute([s(1)], NOW, {"Push": 9.0}), "lower_chest")
+    m = state(rec.compute([s(1)], NOW, {"Push": 9.0}), "pec_major_sternal")
     assert m.k == rec.K_MAX
 
 
@@ -102,7 +107,7 @@ def test_checkin_modifier() -> None:
 
 def test_status_and_ready_at() -> None:
     sets = [s(0, rpe=9.0) for _ in range(8)]  # 8 x 1.0 ES on the lower chest, just now
-    m = state(rec.compute(sets, NOW), "lower_chest")
+    m = state(rec.compute(sets, NOW), "pec_major_sternal")
     assert m.fatigue == pytest.approx(8.0)
     assert m.readiness == pytest.approx(0.2)
     assert m.status == "recovering"
@@ -115,9 +120,11 @@ def test_status_and_ready_at() -> None:
 def test_no_data_and_future_sets() -> None:
     states = rec.compute([s(-5)], NOW)  # logged after "now"
     assert all(m.status == "no_data" for m in states)
-    assert len(states) == 19
+    assert len(states) == 54  # taxonomy v2
 
 
 def test_top_sets_explain_the_fatigue() -> None:
-    m = state(rec.compute([s(2, exercise="Bench"), s(30, exercise="Dip")], NOW), "lower_chest")
+    m = state(
+        rec.compute([s(2, exercise="Bench"), s(30, exercise="Dip")], NOW), "pec_major_sternal"
+    )
     assert [t[0] for t in m.top_sets] == ["Bench", "Dip"]

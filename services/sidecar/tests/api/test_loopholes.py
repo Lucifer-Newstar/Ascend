@@ -152,16 +152,25 @@ def test_custom_exercises_cannot_game_muscle_quests_or_clash(client):
     base = {
         "name": "Everything Press", "section": "gym", "equipment": "barbell", "measure": "reps",
         "pattern": "push",
-        "muscles": [{"muscle": m, "weight": 1} for m in ("quads", "lats", "abs", "glutes")],
+        "muscles": [{"muscle": m, "weight": 1} for m in (
+            "vastus_lateralis", "latissimus_dorsi", "rectus_abdominis",
+            "gluteus_maximus", "biceps_long",
+        )],
     }  # fmt: skip
     r = client.post("/exercises", json=base)
-    assert r.status_code == 422 and "at most 3 primary" in r.text
+    assert r.status_code == 422 and "at most 4 primary" in r.text
     cardio_reps = dict(
-        base, name="Odd Run", section="cardio", muscles=[{"muscle": "quads", "weight": 1}]
+        base,
+        name="Odd Run",
+        section="cardio",
+        muscles=[{"muscle": "vastus_lateralis", "weight": 1}],
     )
     assert client.post("/exercises", json=cardio_reps).status_code == 422
     clash = dict(
-        base, name="My Press", muscles=[{"muscle": "triceps", "weight": 1}], aliases=["Pull-up"]
+        base,
+        name="My Press",
+        muscles=[{"muscle": "triceps_lateral", "weight": 1}],
+        aliases=["Pull-up"],
     )
     assert client.post("/exercises", json=clash).status_code == 409
 

@@ -35,7 +35,7 @@ physical. The rules: **quick, quiet, compositor-only, and optional.**
 | Set logged, streak flame, skeleton shimmer, page transitions, card hover | Small confirmations and continuity | General platform conventions |
 
 No artwork, icons or code were taken from these products. Body artwork is
-react-muscle-highlighter (MIT, see the README credits).
+ASCEND's own body-map artwork (v8; react-muscle-highlighter up to v7).
 
 ## Building blocks
 

@@ -713,11 +713,26 @@ components:
           type: number
           title: Readiness Population
           default: 1.0
-          description: recovery-v2 readiness with the population decay (k = 1), for "population vs you".
         algo_version:
           type: string
           title: Algo Version
           default: recovery-v2
+        region:
+          type: string
+          title: Region
+          default: ''
+        parent:
+          type: string
+          title: Parent
+          default: ''
+        deep:
+          type: boolean
+          title: Deep
+          default: false
+        readiness_only:
+          type: boolean
+          title: Readiness Only
+          default: false
       type: object
       required:
       - key

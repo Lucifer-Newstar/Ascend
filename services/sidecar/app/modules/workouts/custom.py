@@ -39,7 +39,8 @@ from sqlalchemy.orm import Session
 
 from app import __version__
 from app.core.events import EventBus, ExerciseAdded
-from app.modules.progress.taxonomy import MUSCLE_BY_KEY
+from app.modules.progress.muscle_map import refine_legacy
+from app.modules.progress.taxonomy import LEGACY_REGIONS, MUSCLE_BY_KEY
 from app.modules.workouts import library as lib
 from app.modules.workouts.models import Exercise, ExerciseMuscle
 
@@ -245,7 +246,7 @@ def rules_proposal(name: str, equipment_hint: str | None = None) -> Proposal:
         "rules",
         guessed=difficulty_guessed,
     )
-    p.put("muscles", muscles, "rules")
+    p.put("muscles", refine_legacy(muscles, name), "rules")
     p.put("rep_low", low, "rules")
     p.put("rep_high", high, "rules")
     return p
@@ -271,7 +272,9 @@ AI_SCHEMA: dict[str, Any] = {
                 "additionalProperties": False,
                 "required": ["region", "role"],
                 "properties": {
-                    "region": {"enum": list(MUSCLE_BY_KEY)},
+                    # The model picks among the 19 coarse regions (reliable for a 4B model);
+                    # refine_legacy then splits them into heads using the name's keywords.
+                    "region": {"enum": list(LEGACY_REGIONS)},
                     "role": {"enum": ["primary", "secondary"]},
                 },
             },
@@ -293,7 +296,7 @@ class _AiMuscle(BaseModel):
     @field_validator("region")
     @classmethod
     def _region(cls, v: str) -> str:
-        if v not in MUSCLE_BY_KEY:
+        if v not in LEGACY_REGIONS:
             raise ValueError("unknown region")
         return v
 
@@ -345,7 +348,7 @@ def ask_model(
     return data
 
 
-def apply_ai(p: Proposal, raw: dict[str, Any]) -> list[str]:
+def apply_ai(p: Proposal, raw: dict[str, Any], name: str = "") -> list[str]:
     """Validate the model's reply field by field; apply what passes. Returns applied keys."""
     try:
         reply = _AiReply.model_validate(raw)
@@ -373,7 +376,7 @@ def apply_ai(p: Proposal, raw: dict[str, Any]) -> list[str]:
         w = 1.0 if m.role == "primary" else 0.5
         muscles[m.region] = max(muscles.get(m.region, 0.0), w)
     if muscles and any(w == 1.0 for w in muscles.values()):
-        p.put("muscles", muscles, "local_ai")
+        p.put("muscles", refine_legacy(muscles, name), "local_ai")
         applied.append("muscles")
     steps = [
         s.strip() for s in reply.instructions if isinstance(s, str) and 3 <= len(s.strip()) <= 200
@@ -614,7 +617,7 @@ def apply_wger(p: Proposal, found: dict[str, Any]) -> list[str]:
             for region, w in regions.items():
                 muscles[region] = max(muscles.get(region, 0.0), w * scale)
     if muscles and any(w == 1.0 for w in muscles.values()):
-        p.put("muscles", muscles, "wger")
+        p.put("muscles", refine_legacy(muscles, str(tr.get("name") or "")), "wger")
         applied.append("muscles")
     equipment = [
         WGER_EQUIPMENT.get(str(e.get("name")), "") for e in info.get("equipment", []) or []
@@ -699,8 +702,14 @@ def _display(key: str, value: Any) -> str:
     if key == "muscles" and isinstance(value, dict):
         names = {k: MUSCLE_BY_KEY[k].label if k in MUSCLE_BY_KEY else k for k in value}
         primary = [names[k] for k, w in value.items() if w >= 1.0]
-        secondary = [names[k] for k, w in value.items() if w < 1.0]
+        # taxonomy v2 lists many small helpers; the report names the main ones
+        secondary = [
+            names[k] for k, w in sorted(value.items(), key=lambda kv: -kv[1]) if 0.5 <= w < 1.0
+        ]
+        minor = sum(1 for w in value.values() if w < 0.5)
         text = ", ".join(primary)
+        if minor:
+            secondary.append(f"{minor} more")
         return text + (f" (also {', '.join(secondary)})" if secondary else "")
     if key == "instructions" and isinstance(value, list):
         return f"{len(value)} step{'s' if len(value) != 1 else ''}"
@@ -790,7 +799,7 @@ def analyse(
     else:
         try:
             raw = ask_model(ollama_host, model, name, notes)
-            applied = apply_ai(p, raw)
+            applied = apply_ai(p, raw, name)
             ai = AiResult(
                 "ok" if applied else "invalid", "" if applied else "no valid fields", model, applied
             )
