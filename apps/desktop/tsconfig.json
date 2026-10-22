@@ -16,5 +16,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "vite.config.mts"]
+  "include": ["src", "electron/**/*.test.ts", "vite.config.mts"]
 }

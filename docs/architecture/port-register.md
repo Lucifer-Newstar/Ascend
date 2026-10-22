@@ -40,12 +40,19 @@ Read in `services/sidecar/app/core/config.py`.
 | `ASCEND_PORT` | main | `8765` | Port to listen on (main always sets a random one) |
 | `ASCEND_DATA_DIR` | main | `%APPDATA%\ASCEND` (`~/.ascend` elsewhere) | Database, photos, logs |
 | `ASCEND_DB_URL` | tests | derived from data dir | Override the SQLite URL |
-| `ASCEND_HOST` | — | `127.0.0.1` | Bind host (never change in release) |
+| `ASCEND_HOST` | — | `127.0.0.1` | Bind host for `python -m app` (the dev container uses `0.0.0.0`); the packaged sidecar ignores it and always binds `127.0.0.1` |
 | `ASCEND_DEV` | `--dev` flag | unset | `1` enables dev CORS |
 | `ASCEND_COACH_MODEL` | settings | `qwen3:4b` | Ollama model for the coach |
 | `OLLAMA_HOST` | user / settings | `http://127.0.0.1:11434` | Ollama URL |
 | `ASCEND_DEV_METRICS` | dev only | unset | `1` enables `/metrics` (Phase 2) |
 | *(token)* | main → **stdin** | — | First line on stdin; the sidecar keeps it in process memory. `--dev` uses `dev` |
+
+Electron main does not pass its own environment through untouched (`sidecarEnv` in
+`electron/sidecar.ts`): every inherited `ASCEND_*` variable except `ASCEND_COACH_MODEL`
+is dropped, as are `NODE_OPTIONS` and `ELECTRON_RUN_AS_NODE` (and `PYTHON*` in the
+packaged app); it then sets `ASCEND_PORT` and `ASCEND_DATA_DIR`. The packaged sidecar also
+ignores `ASCEND_TOKEN`, `ASCEND_HOST`, `ASCEND_DB_URL` and `ASCEND_DEV` and refuses
+`--dev`, so a leftover `ASCEND_TOKEN=dev` or `ASCEND_HOST=0.0.0.0` can't weaken the app.
 
 ## 4. IPC channels (renderer ↔ main)
 

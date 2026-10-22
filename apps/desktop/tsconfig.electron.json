@@ -16,5 +16,7 @@
     "sourceMap": true,
     "types": ["node"]
   },
-  "include": ["electron"]
+  "include": ["electron"],
+  // Tests run under Vitest (type-checked with tsconfig.json), never shipped.
+  "exclude": ["electron/**/*.test.ts"]
 }

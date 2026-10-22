@@ -18,7 +18,7 @@ export default defineConfig({
     // Pure logic tests run in node; component tests (*.test.tsx) get a DOM from jsdom.
     // (Vitest 3+ dropped environmentMatchGlobs; projects are the replacement.)
     projects: [
-      { extends: true, test: { name: "logic", environment: "node", include: ["src/**/*.test.ts"] } },
+      { extends: true, test: { name: "logic", environment: "node", include: ["src/**/*.test.ts", "electron/**/*.test.ts"] } },
       { extends: true, test: { name: "dom", environment: "jsdom", include: ["src/**/*.test.tsx"] } },
     ],
   },
