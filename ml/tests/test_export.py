@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import pickle
 import random
 from pathlib import Path
 
+import pytest
 import torch
 
 from common import TEST_OWN
@@ -42,3 +44,17 @@ def test_export_writes_manifest_and_passes_parity(tmp_path: Path) -> None:
     assert m["classes"] == ["dosa", "idli"]
     on_disk = json.loads((models_dir / "models-manifest.json").read_text())
     assert on_disk["sha256"] == m["sha256"] and len(m["sha256"]) == 64
+
+
+class _NotAWeight:
+    """Stands in for any object a tampered checkpoint might smuggle in."""
+
+
+def test_export_refuses_a_checkpoint_that_carries_objects(tmp_path: Path) -> None:
+    # weights_only=True: only tensors and plain containers load; anything else (which a
+    # replaced DVC artefact could use to run code) is refused before export starts.
+    models_dir = tmp_path / "models"
+    models_dir.mkdir()
+    torch.save({"classes": ["dosa"], "extra": _NotAWeight()}, models_dir / "food_clf.pt")
+    with pytest.raises(pickle.UnpicklingError):
+        export(models_dir, tmp_path / "processed", version="0.0.0-test")
