@@ -6,8 +6,11 @@
 # Electron code, then electron-builder packs both into an NSIS installer.
 #
 # On a version tag the installer is also published to a GitHub Release (the CD
-# step), so anyone can download ASCEND-Setup from the repo's Releases page.
-# On main and manual runs it stays a workflow artifact (Actions -> run -> Artifacts).
+# step, job "publish"), so anyone can download ASCEND-Setup from the repo's Releases
+# page. On main and manual runs it stays a workflow artifact (Actions -> run -> Artifacts).
+#
+# Permissions: the workflow token is read-only. Only the publish job, which runs on
+# version tags alone and executes no repository code, gets contents: write.
 name: Release (Windows installer)
 
 on:
@@ -27,7 +30,7 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 permissions:
-  contents: write   # needed to create the GitHub Release on version tags
+  contents: read
 
 jobs:
   windows-installer:
@@ -81,15 +84,26 @@ jobs:
           if-no-files-found: error
           retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 90 || 14 }}
 
-      - name: Publish GitHub Release (version tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
+  publish:
+    name: Publish GitHub Release
+    needs: windows-installer
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the Release and upload the installer to it
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: ascend-windows-installer-${{ github.ref_name }}-${{ github.sha }}
+          path: installer
+
+      - name: Create or update the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" apps/desktop/release/*.exe \
+          gh release create "${{ github.ref_name }}" installer/*.exe \
             --repo "${{ github.repository }}" \
             --title "ASCEND ${{ github.ref_name }}" \
             --generate-notes \
-            || gh release upload "${{ github.ref_name }}" apps/desktop/release/*.exe \
+            || gh release upload "${{ github.ref_name }}" installer/*.exe \
                  --repo "${{ github.repository }}" --clobber
