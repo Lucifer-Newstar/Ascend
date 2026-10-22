@@ -271,11 +271,11 @@ def ready_at(
 def classify(m: Muscle, es_7d: float, readiness: float, has_data: bool) -> Status:
     if not has_data:
         return "no_data"
-    if es_7d > m.weekly_high * OVER_FACTOR:
+    if not m.readiness_only and es_7d > m.weekly_high * OVER_FACTOR:
         return "over"
     if readiness < RECOVERING_BELOW:
         return "recovering"
-    if es_7d < m.weekly_low:
+    if not m.readiness_only and es_7d < m.weekly_low:
         return "under"
     return "optimal"
 

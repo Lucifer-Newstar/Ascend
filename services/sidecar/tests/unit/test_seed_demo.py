@@ -64,7 +64,7 @@ def test_seed_demo_wipe_removes_user_added_exercises(
         body = {
             "name": "Banded Pallof Hold", "section": "gym", "equipment": "band",
             "measure": "hold", "pattern": "isometric",
-            "muscles": [{"muscle": "obliques", "weight": 1}],
+            "muscles": [{"muscle": "external_obliques", "weight": 1}],
         }  # fmt: skip
         assert c.post("/exercises", json=body).status_code == 201
     seed_demo.seed(days=3, wipe=True, history_weeks=0)

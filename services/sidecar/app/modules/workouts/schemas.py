@@ -181,7 +181,7 @@ class CustomExerciseIn(StrictIn):
         "carry", "olympic", "locomotion", "mobility", "other",
     ]  # fmt: skip
     difficulty: Literal["beginner", "intermediate", "expert"] | None = None
-    muscles: list[MuscleWeight] = Field(default=[], max_length=8)
+    muscles: list[MuscleWeight] = Field(default=[], max_length=40)
     rep_low: int | None = Field(default=None, ge=1, le=600)
     rep_high: int | None = Field(default=None, ge=1, le=600)
     met: float | None = Field(default=None, ge=1.0, le=23.0)
@@ -205,10 +205,11 @@ class CustomExerciseIn(StrictIn):
             seen.add(m.muscle)
         if self.section not in ("meditation", "flexibility") and not self.muscles:
             raise ValueError("pick at least one muscle region")
-        if sum(1 for m in self.muscles if m.weight >= 1.0) > 3:
-            # One set counts as a hard set for every primary muscle; more than 3 would let
-            # a single custom exercise tick every muscle quest at once.
-            raise ValueError("at most 3 primary muscles; mark the rest as secondary")
+        if sum(1 for m in self.muscles if m.weight >= 1.0) > 4:
+            # One set counts as a hard set for every primary muscle; more than 4 (the most
+            # any library exercise has under taxonomy v2) would let a single custom exercise
+            # tick every muscle quest at once.
+            raise ValueError("at most 4 primary muscles; mark the rest as secondary")
         timed = self.section in ("cardio", "martial_arts", "flexibility", "meditation")
         if timed != (self.measure == "time"):
             raise ValueError(

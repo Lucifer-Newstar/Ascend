@@ -86,11 +86,14 @@ def test_model_down_or_ai_off_uses_the_template(client, profile, clock, monkeypa
 def test_muscle_readiness_explanation(client, profile, clock, monkeypatch):
     bench = exercise_id(client, "Barbell Bench Press")
     session(client, clock, bench, [(60, 8, 9)] * 3, days_later=0.5)
-    e = client.get("/intelligence/recovery/lower_chest/explanation").json()
+    e = client.get("/intelligence/recovery/pec_major_sternal/explanation").json()
     assert e["phrasing"] == "template"
-    assert e["text"].startswith("Lower chest is ") and "effective sets of fatigue" in e["text"]
+    assert (
+        e["text"].startswith("Mid/lower chest (sternal head) is ")
+        and "effective sets of fatigue" in e["text"]
+    )
     assert "readiness pct:" in e["facts"]
     assert client.get("/intelligence/recovery/elbows/explanation").status_code == 404
     clock.now += timedelta(days=30)
-    rested = client.get("/intelligence/recovery/lower_chest/explanation").json()
+    rested = client.get("/intelligence/recovery/pec_major_sternal/explanation").json()
     assert "100% ready" in rested["text"] or "fully recovered" in rested["text"]

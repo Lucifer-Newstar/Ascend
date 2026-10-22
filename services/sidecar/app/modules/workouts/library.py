@@ -28,6 +28,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from app.modules.progress.muscle_map import map_detailed
+
 DATA_FILE = Path(__file__).with_name("library_data") / "free_exercise_db.json"
 FEDB_SOURCE = "free-exercise-db"
 IMAGE_DIR = "exercises"  # relative to the renderer's index.html
@@ -257,6 +259,8 @@ class LibraryEntry:
 
 
 def map_muscles(name: str, primary: list[str], secondary: list[str]) -> dict[str, float]:
+    """v7 mapping onto the 19 old regions (taxonomy v1). Kept for migration 0010 so it still
+    writes what it always wrote; v8 maps with progress/muscle_map.map_detailed."""
     lower = name.lower()
     out: dict[str, float] = {}
 
@@ -357,18 +361,20 @@ def load_fedb() -> dict[str, Any]:
     return data
 
 
-def fedb_entry(raw: dict[str, Any]) -> LibraryEntry:
+def fedb_entry(raw: dict[str, Any], legacy: bool = False) -> LibraryEntry:
     name = str(raw["name"]).strip()
     source_id = str(raw["id"])
     section = FEDB_SECTION_OVERRIDE.get(source_id) or map_section(
         raw.get("category"), raw.get("equipment")
     )
     measure = map_measure(section, raw.get("force"), name)
-    muscles = (
-        {}
-        if section == "flexibility"
-        else map_muscles(name, list(raw.get("primary") or []), list(raw.get("secondary") or []))
-    )
+    primary, secondary = list(raw.get("primary") or []), list(raw.get("secondary") or [])
+    if section == "flexibility":
+        muscles: dict[str, float] = {}
+    elif legacy:
+        muscles = map_muscles(name, primary, secondary)
+    else:
+        muscles = map_detailed(name, primary, secondary, raw.get("category"))
     low, high = default_range(measure)
     level = raw.get("level")
     return LibraryEntry(
@@ -394,8 +400,9 @@ def fedb_entry(raw: dict[str, Any]) -> LibraryEntry:
     )
 
 
-def fedb_entries() -> list[LibraryEntry]:
-    return [fedb_entry(raw) for raw in load_fedb()["exercises"]]
+def fedb_entries(legacy: bool = False) -> list[LibraryEntry]:
+    """Every free-exercise-db entry; legacy=True maps muscles onto the v7 regions."""
+    return [fedb_entry(raw, legacy) for raw in load_fedb()["exercises"]]
 
 
 # --- search and fuzzy matching ---------------------------------------------------------

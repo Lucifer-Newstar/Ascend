@@ -29,10 +29,13 @@ def test_search_finds_aliases(client):
 
 
 def test_filters_by_muscle_equipment_and_difficulty(client):
-    lats = client.get("/exercises", params={"muscle": "lats", "difficulty": "expert"}).json()
+    lats = client.get(
+        "/exercises", params={"muscle": "latissimus_dorsi", "difficulty": "expert"}
+    ).json()
     assert lats and all(r["difficulty"] == "expert" for r in lats)
     assert all(
-        any(m["muscle"] == "lats" and m["weight"] >= 0.5 for m in r["muscles"]) for r in lats
+        any(m["muscle"] == "latissimus_dorsi" and m["weight"] >= 0.5 for m in r["muscles"])
+        for r in lats
     )
     kb = client.get("/exercises", params={"equipment": "kettlebell"}).json()
     assert kb and all(r["equipment"] == "kettlebell" for r in kb)

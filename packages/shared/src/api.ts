@@ -81,6 +81,12 @@ export interface MuscleState {
   /** recovery-v2 readiness with the population decay (k = 1): "population vs you". */
   readiness_population?: number;
   algo_version?: string;
+  /** taxonomy v2: region (Chest, Back...), the muscle a head belongs to, deep layer, and
+   * whether the muscle only shows recovery (no weekly set target). */
+  region?: string;
+  parent?: string;
+  deep?: boolean;
+  readiness_only?: boolean;
 }
 
 /** GET /muscles/activity?days=1..30: per-muscle load over a window (map hover card). */

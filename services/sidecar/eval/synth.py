@@ -28,12 +28,16 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Literal
 
+from app.modules.progress.muscle_map import translate_legacy
 from app.modules.progress.taxonomy import MUSCLE_BY_KEY, MUSCLES
 from app.modules.workouts.seed import EXERCISES
 
 START = datetime(2025, 1, 6, 0, 0)  # a Monday; the date itself does not matter
 GROUPS = tuple(dict.fromkeys(m.group for m in MUSCLES))
-WEIGHTS: dict[str, dict[str, float]] = {name: dict(ms) for name, _, ms in EXERCISES}
+# The seed's hand-made weights are v7 regions; translate them like migration 0018 does.
+WEIGHTS: dict[str, dict[str, float]] = {
+    name: translate_legacy(dict(ms)) for name, _, ms in EXERCISES
+}
 EQUIPMENT: dict[str, str] = {name: eq for name, eq, _ in EXERCISES}
 
 # Splits used by synthetic users: exercise names from the seeded library.

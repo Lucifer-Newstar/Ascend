@@ -94,11 +94,11 @@ def _ready_at(fatigue: float, muscle: Muscle, now: datetime) -> datetime | None:
 def classify(muscle: Muscle, es_7d: float, readiness: float, has_data: bool) -> Status:
     if not has_data:
         return "no_data"
-    if es_7d > muscle.weekly_high * OVER_FACTOR:
+    if not muscle.readiness_only and es_7d > muscle.weekly_high * OVER_FACTOR:
         return "over"
     if readiness < RECOVERING_BELOW:
         return "recovering"
-    if es_7d < muscle.weekly_low:
+    if not muscle.readiness_only and es_7d < muscle.weekly_low:
         return "under"
     return "optimal"
 

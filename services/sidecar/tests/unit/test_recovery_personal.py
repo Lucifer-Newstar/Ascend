@@ -12,7 +12,7 @@ from app.modules.intelligence import recovery as rec
 from eval import synth
 
 T0 = datetime(2026, 1, 5, 18, 0)
-BENCH = {"lower_chest": 1.0, "triceps": 0.5}
+BENCH = {"pec_major_sternal": 1.0, "triceps_lateral": 0.5}
 
 
 def inputs(sessions: list[synth.Session]) -> tuple[list[rec.SetInput], list[personal.SessionPerf]]:
@@ -44,7 +44,7 @@ def test_session_e1rm_uses_rir() -> None:
 
 def test_primary_group() -> None:
     assert personal.primary_group(BENCH) == "Push"
-    assert personal.primary_group({"quads": 1.0, "glutes": 1.0}) == "Legs"
+    assert personal.primary_group({"vastus_lateralis": 1.0, "gluteus_maximus": 1.0}) == "Legs"
     assert personal.primary_group({"unknown": 1.0}) is None
 
 
@@ -85,7 +85,7 @@ def test_recovers_a_known_k_on_a_frequent_synthetic_lifter() -> None:
 def test_k_is_always_in_range(points) -> None:
     perfs = [personal.SessionPerf("Bench", T0 + timedelta(days=d), e, BENCH) for d, e, _ in points]
     contribs = [
-        rec.Contribution("lower_chest", es, T0 + timedelta(days=d, hours=-30))
+        rec.Contribution("pec_major_sternal", es, T0 + timedelta(days=d, hours=-30))
         for d, _, es in points
     ]
     for f in personal.fit(perfs, contribs):

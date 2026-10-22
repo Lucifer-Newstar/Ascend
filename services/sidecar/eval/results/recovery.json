@@ -4,393 +4,393 @@
   "days": 365,
   "cohorts": {
     "typical": {
-      "pairs": 97833,
-      "exposures": 26790,
+      "pairs": 191347,
+      "exposures": 27676,
       "methods": {
         "fixed 48 h": {
           "pearson_r": 0.579,
-          "spearman_rho": 0.603,
-          "mae": 0.127,
+          "spearman_rho": 0.606,
+          "mae": 0.1296,
           "calibration": {
-            "ece": 0.1202,
+            "ece": 0.1212,
             "bins": [
               {
                 "bin": "0.2-0.3",
-                "n": 4676,
+                "n": 8804,
                 "mean_pred": 0.252,
-                "mean_true": 0.698
+                "mean_true": 0.677
               },
               {
                 "bin": "0.4-0.5",
-                "n": 6991,
-                "mean_pred": 0.482,
-                "mean_true": 0.743
+                "n": 13253,
+                "mean_pred": 0.48,
+                "mean_true": 0.729
               },
               {
                 "bin": "0.5-0.6",
-                "n": 3335,
-                "mean_pred": 0.518,
-                "mean_true": 0.75
+                "n": 6194,
+                "mean_pred": 0.517,
+                "mean_true": 0.739
               },
               {
                 "bin": "0.6-0.7",
-                "n": 365,
-                "mean_pred": 0.698,
-                "mean_true": 0.763
+                "n": 780,
+                "mean_pred": 0.697,
+                "mean_true": 0.753
               },
               {
                 "bin": "0.7-0.8",
-                "n": 10509,
+                "n": 21138,
                 "mean_pred": 0.745,
-                "mean_true": 0.799
+                "mean_true": 0.786
               },
               {
                 "bin": "0.9-1.0",
-                "n": 71957,
-                "mean_pred": 0.998,
-                "mean_true": 0.907
+                "n": 141178,
+                "mean_pred": 0.997,
+                "mean_true": 0.899
               }
             ]
           },
-          "capacity_pearson_r": 0.293
+          "capacity_pearson_r": 0.238
         },
         "recovery-v2 population": {
-          "pearson_r": 0.907,
+          "pearson_r": 0.917,
           "spearman_rho": 0.911,
-          "mae": 0.0395,
+          "mae": 0.0397,
           "calibration": {
-            "ece": 0.0147,
+            "ece": 0.014,
             "bins": [
               {
                 "bin": "0.0-0.1",
-                "n": 38,
-                "mean_pred": 0.036,
-                "mean_true": 0.279
+                "n": 117,
+                "mean_pred": 0.033,
+                "mean_true": 0.247
               },
               {
                 "bin": "0.1-0.2",
-                "n": 89,
-                "mean_pred": 0.161,
-                "mean_true": 0.386
+                "n": 194,
+                "mean_pred": 0.158,
+                "mean_true": 0.347
               },
               {
                 "bin": "0.2-0.3",
-                "n": 211,
-                "mean_pred": 0.257,
-                "mean_true": 0.434
+                "n": 477,
+                "mean_pred": 0.258,
+                "mean_true": 0.409
               },
               {
                 "bin": "0.3-0.4",
-                "n": 482,
-                "mean_pred": 0.356,
-                "mean_true": 0.492
+                "n": 1436,
+                "mean_pred": 0.357,
+                "mean_true": 0.476
               },
               {
                 "bin": "0.4-0.5",
-                "n": 1402,
+                "n": 3059,
                 "mean_pred": 0.456,
-                "mean_true": 0.553
+                "mean_true": 0.538
               },
               {
                 "bin": "0.5-0.6",
-                "n": 3102,
-                "mean_pred": 0.555,
-                "mean_true": 0.619
+                "n": 6418,
+                "mean_pred": 0.556,
+                "mean_true": 0.612
               },
               {
                 "bin": "0.6-0.7",
-                "n": 5958,
-                "mean_pred": 0.656,
+                "n": 12146,
+                "mean_pred": 0.657,
                 "mean_true": 0.697
               },
               {
                 "bin": "0.7-0.8",
-                "n": 13454,
+                "n": 28043,
                 "mean_pred": 0.756,
-                "mean_true": 0.783
+                "mean_true": 0.78
               },
               {
                 "bin": "0.8-0.9",
-                "n": 28196,
+                "n": 57036,
                 "mean_pred": 0.855,
-                "mean_true": 0.867
+                "mean_true": 0.865
               },
               {
                 "bin": "0.9-1.0",
-                "n": 44901,
-                "mean_pred": 0.951,
-                "mean_true": 0.951
+                "n": 82421,
+                "mean_pred": 0.948,
+                "mean_true": 0.948
               }
             ]
           },
-          "capacity_pearson_r": 0.453
+          "capacity_pearson_r": 0.499
         },
         "recovery-v2 personal": {
-          "pearson_r": 0.915,
-          "spearman_rho": 0.917,
-          "mae": 0.039,
+          "pearson_r": 0.926,
+          "spearman_rho": 0.919,
+          "mae": 0.0402,
           "calibration": {
-            "ece": 0.0193,
+            "ece": 0.0214,
             "bins": [
               {
                 "bin": "0.0-0.1",
-                "n": 54,
-                "mean_pred": 0.038,
-                "mean_true": 0.295
+                "n": 244,
+                "mean_pred": 0.034,
+                "mean_true": 0.279
               },
               {
                 "bin": "0.1-0.2",
-                "n": 101,
-                "mean_pred": 0.158,
-                "mean_true": 0.389
+                "n": 239,
+                "mean_pred": 0.16,
+                "mean_true": 0.367
               },
               {
                 "bin": "0.2-0.3",
-                "n": 235,
-                "mean_pred": 0.257,
-                "mean_true": 0.441
+                "n": 687,
+                "mean_pred": 0.26,
+                "mean_true": 0.426
               },
               {
                 "bin": "0.3-0.4",
-                "n": 601,
-                "mean_pred": 0.358,
-                "mean_true": 0.501
+                "n": 1666,
+                "mean_pred": 0.357,
+                "mean_true": 0.487
               },
               {
                 "bin": "0.4-0.5",
-                "n": 1606,
-                "mean_pred": 0.456,
-                "mean_true": 0.56
+                "n": 3382,
+                "mean_pred": 0.455,
+                "mean_true": 0.553
               },
               {
                 "bin": "0.5-0.6",
-                "n": 3316,
-                "mean_pred": 0.555,
-                "mean_true": 0.627
+                "n": 6913,
+                "mean_pred": 0.554,
+                "mean_true": 0.624
               },
               {
                 "bin": "0.6-0.7",
-                "n": 6218,
+                "n": 13072,
                 "mean_pred": 0.656,
-                "mean_true": 0.705
+                "mean_true": 0.707
               },
               {
                 "bin": "0.7-0.8",
-                "n": 13724,
-                "mean_pred": 0.756,
-                "mean_true": 0.789
+                "n": 29396,
+                "mean_pred": 0.755,
+                "mean_true": 0.788
               },
               {
                 "bin": "0.8-0.9",
-                "n": 28201,
+                "n": 57594,
                 "mean_pred": 0.855,
                 "mean_true": 0.871
               },
               {
                 "bin": "0.9-1.0",
-                "n": 43777,
-                "mean_pred": 0.95,
-                "mean_true": 0.953
+                "n": 78154,
+                "mean_pred": 0.948,
+                "mean_true": 0.951
               }
             ]
           },
-          "capacity_pearson_r": 0.463
+          "capacity_pearson_r": 0.509
         }
       },
-      "k_mae_personal": 0.221,
-      "k_mae_prior": 0.235,
-      "groups_personalised": "174/240"
+      "k_mae_personal": 0.2,
+      "k_mae_prior": 0.218,
+      "groups_personalised": "172/240"
     },
     "frequent": {
-      "pairs": 132790,
-      "exposures": 37940,
+      "pairs": 247676,
+      "exposures": 38104,
       "methods": {
         "fixed 48 h": {
-          "pearson_r": 0.52,
-          "spearman_rho": 0.535,
-          "mae": 0.1932,
+          "pearson_r": 0.552,
+          "spearman_rho": 0.579,
+          "mae": 0.1911,
           "calibration": {
-            "ece": 0.1765,
+            "ece": 0.1774,
             "bins": [
               {
                 "bin": "0.2-0.3",
-                "n": 17052,
+                "n": 31729,
                 "mean_pred": 0.254,
-                "mean_true": 0.67
+                "mean_true": 0.671
               },
               {
                 "bin": "0.4-0.5",
-                "n": 26181,
-                "mean_pred": 0.482,
-                "mean_true": 0.716
+                "n": 47044,
+                "mean_pred": 0.481,
+                "mean_true": 0.717
               },
               {
                 "bin": "0.5-0.6",
-                "n": 11088,
-                "mean_pred": 0.519,
-                "mean_true": 0.725
+                "n": 21094,
+                "mean_pred": 0.52,
+                "mean_true": 0.729
               },
               {
                 "bin": "0.6-0.7",
-                "n": 1134,
+                "n": 2404,
                 "mean_pred": 0.698,
-                "mean_true": 0.757
+                "mean_true": 0.755
               },
               {
                 "bin": "0.7-0.8",
-                "n": 27060,
-                "mean_pred": 0.742,
-                "mean_true": 0.77
+                "n": 48681,
+                "mean_pred": 0.743,
+                "mean_true": 0.771
               },
               {
                 "bin": "0.9-1.0",
-                "n": 50275,
+                "n": 96724,
                 "mean_pred": 0.995,
-                "mean_true": 0.854
+                "mean_true": 0.853
               }
             ]
           },
-          "capacity_pearson_r": 0.46
+          "capacity_pearson_r": 0.506
         },
         "recovery-v2 population": {
-          "pearson_r": 0.848,
-          "spearman_rho": 0.857,
-          "mae": 0.058,
+          "pearson_r": 0.842,
+          "spearman_rho": 0.846,
+          "mae": 0.0562,
           "calibration": {
-            "ece": 0.0218,
+            "ece": 0.023,
             "bins": [
               {
                 "bin": "0.1-0.2",
-                "n": 24,
-                "mean_pred": 0.183,
-                "mean_true": 0.389
+                "n": 40,
+                "mean_pred": 0.185,
+                "mean_true": 0.376
               },
               {
                 "bin": "0.2-0.3",
-                "n": 366,
-                "mean_pred": 0.261,
-                "mean_true": 0.411
+                "n": 520,
+                "mean_pred": 0.262,
+                "mean_true": 0.404
               },
               {
                 "bin": "0.3-0.4",
-                "n": 989,
-                "mean_pred": 0.36,
-                "mean_true": 0.477
+                "n": 1577,
+                "mean_pred": 0.361,
+                "mean_true": 0.475
               },
               {
                 "bin": "0.4-0.5",
-                "n": 4273,
+                "n": 6558,
                 "mean_pred": 0.46,
-                "mean_true": 0.532
+                "mean_true": 0.534
               },
               {
                 "bin": "0.5-0.6",
-                "n": 11825,
-                "mean_pred": 0.556,
-                "mean_true": 0.602
+                "n": 19758,
+                "mean_pred": 0.557,
+                "mean_true": 0.609
               },
               {
                 "bin": "0.6-0.7",
-                "n": 23118,
-                "mean_pred": 0.654,
-                "mean_true": 0.685
+                "n": 44420,
+                "mean_pred": 0.655,
+                "mean_true": 0.689
               },
               {
                 "bin": "0.7-0.8",
-                "n": 37256,
+                "n": 74596,
                 "mean_pred": 0.752,
-                "mean_true": 0.772
+                "mean_true": 0.774
               },
               {
                 "bin": "0.8-0.9",
-                "n": 39607,
-                "mean_pred": 0.847,
-                "mean_true": 0.856
+                "n": 77224,
+                "mean_pred": 0.846,
+                "mean_true": 0.855
               },
               {
                 "bin": "0.9-1.0",
-                "n": 15332,
-                "mean_pred": 0.934,
-                "mean_true": 0.932
+                "n": 22983,
+                "mean_pred": 0.93,
+                "mean_true": 0.929
               }
             ]
           },
-          "capacity_pearson_r": 0.675
+          "capacity_pearson_r": 0.712
         },
         "recovery-v2 personal": {
-          "pearson_r": 0.946,
-          "spearman_rho": 0.949,
-          "mae": 0.0546,
+          "pearson_r": 0.926,
+          "spearman_rho": 0.926,
+          "mae": 0.0515,
           "calibration": {
-            "ece": 0.0485,
+            "ece": 0.0418,
             "bins": [
               {
                 "bin": "0.0-0.1",
-                "n": 281,
-                "mean_pred": 0.039,
-                "mean_true": 0.314
+                "n": 240,
+                "mean_pred": 0.045,
+                "mean_true": 0.304
               },
               {
                 "bin": "0.1-0.2",
-                "n": 351,
-                "mean_pred": 0.159,
-                "mean_true": 0.378
+                "n": 465,
+                "mean_pred": 0.156,
+                "mean_true": 0.372
               },
               {
                 "bin": "0.2-0.3",
-                "n": 1195,
-                "mean_pred": 0.258,
-                "mean_true": 0.422
+                "n": 1457,
+                "mean_pred": 0.259,
+                "mean_true": 0.427
               },
               {
                 "bin": "0.3-0.4",
-                "n": 3272,
-                "mean_pred": 0.356,
-                "mean_true": 0.483
+                "n": 4190,
+                "mean_pred": 0.358,
+                "mean_true": 0.48
               },
               {
                 "bin": "0.4-0.5",
-                "n": 7037,
+                "n": 10573,
                 "mean_pred": 0.456,
-                "mean_true": 0.557
+                "mean_true": 0.552
               },
               {
                 "bin": "0.5-0.6",
-                "n": 13041,
-                "mean_pred": 0.554,
-                "mean_true": 0.635
+                "n": 22673,
+                "mean_pred": 0.555,
+                "mean_true": 0.628
               },
               {
                 "bin": "0.6-0.7",
-                "n": 23763,
-                "mean_pred": 0.654,
-                "mean_true": 0.713
+                "n": 44951,
+                "mean_pred": 0.655,
+                "mean_true": 0.709
               },
               {
                 "bin": "0.7-0.8",
-                "n": 35309,
-                "mean_pred": 0.751,
-                "mean_true": 0.793
+                "n": 71872,
+                "mean_pred": 0.752,
+                "mean_true": 0.789
               },
               {
                 "bin": "0.8-0.9",
-                "n": 34425,
-                "mean_pred": 0.847,
-                "mean_true": 0.873
+                "n": 68868,
+                "mean_pred": 0.846,
+                "mean_true": 0.867
               },
               {
                 "bin": "0.9-1.0",
-                "n": 14116,
-                "mean_pred": 0.934,
-                "mean_true": 0.944
+                "n": 22387,
+                "mean_pred": 0.931,
+                "mean_true": 0.938
               }
             ]
           },
-          "capacity_pearson_r": 0.845
+          "capacity_pearson_r": 0.806
         }
       },
-      "k_mae_personal": 0.138,
-      "k_mae_prior": 0.211,
+      "k_mae_personal": 0.149,
+      "k_mae_prior": 0.209,
       "groups_personalised": "200/240"
     }
   }

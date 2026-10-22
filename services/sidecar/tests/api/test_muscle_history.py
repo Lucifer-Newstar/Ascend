@@ -12,8 +12,8 @@ def test_drilldown_lists_daily_load_contributing_sets_and_suggestion(client, pro
         )
         clock.now += timedelta(minutes=3)
     clock.now += timedelta(days=2)
-    h = client.get("/muscles/quads/history", params={"days": 7}).json()
-    assert h["code"] == "quads" and h["days"] == 7
+    h = client.get("/muscles/vastus_lateralis/history", params={"days": 7}).json()
+    assert h["code"] == "vastus_lateralis" and h["days"] == 7
     assert len(h["daily"]) == 7
     loaded = [d for d in h["daily"] if d["eff_sets"] > 0]
     assert len(loaded) == 1 and loaded[0]["eff_sets"] == 3.0
@@ -28,8 +28,8 @@ def test_drilldown_lists_daily_load_contributing_sets_and_suggestion(client, pro
 
 
 def test_drilldown_month_window_and_validation(client):
-    month = client.get("/muscles/lats/history", params={"days": 30}).json()
+    month = client.get("/muscles/latissimus_dorsi/history", params={"days": 30}).json()
     assert len(month["daily"]) == 30
     assert month["status"] == "no_data"
     assert client.get("/muscles/wings/history").status_code == 404
-    assert client.get("/muscles/lats/history", params={"days": 31}).status_code == 422
+    assert client.get("/muscles/latissimus_dorsi/history", params={"days": 31}).status_code == 422
