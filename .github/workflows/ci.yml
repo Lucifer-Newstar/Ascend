@@ -105,7 +105,7 @@ jobs:
         run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sidecar-coverage-${{ matrix.os }}-${{ steps.sha.outputs.short }}
           path: services/sidecar/coverage.xml
@@ -162,7 +162,7 @@ jobs:
 
       - name: Upload renderer build
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: renderer-dist-${{ github.sha }}
           path: apps/desktop/dist

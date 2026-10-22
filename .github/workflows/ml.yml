@@ -80,7 +80,7 @@ jobs:
           print(f"smoke top-1 {top1}")
           assert top1 >= 0.8, f"smoke top-1 {top1} < 0.8"
           EOF
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ml-smoke-${{ github.sha }}
           path: |
