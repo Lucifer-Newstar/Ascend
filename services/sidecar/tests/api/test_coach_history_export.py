@@ -83,11 +83,11 @@ def test_history_groups_by_day(client, profile):
 def test_export_json_and_csv(client, profile):
     log_workout(client)
     data = client.get("/export/json").json()
-    assert data["export_schema_version"] == 1
+    assert data["export_schema_version"] == 2
     assert len(data["workouts"][0]["sets"]) == 3
     r = client.get("/export/csv/workouts")
     assert r.headers["content-type"].startswith("text/csv")
     rows = list(csv.reader(io.StringIO(r.text)))
-    assert rows[0][2] == "Exercise Name" and len(rows) == 4
+    assert rows[0][3] == "Exercise Name" and len(rows) == 4
     assert client.get("/export/csv/meals").text.startswith("Date,Meal,Food")
     assert client.get("/export/csv/bogus").status_code == 422
