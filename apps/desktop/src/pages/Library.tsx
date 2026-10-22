@@ -17,6 +17,7 @@ import { SkeletonCard } from "../components/Skeleton";
 import { ErrorState, Loading } from "../components/States";
 import { setPendingExercise } from "../lib/pending";
 import { MUSCLE_LABEL, muscleLabel } from "../lib/muscles";
+import { ExerciseArt } from "../components/ExerciseArt";
 import { useApi } from "../lib/useApi";
 
 export type LibraryType = "all" | "strength" | "calisthenics" | "cardio" | "mobility" | "other";
@@ -202,15 +203,9 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
   );
 }
 
-export function Thumb({ exercise, className = "" }: { exercise: Pick<Exercise, "image" | "name" | "section">; className?: string }) {
-  if (exercise.image) {
-    return <img src={exercise.image} alt="" loading="lazy" decoding="async" className={`w-full bg-white object-contain ${className}`} />;
-  }
-  return (
-    <div aria-hidden className={`flex w-full items-center justify-center bg-panel-2 font-display text-3xl font-bold tracking-widest text-accent ${className}`}>
-      {exercise.name.split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
-    </div>
-  );
+/** Kept for existing imports: the exercise picture (photo or designed tile). */
+export function Thumb({ exercise, className = "" }: { exercise: Pick<Exercise, "image" | "name" | "section"> & { muscles?: Exercise["muscles"] }; className?: string }) {
+  return <ExerciseArt exercise={exercise} className={className} />;
 }
 
 function ExerciseCard({ exercise: e, onOpen }: { exercise: Exercise; onOpen: () => void }) {
@@ -343,6 +338,9 @@ function ExerciseDetailBody({ e, onLog, onOpenSkill }: { e: ExerciseDetail; onLo
         )}
         <p className="mt-5 text-[11px] text-faint">
           {e.source === "free-exercise-db" || e.source_ref ? "Instructions and image: free-exercise-db (public domain). " : ""}
+          {e.field_sources.image?.startsWith("similar:")
+            ? `Picture: a similar movement (${e.field_sources.image.slice("similar:".length)}) from free-exercise-db (public domain). `
+            : ""}
           Muscle weights are estimates used by the recovery model.
         </p>
         {e.attribution.length > 0 && (

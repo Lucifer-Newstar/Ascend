@@ -85,7 +85,7 @@ and motion that respects Reduce motion. Two more deterministic engines feed Fuel
 | Coach: rule-based tips always; local Ollama `qwen3:4b` if running; **AI on/off toggle** | `coach` |
 | History by day (workouts + meals) and export to **JSON / CSV** | `progress/history.py` |
 | **Calisthenics skill trees** (12 trees, unlock criteria from logged sets, estimates only with enough data) | `skills`, `pages/Skills.tsx` |
-| **Exercise gallery**: 873 free-exercise-db exercises + calisthenics progressions, timed holds, search and filters | `workouts/library.py`, `pages/Library.tsx` |
+| **Exercise gallery**: 873 free-exercise-db exercises + calisthenics progressions, timed holds, search and filters; every card has a photo or a designed tile | `workouts/library.py`, `pages/Library.tsx` |
 | **Add your own exercise**: rules → local AI → optional online research (wger.de, Wikipedia), every field with its source and confidence, a research report to confirm, a local lookup log | `workouts/custom.py`, ADR-0013 |
 
 ## Architecture
@@ -280,8 +280,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commit style and PR rules.
   Indian Nutrient Databank (INDB). Not a substitute for a dietitian.
 - Formulas: Mifflin-St Jeor (BMR), Epley (e1RM), MET method (calorie burn) are standard
   estimation formulas; results are estimates.
-- Exercise library and thumbnails: [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
-  (yuhonas), **Unlicense** (public domain).
+- Exercise library and exercise photos: [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+  (yuhonas), **Unlicense** (public domain). One photo per exercise is bundled as a 320 px webp
+  (873 files, about 5.1 MiB); 14 of ASCEND's own entries reuse the photo of a similar movement
+  and say so. Exercises without a photo get a designed tile drawn by the app.
 - Skill-tree progressions follow the r/bodyweightfitness Recommended Routine and wiki, Steven Low's
   *Overcoming Gravity* (2nd ed.) and GMB Fitness tutorials. The thresholds are ASCEND's own choices
   (see `docs/architecture/skill-trees.md`).

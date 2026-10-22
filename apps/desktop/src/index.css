@@ -685,3 +685,14 @@ body {
 .skip-link:focus {
   top: 12px;
 }
+
+/* Exercise tile: the designed picture for an exercise without a photo. A hue per section,
+   a faint hex grid and a soft glow behind the glyph; no images, so it costs nothing to load. */
+.exercise-tile {
+  background:
+    radial-gradient(60% 70% at 50% 42%, color-mix(in srgb, var(--tile-hue) 26%, transparent), transparent 70%),
+    repeating-linear-gradient(60deg, color-mix(in srgb, var(--tile-hue) 9%, transparent) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(-60deg, color-mix(in srgb, var(--tile-hue) 9%, transparent) 0 1px, transparent 1px 14px),
+    linear-gradient(160deg, var(--color-panel-3), var(--color-panel-2));
+  border-bottom: 1px solid color-mix(in srgb, var(--tile-hue) 35%, transparent);
+}

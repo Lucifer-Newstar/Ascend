@@ -32,6 +32,37 @@ DATA_FILE = Path(__file__).with_name("library_data") / "free_exercise_db.json"
 FEDB_SOURCE = "free-exercise-db"
 IMAGE_DIR = "exercises"  # relative to the renderer's index.html
 
+# ASCEND's own entries that free-exercise-db has no picture for, but where the source shows
+# the same movement or a close variation (the lowering phase, the top hold, a loaded
+# version). The detail view labels these "similar movement" (field_sources["image"]).
+# Entries not listed here (levers, planche, flags, martial arts, meditation...) get the
+# renderer's muscle-map tile instead of a photo. Migration 0017 applies this table.
+IMAGE_STANDINS: dict[str, str] = {
+    "Walking Lunge": "Bodyweight_Walking_Lunge",
+    "Bulgarian Split Squat": "Smith_Single-Leg_Split_Squat",
+    "Negative Pull-up": "Pullups",
+    "Chest-to-bar Pull-up": "Pullups",
+    "Muscle-up Negative": "Muscle_Up",
+    "Negative Dip": "Parallel_Bar_Dip",
+    "Parallel Bar Support Hold": "Parallel_Bar_Dip",
+    "Ring Support Hold": "Ring_Dips",
+    "Weighted Dip": "Parallel_Bar_Dip",
+    "Wall Handstand": "Handstand_Push-Ups",
+    "Freestanding Handstand Push-up": "Handstand_Push-Ups",
+    "Pistol Squat": "Kettlebell_Pistol_Squat",
+    "Nordic Curl Negative": "Natural_Glute_Ham_Raise",
+    "Deep Squat Hold": "Bodyweight_Squat",
+}
+
+
+def standin_image(name: str) -> tuple[str, str] | None:
+    """(image path, source exercise name) for a curated entry without its own picture."""
+    ref = IMAGE_STANDINS.get(name)
+    if ref is None:
+        return None
+    return f"{IMAGE_DIR}/{slugify(ref.replace('_', ' '))}.webp", ref.replace("_", " ")
+
+
 MEASURES = ("reps", "hold", "time")
 DIFFICULTIES = ("beginner", "intermediate", "expert")
 PATTERNS = (
