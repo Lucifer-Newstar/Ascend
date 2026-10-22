@@ -69,12 +69,14 @@ const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
  * The trainer's line for an engine sentence. The sentence is kept word for word; the
  * opener and closer add no numbers. The closer is left out when the line would pass 40 words.
  */
-export function trainerLine(key: string, text: string, mood: TrainerMood): string {
-  const opener = OPENERS[mood][pick(key, OPENERS[mood].length)];
-  const body = text.trim().replace(/\s+/g, " ");
+export function trainerLine(key: string, text: string, mood: TrainerMood, position = 0): string {
+  // `position` (the line's place in a list) keeps neighbouring lines from repeating an opener.
+  const opener = OPENERS[mood][(pick(key, OPENERS[mood].length) + position) % OPENERS[mood].length];
+  const raw = text.trim().replace(/\s+/g, " ");
+  const body = /[.!?]$/.test(raw) ? raw : `${raw}.`;
   const line = `${opener} ${body}`;
   const closer = CLOSERS[mood];
-  return closer && words(line) + words(closer) <= 40 ? `${line}${/[.!?]$/.test(line) ? "" : "."}${closer}` : line;
+  return closer && words(line) + words(closer) <= 40 ? `${line}${closer}` : line;
 }
 
 /** Digits in a string, for tests and the guard: the trainer never adds or changes one. */

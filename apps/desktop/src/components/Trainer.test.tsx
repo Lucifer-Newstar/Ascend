@@ -33,6 +33,8 @@ describe("trainer voice", () => {
       expect(line.split(/\s+/).length).toBeLessThanOrEqual(40);
     }
     expect(trainerLine("same", "x", "proud")).toBe(trainerLine("same", "x", "proud"));
+    expect(trainerLine("k", "Side delts under target", "neutral")).toMatch(/target\.$/);
+    expect(trainerLine("k", "a", "warning", 0).split(".")[0]).not.toBe(trainerLine("k", "a", "warning", 1).split(".")[0]);
   });
 
   it("picks the expression from the insight kind", () => {

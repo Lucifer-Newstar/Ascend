@@ -50,7 +50,7 @@ export function buildInsights(tip: CoachReply | null, review: WeeklyReview | nul
   return out;
 }
 
-function InsightRow({ insight, trainer }: { insight: Insight; trainer: boolean }) {
+function InsightRow({ insight, trainer, position }: { insight: Insight; trainer: boolean; position: number }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const mood = moodFor(insight.code, insight.severity);
@@ -58,7 +58,7 @@ function InsightRow({ insight, trainer }: { insight: Insight; trainer: boolean }
     <li className={trainer ? "py-1" : "rounded-md border border-line bg-panel-2/60 p-3"} data-mood={trainer ? mood : undefined}>
       {trainer ? (
         <TrainerSays mood={mood} size={44}>
-          <p className="text-sm leading-relaxed text-ink">{trainerLine(insight.key, insight.title, mood)}</p>
+          <p className="text-sm leading-relaxed text-ink">{trainerLine(insight.key, insight.title, mood, position)}</p>
         </TrainerSays>
       ) : (
         <p className="text-sm leading-relaxed text-ink">{insight.title}</p>
@@ -86,7 +86,7 @@ export function InsightsCard({ tip, review, onOpenCoach }: { tip: CoachReply | n
       {items.length === 0 ? (
         <p className="text-sm text-muted">Nothing to flag yet. Insights appear once there is a week of logs.</p>
       ) : (
-        <ul className="space-y-2">{items.map((i) => <InsightRow key={i.key} insight={i} trainer={trainer} />)}</ul>
+        <ul className="space-y-2">{items.map((i, n) => <InsightRow key={i.key} insight={i} trainer={trainer} position={n} />)}</ul>
       )}
     </section>
   );
