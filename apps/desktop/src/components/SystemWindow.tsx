@@ -61,7 +61,7 @@ export interface SystemWindowProps {
   modal?: boolean;
   onClose?: () => void;
   /** Element to focus when a modal opens (default: the first focusable element). */
-  initialFocus?: RefObject<HTMLElement>;
+  initialFocus?: RefObject<HTMLElement | null>;
   /** id of the element naming the window (default: its header). */
   labelledBy?: string;
   describedBy?: string;

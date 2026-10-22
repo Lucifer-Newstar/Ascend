@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type JSX, type ReactNode } from "react";
 
 import { IconBowl, IconChart, IconChat, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconSettings, IconSkill } from "./Icons";
 import { TrainerToggle } from "./Trainer";
