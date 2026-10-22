@@ -153,12 +153,34 @@ export const QuickLogCard = forwardRef<HTMLElement, { onLogged: (what: string) =
   );
 });
 
-/** One line on Today when nothing is logged yet today, pointing at Quick log. */
+const DISMISS_KEY = "ascend.notLoggedDismissed";
+const todayKey = () => new Date().toLocaleDateString("en-CA");
+
+/** One line on Today when nothing is logged yet today, pointing at Quick log. Dismissible for the day. */
 export function NotLoggedBanner({ onOpen }: { onOpen: () => void }) {
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(DISMISS_KEY) === todayKey();
+    } catch {
+      return false;
+    }
+  });
+  if (hidden) return null;
+  function dismiss() {
+    try {
+      localStorage.setItem(DISMISS_KEY, todayKey());
+    } catch {
+      /* storage unavailable: hide for this visit only */
+    }
+    setHidden(true);
+  }
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border border-warn/40 bg-warn/10 px-4 py-2 text-sm text-ink" role="note" data-testid="not-logged-banner">
       <span>You haven't logged anything today.</span>
-      <button type="button" className="text-sm font-medium text-accent hover:underline" onClick={onOpen}>Quick log →</button>
+      <span className="flex items-center gap-3">
+        <button type="button" className="text-sm font-medium text-accent hover:underline" onClick={onOpen}>Quick log →</button>
+        <button type="button" className="text-xs text-muted hover:text-ink" onClick={dismiss} aria-label="Hide this reminder for today">Not today</button>
+      </span>
     </div>
   );
 }
