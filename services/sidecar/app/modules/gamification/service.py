@@ -115,10 +115,21 @@ def xp_for_refs(db: Session, sources: Iterable[str], ref_id: int) -> int:
 
 
 def active_days(db: Session) -> set[date]:
-    from app.modules.workouts.models import Workout
+    """Days that keep the streak: a finished workout or a completed quest item, and since
+    v8 any quick log too: a single logged set, a meal or a weigh-in (Quick log on Today)."""
+    from app.modules.nutrition.models import Meal
+    from app.modules.progress.models import BodyMetric
+    from app.modules.workouts.models import Workout, WorkoutSet
 
     days = set(db.scalars(select(Workout.day).where(Workout.finished_at.is_not(None))).all())
     days |= set(db.scalars(select(QuestItem.day).where(QuestItem.completed_at.is_not(None))).all())
+    days |= set(
+        db.scalars(
+            select(Workout.day).join(WorkoutSet, WorkoutSet.workout_id == Workout.id).distinct()
+        ).all()
+    )
+    days |= set(db.scalars(select(Meal.day).distinct()).all())
+    days |= {d.date() for d in db.scalars(select(BodyMetric.measured_at)).all()}
     return days
 
 

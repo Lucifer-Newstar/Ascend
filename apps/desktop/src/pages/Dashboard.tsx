@@ -3,7 +3,7 @@
  * fold at 1280×720), then insights and the morning check-in (which collapses to a
  * one-line summary once done), then fuel and the muscle recovery map. 12-column grid.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { CoachReply, WeeklyReview } from "@ascend/shared";
 
@@ -15,6 +15,7 @@ import type { Page } from "../components/Layout";
 import { MuscleMap } from "../components/MuscleMap";
 import { DeloadCard } from "../components/PlanCards";
 import { QuestWindow } from "../components/QuestWindow";
+import { NotLoggedBanner, QuickLogCard } from "../components/QuickLog";
 import { Rings } from "../components/Rings";
 import { Delayed, LoadingLayout, Skeleton, SkeletonCard } from "../components/Skeleton";
 import { StatusPanel } from "../components/StatusPanel";
@@ -35,6 +36,7 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
   const [tip, setTip] = useState<CoachReply | null>(null);
   const [review, setReview] = useState<WeeklyReview | null>(null);
   const toast = useToast();
+  const quickLog = useRef<HTMLElement>(null);
 
   useEffect(() => {
     api.coachTip().then(setTip).catch(() => setTip(null));
@@ -44,6 +46,11 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
   // Cached data paints at once on return; a first load only shows the skeleton if it is slow.
   if (loading && !data) return <Delayed><DashboardSkeleton /></Delayed>;
   if (!data) return <ErrorState message={error ?? "No data"} onRetry={reload} offline={isOffline(status)} />;
+
+  function openQuickLog() {
+    quickLog.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    quickLog.current?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
+  }
 
   async function complete(id: number) {
     try {
@@ -62,6 +69,9 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
     <div className="grid grid-cols-12 gap-6">
       {error && <div className="col-span-12"><StaleNotice message={error} onRetry={reload} /></div>}
       {onNavigate && data.game.xp.total === 0 && <FirstSteps onNavigate={onNavigate} />}
+      {data.has_profile && data.game.xp.total > 0 && !data.game.streak.active_today && (
+        <div className="col-span-12"><NotLoggedBanner onOpen={openQuickLog} /></div>
+      )}
       <div className="col-span-12 lg:col-span-8">
         <QuestWindow items={data.game.quest} rank={data.game.xp.rank} onComplete={complete} onStart={onNavigate ? () => onNavigate("workout") : undefined} />
       </div>
@@ -74,10 +84,13 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
       <div className="col-span-12 lg:col-span-7">
         <InsightsCard tip={tip} review={review} onOpenCoach={onOpenCoach} />
       </div>
-      <section className="card card-hover col-span-12 self-start p-5 lg:col-span-5" aria-labelledby="checkin-title">
-        <h2 id="checkin-title" className="card-title mb-3">Morning check-in</h2>
-        <CheckinCard refreshKey={refreshKey} onSaved={reload} />
-      </section>
+      <div className="col-span-12 space-y-6 self-start lg:col-span-5">
+        <section className="card card-hover p-5" aria-labelledby="checkin-title">
+          <h2 id="checkin-title" className="card-title mb-3">Morning check-in</h2>
+          <CheckinCard refreshKey={refreshKey} onSaved={reload} />
+        </section>
+        <QuickLogCard ref={quickLog} onLogged={(what) => { toast(`${what} · logged`, "info"); if (onChanged) onChanged(); else reload(); }} />
+      </div>
 
 
       <section className="card card-hover col-span-12 self-start p-5 lg:col-span-4" aria-labelledby="fuel-title">
