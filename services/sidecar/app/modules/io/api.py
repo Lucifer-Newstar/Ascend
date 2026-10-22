@@ -161,6 +161,8 @@ def restore_backup(
         info = backup.restore_backup(
             path, db_file, request.app.state.settings.resolved_db_url, take_safety_copy
         )
+        # Safety copies (pre-restore, pre-migration) share one rotation; keep it bounded.
+        backup.prune_automatic(folder, keep_paths={path, safety[0].path})
         # Drop pooled connections that still hold pages of the replaced file, so every
         # later request opens the restored database fresh (the in-process "restart").
         request.app.state.engine.dispose()

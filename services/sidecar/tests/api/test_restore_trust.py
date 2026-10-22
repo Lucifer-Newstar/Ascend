@@ -168,3 +168,17 @@ def test_a_lying_size_header_is_still_refused(tmp_path, monkeypatch) -> None:
         info.file_size = 10  # pretend it is tiny
         with pytest.raises(backup.BackupError):
             backup._extract_capped(z, info, tmp_path / "out.db")
+
+
+def test_pre_restore_safety_copies_are_pruned(client, clock, profile) -> None:
+    """Review L18: only pre-migration backups triggered pruning, so every restore left
+    one more pre-restore copy behind forever."""
+    from datetime import timedelta
+
+    path = _backup(client)
+    for _ in range(backup.KEEP_AUTOMATIC + 3):
+        clock.now += timedelta(minutes=1)
+        assert _restore(client, path.name).status_code == 200
+    reasons = [b["reason"] for b in client.get("/backups").json()]
+    assert reasons.count("pre-restore") == backup.KEEP_AUTOMATIC
+    assert reasons.count("manual") == 1

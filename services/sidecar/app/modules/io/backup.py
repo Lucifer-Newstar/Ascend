@@ -182,12 +182,18 @@ def list_backups(out_dir: Path) -> list[BackupInfo]:
     return sorted(infos, key=lambda i: (i.created_at, i.path.name), reverse=True)
 
 
-def prune_automatic(out_dir: Path, keep: int = KEEP_AUTOMATIC) -> int:
+def prune_automatic(
+    out_dir: Path, keep: int = KEEP_AUTOMATIC, keep_paths: set[Path] | frozenset[Path] = frozenset()
+) -> int:
     """Delete the oldest safety backups (pre-migration, pre-restore) beyond `keep`.
-    Manual backups are never touched; daily ones have their own rotation (prune_daily)."""
+    Manual backups are never touched; daily ones have their own rotation (prune_daily).
+    Files in `keep_paths` (the one just restored, the new safety copy) are never deleted."""
     auto = [i for i in list_backups(out_dir) if i.reason not in ("manual", "daily")]
+    protected = {k.resolve() for k in keep_paths}
     removed = 0
     for info in auto[keep:]:
+        if info.path.resolve() in protected:
+            continue
         info.path.unlink(missing_ok=True)
         removed += 1
     return removed
