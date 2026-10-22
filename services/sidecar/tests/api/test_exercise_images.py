@@ -6,12 +6,25 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import Settings
 from app.modules.workouts.library import IMAGE_STANDINS, standin_image
 
-PUBLIC = Path(__file__).resolve().parents[4] / "apps" / "desktop" / "public"
+
+def _desktop_public() -> Path | None:
+    """apps/desktop/public in a full checkout. The sidecar test image is built from
+    services/sidecar alone (see docker/sidecar.Dockerfile), so the folder is not there."""
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "apps" / "desktop" / "public"
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+PUBLIC = _desktop_public()
+needs_public = pytest.mark.skipif(PUBLIC is None, reason="no apps/desktop/public in this checkout")
 
 
 def _rows(settings: Settings) -> list[tuple[str, str | None, str, str]]:
@@ -26,11 +39,13 @@ def _webp_width(head: bytes) -> int:
     return int.from_bytes(head[26:28], "little") & 0x3FFF
 
 
+@needs_public
 def test_every_image_exists_and_is_a_small_webp(client: TestClient, settings: Settings) -> None:
     rows = _rows(settings)
     with_image = [r for r in rows if r[1]]
     assert len(rows) > 900
     assert len(with_image) >= 880
+    assert PUBLIC is not None
     seen: set[str] = set()
     for name, image, _source, _fs in with_image:
         assert image is not None
@@ -45,7 +60,9 @@ def test_every_image_exists_and_is_a_small_webp(client: TestClient, settings: Se
         assert _webp_width(head) == 320, f"{image} is not 320 px wide"
 
 
+@needs_public
 def test_bundle_stays_small() -> None:
+    assert PUBLIC is not None
     files = list((PUBLIC / "exercises").glob("*.webp"))
     assert len(files) >= 873
     total = sum(f.stat().st_size for f in files)
