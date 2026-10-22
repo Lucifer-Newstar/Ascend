@@ -71,7 +71,8 @@ def test_a_backup_from_a_newer_schema_is_refused(client, profile):
 @pytest.mark.parametrize(
     ("body", "message"),
     [
-        ({"path": "/nowhere/missing.ascendbak"}, "does not exist"),
+        ({"path": "/nowhere/missing.ascendbak"}, "backups folder"),
+        ({"path": "missing.ascendbak"}, "does not exist"),
         ({"path": "/tmp/notes.txt"}, "choose a .ascendbak file"),
         ({"path": "x.ascendbak", "password": "secret"}, "not supported yet"),
     ],
@@ -84,7 +85,8 @@ def test_restore_refuses_bad_requests_before_touching_data(client, profile, body
 
 
 def test_not_a_backup_at_all(client, settings, profile):
-    junk = settings.data_dir / "junk.ascendbak"
+    junk = settings.data_dir / "backups" / "junk.ascendbak"
+    junk.parent.mkdir(parents=True, exist_ok=True)
     junk.write_bytes(b"this is not a zip")
     r = client.post("/restore", json={"path": str(junk)})
     assert r.status_code == 422 and "damaged" in r.json()["detail"]

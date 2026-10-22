@@ -17,6 +17,8 @@ import json
 import sqlite3
 import tempfile
 import zipfile
+import zlib
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -32,6 +34,10 @@ SUFFIX = ".ascendbak"
 DB_NAME = "ascend.db"
 KEEP_AUTOMATIC = 5
 KEEP_DAILY = 14  # one automatic snapshot per day while the app runs, two weeks kept
+# Largest database a restore will unpack. A year of daily logging is a few MB; the cap
+# only exists so a crafted zip (a "zip bomb") can't fill the disk.
+MAX_DB_BYTES = 512 * 1024 * 1024
+MAX_MANIFEST_BYTES = 64 * 1024
 
 
 class BackupError(ValueError):
@@ -119,8 +125,10 @@ def create_backup(
 
 def _manifest(z: zipfile.ZipFile) -> dict[str, object]:
     try:
+        if z.getinfo("manifest.json").file_size > MAX_MANIFEST_BYTES:
+            raise BackupError("the backup manifest is too large")
         data = json.loads(z.read("manifest.json"))
-    except (KeyError, json.JSONDecodeError) as err:
+    except (KeyError, json.JSONDecodeError, UnicodeDecodeError) as err:
         raise BackupError("the backup has no readable manifest") from err
     if not isinstance(data, dict) or data.get("format") != FORMAT:
         raise BackupError("this is not an ASCEND backup")
@@ -174,12 +182,18 @@ def list_backups(out_dir: Path) -> list[BackupInfo]:
     return sorted(infos, key=lambda i: (i.created_at, i.path.name), reverse=True)
 
 
-def prune_automatic(out_dir: Path, keep: int = KEEP_AUTOMATIC) -> int:
+def prune_automatic(
+    out_dir: Path, keep: int = KEEP_AUTOMATIC, keep_paths: set[Path] | frozenset[Path] = frozenset()
+) -> int:
     """Delete the oldest safety backups (pre-migration, pre-restore) beyond `keep`.
-    Manual backups are never touched; daily ones have their own rotation (prune_daily)."""
+    Manual backups are never touched; daily ones have their own rotation (prune_daily).
+    Files in `keep_paths` (the one just restored, the new safety copy) are never deleted."""
     auto = [i for i in list_backups(out_dir) if i.reason not in ("manual", "daily")]
+    protected = {k.resolve() for k in keep_paths}
     removed = 0
     for info in auto[keep:]:
+        if info.path.resolve() in protected:
+            continue
         info.path.unlink(missing_ok=True)
         removed += 1
     return removed
@@ -189,8 +203,86 @@ def _schema_order(rev: str) -> int:
     return int(rev) if rev.isdigit() else -1
 
 
-def restore_backup(path: Path, db_file: Path, db_url: str) -> BackupInfo:
-    """Validate `path` and copy its snapshot over `db_file`, then migrate to head."""
+def resolve_restore_path(raw: str, folder: Path) -> Path:
+    """The backup a restore request names, which must be a file in the backups folder.
+
+    A restore replaces all of the user's data, so only files the app itself wrote (or the
+    user copied into the folder) are accepted. Network paths are refused before anything
+    touches them: opening \\\\host\\share\\x makes Windows sign in to that host (NTLM).
+    A bare file name means a file in the backups folder.
+    """
+    text = raw.strip()
+    if text.startswith(("\\\\", "//")):
+        raise BackupError("network paths can't be restored; copy the backup to this PC first")
+    path = Path(text)
+    if path.suffix != SUFFIX:
+        raise BackupError(f"choose a {SUFFIX} file")
+    if not path.is_absolute() and path.name == text:
+        path = folder / path
+    try:
+        resolved, home = path.resolve(), folder.resolve()
+    except OSError as err:
+        raise BackupError("that backup file does not exist") from err
+    if resolved.parent != home:
+        raise BackupError("only backups in the ASCEND backups folder can be restored")
+    if not resolved.is_file():
+        raise BackupError("that backup file does not exist")
+    return resolved
+
+
+def _extract_capped(z: zipfile.ZipFile, info: zipfile.ZipInfo, target: Path) -> None:
+    """Unpack one member, refusing more than MAX_DB_BYTES. The size in the zip header is
+    the file's own claim, so the copy counts the bytes as well."""
+    too_big = BackupError("the database in this backup is too large to restore")
+    if info.file_size > MAX_DB_BYTES:
+        raise too_big
+    written = 0
+    try:
+        with z.open(info) as src, target.open("wb") as dst:
+            while chunk := src.read(1024 * 1024):
+                written += len(chunk)
+                if written > MAX_DB_BYTES:
+                    raise too_big
+                dst.write(chunk)
+    except (zipfile.BadZipFile, zlib.error) as err:
+        raise BackupError("the backup file is damaged") from err
+
+
+def check_snapshot(snap: Path) -> None:
+    """Refuse a database that is damaged, isn't ASCEND's, or carries schema objects the
+    app never creates. Triggers and views run inside the app's own queries later, so a
+    crafted backup could use them to rewrite or delete data; ASCEND's schema has none."""
+    try:
+        conn = sqlite3.connect(f"file:{snap.as_posix()}?mode=ro", uri=True)
+    except sqlite3.Error as err:
+        raise BackupError("the database in this backup can't be opened") from err
+    try:
+        conn.execute("PRAGMA trusted_schema = OFF")
+        rows = conn.execute("PRAGMA integrity_check").fetchall()
+        if [r[0] for r in rows] != ["ok"]:
+            raise BackupError("the database in this backup failed its integrity check")
+        kinds = conn.execute(
+            "SELECT type, name FROM sqlite_master WHERE type IN ('trigger', 'view')"
+        ).fetchall()
+        if kinds:
+            kind, name = kinds[0]
+            raise BackupError(f"the database in this backup has an unexpected {kind} ({name})")
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if "alembic_version" not in tables:
+            raise BackupError("the file in this backup is not an ASCEND database")
+    except sqlite3.DatabaseError as err:
+        raise BackupError("the database in this backup failed its integrity check") from err
+    finally:
+        conn.close()
+
+
+def restore_backup(
+    path: Path, db_file: Path, db_url: str, before_replace: Callable[[], None] | None = None
+) -> BackupInfo:
+    """Validate `path` and copy its snapshot over `db_file`, then migrate to head.
+    Callers pass a path from resolve_restore_path(). `before_replace` runs once every
+    check has passed, just before the live database is overwritten (the API takes its
+    pre-restore safety copy there, so a refused file leaves no stray backup)."""
     if not path.exists():
         raise BackupError("that backup file does not exist")
     info = read_info(path)
@@ -205,11 +297,19 @@ def restore_backup(path: Path, db_file: Path, db_url: str) -> BackupInfo:
         files = m.get("files")
         if not isinstance(files, dict) or DB_NAME not in files:
             raise BackupError("the backup does not contain a database")
-        z.extract(DB_NAME, tmp)
+        try:
+            member = z.getinfo(DB_NAME)
+        except KeyError as err:
+            raise BackupError("the backup does not contain a database") from err
         snap = Path(tmp) / DB_NAME
+        _extract_capped(z, member, snap)
         expected = files[DB_NAME].get("sha256") if isinstance(files[DB_NAME], dict) else None
         if _sha256(snap) != expected:
             raise BackupError("the backup failed its checksum; it may be damaged")
+        # The checksum sits in the same zip, so it catches damage, not tampering.
+        check_snapshot(snap)
+        if before_replace is not None:
+            before_replace()
         src, dst = sqlite3.connect(snap), sqlite3.connect(db_file)
         try:
             src.backup(dst)  # replaces every page of the live database in one step

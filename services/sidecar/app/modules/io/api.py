@@ -143,19 +143,26 @@ def restore_backup(
     body: RestoreIn, request: Request, now: datetime = Depends(get_now)
 ) -> RestoreOut:
     """Restore a .ascendbak over the current data. The current data is backed up first
-    (reason "pre-restore"), so a mistaken restore can itself be undone."""
+    (reason "pre-restore"), so a mistaken restore can itself be undone.
+
+    Only files in the backups folder are accepted (a bare file name means that folder);
+    the database inside must pass PRAGMA integrity_check and carry no triggers or views."""
     if body.password:
         raise HTTPException(422, "password-protected backups are not supported yet")
-    path = Path(body.path)
-    if path.suffix != backup.SUFFIX:
-        raise HTTPException(422, f"choose a {backup.SUFFIX} file")
     db_file, folder = _dirs(request)
     try:
-        if not path.exists():
-            raise backup.BackupError("that backup file does not exist")
+        path = backup.resolve_restore_path(body.path, folder)
         backup.read_info(path)  # refuse a bad file before touching anything
-        safety = backup.create_backup(db_file, folder, now, reason="pre-restore")
-        info = backup.restore_backup(path, db_file, request.app.state.settings.resolved_db_url)
+        safety: list[backup.BackupInfo] = []
+
+        def take_safety_copy() -> None:
+            safety.append(backup.create_backup(db_file, folder, now, reason="pre-restore"))
+
+        info = backup.restore_backup(
+            path, db_file, request.app.state.settings.resolved_db_url, take_safety_copy
+        )
+        # Safety copies (pre-restore, pre-migration) share one rotation; keep it bounded.
+        backup.prune_automatic(folder, keep_paths={path, safety[0].path})
         # Drop pooled connections that still hold pages of the replaced file, so every
         # later request opens the restored database fresh (the in-process "restart").
         request.app.state.engine.dispose()
@@ -165,5 +172,5 @@ def restore_backup(
         restored_from=str(path),
         backup_created_at=info.created_at,
         schema_revision=info.schema,
-        safety_backup=str(safety.path),
+        safety_backup=str(safety[0].path),
     )
