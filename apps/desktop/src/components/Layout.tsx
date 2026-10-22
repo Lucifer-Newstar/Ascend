@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { IconBowl, IconChart, IconChat, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconSettings, IconSkill } from "./Icons";
+import { TrainerToggle } from "./Trainer";
 
 export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "coach" | "history" | "data" | "settings";
 
@@ -115,6 +116,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
             </button>
           )}
           {status}
+          <TrainerToggle />
           <AiStatusDot aiEnabled={aiEnabled} state={aiState} model={aiModel} onToggle={onToggleAi} />
           {command}
           </div>

@@ -1078,6 +1078,11 @@ components:
           - type: boolean
           - type: 'null'
           title: Online Lookup
+        trainer:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Trainer
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1114,6 +1119,10 @@ components:
           type: boolean
           title: Online Lookup
           default: false
+        trainer:
+          type: boolean
+          title: Trainer
+          default: true
       type: object
       required:
       - ai_enabled

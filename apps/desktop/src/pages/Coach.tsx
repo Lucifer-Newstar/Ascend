@@ -10,6 +10,8 @@ import { PENDING_COACH_KEY } from "../components/CommandBar";
 import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { IconSpark } from "../components/Icons";
 import { PageGrid, Panel } from "../components/Page";
+import { TrainerPortrait, useTrainerOn } from "../components/Trainer";
+import { moodFor } from "../lib/trainer";
 import { useApi } from "../lib/useApi";
 
 interface Msg {
@@ -26,6 +28,7 @@ const FALLBACK_LABEL: Record<string, string> = {
 };
 
 export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null; refreshKey: number }) {
+  const trainer = useTrainerOn();
   const status = useApi(api.coachStatus, [aiEnabled, refreshKey]);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [q, setQ] = useState("");
@@ -107,7 +110,8 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
             </div>
           )}
           {msgs.map((m, i) => (
-            <div key={i} className={`panel-in flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={i} className={`panel-in flex items-start gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              {trainer && m.role !== "user" && <TrainerPortrait mood={m.reply ? moodFor(m.reply.tip_code) : "neutral"} size={36} />}
               <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed ${m.role === "user" ? "bg-accent/15 text-ink" : "border border-line bg-panel-2 text-ink"}`}>
                 {m.text}
                 {m.failedQuestion && (

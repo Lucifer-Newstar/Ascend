@@ -6,6 +6,12 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Added (v8 trainer)
+- **Instructor Iskra Vey**, an original anime-style drill instructor, speaks your insights on Today ("Iskra's briefing") and appears beside coach replies. Four expressions: calm, proud, stern (warnings) and fired up; the portrait crossfades between them (instant with Reduce motion).
+- **The numbers do not change.** Each line is a fixed opener around the engine's own sentence, chosen deterministically from the insight's kind; a tip worded by the local model has already passed the coach's number guard. At most 40 words, second person, "Hunter". **Why?** is still one tap away.
+- **Trainer switch** in the top bar and in Settings → Appearance, saved with your settings (`trainer`, default on). Off shows the same facts in the plain System style.
+- Art provenance, prompts and licence status: `apps/desktop/src/assets/trainer/ART_PROVENANCE.md`; persona research: `docs/research/v8-trainer-persona.md`.
+
 ### Changed (v8 detailed muscle map)
 - **54 muscles and heads instead of 19 regions** (taxonomy `muscles-v2`, ADR-0021, research in `docs/research/v8-anatomy.md`): the pectoralis major heads, pectoralis minor and serratus; lats, teres major, three trapezius parts, rhomboids, the rotator cuff, erectors and quadratus lumborum; the neck; three deltoids; biceps and triceps heads, brachialis, brachioradialis and the forearm groups; the abdominal layers; the glutes, TFL and hip flexors; the four quadriceps, sartorius, adductors, gracilis and the three hamstrings; calves, tibialis anterior and fibularis.
 - **New muscle map artwork**, drawn for ASCEND: front, back and a **Deep** layer (pectoralis minor, rotator cuff, rhomboids, transversus, iliopsoas, vastus intermedius...) that ghosts the surface muscles. "All muscles" is grouped by region and every muscle opens its drill-down. Exercise tiles without a photo now show the body with the exercise's muscles highlighted. react-muscle-highlighter is no longer a dependency.

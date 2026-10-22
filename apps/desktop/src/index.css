@@ -452,6 +452,22 @@ body {
   animation: asc-page-in 240ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   animation-delay: calc(min(var(--i, 0), 10) * 40ms);
 }
+/* v8 trainer: the portrait crossfades between expressions (opacity only). */
+@keyframes asc-trainer-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes asc-trainer-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.trainer-fade-in {
+  animation: asc-trainer-in 300ms ease-out both;
+}
+.trainer-fade-out {
+  animation: asc-trainer-out 300ms ease-out both;
+}
+
 /* Reduce motion: no stagger, so nothing waits hidden for its turn. */
 :root[data-motion="reduce"] .rise-in {
   animation-delay: 0s !important;
