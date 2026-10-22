@@ -6,6 +6,13 @@ Formula and model versions are listed where a number you see could change.
 
 ## [Unreleased]
 
+### Changed (v8 exercise pictures)
+- **No more empty picture boxes.** Every exercise card shows a photo or a designed tile.
+  - Photos are re-fetched from free-exercise-db (public domain) at 320 px wide instead of 224 px: 873 webp files, 5,307,910 bytes in total (was 2,774,240).
+  - 14 of ASCEND's own entries (e.g. Pistol Squat, Negative Pull-up, Nordic Curl Negative) now show the photo of the same or a similar movement; the detail view says "a similar movement". Migration 0017 sets them and leaves any picture you changed alone.
+  - The other 56 (levers, planche, flags, martial arts, meditation, the 3 source entries without a photo) and every custom exercise get a tile coloured by section with a line icon and the main muscles. A photo that fails to load also falls back to the tile.
+  - Tests check that every picture path exists, is a 320 px webp, and that the bundle stays under 25 MB.
+
 ### Fixed
 - Opening the app on a new day could fail one request with a server error: two first requests both built today's quest, and the second hit the unique index. The second request now reads the quest the first one wrote.
 

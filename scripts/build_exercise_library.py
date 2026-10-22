@@ -3,7 +3,7 @@
     python scripts/build_exercise_library.py [--images]
 
 Writes services/sidecar/app/modules/workouts/library_data/free_exercise_db.json and, with
---images, one small webp thumbnail per exercise into apps/desktop/public/exercises/.
+--images, one webp per exercise, 320 px wide, into apps/desktop/public/exercises/.
 free-exercise-db is released under the Unlicense (public domain); see library_data/README.md.
 Needs Pillow for --images.
 """
@@ -23,8 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RAW = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main"
 OUT_JSON = ROOT / "services/sidecar/app/modules/workouts/library_data/free_exercise_db.json"
 OUT_IMG = ROOT / "apps/desktop/public/exercises"
-THUMB = (224, 224)
-QUALITY = 50
+WIDTH = 320  # px; height follows the source aspect ratio (3:2 -> 213 px)
+QUALITY = 55
 
 
 def slugify(text: str) -> str:
@@ -42,7 +42,7 @@ def thumbnail(ex: dict) -> None:
 
     raw = fetch(f"{RAW}/exercises/{ex['images'][0]}")
     im = Image.open(io.BytesIO(raw)).convert("RGB")
-    im.thumbnail(THUMB)
+    im = im.resize((WIDTH, round(im.height * WIDTH / im.width)), Image.Resampling.LANCZOS)
     im.save(OUT_IMG / f"{slugify(ex['id'])}.webp", "WEBP", quality=QUALITY, method=6)
 
 
