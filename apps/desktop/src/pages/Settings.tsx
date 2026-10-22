@@ -7,6 +7,7 @@ import type { Settings } from "@ascend/shared";
 import { useState, type CSSProperties } from "react";
 
 import { api } from "../api/client";
+import { BackupsPanel } from "../components/BackupsPanel";
 import { IconDatabase } from "../components/Icons";
 import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
@@ -146,6 +147,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           <p className="mb-3 text-sm text-muted">Import history from Strong or Hevy, or export everything you logged.</p>
           <button type="button" className="btn-ghost" onClick={onOpenData}><IconDatabase width={16} height={16} /> Open Import & export</button>
         </section>
+        <BackupsPanel style={stagger(6)} />
         <section className="card rise-in p-5" style={stagger(6)} aria-labelledby="keys-title">
           <h2 id="keys-title" className="card-title mb-3">Keyboard shortcuts</h2>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
@@ -177,6 +179,7 @@ const SECTIONS: [string, string][] = [
   ["appearance-title", "Appearance"],
   ["units-title", "Units & training"],
   ["data-title", "Your data"],
+  ["backups-title", "Backups"],
   ["keys-title", "Keyboard shortcuts"],
   ["about-title", "About"],
 ];

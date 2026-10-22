@@ -31,6 +31,7 @@ FORMAT_VERSION = 1
 SUFFIX = ".ascendbak"
 DB_NAME = "ascend.db"
 KEEP_AUTOMATIC = 5
+KEEP_DAILY = 14  # one automatic snapshot per day while the app runs, two weeks kept
 
 
 class BackupError(ValueError):
@@ -157,8 +158,9 @@ def list_backups(out_dir: Path) -> list[BackupInfo]:
 
 
 def prune_automatic(out_dir: Path, keep: int = KEEP_AUTOMATIC) -> int:
-    """Delete the oldest automatic backups beyond `keep`; manual ones are never touched."""
-    auto = [i for i in list_backups(out_dir) if i.reason != "manual"]
+    """Delete the oldest safety backups (pre-migration, pre-restore) beyond `keep`.
+    Manual backups are never touched; daily ones have their own rotation (prune_daily)."""
+    auto = [i for i in list_backups(out_dir) if i.reason not in ("manual", "daily")]
     removed = 0
     for info in auto[keep:]:
         info.path.unlink(missing_ok=True)
@@ -214,4 +216,29 @@ def backup_if_behind(db_file: Path, out_dir: Path, now: datetime) -> BackupInfo 
         return None
     info = create_backup(db_file, out_dir, now, reason="pre-migration")
     prune_automatic(out_dir)
+    return info
+
+
+def prune_daily(out_dir: Path, keep: int = KEEP_DAILY) -> int:
+    """Keep the newest `keep` daily snapshots and delete older ones."""
+    daily = [i for i in list_backups(out_dir) if i.reason == "daily"]
+    for info in daily[keep:]:
+        info.path.unlink(missing_ok=True)
+    return max(0, len(daily) - keep)
+
+
+def backup_daily_if_due(db_file: Path, out_dir: Path, now: datetime) -> BackupInfo | None:
+    """Write today's automatic snapshot unless one exists for `now`'s date, then rotate.
+
+    Called when the sidecar starts and about hourly while it runs (main.lifespan), so a
+    PC that is only on for an evening still gets that day's copy. Returns None when
+    today's snapshot already exists or there is no database yet.
+    """
+    if not db_file.exists() or db_file.stat().st_size == 0:
+        return None
+    today = now.date()
+    if any(i.reason == "daily" and i.created_at.date() == today for i in list_backups(out_dir)):
+        return None
+    info = create_backup(db_file, out_dir, now, reason="daily")
+    prune_daily(out_dir)
     return info
