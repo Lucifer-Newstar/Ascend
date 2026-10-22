@@ -14,7 +14,9 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-build/
+# PyInstaller's work folder. Anchored on purpose: apps/desktop/build/ holds tracked build
+# resources (fuses.cjs, icons) that electron-builder needs.
+/services/sidecar/build/
 *.spec.bak
 htmlcov/
 .coverage

@@ -68,6 +68,11 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: npm run dist:win
 
+      # The afterPack hook (build/fuses.cjs) flips the fuses; fail the build if it did not run.
+      - name: Verify Electron fuses
+        working-directory: apps/desktop
+        run: node build/fuses.cjs --check release/win-unpacked/ASCEND.exe
+
       - name: Upload installer
         uses: actions/upload-artifact@v7
         with:
