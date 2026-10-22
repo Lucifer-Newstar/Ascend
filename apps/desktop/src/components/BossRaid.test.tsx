@@ -35,6 +35,18 @@ describe("BossRaidCard", () => {
     await expectNoAxeViolations(container);
   });
 
+  it("plays the defeat moment when the boss falls while on screen", () => {
+    const { rerender } = renderCard(boss);
+    expect(screen.queryByRole("status")).toBeNull();
+    rerender(
+      <PrefsProvider initial={{ ...DEFAULT_SETTINGS }} save={vi.fn()}>
+        <BossRaidCard boss={{ ...boss, defeated: true, hp_left: 0, damage: 40 }} />
+      </PrefsProvider>,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Iron Golem defeated. Plus 150 XP and the title Golem Breaker.");
+    expect(screen.getByTestId("boss-raid")).toHaveClass("moment-pop");
+  });
+
   it("celebrates a defeat and has no trainer line in plain mode", () => {
     renderCard({ ...boss, defeated: true, hp_left: 0, damage: 40, defeated_at: "2026-10-23T18:00:00" }, false);
     expect(screen.getByText("Defeated")).toBeInTheDocument();

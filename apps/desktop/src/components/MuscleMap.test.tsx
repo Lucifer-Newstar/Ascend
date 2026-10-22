@@ -76,11 +76,12 @@ describe("MuscleMap", () => {
     await waitFor(() => expect(screen.queryByTestId("muscle-tooltip")).toBeNull());
   });
 
-  it("glows fatigued muscles and pulses the ones ready to train", async () => {
+  it("outlines fatigued muscles and pulses the ones ready to train", async () => {
     renderMap();
     await screen.findByText("Ready again:", { exact: false });
     const css = figure().querySelector("style")?.textContent ?? "";
-    expect(css).toMatch(/path\[data-key="pec_major_sternal"\] \{ filter: drop-shadow/);
+    expect(css).toMatch(/path\[data-key="pec_major_sternal"\] \{ stroke: color-mix/);
+    expect(css).not.toMatch(/drop-shadow/);
     expect(css).toMatch(/path\[data-key="biceps_long"\][^{]*\{ animation: asc-muscle-pulse/);
     expect(css).not.toMatch(/path\[data-key="pec_major_sternal"\][^{]*\{ animation/);
     expect(screen.getByText("Ready again:").parentElement).toHaveTextContent("Biceps, Lats");
@@ -102,8 +103,8 @@ describe("MuscleMap", () => {
     await userEvent.click(screen.getByLabelText("30 days"));
     await waitFor(() => expect(api.muscleActivity).toHaveBeenLastCalledWith(30));
     // Biceps carry the most sets in 30 days, so they take the deepest colour; quads are untrained.
-    await waitFor(() => expect(pathOf("biceps_long").getAttribute("fill")).toBe("#2fd9f2"));
-    expect(pathOf("vastus_lateralis").getAttribute("fill")).not.toBe("#2fd9f2");
+    await waitFor(() => expect(pathOf("biceps_long").getAttribute("fill")).toBe("#5193a6"));
+    expect(pathOf("vastus_lateralis").getAttribute("fill")).not.toBe("#5193a6");
     expect(screen.getByText(/More sets · last 30 days/)).toBeInTheDocument();
   });
 

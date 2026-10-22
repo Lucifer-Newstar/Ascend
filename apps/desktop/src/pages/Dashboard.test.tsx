@@ -16,7 +16,7 @@ vi.mock("../api/client", () => ({
   api: {
     dashboard: vi.fn(), stats: vi.fn(), coachTip: vi.fn(), weeklyReview: vi.fn(), completeQuest: vi.fn(),
     checkinToday: vi.fn(), checkin: vi.fn(), deload: vi.fn(), startDeload: vi.fn(), muscleActivity: vi.fn(), updateSettings: vi.fn(),
-    boss: vi.fn(() => Promise.reject(new Error("not needed"))), titles: vi.fn(() => Promise.resolve([])),
+    boss: vi.fn(() => Promise.reject(new Error("not needed"))), titles: vi.fn(() => Promise.resolve([])), profile: vi.fn(() => Promise.resolve({ name: "Navin" })),
   },
 }));
 

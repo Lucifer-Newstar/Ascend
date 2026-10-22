@@ -91,6 +91,7 @@ describe("System events", () => {
     const ev = eventsBetween(prev, g2);
     expect(ev.map((e) => e.variant)).toEqual(["levelup", "quest"]);
     expect(ev[0].text).toContain("Rank up: E → D");
+    expect(ev[0].title).toBe("Rank up");
     expect(ev[1].text).toBe("Daily quest cleared: 2 of 2 tasks · 60 XP.");
     expect(eventsBetween({ level: 5, rank: "D", questDone: true }, g2)).toEqual([]);
   });
@@ -100,6 +101,7 @@ describe("System events", () => {
     expect(screen.queryByTestId("system-event-levelup")).toBeNull();
     rerender(wrap(<SystemEvents game={game(5, "E", [quest()])} />));
     expect(screen.getByRole("region", { name: "Level up" })).toHaveTextContent("Level 5 reached. Rank E · Hunter.");
+    expect(screen.getByTestId("moment-levelup")).toHaveTextContent("LV 5");
     expect(screen.getByRole("status")).toHaveTextContent("Level up. Level 5 reached.");
     await act(async () => { await userEvent.keyboard("{Escape}"); });
     expect(screen.queryByRole("region", { name: "Level up" })).toBeNull();
