@@ -1,7 +1,9 @@
 """Minimal client for a local Ollama server (http://127.0.0.1:11434 by default).
 
-Only localhost is ever contacted. Every call has a short timeout; on any error
-the caller falls back to the rule-based tip, so the app works without AI.
+Only localhost is contacted unless the user opts in to a remote Ollama (the host
+comes from config.normalize_ollama_host; "" means off). Every call has a short
+timeout; on any error the caller falls back to the rule-based tip, so the app
+works without AI.
 """
 
 from __future__ import annotations
@@ -23,6 +25,8 @@ class OllamaUnavailable(Exception):
 
 
 def is_available(host: str, model: str, timeout: float = 1.5) -> bool:
+    if not host:
+        return False
     try:
         r = httpx.get(f"{host}/api/tags", timeout=timeout)
         r.raise_for_status()
@@ -40,6 +44,8 @@ def chat(
     timeout: float = 20.0,
     system: str = SYSTEM_PROMPT,
 ) -> str:
+    if not host:
+        raise OllamaUnavailable("no usable OLLAMA_HOST")
     payload = {
         "model": model,
         "stream": False,
