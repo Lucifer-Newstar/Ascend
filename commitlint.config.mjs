@@ -28,11 +28,18 @@ export default {
         // ops and ml
         "ci", "docker", "build", "release", "ml", "deps", "meta", "repo", "github",
         // docs
-        "docs", "dev", "adr", "planning", "members", "contracts",
+        "docs", "dev", "adr", "planning", "members", "contracts", "readme", "research",
+        // v8 feature areas
+        "trainer", "map", "muscles", "library", "today", "game", "backup",
+        // Dependabot's ML requirement bumps
+        "ml-deps",
       ],
     ],
     "header-max-length": [2, "always", 120],
     "body-max-line-length": [1, "always", 100],
+    // A warning like the body rule: the parser treats a line containing "#<word with a digit>"
+    // (a colour such as #3e9e7c, or an issue ref) as a footer, so a long prose line can trip it.
+    "footer-max-line-length": [1, "always", 100],
     "subject-case": [2, "never", ["start-case", "pascal-case", "upper-case"]],
   },
 };
