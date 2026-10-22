@@ -124,9 +124,26 @@ def _manifest(z: zipfile.ZipFile) -> dict[str, object]:
         raise BackupError("the backup has no readable manifest") from err
     if not isinstance(data, dict) or data.get("format") != FORMAT:
         raise BackupError("this is not an ASCEND backup")
-    if int(data.get("format_version", 0)) > FORMAT_VERSION:
+    try:
+        version = int(data.get("format_version", 0))
+    except (TypeError, ValueError) as err:
+        raise BackupError("the backup manifest has an invalid format_version") from err
+    if version > FORMAT_VERSION:
         raise BackupError("this backup was made by a newer version of ASCEND")
     return data
+
+
+def _created_at(m: dict[str, object]) -> datetime:
+    """The manifest's created_at as naive local time (the app's convention), so backups
+    written with and without a UTC offset sort together."""
+    raw = m.get("created_at")
+    if not isinstance(raw, str):
+        raise BackupError("the backup manifest has no created_at date")
+    try:
+        at = datetime.fromisoformat(raw)
+    except ValueError as err:
+        raise BackupError("the backup manifest has an invalid created_at date") from err
+    return at.astimezone().replace(tzinfo=None) if at.tzinfo is not None else at
 
 
 def read_info(path: Path) -> BackupInfo:
@@ -139,7 +156,7 @@ def read_info(path: Path) -> BackupInfo:
         path=path,
         size_bytes=path.stat().st_size,
         sha256=_sha256(path),
-        created_at=datetime.fromisoformat(str(m["created_at"])),
+        created_at=_created_at(m),
         schema=str(m.get("schema", "none")),
         app_version=str(m.get("app_version", "")),
         reason=str(m.get("reason", "manual")),

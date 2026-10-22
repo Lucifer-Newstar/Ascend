@@ -103,8 +103,8 @@ def daily_backup_once(app: FastAPI) -> None:
         info = backup.backup_daily_if_due(
             db_file, backup.backups_dir(app.state.settings.data_dir), app.state.clock()
         )
-    except (OSError, backup.BackupError) as err:
-        log.warning("daily backup failed: %s", err)
+    except Exception as err:  # noqa: BLE001 - documented as never raising
+        log.warning("daily backup failed: %s", err, exc_info=not isinstance(err, OSError))
         return
     if info is not None:
         log.info("daily backup written to %s", info.path)
@@ -113,7 +113,10 @@ def daily_backup_once(app: FastAPI) -> None:
 async def _daily_backups(app: FastAPI) -> None:
     """At start-up and then about hourly: one snapshot per calendar day, 14 kept."""
     while True:
-        await asyncio.to_thread(daily_backup_once, app)
+        try:
+            await asyncio.to_thread(daily_backup_once, app)
+        except Exception:  # noqa: BLE001 - one bad check must not end the loop for the session
+            log.exception("daily backup check crashed; trying again in an hour")
         await asyncio.sleep(DAILY_BACKUP_CHECK_S)
 
 
