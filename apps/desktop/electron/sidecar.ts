@@ -6,7 +6,9 @@
  *  3. spawn the sidecar: dev = `uv run python -m app` in services/sidecar,
  *     packaged = resources/sidecar/ascend-sidecar(.exe) built by PyInstaller
  *  4. write the token on its stdin (never in argv/env, so it isn't visible in
- *     the process list)
+ *     the process list). The child gets a cleaned environment (sidecarEnv): no
+ *     inherited ASCEND_* variable can replace the token, the bind address or the
+ *     database (a leftover ASCEND_TOKEN=dev or ASCEND_HOST=0.0.0.0, for example)
  *  5. poll GET /health until 200 (timeout 30 s)
  *  6. on unexpected exit: restart with backoff, up to MAX_RESTARTS
  */
@@ -28,6 +30,38 @@ export interface SidecarOptions {
   devRoot: string;
   dataDir: string;
   log: (line: string) => void;
+}
+
+/**
+ * ASCEND_* settings a user may still set for the desktop app: harmless preferences.
+ * Everything else under ASCEND_ (token, host, port, database, dev mode, data dir) comes
+ * from Electron or not at all.
+ */
+const PASS_THROUGH = new Set(["ASCEND_COACH_MODEL"]);
+/** Never handed to the child: they change how a runtime starts, not what ASCEND does. */
+const DROP = new Set(["NODE_OPTIONS", "ELECTRON_RUN_AS_NODE"]);
+
+/**
+ * The sidecar's environment: the parent's, minus ASCEND_* (except PASS_THROUGH),
+ * NODE_OPTIONS and ELECTRON_RUN_AS_NODE, and in the packaged app minus PYTHON* too
+ * (the frozen sidecar needs none, and PYTHONPATH and friends could load other code).
+ * Names are compared upper-cased because Windows environment names are case-insensitive.
+ */
+export function sidecarEnv(
+  parent: NodeJS.ProcessEnv,
+  opts: { isPackaged: boolean; port: number; dataDir: string },
+): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const [name, value] of Object.entries(parent)) {
+    const key = name.toUpperCase();
+    if (key.startsWith("ASCEND_") && !PASS_THROUGH.has(key)) continue;
+    if (DROP.has(key)) continue;
+    if (opts.isPackaged && key.startsWith("PYTHON")) continue;
+    env[name] = value;
+  }
+  env.ASCEND_PORT = String(opts.port);
+  env.ASCEND_DATA_DIR = opts.dataDir;
+  return env;
 }
 
 export function freePort(): Promise<number> {
@@ -67,7 +101,7 @@ export class SidecarManager {
 
     const child = spawn(command, args, {
       cwd,
-      env: { ...process.env, ASCEND_PORT: String(port), ASCEND_DATA_DIR: this.opts.dataDir },
+      env: sidecarEnv(process.env, { isPackaged: this.opts.isPackaged, port, dataDir: this.opts.dataDir }),
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
     });
