@@ -8,12 +8,14 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { bossArt } from "../lib/bosses";
+import { dropName } from "../lib/cosmetics";
 import { useAppTheme } from "../lib/prefs";
 import { themeArt } from "../lib/themeArt";
 import { EventBackdrop } from "./EventBackdrop";
 import { SystemWindow } from "./SystemWindow";
 import { TrainerSays, useTrainerOn } from "./Trainer";
-import { bossLine } from "./BossRaid";
+import { CATEGORY_LABEL } from "./BossLadder";
+import { bossEyebrow, bossLine } from "./BossRaid";
 
 export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => void }) {
   const art = themeArt(useAppTheme(), "event");
@@ -39,16 +41,23 @@ export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => v
     };
   }, [onClose]);
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="boss-screen" role="dialog" aria-modal="true" aria-label={`${boss.name}, weekly boss`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="boss-screen" role="dialog" aria-modal="true" aria-label={`${boss.name}, ${boss.seasonal ? "seasonal" : "weekly"} boss`}>
       <EventBackdrop art={art} />
       <div className="relative z-10 grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
         {portrait && (
           <img src={portrait} alt={`${boss.name}, this week's boss`} width={320} height={320} data-testid="boss-screen-art"
             className={`mx-auto h-[300px] w-[300px] shrink-0 rounded-2xl border-2 object-cover shadow-2xl ${boss.defeated ? "border-good/70 grayscale" : "border-bad/70"}`} />
         )}
-        <SystemWindow variant="warning" title="Weekly boss" className="min-w-0 bg-panel"
+        <SystemWindow variant="warning" title={boss.seasonal ? "Seasonal boss" : "Weekly boss"} className="min-w-0 bg-panel"
           actions={<button ref={close} type="button" className="btn-primary" onClick={onClose}>Close</button>}>
           <h2 className="text-display-l text-ink">{boss.name}</h2>
+          {boss.tier && (
+            <p className="mt-1 flex flex-wrap gap-1.5 text-[11px]">
+              <span className="chip border-accent/50 text-ink">Tier {boss.tier}</span>
+              {boss.category && <span className="chip">{CATEGORY_LABEL[boss.category]}</span>}
+              {boss.seasonal && <span className="chip border-warn/60 text-warn">{bossEyebrow(boss).replace("Seasonal boss · ", "")}</span>}
+            </p>
+          )}
           <p className="mt-1 text-sm text-muted">{boss.defeated ? "Defeated this week" : `${boss.days_left === 0 ? "Last day" : `${boss.days_left} day${boss.days_left === 1 ? "" : "s"} left`} · beat it by Sunday`}</p>
           <div className="mt-4">
             <div className="mb-1 flex justify-between text-xs text-muted">
@@ -63,6 +72,7 @@ export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => v
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             <span className="chip border-xp/50 text-xp">+{boss.bonus_xp} XP</span>
             <span className="chip border-accent/50 text-ink">Title: {boss.title}</span>
+            {boss.drop && dropName(boss.drop) && <span className="chip border-warn/60 text-warn">Drop: {dropName(boss.drop)}</span>}
           </div>
           {trainer && (
             <div className="mt-4">

@@ -82,6 +82,7 @@ import type {
   FinishedWorkout,
   Food,
   FoodIn,
+  BossLadderEntry,
   GameSummary,
   StreakInfo,
   ThemeInfo,
@@ -249,6 +250,7 @@ export const api = {
   stats: () => call<Stats>("GET", "/game/stats"),
   boss: () => call<BossRaid>("GET", "/game/boss"),
   titles: () => call<EarnedTitle[]>("GET", "/game/titles"),
+  bosses: () => call<BossLadderEntry[]>("GET", "/game/bosses"),
   completeQuest: (id: number) => call<QuestItem>("POST", `/game/quests/${id}/complete`),
 
   coachStatus: () => call<CoachStatus>("GET", "/coach/status"),

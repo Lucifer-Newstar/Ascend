@@ -65,4 +65,18 @@ describe("BossRaidCard", () => {
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByTestId("boss-screen")).not.toBeInTheDocument();
   });
+
+  it("shows the tier, category, season and drop of a seasonal boss", async () => {
+    const seasonal: BossRaid = {
+      ...boss, name: "Harvest Colossus", title: "Harvest Breaker", tier: "D", category: "martial_arts", seasonal: true,
+      season: "Harvest Festival", season_ends: "2026-11-30", drop: "outfit_harvest_festival", algo_version: "boss-v2",
+    };
+    const { container } = renderCard(seasonal);
+    expect(screen.getByText("Seasonal boss · Harvest Festival, until 30 Nov")).toBeInTheDocument();
+    expect(screen.getByTestId("boss-tier")).toHaveTextContent("Tier D");
+    expect(screen.getByTestId("boss-tier")).toHaveTextContent("Martial arts");
+    expect(screen.getByTestId("boss-drop")).toHaveTextContent("Drop: Harvest Festival set");
+    expect(screen.getByTestId("boss-art")).toBeInTheDocument();
+    await expectNoAxeViolations(container);
+  });
 });

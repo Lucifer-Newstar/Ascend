@@ -8,6 +8,8 @@ import type { BossRaid } from "@ascend/shared";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { bossArt } from "../lib/bosses";
+import { dropName } from "../lib/cosmetics";
+import { CATEGORY_LABEL } from "./BossLadder";
 import { play } from "../lib/sound";
 import { BossScreen } from "./BossScreen";
 import { Confetti } from "./Celebrate";
@@ -36,6 +38,13 @@ const SOURCE_WORDS: Record<BossRaid["hp_source"], string> = {
   history: "your recent weeks",
   starter: "a starter week",
 };
+
+/** "Weekly boss raid", or for a seasonal boss "Seasonal boss · Harvest Festival, until 30 Nov". */
+export function bossEyebrow(b: BossRaid): string {
+  if (!b.seasonal) return "Weekly boss raid";
+  const until = b.season_ends ? `, until ${new Date(`${b.season_ends}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : "";
+  return `Seasonal boss · ${b.season ?? "limited time"}${until}`;
+}
 
 export function bossLine(b: BossRaid): string {
   if (b.defeated) return `${b.name} is down, Hunter. +${b.bonus_xp} XP and the title "${b.title}" are yours.`;
@@ -75,8 +84,14 @@ export function BossRaidCard({ boss }: { boss: BossRaid }) {
             <Crest defeated={boss.defeated} />
           )}
           <div>
-            <p className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-bad">Weekly boss raid</p>
+            <p className={`font-display text-[11px] font-bold uppercase tracking-[0.18em] ${boss.seasonal ? "text-warn" : "text-bad"}`}>{bossEyebrow(boss)}</p>
             <h2 id={`${id}-t`} className="text-display-l text-ink">{boss.name}</h2>
+            {boss.tier && (
+              <p className="mt-0.5 flex flex-wrap gap-1.5 text-[11px]" data-testid="boss-tier">
+                <span className="chip border-accent/50 text-ink">Tier {boss.tier}</span>
+                {boss.category && <span className="chip">{CATEGORY_LABEL[boss.category]}</span>}
+              </p>
+            )}
           </div>
         </div>
         <span className={`chip ${boss.defeated ? "border-good/60 text-good" : "border-bad/50 text-bad"}`}>{boss.defeated ? "Defeated" : days}</span>
@@ -95,6 +110,7 @@ export function BossRaidCard({ boss }: { boss: BossRaid }) {
         <span className="text-muted">Reward:</span>
         <span className="chip border-xp/50 text-xp">+{boss.bonus_xp} XP</span>
         <span className="chip border-accent/50 text-ink">Title: {boss.title}</span>
+        {boss.drop && dropName(boss.drop) && <span className="chip border-warn/60 text-warn" data-testid="boss-drop">Drop: {dropName(boss.drop)}</span>}
         <span className="text-faint">No penalty if it survives.</span>
       </div>
       {trainer && (

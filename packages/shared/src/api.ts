@@ -565,6 +565,31 @@ export interface BossRaid {
   titles_earned: number;
   algo_version: string;
   why: Why;
+  /** boss-v2 (v1.2): tier E to S (a seasonal boss follows your level) and category. */
+  tier?: string;
+  category?: BossCategory;
+  seasonal?: boolean;
+  season?: string | null;
+  season_ends?: string | null;
+  /** The cosmetic a seasonal boss drops (catalog id). */
+  drop?: string | null;
+}
+
+export type BossCategory = "strength" | "calisthenics" | "cardio" | "martial_arts";
+
+/** GET /game/bosses: the boss ladder, E to S, then the seasonal bosses. */
+export interface BossLadderEntry {
+  name: string;
+  title: string;
+  /** "E".."S", or "level" for a seasonal boss (it follows your level). */
+  tier: string;
+  category: BossCategory;
+  min_level: string;
+  seasonal: boolean;
+  season: string | null;
+  months: number[];
+  drop: string | null;
+  beaten: number;
 }
 
 /** GET /game/titles: a title earned by beating a weekly boss (the only title source). */
@@ -674,6 +699,15 @@ export interface Settings {
   photo_feedback?: boolean;
   /** v1.2: the theme's background art behind the pages. Default "on". */
   background_art?: BackgroundArt;
+  /** v1.2: the avatar's look (body-neutral; rank shows as gear and aura). */
+  avatar?: "male" | "female";
+  /** v1.2: worn cosmetics, catalog ids ("" = nothing). */
+  outfit?: string;
+  relic?: string;
+  pet?: string;
+  weapon?: string;
+  /** v1.2: show the optional faith-flavoured themed cosmetics. Default true. */
+  themed_cosmetics?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------
