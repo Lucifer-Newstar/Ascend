@@ -140,6 +140,11 @@ def test_natural_logging_lines_become_proposals(client: TestClient) -> None:
 
 def test_beginner_questions_without_local_ai(client: TestClient) -> None:
     client.put("/profile", json=NO_GEAR)
+    # No program yet: where to start for this kit, not the day's protein or muscle tip.
+    first = chat(client, "What should I train today?")
+    assert first["intent"] == "train_today" and first["source"] == "rules"
+    assert first["reply"].startswith("You don't follow a program yet. With your kit, start with")
+    assert "protein" not in first["reply"].lower()
     client.put("/plans/current", json={"program_key": "bodyweight_starter_3"})
     today = chat(client, "What should I train today?")
     assert today["source"] == "rules" and "Starter A" in today["reply"]

@@ -247,13 +247,11 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
         today = _today_from_program(db, now)
         if today is not None:
             return today
-        r = coach.reply(db, settings, now, None)
-        return ChatOut(
-            reply=r.text,
-            mood="neutral",
-            intent=k,
-            source="ollama" if r.source == "ollama" else "rules",
-            fallback_reason=r.fallback_reason,
+        # No program yet: say where to start for this kit. (QA: this used to fall through to
+        # the day's top tip, so "what should I train today?" got a protein reminder.)
+        pick = _program_pick(db)
+        return pick.model_copy(
+            update={"reply": "You don't follow a program yet. " + pick.reply, "intent": k}
         )
     if k == "faq":
         return _faq(intent)
