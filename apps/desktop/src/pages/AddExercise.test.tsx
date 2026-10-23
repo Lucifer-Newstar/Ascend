@@ -76,7 +76,7 @@ describe("AddExerciseView", () => {
   it("proposes details with their sources and saves user edits as 'You'", async () => {
     const { container, onCreated } = renderView();
     expect(screen.getByText(/Online research is off/)).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText("Exercise name"), "Banded Pallof Hold");
+    await userEvent.type(screen.getByLabelText("Exercise name"), "Banded Pallof Hold", { delay: null });
     await userEvent.click(screen.getByRole("button", { name: "Suggest details" }));
     expect(api.analyzeExercise).toHaveBeenCalledWith({ name: "Banded Pallof Hold", equipment: null, notes: "", online: false });
     expect(await screen.findByText(/Local AI filled in 1 field/)).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("AddExerciseView", () => {
   it("blocks duplicates and offers the existing exercise", async () => {
     vi.mocked(api.analyzeExercise).mockResolvedValue(analysis({ duplicate_of: { id: 3, name: "Pull-up", score: 1, via: "exact", section: "calisthenics", image: null } }));
     const { onOpenExisting } = renderView();
-    await userEvent.type(screen.getByLabelText("Exercise name"), "pullups");
+    await userEvent.type(screen.getByLabelText("Exercise name"), "pullups", { delay: null });
     await userEvent.click(screen.getByRole("button", { name: "Suggest details" }));
     expect(await screen.findByText(/is already in the library/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add to my library" })).toBeDisabled();
@@ -111,7 +111,7 @@ describe("AddExerciseView", () => {
     vi.mocked(api.analyzeExercise).mockResolvedValueOnce(weak).mockResolvedValueOnce(researched());
     const { container } = renderView(false);
     expect(screen.getByText(/Online research is off/)).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText("Exercise name"), "Spoto press");
+    await userEvent.type(screen.getByLabelText("Exercise name"), "Spoto press", { delay: null });
     await userEvent.click(screen.getByRole("button", { name: "Suggest details" }));
     expect(api.analyzeExercise).toHaveBeenLastCalledWith({ name: "Spoto press", equipment: null, notes: "", online: false });
     expect(await screen.findByText(/Not enough offline data for/)).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe("AddExerciseView", () => {
     const weak = analysis({ insufficient: ["muscles"], confidence: { ...analysis().confidence, muscles: "low" } });
     vi.mocked(api.analyzeExercise).mockResolvedValue(weak);
     const { save } = renderView(false);
-    await userEvent.type(screen.getByLabelText("Exercise name"), "Spoto press");
+    await userEvent.type(screen.getByLabelText("Exercise name"), "Spoto press", { delay: null });
     await userEvent.click(screen.getByRole("button", { name: "Suggest details" }));
     await userEvent.click(await screen.findByRole("button", { name: "No" }));
     expect(screen.queryByText(/Not enough offline data/)).toBeNull();
@@ -147,7 +147,7 @@ describe("AddExerciseView", () => {
   it("lets the user keep the offline guess over a research finding before saving", async () => {
     vi.mocked(api.analyzeExercise).mockResolvedValue(researched());
     renderView(true);
-    await userEvent.type(screen.getByLabelText("Exercise name"), "Spoto press");
+    await userEvent.type(screen.getByLabelText("Exercise name"), "Spoto press", { delay: null });
     await userEvent.click(screen.getByRole("button", { name: "Suggest details" }));
     expect(await screen.findByRole("heading", { name: "Research report" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "wger.de" })[0]).toHaveAttribute("href", "https://wger.de/en/exercise/77/view/");
@@ -166,7 +166,7 @@ describe("AddExerciseView", () => {
     vi.mocked(api.analyzeExercise).mockResolvedValue(analysis({ ai: { status: "unavailable", detail: "", model: "qwen3:4b", applied: [] }, online: { status: "not_requested", detail: "", model: null, applied: [] } }));
     renderView(true);
     expect(screen.getByText(/Online research is on/)).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText("Exercise name"), "Zercher squat");
+    await userEvent.type(screen.getByLabelText("Exercise name"), "Zercher squat", { delay: null });
     await userEvent.click(screen.getByRole("button", { name: "Suggest details" }));
     expect(await screen.findByText(/Local AI model not installed: rules only/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Look it up online" }));

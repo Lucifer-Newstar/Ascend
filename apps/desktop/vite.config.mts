@@ -18,6 +18,11 @@ export default defineConfig({
   build: { outDir: "dist", emptyOutDir: true, chunkSizeWarningLimit: 900 },
   test: {
     setupFiles: ["src/test/setup.ts"],
+    // Windows CI runners render jsdom pages several times slower than Linux: the big
+    // page tests (Dashboard, AddExercise) passed in about 0.9 s locally and hit the 5 s
+    // default there. A longer limit on CI only; locally a stuck test still fails fast.
+    testTimeout: process.env.CI ? 30_000 : 10_000,
+    hookTimeout: process.env.CI ? 30_000 : 10_000,
     // Pure logic tests run in node; component tests (*.test.tsx) get a DOM from jsdom.
     // (Vitest 3+ dropped environmentMatchGlobs; projects are the replacement.)
     projects: [
