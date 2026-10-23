@@ -38,12 +38,13 @@ export function BackupsPanel({ style }: { style?: CSSProperties }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<BackupInfo | null>(null);
+  const [withPhotos, setWithPhotos] = useState(true);
 
   async function backupNow() {
     setBusy(true);
     try {
-      await api.backupNow();
-      toast("Backup saved");
+      await api.backupNow(withPhotos);
+      toast(withPhotos ? "Backup saved" : "Backup saved without your progress photos");
       reload();
     } catch (e) {
       toast(e instanceof Error ? e.message : "Backup failed", "error");
@@ -76,6 +77,15 @@ export function BackupsPanel({ style }: { style?: CSSProperties }) {
       <p className="mb-3 text-sm text-muted">
         A copy of your data is saved once a day while ASCEND runs (the last 14 are kept), and before every app update or restore.
       </p>
+      <label className="mb-3 flex items-center justify-between gap-4 text-sm">
+        <span className="text-ink">
+          Include progress photos
+          <br />
+          <span className="text-xs text-muted">Untick before you make a backup to share with someone. Your photos stay on this PC either way.</span>
+        </span>
+        <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={withPhotos} data-testid="backup-with-photos"
+          onChange={(e) => setWithPhotos(e.target.checked)} />
+      </label>
       {error ? (
         <ErrorState message={error} onRetry={reload} />
       ) : list.length === 0 ? (
@@ -88,6 +98,7 @@ export function BackupsPanel({ style }: { style?: CSSProperties }) {
                 <span className="w-32 shrink-0 text-ink">{when(b.created_at)}</span>
                 <span className="chip">{REASON[b.reason] ?? b.reason}</span>
                 {fileLabel(b.path) && <span className="truncate text-xs text-muted" data-testid="backup-file">{fileLabel(b.path)}</span>}
+                {b.photos_included === false && <span className="chip" data-testid="backup-no-photos">No photos</span>}
                 <span className="flex-1 text-right tabular-nums text-muted">{size(b.size_bytes)}</span>
                 <button type="button" className="btn-ghost px-2 py-1 text-xs" disabled={busy} onClick={() => setConfirm(b)}
                   aria-label={`Restore the backup from ${when(b.created_at)}`}>
@@ -103,6 +114,7 @@ export function BackupsPanel({ style }: { style?: CSSProperties }) {
         <div role="alertdialog" aria-labelledby="restore-q" className="mt-3 rounded-md border border-warn/50 bg-panel-2 p-3 text-sm">
           <p id="restore-q" className="text-ink">
             Replace your current data with the backup from {when(confirm.created_at)}? Your current data is backed up first, so you can undo this.
+            {confirm.photos_included === false && " This backup has no progress photos; the photos already on this PC stay where they are."}
           </p>
           <div className="mt-2 flex gap-2">
             <button type="button" className="btn-primary" disabled={busy} onClick={() => restore(confirm)}>Restore</button>

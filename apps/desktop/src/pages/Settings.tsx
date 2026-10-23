@@ -12,6 +12,7 @@ import { AiSetupPanel } from "../components/AiSetupPanel";
 import { BackupsPanel } from "../components/BackupsPanel";
 import { EraseDataPanel } from "../components/EraseData";
 import { PageGrid } from "../components/Page";
+import { PhotoSafety } from "../components/PhotoSafety";
 import { Segmented } from "../components/Segmented";
 import { ThemePicker } from "../components/ThemePicker";
 import { TodaysNumbers } from "../components/TodaysNumbers";
@@ -138,6 +139,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
                 onChange={(e) => save({ photo_feedback: e.target.checked }, e.target.checked ? "Photo feedback: on" : "Photo feedback: off")} />
             </label>
             {p.age < 18 && <p className="text-xs text-muted" data-testid="photo-feedback-minor">Photo feedback is off for under-18s.</p>}
+            <PhotoSafety />
           </section>
         </>
       )}

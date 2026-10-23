@@ -133,6 +133,23 @@ function Achievements({ refreshKey, onShare }: { refreshKey: number; onShare: (p
   );
 }
 
+/** Photo safety (v1.2): shown photos blur again when the window loses focus or is hidden,
+ * so a photo is never left on screen when you step away or switch apps. */
+export function useBlurWhenAway(setReveal: (v: boolean) => void) {
+  useEffect(() => {
+    const hide = () => setReveal(false);
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") hide();
+    };
+    window.addEventListener("blur", hide);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("blur", hide);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [setReveal]);
+}
+
 function Gallery() {
   const toast = useToast();
   const photos = useApi(api.photos, []);
@@ -144,6 +161,7 @@ function Gallery() {
   const [picked, setPicked] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<PhotoFeedback | null>(null);
   const list = photos.data ?? [];
+  useBlurWhenAway(setReveal);
 
   async function add(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -182,7 +200,7 @@ function Gallery() {
 
   return (
     <Panel id="gallery" index={4} className="col-span-12" title="Progress photos"
-      hint="Private: they stay in your data folder, are included in backups, and carry no location or camera data."
+      hint="Private: they stay on this PC, carry no location or camera data, and blur again when you leave the app. Backups include them unless you untick it."
       action={<button type="button" className="btn-ghost px-2 py-1 text-xs" aria-pressed={reveal} onClick={() => setReveal((r) => !r)}>{reveal ? "Blur photos" : "Show photos"}</button>}
       loading={photos.loading && !photos.data} error={!photos.data ? photos.error ?? null : null} onRetry={photos.reload}>
       <div className="flex flex-wrap items-end gap-3">
