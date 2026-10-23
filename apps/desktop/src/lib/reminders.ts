@@ -66,7 +66,8 @@ export function quietLine(game: GameSummary | null | undefined): string {
   const left = game ? game.quest.filter((q) => !q.completed_at).length : 0;
   if (left === 0) return "Everything for today is done. Rest well; I'll have tomorrow ready.";
   const items = `${left} quest item${left === 1 ? "" : "s"}`;
-  if (game?.streak.active_today) return `You trained today, nice. ${items} still open if you want the XP.`;
+  // active_today means anything was logged (a weigh-in counts), not that you trained.
+  if (game?.streak.active_today) return `Today already counts for your streak. ${items} still open for extra XP.`;
   return `Nothing urgent. ${items} ${left === 1 ? "is" : "are"} open for when you're ready.`;
 }
 

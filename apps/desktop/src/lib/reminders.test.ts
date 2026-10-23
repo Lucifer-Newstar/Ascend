@@ -42,7 +42,7 @@ describe("trainer reminders", () => {
 
   it("says the day is done only when today's quest is done", () => {
     const open = [{ code: "train_3", completed_at: null }, { code: "protein", completed_at: "2026-10-23T10:00:00" }];
-    expect(quietLine(game({ active_today: true }, open))).toBe("You trained today, nice. 1 quest item still open if you want the XP.");
+    expect(quietLine(game({ active_today: true }, open))).toBe("Today already counts for your streak. 1 quest item still open for extra XP.");
     expect(quietLine(game({}, [...open, { code: "steps", completed_at: null }]))).toBe("Nothing urgent. 2 quest items are open for when you're ready.");
     expect(quietLine(game({ active_today: true }, [{ code: "train_3", completed_at: "2026-10-23T10:00:00" }]))).toMatch(/^Everything for today is done/);
   });
