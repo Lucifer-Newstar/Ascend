@@ -31,7 +31,9 @@ from app.modules.gamification import formulas as f
 from app.modules.gamification.models import QuestItem, XpEvent
 from app.modules.gamification.quests import (
     GENERATOR_VERSION,
+    TRAINING_XP,
     ExerciseRef,
+    QuestItemSpec,
     Tuning,
     generate_daily_quest,
 )
@@ -276,6 +278,56 @@ def _tuning(db: Session, now: datetime) -> Tuning | None:
     return personalize(selector.player_state(db, now)).tuning
 
 
+def _plan_item(db: Session, now: datetime) -> QuestItemSpec | None:
+    """v1.2 "follow your program": with a program followed, today's training item is its
+    next session (one set of each of its exercises counts it done)."""
+    from app.modules.workouts import programs_service
+
+    try:
+        plan = programs_service.plan(db, now)
+    except Exception:  # a broken custom program must never break the quest
+        return None
+    if plan is None or not plan.next.items:
+        return None
+    n = len([i for i in plan.next.items if i.exercise_id is not None])
+    if n == 0:
+        return None
+    first = ", ".join(i.exercise for i in plan.next.items[:3])
+    return QuestItemSpec(
+        kind="training",
+        code="plan_session",
+        title=f"Today's session: {plan.next.name}"[:80],
+        detail=f"From {plan.name}: log a set of each of its {n} exercises ({first}…).",
+        metric=f"plan:{plan.id}:{plan.next.key}"[:40],
+        target=n,
+        xp=TRAINING_XP,
+    )
+
+
+def follow_plan_today(db: Session, now: datetime) -> None:
+    """A program chosen mid-day takes over today's training item too, as long as nothing
+    has been counted on it yet (no progress, not completed)."""
+    spec = _plan_item(db, now)
+    if spec is None:
+        return
+    row = db.scalars(
+        select(QuestItem).where(QuestItem.day == now.date(), QuestItem.kind == "training")
+    ).first()
+    if row is None or row.completed_at is not None:
+        return
+    if row.code != "plan_session" and (_metric_value(db, row.metric, now.date()) or 0) > 0:
+        return
+    if db.scalar(
+        select(QuestItem.id).where(
+            QuestItem.day == now.date(), QuestItem.code == "plan_session", QuestItem.id != row.id
+        )
+    ):
+        return
+    row.code, row.title, row.detail = spec.code, spec.title, spec.detail
+    row.metric, row.target, row.xp = spec.metric, spec.target, spec.xp
+    db.flush()
+
+
 def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
     from app.modules.progress import service as progress
 
@@ -302,6 +354,9 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
         readiness_band=_band_today(db, today),
         tuning=_tuning(db, now),
     )
+    plan_item = _plan_item(db, now)
+    if plan_item is not None and specs and specs[0].kind == "training":
+        specs[0] = plan_item  # v1.2: the quest follows your program
     # Two first requests of the day (the dashboard and the quest panel at app start) can
     # both find no quest and both build one; the second insert then hits the unique
     # (day, code) index. A savepoint keeps that from failing the request: the loser rolls
@@ -327,6 +382,25 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
     return list(
         db.scalars(select(QuestItem).where(QuestItem.day == today).order_by(QuestItem.id)).all()
     )
+
+
+def _plan_progress(db: Session, metric: str, day: date) -> int:
+    from app.modules.workouts import programs_service
+    from app.modules.workouts.models import Exercise, PlanEnrollment, WorkoutSet
+
+    _, enrollment_id, day_key = metric.split(":", 2)
+    e = db.get(PlanEnrollment, int(enrollment_id))
+    p = programs_service.get_program(db, e.program_key) if e is not None else None
+    d = next((x for x in p.days if x.key == day_key), None) if p is not None else None
+    if d is None:
+        return 0
+    names = {s.exercise for s in d.slots}
+    stmt = (
+        select(func.count(func.distinct(Exercise.name)))
+        .join(WorkoutSet, WorkoutSet.exercise_id == Exercise.id)
+        .where(Exercise.name.in_(names), func.date(WorkoutSet.performed_at) == day.isoformat())
+    )
+    return int(db.scalar(stmt) or 0)
 
 
 def _metric_value(db: Session, metric: str, day: date) -> int | None:
@@ -359,6 +433,9 @@ def _metric_value(db: Session, metric: str, day: date) -> int | None:
             value >= int(minimum),
         )
         return int(db.scalar(stmt) or 0)
+    if metric.startswith("plan:"):
+        # plan:<enrollment id>:<day key>: exercises of that program day with a set today.
+        return _plan_progress(db, metric, day)
     if metric == "meals":
         return nutrition.meal_count(db, day)
     if metric == "protein_g":

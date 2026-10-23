@@ -205,3 +205,26 @@ def test_generate_calisthenics_leaves_gym_kit_out(client: TestClient, profile) -
     for d in r.json()["draft"]["days"]:
         for s in d["slots"]:
             assert lib[s["exercise"]]["equipment"] in ("bodyweight", "none", "mat"), s["exercise"]
+
+
+def test_the_quest_follows_your_program(client: TestClient, profile, clock) -> None:
+    assert (
+        client.put("/plans/current", json={"program_key": "bodyweight_starter_3"}).status_code
+        == 200
+    )
+    q = client.get("/game/summary").json()["quest"]
+    item = next(i for i in q if i["code"] == "plan_session")
+    assert item["title"] == "Today's session: Starter A" and item["target"] == 5
+    w = client.post("/workouts").json()["id"]
+    squat = next(
+        e
+        for e in client.get("/exercises", params={"q": "Bodyweight Squat"}).json()
+        if e["name"] == "Bodyweight Squat"
+    )
+    client.post(
+        f"/workouts/{w}/sets", json={"exercise_id": squat["id"], "weight_kg": 0, "reps": 10}
+    )
+    item = next(
+        i for i in client.get("/game/summary").json()["quest"] if i["code"] == "plan_session"
+    )
+    assert item["progress"] == 1

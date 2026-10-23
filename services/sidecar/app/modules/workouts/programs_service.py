@@ -110,6 +110,10 @@ def enroll(db: Session, key: str, now: datetime) -> PlanEnrollment:
         current.ended_at = now
     e = PlanEnrollment(program_key=key, started_on=now.date(), created_at=now)
     db.add(e)
+    db.flush()
+    from app.modules.gamification import service as game
+
+    game.follow_plan_today(db, now)  # v1.2: today's quest follows the new program
     db.commit()
     return e
 
