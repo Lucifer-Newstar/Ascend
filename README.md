@@ -129,7 +129,7 @@ scripts/             Windows PowerShell helpers
 
 ## Quick start (Windows 11)
 
-You need **Git**, **Node.js 20+** (22 LTS recommended; newer works with npm) and **uv**.
+You need **Git**, **Node.js 22.22.2+** (22 LTS; newer works with npm) and **uv**.
 The sidecar uses **Python 3.12**; uv installs it *next to* your existing Python 3.14 and never
 touches it.
 
