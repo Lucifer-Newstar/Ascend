@@ -9,9 +9,24 @@ import pytest
 
 from app.modules.actions.parser import parse
 
-VECTORS = json.loads(
-    (Path(__file__).parents[4] / "packages/shared/src/command-vectors.json").read_text("utf-8")
-)["vectors"]
+
+def _shared_vectors() -> Path | None:
+    """packages/shared in a full checkout. The sidecar test image is built from
+    services/sidecar alone, so there the file is absent and these tests skip."""
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "packages/shared/src/command-vectors.json"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+_VECTORS_FILE = _shared_vectors()
+if _VECTORS_FILE is None:
+    pytest.skip("no packages/shared in this checkout", allow_module_level=True)
+assert _VECTORS_FILE is not None
+
+
+VECTORS = json.loads(_VECTORS_FILE.read_text("utf-8"))["vectors"]
 
 
 @pytest.mark.parametrize("v", VECTORS, ids=[v["text"] for v in VECTORS])
