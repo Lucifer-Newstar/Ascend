@@ -51,7 +51,7 @@ Checked against the code in October 2026 (external review, see [SECURITY.md](../
   so an Electron upgrade that adds a fuse fails the build until it is decided.
 - [x] `app.requestSingleInstanceLock()`
 - [x] Electron within the supported versions (45.0.0); Dependabot security alerts on,
-  version-update PRs off (upgrades are done by hand in tested commits)
+  no version-update PRs (upgrades are done by hand in tested commits)
 - [x] The sidecar gets a cleaned environment and its token on stdin; requests from the
   renderer time out after 30 s
 
@@ -94,7 +94,7 @@ Checked against the code in October 2026 (external review, see [SECURITY.md](../
 | Least-privilege workflow token | Read-only everywhere; `contents: write` only on the tag-only publish job in release.yml |
 | Electron fuses verified on every release build | Done (`fuses.cjs --check`) |
 | ML dependencies | Exact pins; torch 2.14.1. `--extra-index-url` for the PyTorch CPU index remains (training machine and CI only); hash-locking is the next step |
-| Dependabot | Security alerts and security updates on (repo settings); version-update PRs off (`open-pull-requests-limit: 0`) |
+| Dependabot | Security alerts and security updates on (repo settings); no version-update config, upgrades are done by hand |
 | Code signing | Unsigned until decided; Azure Artifact Signing (Basic $9.99/month per Microsoft's pricing page) — **eligibility for an individual in India unverified** |
 
 ## 7. Optional encryption (v1.1)

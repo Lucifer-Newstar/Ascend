@@ -69,7 +69,7 @@ Sizes are from the Ollama tag pages (Oct 2026); speeds on the reference laptop a
 |---|---|
 | CI/CD | GitHub Actions (`windows-latest` for builds and E2E, `ubuntu-latest` for fast jobs) — free for public repos on standard runners |
 | Releases + updates | GitHub Releases + electron-updater (`latest.yml`, blockmaps) |
-| Supply chain | gitleaks, npm audit, pip-audit, CycloneDX SBOM, SHA-256 checksums, Dependabot, actions pinned by SHA |
+| Supply chain | gitleaks, npm audit, pip-audit, CycloneDX SBOM, SHA-256 checksums, Dependabot security alerts, actions pinned by SHA |
 | Dev observability | Prometheus + Grafana (Compose), dev builds only |
 | Docs | Markdown + Mermaid/PlantUML, link check + `mmdc` render in CI |
 | Code signing | Undecided (unsigned at first; see [ADR-0008](../architecture/adr/0008-electron-builder-pyinstaller-packaging.md)) |

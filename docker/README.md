@@ -42,7 +42,6 @@ runtime image with the same flags until it reports healthy.
   build output, coverage and local databases out of the image.
 - `uv sync --frozen` fails the build if `uv.lock` is out of date with `pyproject.toml`; run
   `uv lock` and commit the lockfile.
-- `ARG UV_VERSION` and `ARG PYTHON_VERSION` pick the toolchain; bump base images by hand
-  (Dependabot version-update PRs are off, see `.github/dependabot.yml`).
+- `ARG UV_VERSION` and `ARG PYTHON_VERSION` pick the toolchain; bump base images by hand.
 - On Windows, Docker Desktop with the WSL2 backend works as-is. On Linux engines compose maps
   `host.docker.internal` to the host so the sidecar can still reach a host Ollama.
