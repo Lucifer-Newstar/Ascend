@@ -84,7 +84,7 @@ export function QuestWindow({ items, rank, onComplete, onStart }: {
                   {complete && <IconCheck width={14} height={14} />}
                 </button>
                 <div className="min-w-0 flex-1">
-                  <div className={`truncate text-sm font-medium ${complete ? "text-muted line-through decoration-faint" : "text-ink"}`}>
+                  <div className={`text-sm font-medium leading-snug ${complete ? "text-muted line-through decoration-faint" : "text-ink"}`}>
                     {q.title}
                     {q.code === "comeback" && <span className="chip ml-2 border-good/50 text-good no-underline">Recovery quest · no penalty</span>}
                   </div>
@@ -92,7 +92,7 @@ export function QuestWindow({ items, rank, onComplete, onStart }: {
                 </div>
                 {!manual && (
                   <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
-                    <Pips progress={q.progress} target={q.target} done={complete} />
+                    <span className="hidden xl:inline-flex"><Pips progress={q.progress} target={q.target} done={complete} /></span>
                     <span className="w-12 text-right tabular-nums">{Math.min(q.progress, q.target)}/{q.target}</span>
                   </span>
                 )}

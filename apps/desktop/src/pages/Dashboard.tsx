@@ -64,10 +64,10 @@ export function DashboardPage({ refreshKey, onChanged, onNavigate, onOpenChat, n
       {data.game.streak.reason_due && (
         <div className="col-span-12"><StreakReasonCard streak={data.game.streak} onSaved={onChanged ?? reload} /></div>
       )}
-      <div className="col-span-12 lg:col-span-8">
+      <div className="col-span-12 lg:col-span-7 xl:col-span-8">
         <QuestWindow items={data.game.quest} rank={data.game.xp.rank} onComplete={complete} onStart={onNavigate ? () => onNavigate("workout") : undefined} />
       </div>
-      <div className="col-span-12 lg:col-span-4">
+      <div className="col-span-12 lg:col-span-5 xl:col-span-4">
         <StatusPanel game={data.game} stats={stats.data} title={titles.data?.[0]?.title ?? null} titlesEarned={titles.data?.length ?? 0} name={profile.data?.name ?? null} />
       </div>
       <div className={`col-span-12 ${morning ? "lg:col-span-8" : ""}`}>

@@ -311,7 +311,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     <SectionTabs value={section} onChange={changeSection} />
     {/* Three panes on the 12-column grid: session + library (3) | active exercise (6) | context (3). */}
     <div className="grid grid-cols-12 gap-5">
-      <div className="col-span-12 flex min-h-0 flex-col gap-5 lg:col-span-3">
+      <div className="col-span-12 flex min-h-0 flex-col gap-5 lg:col-span-4 xl:col-span-3">
         <ProgramCard refreshKey={workout?.sets.length ?? 0} onPick={(id, itemSection) => {
           // v1.2: a program item opens in its own section's logger (a calisthenics or hold
           // item used to do nothing from the gym list).
@@ -384,7 +384,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         </section>
       </div>
 
-      <section className="col-span-12 space-y-5 lg:col-span-6">
+      <section className="col-span-12 space-y-5 lg:col-span-8 xl:col-span-6">
         <div className="card p-5">
           {selected ? (
             <>
@@ -477,7 +477,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         </div>
       </section>
 
-      <aside className="col-span-12 space-y-5 lg:col-span-3" aria-label="Exercise context">
+      <aside className="col-span-12 space-y-5 xl:col-span-3" aria-label="Exercise context">
         {selected && (
           <section className="card p-4" aria-labelledby="ctx-muscles">
             <h2 id="ctx-muscles" className="card-title mb-2">Muscles hit</h2>

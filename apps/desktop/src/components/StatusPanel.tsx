@@ -100,7 +100,7 @@ export function StatusPanel({ game, stats, title = null, name = null, titlesEarn
       </div>
       <div className="mt-3">
         <XpSegments key={xp.level} fill={fill} className="h-2 w-full" />
-        <div className="mt-1.5 flex justify-between text-small text-muted">
+        <div className="mt-1.5 flex flex-wrap justify-between gap-x-3 text-small text-muted">
           <span><span className="text-ink">{xp.xp_into_level}</span> / {xp.xp_for_next} XP</span>
           <span>{xp.xp_for_next - xp.xp_into_level} to level {xp.level + 1}</span>
         </div>
