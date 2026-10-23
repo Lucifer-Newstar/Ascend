@@ -15,6 +15,7 @@ export const IPC = {
   clipboardWrite: "clipboard:write",
   shareOpen: "share:open",
   keepAwake: "power:keep-awake",
+  videoSave: "video:save",
 } as const;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -57,6 +58,12 @@ export interface ImageSaveRequest {
   dataUrl: string;
 }
 
+/** video:save (v1.2): the weekly recap video, a WebM data URL, behind a native save dialog. */
+export interface VideoSaveRequest {
+  defaultName: string;
+  dataUrl: string;
+}
+
 /** clipboard:write (v1.1): a caption and/or an image for share cards. */
 export interface ClipboardWriteRequest {
   text?: string;
@@ -86,4 +93,6 @@ export interface AscendBridge {
    * timer. Resolves to whether the screen is being kept awake now.
    */
   keepAwake(on: boolean): Promise<boolean>;
+  /** Save the weekly recap video (WebM) through a native save dialog (v1.2). */
+  saveVideo(req: VideoSaveRequest): Promise<ExportSaveResult>;
 }

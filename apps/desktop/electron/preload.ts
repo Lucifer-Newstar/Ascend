@@ -20,6 +20,7 @@ const IPC: typeof SharedIPC = {
   clipboardWrite: "clipboard:write",
   shareOpen: "share:open",
   keepAwake: "power:keep-awake",
+  videoSave: "video:save",
 };
 
 const bridge: AscendBridge = {
@@ -31,6 +32,7 @@ const bridge: AscendBridge = {
   copyToClipboard: (req) => ipcRenderer.invoke(IPC.clipboardWrite, req),
   openShareLink: (url) => ipcRenderer.invoke(IPC.shareOpen, url),
   keepAwake: (on) => ipcRenderer.invoke(IPC.keepAwake, on),
+  saveVideo: (req) => ipcRenderer.invoke(IPC.videoSave, req),
 };
 
 contextBridge.exposeInMainWorld("ascend", bridge);

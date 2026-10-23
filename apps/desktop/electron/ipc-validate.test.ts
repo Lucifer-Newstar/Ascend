@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_EXPORT_BYTES, validateClipboard, validateExportSave, validateImageSave, validateShareUrl } from "./ipc-validate";
+import { MAX_EXPORT_BYTES, validateClipboard, validateExportSave, validateImageSave, validateShareUrl, validateVideoSave } from "./ipc-validate";
 
 describe("validateExportSave", () => {
   it("accepts a plain name and text", () => {
@@ -84,5 +84,26 @@ describe("validateShareUrl (allowlist)", () => {
     42,
   ])("refuses %s", (url) => {
     expect(() => validateShareUrl(url)).toThrow();
+  });
+});
+
+const WEBM = `data:video/webm;base64,${Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 1, 2, 3]).toString("base64")}`;
+
+describe("validateVideoSave (v1.2 weekly recap)", () => {
+  it("accepts a WebM with a .webm plain name, with or without a codecs part", () => {
+    expect(validateVideoSave({ defaultName: "ascend-recap-2026-10-19.webm", dataUrl: WEBM }).bytes[0]).toBe(0x1a);
+    const vp9 = WEBM.replace("data:video/webm", "data:video/webm;codecs=vp9");
+    expect(validateVideoSave({ defaultName: "recap.webm", dataUrl: vp9 }).bytes.length).toBe(7);
+  });
+
+  it.each([
+    { defaultName: "recap.webm", dataUrl: PNG },
+    { defaultName: "recap.exe", dataUrl: WEBM },
+    { defaultName: "../recap.webm", dataUrl: WEBM },
+    { defaultName: "recap.webm", dataUrl: `data:video/webm;base64,${Buffer.from("MZ not a video").toString("base64")}` },
+    { defaultName: "recap.webm" },
+    null,
+  ])("rejects %j", (req) => {
+    expect(() => validateVideoSave(req)).toThrow();
   });
 });

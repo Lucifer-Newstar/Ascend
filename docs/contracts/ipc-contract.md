@@ -38,6 +38,8 @@ export const IPC = {
   imageSave: "image:save",
   clipboardWrite: "clipboard:write",
   shareOpen: "share:open",
+  keepAwake: "power:keep-awake",
+  videoSave: "video:save",
 } as const;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -70,6 +72,8 @@ export interface AscendBridge {
 | `saveImage` | `image:save` | invoke | `ImageSaveRequest`: a plain file name with the image's own extension and a PNG/JPEG data URL (≤ 16 MB, magic bytes checked); native save dialog | `ExportSaveResult` | implemented (v1.1) |
 | `copyToClipboard` | `clipboard:write` | invoke | `ClipboardWriteRequest`: text ≤ 4000 chars and/or one PNG/JPEG data URL | `true` | implemented (v1.1) |
 | `openShareLink` | `share:open` | invoke | a URL; only `https://x.com` or `https://twitter.com` `/intent/tweet` or `/intent/post` with a single `text` query passes (`validateShareUrl`) | `true` | implemented (v1.1) |
+| `keepAwake` | `power:keep-awake` | invoke | `true` keeps the display awake for the full-screen timer, `false` lets it sleep again | `boolean` (kept awake now) | implemented (v1.2) |
+| `saveVideo` | `video:save` | invoke | `VideoSaveRequest`: a plain file name ending in `.webm` and a WebM data URL (≤ 64 MB, EBML magic bytes checked); native save dialog. Used for the weekly recap video | `ExportSaveResult` | implemented (v1.2) |
 
 ## 3. Planned for v1.0 (additive)
 

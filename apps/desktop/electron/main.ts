@@ -12,7 +12,7 @@ import path from "node:path";
 import type { SidecarRequest } from "@ascend/shared";
 
 import { IPC } from "./channels";
-import { validateClipboard, validateExportSave, validateImageSave, validateShareUrl } from "./ipc-validate";
+import { validateClipboard, validateExportSave, validateImageSave, validateShareUrl, validateVideoSave } from "./ipc-validate";
 import { SidecarManager } from "./sidecar";
 
 app.setName("ASCEND");
@@ -100,6 +100,14 @@ function registerIpc(): void {
     const req = validateImageSave(raw);
     const ext = path.extname(req.defaultName).slice(1).toLowerCase();
     const result = await dialog.showSaveDialog({ defaultPath: req.defaultName, filters: [{ name: "Image", extensions: [ext] }] });
+    if (result.canceled || !result.filePath) return { saved: false, path: null };
+    fs.writeFileSync(result.filePath, req.bytes);
+    return { saved: true, path: result.filePath };
+  });
+
+  ipcMain.handle(IPC.videoSave, async (_e, raw: unknown) => {
+    const req = validateVideoSave(raw);
+    const result = await dialog.showSaveDialog({ defaultPath: req.defaultName, filters: [{ name: "Video", extensions: ["webm"] }] });
     if (result.canceled || !result.filePath) return { saved: false, path: null };
     fs.writeFileSync(result.filePath, req.bytes);
     return { saved: true, path: result.filePath };

@@ -3,7 +3,7 @@
  */
 import path from "node:path";
 
-import type { ClipboardWriteRequest, ExportSaveRequest, ImageSaveRequest } from "@ascend/shared";
+import type { ClipboardWriteRequest, ExportSaveRequest, ImageSaveRequest, VideoSaveRequest } from "@ascend/shared";
 
 /** Bigger than any export ASCEND writes (years of history is a few MB). */
 export const MAX_EXPORT_BYTES = 64 * 1024 * 1024;
@@ -54,6 +54,25 @@ export function validateImageSave(req: unknown): ImageSaveRequest & { bytes: Buf
   const ext = mime === "png" ? /\.png$/i : /\.jpe?g$/i;
   if (!ext.test(defaultName)) throw new Error("the file name must match the image type");
   return { defaultName, dataUrl: dataUrl as string, bytes };
+}
+
+/** The weekly recap video (v1.2): about 15 s of 720p WebM is a few MB; this is far above it. */
+export const MAX_VIDEO_BYTES = 64 * 1024 * 1024;
+const VIDEO_URL = /^data:video\/webm(?:;codecs=[a-z0-9.,]+)?;base64,([A-Za-z0-9+/]+={0,2})$/;
+
+/** video:save: a plain file name ending in .webm and a WebM data URL (EBML magic bytes). */
+export function validateVideoSave(req: unknown): VideoSaveRequest & { bytes: Buffer } {
+  if (!req || typeof req !== "object") throw new Error("invalid video request");
+  const { defaultName, dataUrl } = req as Record<string, unknown>;
+  if (typeof dataUrl !== "string" || dataUrl.length > (MAX_VIDEO_BYTES * 4) / 3 + 64) throw new Error("invalid video");
+  const m = VIDEO_URL.exec(dataUrl);
+  if (!m) throw new Error("only WebM videos can be saved");
+  const bytes = Buffer.from(m[1], "base64");
+  if (!bytes.length || bytes.length > MAX_VIDEO_BYTES) throw new Error("invalid video");
+  if (!(bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3)) throw new Error("the video data is not WebM");
+  if (!plainName(defaultName)) throw new Error("invalid video file name");
+  if (!/\.webm$/i.test(defaultName)) throw new Error("the file name must end in .webm");
+  return { defaultName, dataUrl, bytes };
 }
 
 const MAX_CLIPBOARD_TEXT = 4000;
