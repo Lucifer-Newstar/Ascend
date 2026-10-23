@@ -7,7 +7,7 @@ It works fully offline; the only optional outbound call is to a local Ollama.
 ```bash
 uv sync                          # Python 3.12 venv + locked deps (uv installs 3.12 if needed)
 uv run alembic upgrade head      # create / migrate the database
-uv run pytest                    # 95 tests: engines (unit) + API (TestClient)
+uv run pytest                    # 666 tests: engines (unit + Hypothesis) + API (TestClient)
 uv run python -m app --dev       # http://127.0.0.1:8765, token "dev", docs at /docs
 uv run python -m app.devtools.seed_demo --wipe   # 2 weeks of demo data (deletes your data!)
 ```

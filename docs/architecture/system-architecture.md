@@ -4,6 +4,14 @@ This document describes the architecture of ASCEND: its processes, modules and d
 flows, and the responsibilities of each part. It is the source of truth that
 implementation must follow; deviations are recorded as ADRs ([adr/](adr/adr-template.md)).
 
+> **As built at 1.0.0 (2026-10-23).** The processes, the IPC contract, the token and Host
+> checks, the event bus with its outbox and the modular monolith are built as described. The
+> sidecar's modules are `workouts`, `nutrition`, `gamification`, `progress`, `skills`,
+> `intelligence`, `coach` and `io`. Not built in 1.0.0: the auto-updater, tray and toasts,
+> `safeStorage`, the job queue (`core/jobs.py`), the model manager and the `ai/` package, and
+> the meal-scan pipeline. The sidecar sends no CORS headers at all; in browser dev mode the Vite
+> server proxies `/api` to it. Items marked with a phase below are the original plan.
+
 ---
 
 ## 1. Design Principles
@@ -88,7 +96,7 @@ file is stale or the OpenAPI differs from `docs/contracts/` ("contract drift").
 | **Spawn** | Main binds `127.0.0.1:0` to find a free port, creates a 32-byte random token, starts `ascend-sidecar.exe` (dev: `uv run python -m app` in `services/sidecar`) with `ASCEND_PORT` and `ASCEND_DATA_DIR` in env and the token as the first line on **stdin** (never argv, so it is not visible in Task Manager) |
 | **Ready** | Sidecar runs migrations, prints `ASCEND_SIDECAR_READY port=<n>`; main polls `GET /health` until healthy; the splash shows "Starting engine…" |
 | **Live** | Health every 5 s; 3 misses or an unexpected exit → restart with exponential backoff; too many restarts → `failed` with an error screen, logs link and "Restart engine" |
-| **Auth** | Every request needs `Authorization: Bearer <token>` (constant-time compare); `Host` must be `127.0.0.1`/`localhost` (blocks DNS rebinding); CORS only with `--dev` for the Vite origin |
+| **Auth** | Every request needs `Authorization: Bearer <token>` (constant-time compare); `Host` must be `127.0.0.1`/`localhost` (blocks DNS rebinding); no CORS headers (browser dev mode goes through the Vite proxy) |
 | **Stop** | `POST /shutdown` → finish or park jobs, checkpoint WAL, exit; hard kill after a grace period |
 | **Ollama** | Detected at onboarding. Health = `GET /api/tags` + a 1-token warm-up. `keep_alive` keeps the chat model loaded while the app is open |
 

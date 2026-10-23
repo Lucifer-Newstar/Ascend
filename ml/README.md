@@ -38,7 +38,7 @@ uv pip install --python .venv/bin/python -r requirements.txt --index-strategy un
 .venv/bin/python src/make_smoke_data.py      # synthetic shapes, NOT food photos
 PATH="$PWD/.venv/bin:$PATH" dvc repro         # prepare -> train -> export -> evaluate
 PATH="$PWD/.venv/bin:$PATH" dvc metrics show
-.venv/bin/python -m pytest                    # 17 tests
+.venv/bin/python -m pytest                    # 18 tests
 ```
 
 Without DVC: `python src/prepare.py && python src/train.py && python src/export_onnx.py && python src/evaluate.py`.
