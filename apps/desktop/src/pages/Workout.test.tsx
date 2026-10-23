@@ -61,7 +61,7 @@ describe("Training page", () => {
     vi.mocked(api.previousSession).mockResolvedValue(null);
     vi.mocked(api.exercise).mockRejectedValue(new Error("not needed"));
     vi.mocked(api.progression).mockRejectedValue(new Error("no suggestion"));
-    vi.mocked(api.currentPlan).mockRejectedValue(Object.assign(new Error("No program chosen yet"), { status: 404 }));
+    vi.mocked(api.currentPlan).mockResolvedValue(null);
     vi.mocked(api.programs).mockResolvedValue([]);
   });
 

@@ -65,6 +65,17 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     if (selected && isBodyweight(selected)) setWeight(0);
   }, [selected]);
 
+  // A program item picked on the card: selected once its section's list has loaded.
+  const [pickId, setPickId] = useState<number | null>(null);
+  useEffect(() => {
+    if (pickId === null || !exercises.data) return;
+    const match = exercises.data.find((e) => e.id === pickId);
+    if (match) {
+      setSelected(match);
+      setPickId(null);
+    }
+  }, [pickId, exercises.data]);
+
   const [pendingDone, setPendingDone] = useState(false);
   useEffect(() => {
     if (!pending || pendingDone || !exercises.data) return;
@@ -256,12 +267,14 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     {/* Three panes on the 12-column grid: session + library (3) | active exercise (6) | context (3). */}
     <div className="grid grid-cols-12 gap-5">
       <div className="col-span-12 flex min-h-0 flex-col gap-5 lg:col-span-3">
-        {section === "gym" && (
-          <ProgramCard refreshKey={workout?.sets.length ?? 0} onPick={(id) => {
-            const ex = exercises.data?.find((e) => e.id === id);
-            if (ex) setSelected(ex);
-          }} />
-        )}
+        <ProgramCard refreshKey={workout?.sets.length ?? 0} onPick={(id, itemSection) => {
+          // v1.2: a program item opens in its own section's logger (a calisthenics or hold
+          // item used to do nothing from the gym list).
+          if (itemSection && itemSection !== section && SECTIONS.some((s) => s.id === itemSection)) {
+            changeSection(itemSection as Section);
+          }
+          setPickId(id);
+        }} />
         {sessionExercises.length > 0 && (
           <section className="card p-4" aria-labelledby="session-list-title">
             <h2 id="session-list-title" className="card-title mb-2">This session</h2>

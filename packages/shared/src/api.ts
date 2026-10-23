@@ -318,7 +318,7 @@ export interface CustomExerciseIn extends ExerciseProposal {
 // ---- skill trees ------------------------------------------------------------
 
 export type SkillFamily = "pull" | "push" | "core" | "balance" | "legs" | "levers";
-export type StepStatus = "unlocked" | "next" | "locked";
+export type StepStatus = "unlocked" | "next" | "locked" | "start";
 
 export interface SkillCriterion {
   text: string;
@@ -374,6 +374,8 @@ export interface SkillSummary {
   rusty: boolean;
   /** A tree the user made (v1.1); it tracks like the built-in ones and pays no XP. */
   custom?: boolean;
+  /** v1.2: whether the player's equipment covers this tree's moves. */
+  fits_equipment?: boolean;
 }
 
 export interface CustomSkillStepIn {
@@ -444,6 +446,17 @@ export interface Food {
   carbs_g: number;
   fat_g: number;
   source: string;
+}
+
+/** POST /foods (v1.2): a food of the player's own. */
+export interface FoodIn {
+  name: string;
+  portion_label?: string;
+  portion_g?: number;
+  kcal: number;
+  protein_g?: number;
+  carbs_g?: number;
+  fat_g?: number;
 }
 
 export interface MealItem {
@@ -623,7 +636,21 @@ export interface HistoryDay {
 // --- settings -------------------------------------------------------------------
 
 export type Units = "metric" | "imperial";
-export type ThemePref = "dark" | "light" | "system";
+/** v1.2: dark / light / system are the 1.1 looks (free); the rest are the v1.2 themes. */
+export type AppTheme = "shadow" | "crimson" | "frost" | "emerald" | "solar";
+export type ThemePref = "dark" | "light" | "system" | AppTheme;
+export type BackgroundArt = "on" | "dim" | "off";
+
+/** GET /game/themes */
+export interface ThemeInfo {
+  key: AppTheme | "dark" | "light";
+  name: string;
+  tagline: string;
+  free: boolean;
+  unlocked: boolean;
+  requirement: string;
+  progress: string;
+}
 
 export interface Settings {
   ai_enabled: boolean;
@@ -642,6 +669,8 @@ export interface Settings {
   hide_calories?: boolean;
   /** v1.1: local AI feedback on progress photos. Off by default; always off under 18. */
   photo_feedback?: boolean;
+  /** v1.2: the theme's background art behind the pages. Default "on". */
+  background_art?: BackgroundArt;
 }
 
 // --- progress ---------------------------------------------------------------------
@@ -724,6 +753,8 @@ export interface MuscleDay {
 export interface MuscleHistory {
   code: string;
   label: string;
+  /** v1.2: the anatomical name, shown only in the drill-down. */
+  latin?: string;
   days: number;
   status: MuscleStatus;
   es_7d: number;
@@ -1033,6 +1064,10 @@ export interface PlanItem {
   target?: string | null;
   target_reason?: string | null;
   done_sets?: number;
+  /** v1.2: reps, hold (rep_low/rep_high are seconds), time or distance. */
+  measure?: Measure;
+  /** v1.2: the logger section the exercise lives in (gym, calisthenics, ...). */
+  section?: string;
 }
 
 export interface PlanDay {

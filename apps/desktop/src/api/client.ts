@@ -81,7 +81,9 @@ import type {
   SkillUnlock,
   FinishedWorkout,
   Food,
+  FoodIn,
   GameSummary,
+  ThemeInfo,
   HistoryDay,
   ImportIn,
   ImportReport,
@@ -172,6 +174,7 @@ export const api = {
   saveProfile: (p: ProfileIn) => call<Profile>("PUT", "/profile", p),
   baseline: (b: BaselineIn) => call<BaselineOut>("POST", "/profile/baseline", b),
   settings: () => call<Settings>("GET", "/settings"),
+  themes: () => call<ThemeInfo[]>("GET", "/game/themes"),
   setAi: (enabled: boolean) => call<Settings>("PUT", "/settings", { ai_enabled: enabled }),
   updateSettings: (patch: Partial<Settings>) => call<Settings>("PUT", "/settings", patch),
   muscles: () => call<MuscleState[]>("GET", "/muscles"),
@@ -187,6 +190,8 @@ export const api = {
   createExercise: (body: CustomExerciseIn) => call<ExerciseDetail>("POST", "/exercises", body),
   archiveExercise: (id: number) => call<void>("DELETE", `/exercises/${id}`),
   skills: () => call<SkillSummary[]>("GET", "/skills"),
+  /** v1.2: every tree with its steps in one call. */
+  skillDetails: () => call<SkillDetail[]>("GET", "/skills/details"),
   skill: (key: string) => call<SkillDetail>("GET", `/skills/${encodeURIComponent(key)}`),
   skillUnlocks: (limit = 10) => call<SkillUnlock[]>("GET", `/skills/unlocks?limit=${limit}`),
   customSkills: () => call<CustomSkill[]>("GET", "/skills/custom"),
@@ -217,7 +222,8 @@ export const api = {
   stalls: () => call<StalledLift[]>("GET", "/intelligence/stalls"),
   notices: () => call<SystemNotice[]>("GET", "/intelligence/notices"),
   programs: () => call<ProgramSummary[]>("GET", "/plans/programs"),
-  currentPlan: () => call<Plan>("GET", "/plans/current"),
+  /** null when no program is chosen yet (v1.2: a normal answer, not a 404). */
+  currentPlan: () => call<Plan | null>("GET", "/plans/current"),
   choosePlan: (program_key: string) => call<Plan>("PUT", "/plans/current", { program_key }),
   leavePlan: () => call<void>("DELETE", "/plans/current"),
   tdee: (days = 90) => call<TdeeReport>("GET", `/intelligence/tdee?days=${days}`),
@@ -230,6 +236,8 @@ export const api = {
   finishWorkout: (workoutId: number) => call<FinishedWorkout>("POST", `/workouts/${workoutId}/finish`),
 
   foods: (q = "") => call<Food[]>("GET", `/foods?q=${encodeURIComponent(q)}`),
+  addFood: (body: FoodIn) => call<Food>("POST", "/foods", body),
+  deleteFood: (id: number) => call<null>("DELETE", `/foods/${id}`),
   dayLog: () => call<DayLog>("GET", "/meals/day"),
   logMeal: (meal_type: MealType, items: { food_id: number; portions: number }[]) =>
     call<{ meal: unknown; xp_awarded: number }>("POST", "/meals", { meal_type, items }),

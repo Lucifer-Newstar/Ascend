@@ -52,12 +52,12 @@ describe("ProgramCard", () => {
     expect(within(list).getByLabelText("2 of 4 sets done")).toBeInTheDocument();
     expect(screen.getByText(/so Upper A is next/)).toBeInTheDocument();
     await userEvent.click(within(list).getByRole("button", { name: /Barbell Row/ }));
-    expect(onPick).toHaveBeenCalledWith(2);
+    expect(onPick).toHaveBeenCalledWith(2, undefined); // the item's section rides along when the plan names one
     await expectNoAxeViolations(container);
   });
 
   it("offers the catalog when no program is followed, and follows one", async () => {
-    vi.mocked(api.currentPlan).mockRejectedValueOnce(Object.assign(new Error("No program chosen yet"), { status: 404 }));
+    vi.mocked(api.currentPlan).mockResolvedValueOnce(null);
     renderCard();
     expect(await screen.findByRole("region", { name: "Follow a program" })).toBeInTheDocument();
     expect(await screen.findByText("Needs equipment you didn't list at setup.")).toBeInTheDocument();

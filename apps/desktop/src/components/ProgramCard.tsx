@@ -3,7 +3,7 @@
  * user follows, with prog-v1's target per exercise and the sets already done today, or a
  * chooser when no program is followed. Picking an exercise opens it in the logger.
  */
-import type { Plan, ProgramSummary } from "@ascend/shared";
+import type { Plan, PlanItem, ProgramSummary } from "@ascend/shared";
 import { useState } from "react";
 
 import { api } from "../api/client";
@@ -13,13 +13,24 @@ import { WhyButton } from "./WhyPanel";
 import { useApi } from "../lib/useApi";
 
 const WEEKDAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** "3 × 8–12", or "3 × 20–30 s" for a hold (holds are dosed in seconds). */
+export function planTarget(it: PlanItem): string {
+  const range = it.rep_low === it.rep_high ? `${it.rep_low}` : `${it.rep_low}–${it.rep_high}`;
+  return `${it.sets} × ${range}${it.measure === "hold" ? " s" : ""}`;
+}
 const LEVEL: Record<string, string> = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
 
-export function ProgramCard({ refreshKey = 0, onPick }: { refreshKey?: number; onPick: (exerciseId: number) => void }) {
+export function ProgramCard({ refreshKey = 0, onPick }: {
+  refreshKey?: number;
+  /** v1.2: the item's logger section comes along, so a calisthenics or hold item opens there. */
+  onPick: (exerciseId: number, section?: string) => void;
+}) {
   const [tick, setTick] = useState(0);
   const plan = useApi(api.currentPlan, [refreshKey, tick]);
   const [choosing, setChoosing] = useState(false);
-  const none = !plan.data && plan.status === 404;
+  // v1.2: no program is a normal answer (null), not an error.
+  const none = !plan.loading && !plan.error && plan.data === null;
   const p: Plan | null = plan.data ?? null;
 
   if (choosing || none) {
@@ -44,11 +55,11 @@ export function ProgramCard({ refreshKey = 0, onPick }: { refreshKey?: number; o
               const complete = done >= it.sets;
               return (
                 <li key={it.exercise}>
-                  <button type="button" disabled={it.exercise_id === null} onClick={() => it.exercise_id !== null && onPick(it.exercise_id)}
+                  <button type="button" disabled={it.exercise_id === null} onClick={() => it.exercise_id !== null && onPick(it.exercise_id, it.section)}
                     className="flex w-full items-start justify-between gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-panel-2 disabled:cursor-default">
                     <span className="min-w-0">
                       <span className={`block truncate text-sm ${complete ? "text-muted line-through" : "text-ink"}`}>{it.exercise}</span>
-                      <span className="block truncate text-xs text-muted">{it.target ?? `${it.sets} × ${it.rep_low}–${it.rep_high}`}</span>
+                      <span className="block truncate text-xs text-muted">{it.target ?? planTarget(it)}</span>
                     </span>
                     <span className={`shrink-0 text-xs ${complete ? "text-good" : "text-muted"}`} aria-label={`${done} of ${it.sets} sets done`}>{done}/{it.sets}</span>
                   </button>
