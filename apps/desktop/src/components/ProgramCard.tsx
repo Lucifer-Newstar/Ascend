@@ -163,7 +163,9 @@ function ProgramChooser({ current, onChosen, onCancel }: { current: string | nul
         </button>
         <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={() => { window.location.hash = "planner"; }}>Build your own</button>
       </div>
-      <ul className="space-y-2">
+      {/* Its own scroll, so the exercise library under it stays on screen (QA: with no
+          program picked the list pushed the library a full screen down). */}
+      <ul className="max-h-[38vh] space-y-2 overflow-y-auto pr-1" data-testid="program-list">
         {list.map((p) => (
           <li key={p.key} className={`rounded-lg border border-line bg-panel-2 p-3 ${p.fits_equipment ? "" : "opacity-60"}`}>
             <div className="flex items-baseline justify-between gap-2">
