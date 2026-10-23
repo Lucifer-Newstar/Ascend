@@ -216,7 +216,7 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
             PlanDoneOut(day=d.day, key=p.days[d.index].key, name=p.days[d.index].name)
             for d in state.done[-5:][::-1]
         ],
-        reason=state.reason + (" (deload week: half the sets at RPE 7)" if deload else ""),
+        reason=state.reason + (" Deload week: half the sets at RPE 7." if deload else ""),
         why=Why(
             formula=(
                 "next = the day after the last program day you trained; a finished workout "

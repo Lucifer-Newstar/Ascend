@@ -55,7 +55,7 @@ def test_first_session_is_day_one() -> None:
     p = pg.PROGRAMS["upper_lower_4"]
     s = pg.plan_state(p, START, [], START)
     assert s.next_index == 0 and s.sessions_done == 0
-    assert s.reason == "first session of the program: Upper A"
+    assert s.reason == "First session of the program: Upper A."
 
 
 def test_rotation_advances_on_matching_workouts_and_survives_missed_days() -> None:
@@ -66,6 +66,8 @@ def test_rotation_advances_on_matching_workouts_and_survives_missed_days() -> No
     s = pg.plan_state(p, START, log, today)
     assert s.next_index == 2 and s.sessions_done == 2 and s.this_week_done == 0
     assert "Lower A" in s.reason and "Upper B is next" in s.reason
+    last = START + timedelta(days=1)
+    assert f"on {last:%a} {last.day} {last:%b}," in s.reason and "-" not in s.reason
 
 
 def test_a_partial_session_counts_when_it_covers_half_the_day() -> None:

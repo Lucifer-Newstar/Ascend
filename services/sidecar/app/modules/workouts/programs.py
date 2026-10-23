@@ -449,12 +449,12 @@ def plan_state(
     last = done[-1].day if done else None
     nxt = program.days[due]
     if not done:
-        reason = f"first session of the program: {nxt.name}"
+        reason = f"First session of the program: {nxt.name}."
     else:
         prev = program.days[done[-1].index]
-        reason = (
-            f"you last trained {prev.name} on {done[-1].day.isoformat()}, so {nxt.name} is next"
-        )
+        # Plain words on the card: "Thu 22 Oct", not an ISO date.
+        when = f"{done[-1].day:%a} {done[-1].day.day} {done[-1].day:%b}"
+        reason = f"You last trained {prev.name} on {when}, so {nxt.name} is next."
     return PlanState(due, len(done), this_week, week_start, tuple(done), last, reason)
 
 
