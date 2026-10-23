@@ -7,6 +7,11 @@ A seeded RNG keyed on the date keeps the quest stable all day.
 
 quest-v2: the morning check-in's readiness band resizes the training item
 (amber: one set fewer; red: swapped for mobility), see apply_readiness().
+
+quest-v3 (personalization): an optional Tuning from the player state (selector
+module) sets the set range for the experience level and picks the nutrition item
+from the user's own gaps (meal logging first, then protein). Without a Tuning the
+quest is exactly quest-v2.
 """
 
 from __future__ import annotations
@@ -19,7 +24,7 @@ from datetime import date
 from app.modules.progress.muscle_load import MuscleState
 from app.modules.progress.taxonomy import MUSCLE_BY_KEY
 
-GENERATOR_VERSION = "quest-v2"
+GENERATOR_VERSION = "quest-v3"
 
 TRAINING_XP = 40
 NUTRITION_XP = 25
@@ -51,6 +56,18 @@ class QuestItemSpec:
     metric: str  # "sets:<muscle_key>" | "meals" | "protein_g" | "manual"
     target: int
     xp: int
+
+
+@dataclass(frozen=True)
+class Tuning:
+    """What the personalization layer changes in a quest (all optional)."""
+
+    sets_min: int = 2
+    sets_max: int = 5
+    # "meals" (log meals first), "protein", or None for the day's coin toss.
+    nutrition: str | None = None
+    # Appended to the training item's detail: why it is this size.
+    note: str = ""
 
 
 def difficulty_multiplier(completion_rate_7d: float | None) -> float:
@@ -97,7 +114,11 @@ def apply_readiness(item: QuestItemSpec, band: str | None) -> QuestItemSpec:
 
 
 def _training_item(
-    states: Sequence[MuscleState], exercises: Sequence[ExerciseRef], mult: float, rng: random.Random
+    states: Sequence[MuscleState],
+    exercises: Sequence[ExerciseRef],
+    mult: float,
+    rng: random.Random,
+    tuning: Tuning | None = None,
 ) -> QuestItemSpec:
     # readiness-only muscles (rotator cuff, neck, hip flexors...) have no weekly set target
     # in taxonomy v2, so they are never a quest target.
@@ -113,12 +134,15 @@ def _training_item(
         options = [e for e in exercises if e.muscles.get(target.key, 0) >= 1.0]
         if options:
             ex = rng.choice(sorted(options, key=lambda e: e.id))
-            sets = max(2, min(5, round(3 * mult)))
+            t = tuning or Tuning()
+            base = 3 if tuning is None else (t.sets_min + t.sets_max + 1) // 2
+            sets = max(t.sets_min, min(t.sets_max, round(base * mult)))
+            detail = f"Suggested: {ex.name}. Any {target.label.lower()} exercise counts."
             return QuestItemSpec(
                 kind="training",
                 code=f"train_{target.key}",
                 title=f"{sets} hard sets for {target.label.lower()}",
-                detail=f"Suggested: {ex.name}. Any {target.label.lower()} exercise counts.",
+                detail=f"{detail} {t.note}".strip(),
                 metric=f"sets:{target.key}",
                 target=sets,
                 xp=TRAINING_XP,
@@ -134,12 +158,15 @@ def generate_daily_quest(
     completion_rate_7d: float | None = None,
     missed_yesterday: bool = False,
     readiness_band: str | None = None,
+    tuning: Tuning | None = None,
 ) -> list[QuestItemSpec]:
     rng = random.Random(day.toordinal())
     mult = difficulty_multiplier(completion_rate_7d)
-    items = [apply_readiness(_training_item(states, exercises, mult, rng), readiness_band)]
+    items = [apply_readiness(_training_item(states, exercises, mult, rng, tuning), readiness_band)]
 
-    if protein_target_g and rng.random() < 0.5:
+    coin = rng.random() < 0.5
+    pick = tuning.nutrition if tuning is not None and tuning.nutrition else None
+    if protein_target_g and (pick == "protein" or (pick is None and coin)):
         items.append(
             QuestItemSpec(
                 "nutrition",

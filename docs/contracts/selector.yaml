@@ -88,6 +88,23 @@ paths:
       x-status: implemented
       tags:
       - selector
+  /selector/personalization:
+    get:
+      tags:
+      - selector
+      summary: Personalization
+      description: 'How the player state tunes today''s quest and the trainer''s tone (personalize-v1),
+
+        with one plain reason per rule that fired.'
+      operationId: personalization_selector_personalization_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalizationOut'
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -317,3 +334,42 @@ components:
       - hide_calories
       - algo_version
       title: PlayerStateOut
+    PersonalizationOut:
+      properties:
+        focus:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Focus
+        tone:
+          type: string
+          title: Tone
+        sets_min:
+          type: integer
+          title: Sets Min
+        sets_max:
+          type: integer
+          title: Sets Max
+        nutrition:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nutrition
+        reasons:
+          items:
+            type: string
+          type: array
+          title: Reasons
+        version:
+          type: string
+          title: Version
+      type: object
+      required:
+      - focus
+      - tone
+      - sets_min
+      - sets_max
+      - nutrition
+      - reasons
+      - version
+      title: PersonalizationOut

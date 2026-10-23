@@ -32,6 +32,7 @@ from app.modules.gamification.models import QuestItem, XpEvent
 from app.modules.gamification.quests import (
     GENERATOR_VERSION,
     ExerciseRef,
+    Tuning,
     generate_daily_quest,
 )
 from app.modules.gamification.schemas import (
@@ -243,11 +244,23 @@ def resize_training_for_readiness(db: Session, now: datetime, band: str) -> None
         protein,
         _completion_rate(db, now.date()),
         readiness_band=band,
+        tuning=_tuning(db, now),
     )[0]
     row.code, row.title, row.detail = spec.code, spec.title, spec.detail
     row.metric, row.target, row.xp = spec.metric, spec.target, spec.xp
     row.generator_version = GENERATOR_VERSION
     db.flush()
+
+
+def _tuning(db: Session, now: datetime) -> Tuning | None:
+    """personalize-v1 from the player state; None before there is a profile."""
+    from app.modules.progress import service as progress
+    from app.modules.selector import service as selector
+    from app.modules.selector.personalize import personalize
+
+    if progress.get_profile(db) is None:
+        return None
+    return personalize(selector.player_state(db, now)).tuning
 
 
 def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
@@ -274,6 +287,7 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
         _completion_rate(db, today),
         missed,
         readiness_band=_band_today(db, today),
+        tuning=_tuning(db, now),
     )
     # Two first requests of the day (the dashboard and the quest panel at app start) can
     # both find no quest and both build one; the second insert then hits the unique

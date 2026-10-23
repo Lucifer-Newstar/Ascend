@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
 from app.modules.selector import catalog, engine, service
+from app.modules.selector.personalize import personalize
 from app.modules.selector.state import STATE_VERSION
 
 router = APIRouter(prefix="/selector", tags=["selector"])
@@ -107,4 +108,32 @@ def get_explain(db: Session = Depends(get_db), now: datetime = Depends(get_now))
         catalog_version=catalog.CATALOG_VERSION,
         engine_version=engine.ENGINE_VERSION,
         state_version=STATE_VERSION,
+    )
+
+
+class PersonalizationOut(BaseModel):
+    focus: str | None
+    tone: str
+    sets_min: int
+    sets_max: int
+    nutrition: str | None
+    reasons: list[str]
+    version: str
+
+
+@router.get("/personalization", response_model=PersonalizationOut)
+def personalization(
+    db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> PersonalizationOut:
+    """How the player state tunes today's quest and the trainer's tone (personalize-v1),
+    with one plain reason per rule that fired."""
+    p = personalize(service.player_state(db, now))
+    return PersonalizationOut(
+        focus=p.focus,
+        tone=p.tone,
+        sets_min=p.tuning.sets_min,
+        sets_max=p.tuning.sets_max,
+        nutrition=p.tuning.nutrition,
+        reasons=p.reasons,
+        version=p.version,
     )
