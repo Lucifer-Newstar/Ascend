@@ -9,6 +9,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { bossArt } from "../lib/bosses";
 import { play } from "../lib/sound";
+import { BossScreen } from "./BossScreen";
 import { Confetti } from "./Celebrate";
 import { TrainerSays, useTrainerOn } from "./Trainer";
 
@@ -45,6 +46,7 @@ export function bossLine(b: BossRaid): string {
 export function BossRaidCard({ boss }: { boss: BossRaid }) {
   const trainer = useTrainerOn();
   const [open, setOpen] = useState(false);
+  const [full, setFull] = useState(false);
   const id = useId();
   // The defeat moment plays when the boss falls while you watch (not on every visit).
   const was = useRef(boss.defeated);
@@ -65,8 +67,10 @@ export function BossRaidCard({ boss }: { boss: BossRaid }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           {bossArt(boss.name) ? (
-            <img src={bossArt(boss.name)!} alt={`${boss.name}, this week's boss`} width={72} height={72} data-testid="boss-art"
-              className={`h-[72px] w-[72px] rounded-lg border object-cover ${boss.defeated ? "border-good/60 grayscale" : "border-bad/50"}`} />
+            <button type="button" className="shrink-0 rounded-lg" onClick={() => setFull(true)} aria-label={`Open the ${boss.name} boss screen`}>
+              <img src={bossArt(boss.name)!} alt={`${boss.name}, this week's boss`} width={72} height={72} data-testid="boss-art"
+                className={`h-[72px] w-[72px] rounded-lg border object-cover ${boss.defeated ? "border-good/60 grayscale" : "border-bad/50"}`} />
+            </button>
           ) : (
             <Crest defeated={boss.defeated} />
           )}
@@ -100,7 +104,9 @@ export function BossRaidCard({ boss }: { boss: BossRaid }) {
           </TrainerSays>
         </div>
       )}
-      <div className="mt-2 text-right">
+      {full && <BossScreen boss={boss} onClose={() => setFull(false)} />}
+      <div className="mt-2 flex justify-end gap-4">
+        <button type="button" className="text-xs text-accent hover:underline" onClick={() => setFull(true)}>Face the boss</button>
         <button type="button" className="text-xs text-accent hover:underline" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>Why?</button>
       </div>
       {open && (

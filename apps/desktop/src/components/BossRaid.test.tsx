@@ -55,4 +55,14 @@ describe("BossRaidCard", () => {
     expect(bossLine({ ...boss, defeated: true })).toContain('"Golem Breaker"');
     expect(bossLine({ ...boss, damage: 0, hp_left: 40 })).toContain("A new boss rises");
   });
+
+  it("opens the boss screen full size and closes it with Esc", async () => {
+    renderCard(boss);
+    await userEvent.click(screen.getByRole("button", { name: "Face the boss" }));
+    expect(screen.getByTestId("boss-screen")).toBeInTheDocument();
+    expect(screen.getByTestId("boss-screen-art")).toHaveAttribute("alt", "Iron Golem, this week's boss");
+    expect(screen.getAllByText(/3 days left/).length).toBeGreaterThan(0);
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByTestId("boss-screen")).not.toBeInTheDocument();
+  });
 });
