@@ -6,6 +6,7 @@
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -39,5 +40,17 @@ describe("electron-builder resources", () => {
   it.each(referenced())("%s exists and is not git-ignored", (file) => {
     expect(fs.existsSync(path.join(desktop, file))).toBe(true);
     expect(ignored(file)).toBe(false);
+  });
+});
+
+describe("Electron fuses hook", () => {
+  it("decides every fuse @electron/fuses knows (Electron 45 has nine)", async () => {
+    const { FuseV1Options } = await import("@electron/fuses");
+    const known = Object.keys(FuseV1Options).filter((key) => Number.isNaN(Number(key)));
+    const { FUSES } = createRequire(__filename)(path.join(desktop, "build/fuses.cjs")) as {
+      FUSES: Record<string, boolean>;
+    };
+    expect(known).toContain("WasmTrapHandlers");
+    expect(Object.keys(FUSES).sort()).toEqual([...known].sort());
   });
 });

@@ -26,7 +26,7 @@ Status as of PR #37:
 | Finding | Status | Fix and regression test |
 |---|---|---|
 | H1 Electron 33 out of support | Fixed | Electron 45.0.0 (#24). `npm audit`: 10 (2 high) before, 8 moderate after; all 8 are in electron-builder's packaging tool chain (sprintf-js via @electron/get), none ships in the app |
-| H2 Release build could not succeed, fuses never applied | Fixed | `.gitignore` anchored; `build/fuses.cjs` and icons committed; `fuses.cjs --check` step in release.yml (#25). Verified on a clean clone with an unpacked `--win --dir` build: all six fuses set. `src/build-config.test.ts` |
+| H2 Release build could not succeed, fuses never applied | Fixed | `.gitignore` anchored; `build/fuses.cjs` and icons committed; `fuses.cjs --check` step in release.yml (#25). Verified on a clean clone with an unpacked `--win --dir` build: all six hardening fuses set. Since `@electron/fuses` 2 all nine Electron 45 fuses are set explicitly and checked. `src/build-config.test.ts` |
 | H3 Sidecar inherited the user's environment | Fixed | `sidecarEnv()` drops `ASCEND_*`, `NODE_OPTIONS`, `ELECTRON_RUN_AS_NODE` (and `PYTHON*` when packaged); the frozen sidecar ignores `ASCEND_TOKEN/HOST/DB_URL/DEV`, reads the token from stdin and binds 127.0.0.1 (#26). `electron/sidecar.test.ts`, `tests/unit/test_launch_env.py` |
 | M1 A bad backup file broke the list and stopped daily backups | Fixed | #27, `tests/api/test_backup_robustness.py` |
 | M2 Restore trusted any SQLite file at any path | Fixed | Backups folder only, no UNC, size cap, `integrity_check`, no triggers or views, safety copy only after the checks (#28). `tests/api/test_restore_trust.py` |
@@ -66,9 +66,6 @@ Status as of PR #37:
   version, and uv runs with `UV_INDEX_STRATEGY=unsafe-best-match`, which is needed
   because the PyTorch index also carries numpy, pillow and others. A hash-locked file
   (`uv pip compile --generate-hashes`) is the next step.
-- **Electron fuses.** Electron 45 has a ninth fuse that `@electron/fuses` 1.8 does not
-  name yet; it stays at Electron's default. The six fuses in `apps/desktop/build/fuses.cjs`
-  are set and checked on every release build.
 - **Not verified here:** the NSIS installer step and the publish job only run on the
   Windows runner and on a version tag. The unpacked Windows build and the fuse check were
   verified locally; the first tagged release should be watched end to end.

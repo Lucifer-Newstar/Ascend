@@ -46,8 +46,9 @@ Checked against the code in October 2026 (external review, see [SECURITY.md](../
   `export:save` payload in `electron/ipc-validate.ts`); no `remote` module. Not zod.
 - [x] Fuses set at build time by `apps/desktop/build/fuses.cjs` (afterPack) and checked
   in release.yml with `fuses.cjs --check`: RunAsNode, NODE_OPTIONS and CLI inspect off,
-  cookie encryption, embedded ASAR integrity and OnlyLoadAppFromAsar on. Electron 45's
-  ninth fuse is not named by `@electron/fuses` 1.8 and stays at its default.
+  cookie encryption, embedded ASAR integrity and OnlyLoadAppFromAsar on. All nine of
+  Electron 45's fuses are set explicitly (`@electron/fuses` 2, `strictlyRequireAllFuses`),
+  so an Electron upgrade that adds a fuse fails the build until it is decided.
 - [x] `app.requestSingleInstanceLock()`
 - [x] Electron within the supported versions (45.0.0); Dependabot on
 - [x] The sidecar gets a cleaned environment and its token on stdin; requests from the
