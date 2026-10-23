@@ -32,7 +32,7 @@ export function FirstRunCard({
         <div className="flex items-start gap-4">
           <TrainerPortrait mood="hyped" size={88} />
           <div className="min-w-0">
-            <h2 id="welcome-title" className="text-lg font-semibold text-ink">{hasData ? "Welcome to ASCEND 1.1" : "You're set up"}</h2>
+            <h2 id="welcome-title" className="text-lg font-semibold text-ink">{hasData ? "Welcome to ASCEND" : "You're set up"}</h2>
             <p className="mt-1 text-sm text-muted">
               I&apos;m {trainer.name}, your trainer. I watch your log, answer questions and show you around. Open the chat any time from Trainer in the top bar.
             </p>
