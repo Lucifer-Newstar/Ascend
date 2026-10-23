@@ -129,6 +129,173 @@
   color-scheme: light;
 }
 
+/*
+ * v1.2 themes. Each is a dark theme with its own palette, card frame (--theme-frame,
+ * --theme-card-radius), button shape (--theme-btn-radius), icon tint (--color-icon),
+ * particles (.theme-ambience) and art (lib/themeArt.ts). Readability first: cards stay
+ * solid, and every text token meets WCAG AA on every surface (src/lib/tokens.test.ts).
+ */
+/* Shadow: night dungeon, chains and violet torchlight. Angular frames. */
+:root[data-theme="shadow"] {
+  --color-bg: #09070f;
+  --color-panel: #110d1c;
+  --color-panel-2: #171226;
+  --color-panel-3: #1f1833;
+  --color-ink: #efe9ff;
+  --color-muted: #ab9fca;
+  --color-faint: #9488b5;
+  --color-accent: #b794ff;
+  --color-accent-hover: #cdb4ff;
+  --color-on-accent: #140a26;
+  --color-line-input: #7a68a8;
+  --color-xp: #d4a8ff;
+  --color-under: #8a9cf7;
+  --color-line: #2a2142;
+  --color-line-2: #3d2f63;
+  --color-sidebar: #0c0916;
+  --color-map-fill: #1b1530;
+  --color-map-nodata: #2a2240;
+  --color-nodata: #2a2240;
+  --color-accent-dim: #4a2f86;
+  --color-system-glow: #8b5cf6;
+  --color-icon: #c4a6ff;
+  --color-ring-tasks: #b794ff;
+  --color-rank-c: #7fb6ff;
+  --color-system-glass: rgba(17, 13, 28, 0.9);
+  --shadow-system: 0 0 0 1px rgba(183, 148, 255, 0.45), 0 0 24px rgba(139, 92, 246, 0.3);
+  --theme-card-radius: 4px;
+  --theme-btn-radius: 4px;
+  --theme-frame: inset 0 0 0 1px rgba(183, 148, 255, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+/* Crimson Gate: red battlefield before a cracking gate. Sharp frames with a gate bar. */
+:root[data-theme="crimson"] {
+  --color-bg: #0d0607;
+  --color-panel: #170b0d;
+  --color-panel-2: #201013;
+  --color-panel-3: #2a1519;
+  --color-ink: #fdeceb;
+  --color-muted: #c9a3a3;
+  --color-faint: #b38e8f;
+  --color-accent: #ff6f61;
+  --color-accent-hover: #ff958a;
+  --color-on-accent: #1f0504;
+  --color-line-input: #a06a6a;
+  --color-xp: #ff9fb0;
+  --color-under: #8f9ff7;
+  --color-bad: #ff7b7b;
+  --color-line: #3a1a1e;
+  --color-line-2: #5a262c;
+  --color-sidebar: #120809;
+  --color-map-fill: #24121a;
+  --color-map-nodata: #33191d;
+  --color-nodata: #33191d;
+  --color-accent-dim: #7a2020;
+  --color-system-glow: #ff3b30;
+  --color-icon: #ff8a7a;
+  --color-ring-tasks: #ff6f61;
+  --color-rank-s: #ff7a9a;
+  --color-system-glass: rgba(23, 11, 13, 0.9);
+  --shadow-system: 0 0 0 1px rgba(255, 111, 97, 0.5), 0 0 24px rgba(255, 59, 48, 0.25);
+  --theme-card-radius: 2px;
+  --theme-btn-radius: 0px;
+  --theme-frame: inset 3px 0 0 0 rgba(255, 111, 97, 0.55);
+}
+/* Frost: frozen fortress under the aurora. Round, frosted frames, pill buttons. */
+:root[data-theme="frost"] {
+  --color-bg: #050b12;
+  --color-panel: #0b1520;
+  --color-panel-2: #101d2b;
+  --color-panel-3: #162637;
+  --color-ink: #eef8ff;
+  --color-muted: #a3bfd4;
+  --color-faint: #8eaac0;
+  --color-accent: #7fd6ff;
+  --color-accent-hover: #a8e4ff;
+  --color-on-accent: #03121c;
+  --color-line-input: #5f86a3;
+  --color-xp: #b8b0ff;
+  --color-under: #8ea6f8;
+  --color-line: #1c3046;
+  --color-line-2: #2b4866;
+  --color-sidebar: #08111b;
+  --color-map-fill: #132235;
+  --color-map-nodata: #1d2e42;
+  --color-nodata: #1d2e42;
+  --color-accent-dim: #1d5a7a;
+  --color-system-glow: #5cc8ff;
+  --color-icon: #a8e4ff;
+  --color-ring-tasks: #7fd6ff;
+  --color-system-glass: rgba(11, 21, 32, 0.9);
+  --shadow-system: 0 0 0 1px rgba(127, 214, 255, 0.5), 0 0 26px rgba(92, 200, 255, 0.25);
+  --theme-card-radius: 16px;
+  --theme-btn-radius: 999px;
+  --theme-frame: inset 0 1px 0 0 rgba(238, 248, 255, 0.14);
+}
+/* Emerald: jungle ruins and glowing vines. Leaf-cut frames. */
+:root[data-theme="emerald"] {
+  --color-bg: #040c09;
+  --color-panel: #091510;
+  --color-panel-2: #0e1d17;
+  --color-panel-3: #14271f;
+  --color-ink: #eafff5;
+  --color-muted: #9fc7b5;
+  --color-faint: #89b29f;
+  --color-accent: #3fe0a0;
+  --color-accent-hover: #79ecbe;
+  --color-on-accent: #02160d;
+  --color-line-input: #57907a;
+  --color-xp: #b6a6ff;
+  --color-under: #8aa2f6;
+  --color-good: #5ce6a8;
+  --color-line: #183427;
+  --color-line-2: #24513c;
+  --color-sidebar: #06110c;
+  --color-map-fill: #10241b;
+  --color-map-nodata: #1a3127;
+  --color-nodata: #1a3127;
+  --color-accent-dim: #14664a;
+  --color-system-glow: #2ee59d;
+  --color-icon: #79ecbe;
+  --color-ring-tasks: #3fe0a0;
+  --color-system-glass: rgba(9, 21, 16, 0.9);
+  --shadow-system: 0 0 0 1px rgba(63, 224, 160, 0.45), 0 0 24px rgba(46, 229, 157, 0.22);
+  --theme-card-radius: 18px 4px 18px 4px;
+  --theme-btn-radius: 12px 3px 12px 3px;
+  --theme-frame: inset 0 0 0 1px rgba(63, 224, 160, 0.08);
+}
+/* Solar Gold: sky-island arena at sunrise. Gilded frames. */
+:root[data-theme="solar"] {
+  --color-bg: #0d0904;
+  --color-panel: #171008;
+  --color-panel-2: #20170c;
+  --color-panel-3: #2a1f11;
+  --color-ink: #fff6e6;
+  --color-muted: #d1b993;
+  --color-faint: #bba27c;
+  --color-accent: #ffc24a;
+  --color-accent-hover: #ffd57f;
+  --color-on-accent: #1c1100;
+  --color-line-input: #a08455;
+  --color-xp: #c9b1ff;
+  --color-under: #93a6f7;
+  --color-gold: #ffd466;
+  --color-line: #3a2c16;
+  --color-line-2: #5a4420;
+  --color-sidebar: #120d06;
+  --color-map-fill: #241b10;
+  --color-map-nodata: #33281a;
+  --color-nodata: #33281a;
+  --color-accent-dim: #7a5a12;
+  --color-system-glow: #ffb020;
+  --color-icon: #ffd57f;
+  --color-ring-tasks: #ffc24a;
+  --color-system-glass: rgba(23, 16, 8, 0.9);
+  --shadow-system: 0 0 0 1px rgba(255, 194, 74, 0.55), 0 0 26px rgba(255, 176, 32, 0.25);
+  --theme-card-radius: 8px;
+  --theme-btn-radius: 6px;
+  --theme-frame: inset 0 0 0 1px rgba(255, 213, 127, 0.16), inset 0 2px 0 0 rgba(255, 194, 74, 0.35);
+}
+
 :root {
   color-scheme: dark;
 }
@@ -168,8 +335,10 @@ body {
 /* Reusable component classes (Tailwind v4 @utility so they can be composed with @apply). */
 @utility card {
   @apply rounded-lg border border-line bg-panel;
-  /* Read at runtime (not via the shadow utility, which inlines the dark value). */
-  box-shadow: var(--shadow-panel);
+  /* Read at runtime (not via the shadow utility, which inlines the dark value). v1.2: the
+     theme's frame and radius when it has them (the 1.1 looks fall back to the old card). */
+  border-radius: var(--theme-card-radius, var(--radius-lg));
+  box-shadow: var(--theme-frame, 0 0 #0000), var(--shadow-panel);
 }
 /* Window header style (Rajdhani 14/20, 600, uppercase, +0.08em): card and window titles. */
 @utility card-title {
@@ -193,6 +362,7 @@ body {
 }
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100;
+  border-radius: var(--theme-btn-radius, var(--radius-md));
 }
 @utility btn-primary {
   @apply btn bg-accent text-on-accent hover:bg-accent-hover;
@@ -733,4 +903,161 @@ body {
     repeating-linear-gradient(-60deg, color-mix(in srgb, var(--tile-hue) 9%, transparent) 0 1px, transparent 1px 14px),
     linear-gradient(160deg, var(--color-panel-3), var(--color-panel-2));
   border-bottom: 1px solid color-mix(in srgb, var(--tile-hue) 35%, transparent);
+}
+
+/* v1.2 theme frames and shapes: cards and buttons read their theme's radius and frame
+   (the 1.1 Dark and Light looks define neither, so they keep the old shapes). */
+:root[data-theme="crimson"] .btn-primary {
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+:root[data-theme="solar"] .btn-primary {
+  background-image: linear-gradient(180deg, #ffd57f, #ffb020);
+}
+:root[data-theme="frost"] .card {
+  backdrop-filter: none;
+}
+:root[data-theme="shadow"] .card::before,
+:root[data-theme="solar"] .card::before {
+  /* Corner marks: a small bracket in the top-left corner of every card. */
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--color-accent);
+  border-left: 2px solid var(--color-accent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+:root[data-theme="shadow"] .card,
+:root[data-theme="solar"] .card {
+  position: relative;
+}
+/* Icon tint: the sidebar icons take the theme's tint (the active item stays accent). */
+nav[aria-label="Main"] button:not([aria-current]) svg {
+  color: var(--color-icon, currentColor);
+}
+
+/* Background art behind the pages (lib/themeArt.ts). The art is dark by design and sits
+   under a scrim, and every card on top is solid, so text never sits on bright art. */
+.theme-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 45%, transparent), color-mix(in srgb, var(--color-bg) 80%, transparent)),
+    var(--theme-bg) center / cover no-repeat;
+  transition: opacity var(--dur-base) ease;
+}
+:root[data-art="dim"] .theme-art {
+  opacity: 0.4;
+}
+:root[data-art="off"] .theme-art,
+:root[data-art="off"] .theme-ambience {
+  display: none;
+}
+
+/* Event screens (level-up, boss, workout finish, timer): bright art behind a dark radial
+   scrim, and the big number gets a text shadow, so it reads on every theme. */
+.event-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 35% 50%, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.55) 45%, rgba(0, 0, 0, 0.35) 100%),
+    var(--event-bg) center / cover no-repeat;
+}
+.event-title {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 24px rgba(0, 0, 0, 0.75);
+}
+
+/* Theme particles: chains (Shadow), embers (Crimson Gate), snow (Frost), leaves (Emerald),
+   light rays (Solar Gold). Few, slow and behind everything; off with reduced motion. */
+.theme-ambience {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.theme-ambience > span {
+  position: absolute;
+  left: var(--x);
+  top: -24px;
+  opacity: 0;
+  animation: asc-fall var(--s) linear var(--d) infinite;
+}
+@keyframes asc-fall {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: var(--o, 0.5); }
+  90% { opacity: var(--o, 0.5); }
+  100% { transform: translate(var(--drift, 30px), 105vh) rotate(var(--spin, 0deg)); opacity: 0; }
+}
+@keyframes asc-rise {
+  0% { transform: translate(0, 0) scale(1); opacity: 0; }
+  15% { opacity: var(--o, 0.7); }
+  100% { transform: translate(var(--drift, -20px), -105vh) scale(0.4); opacity: 0; }
+}
+@keyframes asc-ray {
+  0%, 100% { opacity: 0; }
+  50% { opacity: var(--o, 0.18); }
+}
+:root[data-theme="shadow"] .theme-ambience > span {
+  width: 9px;
+  height: 14px;
+  border: 2px solid rgba(183, 148, 255, 0.55);
+  border-radius: 6px;
+  --spin: 180deg;
+  --o: 0.35;
+}
+:root[data-theme="crimson"] .theme-ambience > span {
+  top: auto;
+  bottom: -10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ff8a3d;
+  box-shadow: 0 0 8px 2px rgba(255, 90, 40, 0.7);
+  animation-name: asc-rise;
+  --o: 0.75;
+}
+:root[data-theme="frost"] .theme-ambience > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(238, 248, 255, 0.85);
+  --o: 0.6;
+  --drift: 60px;
+}
+:root[data-theme="emerald"] .theme-ambience > span {
+  width: 10px;
+  height: 6px;
+  border-radius: 10px 0 10px 0;
+  background: rgba(63, 224, 160, 0.6);
+  --spin: 300deg;
+  --drift: 120px;
+  --o: 0.5;
+}
+:root[data-theme="solar"] .theme-ambience > span {
+  top: -20%;
+  width: 70px;
+  height: 140%;
+  background: linear-gradient(180deg, rgba(255, 213, 127, 0.35), transparent 75%);
+  transform: rotate(18deg);
+  animation-name: asc-ray;
+  --o: 0.16;
+}
+:root[data-theme="dark"] .theme-ambience,
+:root[data-theme="light"] .theme-ambience {
+  display: none;
+}
+:root[data-motion="reduce"] .theme-ambience {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-ambience {
+    display: none;
+  }
 }

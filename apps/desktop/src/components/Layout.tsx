@@ -2,6 +2,7 @@ import { useEffect, useRef, type JSX, type ReactNode } from "react";
 
 import { IconBowl, IconChart, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconProfile, IconSettings, IconSkill } from "./Icons";
 import { PAGE_KEYS } from "../lib/shortcuts";
+import { ThemeAmbience } from "./ThemeAmbience";
 import { TrainerToggle } from "./Trainer";
 
 export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "data" | "settings";
@@ -103,8 +104,9 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
           {onlineResearch ? "Online research on · only exercise names leave this PC" : "Offline · data stays on this PC"}
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[76px] shrink-0 items-center justify-between gap-4 border-b border-line px-8">
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <ThemeAmbience />
+        <header className="relative z-[1] flex h-[76px] shrink-0 items-center justify-between gap-4 border-b border-line px-8">
           <div className="min-w-0">
             <h1 ref={heading} tabIndex={-1} className="text-display-l truncate text-ink outline-none">{title}</h1>
             <p className="text-small text-muted">{subtitle ?? today}</p>
@@ -128,7 +130,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
           </div>
         </header>
         {/* tabIndex 0: a page with no controls (e.g. a long History) must still scroll from the keyboard. */}
-        <main ref={main} id="main" data-tour="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
+        <main ref={main} id="main" data-tour="main" tabIndex={0} className="relative z-[1] min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
       </div>
     </div>
   );

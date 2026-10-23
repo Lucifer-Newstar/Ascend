@@ -7,7 +7,7 @@ import type { Settings } from "@ascend/shared";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { api } from "../api/client";
-import { applyMotionPreference, applyTheme, resolveTheme, systemPrefersLight } from "./theme";
+import { applyBackgroundArt, applyMotionPreference, applyTheme, resolveTheme, systemPrefersLight, toneOf, type Theme } from "./theme";
 
 interface PrefsValue {
   settings: Settings;
@@ -16,7 +16,7 @@ interface PrefsValue {
 
 const PrefsContext = createContext<PrefsValue | null>(null);
 
-export const DEFAULT_SETTINGS: Settings = { ai_enabled: true, units: "metric", theme: "dark", sessions_per_week: 3, reduce_motion: false, online_lookup: false, trainer: true };
+export const DEFAULT_SETTINGS: Settings = { ai_enabled: false, units: "metric", theme: "shadow", sessions_per_week: 3, reduce_motion: false, online_lookup: false, trainer: true, background_art: "on" };
 
 export function PrefsProvider({
   initial,
@@ -49,15 +49,21 @@ export function PrefsProvider({
   }, [settings.theme]);
 
   useEffect(() => applyMotionPreference(Boolean(settings.reduce_motion)), [settings.reduce_motion]);
+  useEffect(() => applyBackgroundArt(settings.background_art ?? "on"), [settings.background_art]);
 
   const value = useMemo(() => ({ settings, update }), [settings, update]);
   return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>;
 }
 
-/** The resolved theme ("dark" | "light"), for components that need literal colours. */
+/** The resolved tone ("dark" | "light"), for components that need literal colours. */
 export function usePrefsTheme(): "dark" | "light" {
+  return toneOf(useAppTheme());
+}
+
+/** The resolved look (a v1.2 theme, or the 1.1 "dark" / "light"). */
+export function useAppTheme(): Theme {
   const prefs = useContext(PrefsContext);
-  return resolveTheme(prefs?.settings.theme ?? "dark", systemPrefersLight());
+  return resolveTheme(prefs?.settings.theme ?? "shadow", systemPrefersLight());
 }
 
 /** Prefs when inside <PrefsProvider>, else null (for components that also render standalone). */

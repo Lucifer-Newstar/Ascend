@@ -6,7 +6,7 @@ import { READY_TOKEN, STATUS_TOKEN } from "./muscleMap";
 
 /**
  * UI-1: every text token meets WCAG AA (4.5:1) against the background and all three
- * surfaces, in both themes. The values are read from index.css itself, so a token
+ * surfaces, in every theme (the two 1.1 looks and the five v1.2 themes). The values are read from index.css itself, so a token
  * change that breaks contrast fails here.
  */
 const css = readFileSync(new URL("../index.css", import.meta.url), "utf8");
@@ -22,6 +22,10 @@ function block(startMarker: string): Record<string, string> {
 
 const dark = block("@theme static");
 const light = { ...dark, ...block(':root[data-theme="light"]') };
+// v1.2 themes: each overrides the dark tokens it changes; the rest are inherited.
+const APP = ["shadow", "crimson", "frost", "emerald", "solar"].map(
+  (name) => [name, { ...dark, ...block(`:root[data-theme="${name}"]`) }] as [string, Record<string, string>],
+);
 
 function luminance(hex: string): number {
   const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
@@ -40,6 +44,7 @@ const TEXT = ["ink", "muted", "faint", "accent", "xp", "good", "warn", "bad", "u
 describe.each([
   ["dark", dark],
   ["light", light],
+  ...APP,
 ])("%s theme tokens", (_name, t) => {
   it.each(TEXT)("text token %s is at least 4.5:1 on every surface", (token) => {
     expect(t[token], token).toBeDefined();
@@ -53,6 +58,15 @@ describe.each([
 
   it("input borders are at least 3:1 against panels (non-text contrast)", () => {
     for (const s of ["panel", "panel-2"]) expect(contrast(t["line-input"], t[s])).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("v1.2 theme art stays readable", () => {
+  it("every theme has a scrim over its background art and solid cards", () => {
+    expect(css).toMatch(/\.theme-art \{[^}]*linear-gradient\(180deg, color-mix\(in srgb, var\(--color-bg\) 45%/);
+    expect(css).toMatch(/\.event-art \{[^}]*radial-gradient/);
+    expect(css).toMatch(/\.event-title \{[^}]*text-shadow/);
+    for (const [name, t] of APP) for (const s of ["panel", "panel-2", "panel-3"]) expect(t[s], `${name} ${s}`).toMatch(/^#[0-9a-f]{6}$/i);
   });
 });
 
