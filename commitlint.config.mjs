@@ -28,7 +28,8 @@ export default {
         // ops and ml
         "ci", "docker", "build", "release", "ml", "deps", "meta", "repo", "github",
         // docs
-        "docs", "dev", "adr", "planning", "members", "contracts", "readme", "research",
+        "docs", "dev", "adr", "planning", "members", "contracts", "readme", "research", "security",
+        "architecture",
         // v8 feature areas
         "trainer", "map", "muscles", "library", "today", "game", "backup",
         // Dependabot's ML requirement bumps
