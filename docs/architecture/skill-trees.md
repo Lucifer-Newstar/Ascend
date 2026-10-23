@@ -69,6 +69,11 @@ They are not measured values. Steps where the sources disagree, or where we foun
 | Human flag | Side plank → Vertical flag → Tuck flag → Straddle flag → Human flag | BWF | stretch goal |
 | Nordic curl | Single-leg glute bridge → Nordic negative → Nordic curl → Nordic curl 3×5 | NHE, RR |  |
 | Dragon flag | Lying leg raise → Tuck negative → Dragon flag negative → Dragon flag | BWF, OG |  |
+| Hanging leg raise | Dead hang → Knee raise on bars → Hanging leg raise → Hanging leg raise 3×10 | RR, BWF |  |
+| Weighted pull-up | Pull-up → Pull-up 3×8 → Pull-up +10 kg → Pull-up +20 kg | OG, RR |  |
+| One-arm hang | Dead hang → Dead hang 60 s → One-arm hang → One-arm hang 3×20 s | OG | stretch goal |
+| Bulgarian split squat | Bodyweight squat → Split squat → Bulgarian split squat → Bulgarian split squat 3×12 | RR |  |
+| Plyo push-up | Push-up → Push-up 3×15 → Plyo push-up | OG, RR |  |
 
 Every listed step must be shown in 2 sessions within 42 days.
 
@@ -219,6 +224,68 @@ Feeders: Romanian Deadlift, Leg Curl, Single-leg Glute Bridge, Back Extension.
 | Dragon flag | Dragon Flag | 3×5 Dragon Flag Negative; 1×1 Dragon Flag | 250 | uncertain.  |
 
 Feeders: Hanging Leg Raise, Hollow Body Hold, Plank, Lying Leg Raise.
+
+### Hanging leg raise
+
+| Step | Exercise | Unlocks when | XP | Note |
+|---|---|---|---|---|
+| Dead hang | Dead Hang | start here | 0 |  |
+| Knee raise on bars | Knee/Hip Raise On Parallel Bars | 3×45 s Dead Hang | 30 |  |
+| Hanging leg raise | Hanging Leg Raise | 3×12 Knee/Hip Raise On Parallel Bars | 60 |  |
+| Hanging leg raise 3×10 | Hanging Leg Raise | 3×10 Hanging Leg Raise | 100 |  |
+
+Feeders: Hollow Body Hold, Lying Leg Raise, Dead Hang, Plank.
+
+### Weighted pull-up
+
+| Step | Exercise | Unlocks when | XP | Note |
+|---|---|---|---|---|
+| Pull-up | Pull-up | start here | 0 |  |
+| Pull-up 3×8 | Pull-up | 3×8 Pull-up | 60 |  |
+| Pull-up +10 kg | Weighted Pull Ups | 3×10 Pull-up; 3×5 Weighted Pull Ups at +10 kg | 100 |  |
+| Pull-up +20 kg | Weighted Pull Ups | 3×5 Weighted Pull Ups at +20 kg | 150 | uncertain. Threshold is ASCEND's choice; sources give no fixed number. |
+
+Feeders: Pull-up, Chin-up, Inverted Row, Lat Pulldown.
+
+### One-arm hang
+
+| Step | Exercise | Unlocks when | XP | Note |
+|---|---|---|---|---|
+| Dead hang | Dead Hang | start here | 0 |  |
+| Dead hang 60 s | Dead Hang | 3×60 s Dead Hang | 40 |  |
+| One-arm hang | One Handed Hang | 3×60 s Dead Hang; 1×5 s One Handed Hang (each side) | 100 |  |
+| One-arm hang 3×20 s | One Handed Hang | 3×20 s One Handed Hang (each side) | 150 | uncertain. |
+
+Feeders: Dead Hang, Scapular Pull-up, Pull-up.
+
+### Bulgarian split squat
+
+| Step | Exercise | Unlocks when | XP | Note |
+|---|---|---|---|---|
+| Bodyweight squat | Bodyweight Squat | start here | 0 |  |
+| Split squat | Split Squats | 3×20 Bodyweight Squat | 30 |  |
+| Bulgarian split squat | Bulgarian Split Squat | 3×12 Split Squats (each side) | 60 |  |
+| Bulgarian split squat 3×12 | Bulgarian Split Squat | 3×12 Bulgarian Split Squat (each side) | 100 |  |
+
+Feeders: Bodyweight Squat, Walking Lunge, Single-leg Glute Bridge, Goblet Squat.
+
+### Plyo push-up
+
+| Step | Exercise | Unlocks when | XP | Note |
+|---|---|---|---|---|
+| Push-up | Push-up | start here | 0 |  |
+| Push-up 3×15 | Push-up | 3×15 Push-up | 40 |  |
+| Plyo push-up | Plyo Push-up | 3×20 Push-up; 3×5 Plyo Push-up | 80 | uncertain. Stop the set when the push-offs get slow; power work is about speed. |
+
+Feeders: Push-up, Diamond Push-up, Chest Dip, Plank.
+
+## Custom skills
+
+You can write up to 20 trees of your own (`/skills/custom`): 1 to 8 milestones, each a goal on a library exercise
+(sets × reps, or sets × seconds for holds, optionally with added kg). The first milestone is open from the start; each one
+is reached when its goal is shown in 2 sessions within 42 days, judged by the same engine as the built-in trees. Custom
+milestones pay no XP, so a tree you wrote cannot be used to farm levels. Editing a custom tree re-judges it from your
+logged sets; deleting it keeps the sets.
 
 ## "Train this skill"
 

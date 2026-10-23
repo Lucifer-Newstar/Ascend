@@ -24,14 +24,13 @@ from app.core.events import (
 )
 from app.modules.skills import engine
 from app.modules.skills.catalog import (
-    SKILL_BY_KEY,
-    SKILLS,
     SOURCES,
     Criterion,
     Skill,
     Step,
     all_exercise_names,
 )
+from app.modules.skills.custom import all_skills, custom_skills, skill_by_key
 from app.modules.skills.models import SkillUnlock
 from app.modules.skills.schemas import (
     CriterionOut,
@@ -57,7 +56,7 @@ class SkillNotFound(Exception):
 
 
 def exercises_by_name(db: Session) -> dict[str, Exercise]:
-    names = all_exercise_names()
+    names = all_exercise_names() | {n for k in custom_skills(db) for n in _skill_names(k)}
     rows = db.scalars(select(Exercise).where(Exercise.name.in_(names))).all()
     return {e.name: e for e in rows}
 
@@ -129,7 +128,7 @@ def evaluate(
     next) and publish an event for each. Returns the new rows."""
     created: list[SkillUnlock] = []
     have_all = stored(db)
-    for skill in SKILLS:
+    for skill in all_skills(db):
         if skill_keys is not None and skill.key not in skill_keys:
             continue
         records = load_records(db, _skill_names(skill), now)
@@ -179,7 +178,7 @@ def revalidate(db: Session, bus: EventBus, set_id: int, now: datetime, deleted: 
     many were revoked."""
     revoked = 0
     for skill_key, steps in stored(db).items():
-        skill = SKILL_BY_KEY.get(skill_key)
+        skill = skill_by_key(db, skill_key)
         if skill is None:
             continue
         doomed: set[str] = set()
@@ -268,16 +267,17 @@ def _summary(res: engine.SkillResult) -> SkillSummary:
         last_trained=res.last_trained,
         sessions_28d=res.sessions_28d,
         rusty=res.rusty,
+        custom="custom" in skill.tags,
     )
 
 
 def summaries(db: Session, now: datetime) -> list[SkillSummary]:
     ex = exercises_by_name(db)
-    return [_summary(_evaluate_one(db, s, now, ex)) for s in SKILLS]
+    return [_summary(_evaluate_one(db, s, now, ex)) for s in all_skills(db)]
 
 
 def detail(db: Session, key: str, now: datetime) -> SkillDetail:
-    skill = SKILL_BY_KEY.get(key)
+    skill = skill_by_key(db, key)
     if skill is None:
         raise SkillNotFound(f"unknown skill '{key}'")
     ex = exercises_by_name(db)
@@ -332,7 +332,9 @@ def detail(db: Session, key: str, now: datetime) -> SkillDetail:
 def unlock_out(db: Session, row: SkillUnlock) -> SkillUnlockOut:
     from app.modules.gamification import service as game
 
-    skill = SKILL_BY_KEY[row.skill_key]
+    skill = skill_by_key(db, row.skill_key)
+    if skill is None:
+        raise SkillNotFound(f"unknown skill '{row.skill_key}'")
     step = _step(skill, row.step_key)
     idx = skill.steps.index(step)
     nxt = skill.steps[idx + 1].name if idx + 1 < len(skill.steps) else None
@@ -361,13 +363,13 @@ def recent_unlocks(db: Session, limit: int = 10) -> list[SkillUnlockOut]:
     rows = db.scalars(
         select(SkillUnlock).order_by(SkillUnlock.unlocked_at.desc(), SkillUnlock.id.desc())
     ).all()
-    return [unlock_out(db, r) for r in rows[:limit] if r.skill_key in SKILL_BY_KEY]
+    return [unlock_out(db, r) for r in rows[:limit] if skill_by_key(db, r.skill_key) is not None]
 
 
 def links_for_exercise(db: Session, e: Exercise) -> list[SkillLinkOut]:
     """Skill trees an exercise belongs to (as a step) or feeds (as a feeder)."""
     out: list[SkillLinkOut] = []
-    for skill in SKILLS:
+    for skill in all_skills(db):
         steps = [s for s in skill.steps if s.exercise == e.name]
         if steps:
             out.append(
@@ -395,7 +397,7 @@ def _threshold(c: Criterion, best: int | None) -> int:
 def train(db: Session, bus: EventBus, key: str, now: datetime) -> TrainOut:
     from app.modules.gamification import service as game
 
-    skill = SKILL_BY_KEY.get(key)
+    skill = skill_by_key(db, key)
     if skill is None:
         raise SkillNotFound(f"unknown skill '{key}'")
     ex = exercises_by_name(db)
@@ -462,9 +464,11 @@ def register(bus: EventBus) -> None:
 
     def keys_for(db: Session, exercise_id: int) -> set[str] | None:
         e = db.get(Exercise, exercise_id)
-        if e is None or e.name not in names:
+        if e is None:
             return None
-        return {s.key for s in SKILLS if e.name in _skill_names(s)}
+        if e.name not in names and not any(e.name in _skill_names(k) for k in custom_skills(db)):
+            return None
+        return {s.key for s in all_skills(db) if e.name in _skill_names(s)}
 
     def on_logged(db: Session, e: SetLogged) -> None:
         keys = keys_for(db, e.exercise_id)

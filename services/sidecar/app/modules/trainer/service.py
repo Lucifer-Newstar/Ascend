@@ -16,7 +16,7 @@ from app.modules.progress import service as progress
 from app.modules.progress.models import BodyMetric
 from app.modules.selector import service as selector
 from app.modules.selector.catalog import ITEM_BY_ID
-from app.modules.skills.catalog import SKILL_BY_KEY
+from app.modules.skills.custom import skill_by_key
 from app.modules.skills.models import SkillUnlock
 from app.modules.trainer import monitor
 from app.modules.trainer.models import TrainerMessage
@@ -29,8 +29,8 @@ TRAINERS = ("iskra", "vera", "kai", "dario")
 FEED_LIMIT = 30
 
 
-def _step_name(skill_key: str, step_key: str) -> tuple[str, str]:
-    skill = SKILL_BY_KEY.get(skill_key)
+def _step_name(db: Session, skill_key: str, step_key: str) -> tuple[str, str]:
+    skill = skill_by_key(db, skill_key)
     if skill is None:
         return skill_key, step_key
     step = next((s for s in skill.steps if s.key == step_key), None)
@@ -66,7 +66,7 @@ def facts(db: Session, now: datetime) -> monitor.Facts:
     for u in db.scalars(
         select(SkillUnlock).where(SkillUnlock.unlocked_at >= now - timedelta(days=3))
     ):
-        skill, step = _step_name(u.skill_key, u.step_key)
+        skill, step = _step_name(db, u.skill_key, u.step_key)
         unlocks.append((u.id, skill, step, u.unlocked_at.date()))
     week = today - timedelta(days=today.weekday())
     raid = db.scalars(

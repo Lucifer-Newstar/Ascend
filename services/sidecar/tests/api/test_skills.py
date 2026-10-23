@@ -28,7 +28,7 @@ def test_every_catalog_exercise_is_in_the_library(client):
 
 def test_list_and_detail(client):
     skills = client.get("/skills").json()
-    assert len(skills) == 12
+    assert len(skills) == 17
     mu = next(s for s in skills if s["key"] == "muscle_up")
     assert mu["current_step"] == "dead_hang" and mu["next_step"] == "scap_pull"
     assert mu["pct_to_next"] == 0 and not mu["acquired"]

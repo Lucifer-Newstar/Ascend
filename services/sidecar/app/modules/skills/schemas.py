@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CriterionOut(BaseModel):
@@ -81,6 +81,8 @@ class SkillSummary(BaseModel):
     last_trained: datetime | None
     sessions_28d: int
     rusty: bool
+    # True for a tree the user wrote (no XP; editable).
+    custom: bool = False
 
 
 class SkillDetail(SkillSummary):
@@ -112,3 +114,40 @@ class TrainOut(BaseModel):
     # Titles of today's skill quest items after the call.
     items: list[str]
     message: str
+
+
+class CustomStepIn(BaseModel):
+    name: str = Field(default="", max_length=60)
+    exercise_id: int
+    sets: int = Field(default=3, ge=1, le=10)
+    reps: int | None = Field(default=None, ge=1, le=200)
+    hold_s: int | None = Field(default=None, ge=1, le=600)
+    added_kg: float = Field(default=0, ge=0, le=200)
+
+
+class CustomSkillIn(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    family: str = "custom"
+    summary: str = Field(default="", max_length=240)
+    steps: list[CustomStepIn] = Field(min_length=1, max_length=8)
+
+
+class CustomStepOut(BaseModel):
+    name: str
+    exercise: str
+    exercise_id: int
+    sets: int
+    reps: int | None
+    hold_s: int | None
+    added_kg: float
+
+
+class CustomSkillOut(BaseModel):
+    id: int
+    key: str
+    name: str
+    family: str
+    summary: str
+    steps: list[CustomStepOut]
+    created_at: datetime
+    updated_at: datetime

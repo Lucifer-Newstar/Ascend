@@ -84,7 +84,7 @@ def test_eta_only_with_enough_sessions_and_an_upward_trend():
 
 
 def test_catalog_shape():
-    assert len(SKILLS) == 12
+    assert len(SKILLS) == 17
     for skill in SKILLS:
         keys = [s.key for s in skill.steps]
         assert len(keys) == len(set(keys)), skill.key

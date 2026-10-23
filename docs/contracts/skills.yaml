@@ -137,6 +137,109 @@ paths:
       x-status: implemented
       tags:
       - skills
+  /skills/custom:
+    get:
+      tags:
+      - skills
+      summary: List Custom
+      description: The skill trees you wrote yourself.
+      operationId: list_custom_skills_custom_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CustomSkillOut'
+                type: array
+                title: Response List Custom Skills Custom Get
+      x-status: implemented
+    post:
+      tags:
+      - skills
+      summary: Create Custom
+      description: 'Write your own skill tree: 1 to 8 milestones on library exercises. Evaluated like
+
+        the built-in trees from logged sets; custom milestones pay no XP.'
+      operationId: create_custom_skills_custom_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomSkillIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomSkillOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /skills/custom/{skill_id}:
+    put:
+      tags:
+      - skills
+      summary: Update Custom
+      description: Change a custom tree. Its milestones are re-judged from your logged sets.
+      operationId: update_custom_skills_custom__skill_id__put
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Skill Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomSkillIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomSkillOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+    delete:
+      tags:
+      - skills
+      summary: Delete Custom
+      description: Remove a custom tree (your logged sets stay).
+      operationId: delete_custom_skills_custom__skill_id__delete
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Skill Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -308,6 +411,10 @@ components:
         rusty:
           type: boolean
           title: Rusty
+        custom:
+          type: boolean
+          title: Custom
+          default: false
         steps:
           items:
             $ref: '#/components/schemas/StepOut'
@@ -444,6 +551,10 @@ components:
         rusty:
           type: boolean
           title: Rusty
+        custom:
+          type: boolean
+          title: Custom
+          default: false
       type: object
       required:
       - key
@@ -646,3 +757,149 @@ components:
       - msg
       - type
       title: ValidationError
+    CustomSkillIn:
+      properties:
+        name:
+          type: string
+          maxLength: 60
+          minLength: 1
+          title: Name
+        family:
+          type: string
+          title: Family
+          default: custom
+        summary:
+          type: string
+          maxLength: 240
+          title: Summary
+          default: ''
+        steps:
+          items:
+            $ref: '#/components/schemas/CustomStepIn'
+          type: array
+          maxItems: 8
+          minItems: 1
+          title: Steps
+      type: object
+      required:
+      - name
+      - steps
+      title: CustomSkillIn
+    CustomStepIn:
+      properties:
+        name:
+          type: string
+          maxLength: 60
+          title: Name
+          default: ''
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        sets:
+          type: integer
+          maximum: 10.0
+          minimum: 1.0
+          title: Sets
+          default: 3
+        reps:
+          anyOf:
+          - type: integer
+            maximum: 200.0
+            minimum: 1.0
+          - type: 'null'
+          title: Reps
+        hold_s:
+          anyOf:
+          - type: integer
+            maximum: 600.0
+            minimum: 1.0
+          - type: 'null'
+          title: Hold S
+        added_kg:
+          type: number
+          maximum: 200.0
+          minimum: 0.0
+          title: Added Kg
+          default: 0
+      type: object
+      required:
+      - exercise_id
+      title: CustomStepIn
+    CustomSkillOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        family:
+          type: string
+          title: Family
+        summary:
+          type: string
+          title: Summary
+        steps:
+          items:
+            $ref: '#/components/schemas/CustomStepOut'
+          type: array
+          title: Steps
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - key
+      - name
+      - family
+      - summary
+      - steps
+      - created_at
+      - updated_at
+      title: CustomSkillOut
+    CustomStepOut:
+      properties:
+        name:
+          type: string
+          title: Name
+        exercise:
+          type: string
+          title: Exercise
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        sets:
+          type: integer
+          title: Sets
+        reps:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Reps
+        hold_s:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Hold S
+        added_kg:
+          type: number
+          title: Added Kg
+      type: object
+      required:
+      - name
+      - exercise
+      - exercise_id
+      - sets
+      - reps
+      - hold_s
+      - added_kg
+      title: CustomStepOut

@@ -94,11 +94,11 @@ def skill_goal(db: Session, e: Exercise, now: datetime) -> prog.SkillGoal | None
     """The open criterion this exercise must show for a step still to unlock (open steps
     first, then the one closest to done)."""
     from app.modules.skills import service as skills
-    from app.modules.skills.catalog import SKILLS
+    from app.modules.skills.custom import all_skills
 
     best: tuple[tuple[bool, float], prog.SkillGoal] | None = None
     ex = None
-    for skill in SKILLS:
+    for skill in all_skills(db):
         if not any(c.exercise == e.name for s in skill.steps for c in s.unlock):
             continue
         ex = ex or skills.exercises_by_name(db)
