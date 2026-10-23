@@ -5,7 +5,7 @@ Team: **Navin** (lead, MLOps), **Gokul** (DevOps), **Jegatheesan** (backend), **
 
 ## Setup
 
-See the [README quick start](README.md#quick-start-windows-11). Then install the git hooks once:
+See the [README quick start](README.md#developer-quick-start). Then install the git hooks once:
 
 ```bash
 uv tool install pre-commit   # or: pip install pre-commit

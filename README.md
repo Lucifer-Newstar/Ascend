@@ -1,10 +1,19 @@
 # ASCEND
 
+[![CI](https://github.com/Lucifer-Newstar/Ascend-/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Lucifer-Newstar/Ascend-/actions/workflows/ci.yml)
+[![ML](https://github.com/Lucifer-Newstar/Ascend-/actions/workflows/ml.yml/badge.svg?branch=main)](https://github.com/Lucifer-Newstar/Ascend-/actions/workflows/ml.yml)
+[![Windows installer](https://github.com/Lucifer-Newstar/Ascend-/actions/workflows/release.yml/badge.svg)](https://github.com/Lucifer-Newstar/Ascend-/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/Lucifer-Newstar/Ascend-?sort=semver)](https://github.com/Lucifer-Newstar/Ascend-/releases/latest)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 **An offline Windows desktop fitness RPG.** Log workouts and Indian meals, earn XP, clear daily
 quests, keep a streak and rank up from **E to S**, while a muscle map shows which muscles are
 under-trained, recovering or overreached. Everything runs and is stored on your own PC; an
 optional local AI coach (Ollama + `qwen3:4b`) explains your numbers, and the app works fully
 without it.
+
+ASCEND is our final-year project: an Electron + React desktop app, a FastAPI + SQLite engine
+that runs beside it, deterministic training and diet engines, and an MLOps pipeline.
 
 ![Today](docs/screenshots/ASCEND_v5_Today.png)
 
@@ -15,9 +24,41 @@ without it.
 > Screens use demo data from `app.devtools.seed_demo`. The v0.1 MVP screens are kept in
 > [docs/screenshots](docs/screenshots/).
 
-## The v5 interface
+**Contents:** [Download](#download-and-install) · [Features](#features) ·
+[Limitations](#honest-limitations) · [Architecture](#architecture) · [Tech stack](#tech-stack) ·
+[Developer quick start](#developer-quick-start) · [Testing and CI](#testing-and-ci) ·
+[Docs](#documentation) · [Team](#team) · [Credits](#credits-and-licences)
 
-| What | How it works |
+## Download and install
+
+1. Open the [latest release](https://github.com/Lucifer-Newstar/Ascend-/releases/latest) and download **`ASCEND-Setup-<version>.exe`**
+   (for 1.0.0: `ASCEND-Setup-1.0.0.exe`). `SHA256SUMS.txt` next to it lets you check the download.
+2. Run it. The installer is **not code-signed yet**, so Windows SmartScreen shows "Windows protected
+   your PC": click **More info → Run anyway**.
+3. Pick a folder (default: `%LOCALAPPDATA%\Programs\ASCEND`, no admin rights needed) and finish.
+   ASCEND starts and walks you through the five-step first run.
+
+**System requirements:** Windows 10 or 11, 64-bit (x64). Nothing else: the engine ships inside the
+installer. For the optional AI coach, install [Ollama](https://ollama.com) and run
+`ollama pull qwen3:4b` (about 2.5 GB; fits a 4 GB GPU, see [AI coach](#optional-ai-coach)).
+
+**Your data** is one SQLite file in `%APPDATA%\ASCEND\data`. It stays on your PC, is kept when you
+uninstall, and a reinstall picks it up again. The app also writes a daily automatic backup.
+
+Check a download in PowerShell (compare with the line for the file in `SHA256SUMS.txt`):
+
+```powershell
+Get-FileHash .\ASCEND-Setup-1.0.0.exe -Algorithm SHA256
+```
+
+Release notes for each version: [GitHub Releases](https://github.com/Lucifer-Newstar/Ascend-/releases) and [docs/releases](docs/releases/);
+the full history is in [CHANGELOG.md](CHANGELOG.md).
+
+## Features
+
+### Screens
+
+| Screen | What it does |
 |---|---|
 | **Today ("Hunter HQ")** | The daily quest as a System window with time left, a status panel (STR, AGI, END, VIT, INT) where every number has a "Why?", up to three insights spoken by the trainer, Instructor Iskra Vey (switchable to a plain mode), the weekly boss raid ([ADR-0022](docs/architecture/adr/0022-weekly-boss-raid.md)), Quick log, check-in, fuel and the muscle map on a 12-column grid. |
 | **Train** | Keyboard-first logger: last session's sets in grey next to today's, the next set pre-filled from last time (Enter logs it), a rest bar (Space pauses), muscles hit and the skills the exercise feeds. |
@@ -30,10 +71,10 @@ without it.
 Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages · **Enter** log the set shown ·
 **Space** pause rest · arrows on the skill canvas.
 
-## The v6 intelligence layer
+### Training and recovery engines
 
-Two deterministic engines, pure Python on the CPU. The local model is optional and only ever
-phrases what the engines computed.
+Deterministic engines, pure Python on the CPU. The local model is optional and only ever phrases
+what the engines computed.
 
 | What | How it works |
 |---|---|
@@ -44,18 +85,7 @@ phrases what the engines computed.
 | **The System speaks, rarely** | Three notices, each shown once: Deload advised, Target raised, Muscle recovered. |
 | **Evaluation** | A seeded synthetic-user simulator with baselines, in [docs/ai/evaluation.md](docs/ai/evaluation.md) ([ADR-0017](docs/architecture/adr/0017-evaluation-synthetic-users.md)). On synthetic users, prog-v1 targets were hit within 1 rep on 93.1 % of exposures (linear +2.5 kg with resets: 71.8 %) and too hard on 2.7 % (22.4 %); recovery-v2 readiness correlates with the simulated truth at Pearson r 0.842-0.926 on the 54-muscle taxonomy (fixed 48 h rule: 0.552-0.579). |
 
-**Honest limitations of v6**
-
-- **Synthetic users only.** Both engines were evaluated on simulated users, not real people.
-- **Recovery r ≈ 0.9 is partly circular.** It is measured against the simulator's own ground truth, which uses the same model family as the engine. It shows the estimation works under those assumptions, not that people recover this way.
-- **Stall detection is weak:** precision 0.113, recall 0.62 on synthetic stalls. That is why a stall alone never triggers a deload.
-- **Real local-model phrasing is unverified.** No Ollama was available on the build machine; the guard is tested with a stub model. Without a model the app shows template text and is fully functional.
-- Latency was measured on the 4-CPU Linux build machine (finishing a workout: p50 394.2 ms), not on the target Windows laptop.
-
-## v7: diet engines and the new layouts
-
-Every screen now uses one 12-column layout with consistent loading, error and empty states,
-and motion that respects Reduce motion. Two more deterministic engines feed Fuel and Progress, and Train can follow a workout program.
+### Diet engines and workout programs
 
 | What | How it works |
 |---|---|
@@ -64,15 +94,20 @@ and motion that respects Reduce motion. Two more deterministic engines feed Fuel
 | **Workout programs (`programs-v1`)** | Four built-in programs: full body 3 days, upper/lower 4 days, push/pull/legs 6 days, and home full body 3 days. The Program card on Train shows the next session with each exercise's target from your progression and the sets you have done today. The plan reads your log: a finished workout that covers half of a program day counts as that day, so a missed day shifts the plan instead of skipping a session. [ADR-0020](docs/architecture/adr/0020-workout-programs.md) |
 | **Evaluation** | Synthetic users, seed 2026 ([docs/ai/evaluation.md §5](docs/ai/evaluation.md)). Median TDEE error at day 56 is 82.8 kcal (formula: 194.7), and the 14-day weight prediction from day 56 is 50.3 % more accurate than the formula's. The intake, protein and weekend insights have precision 0.935-1.0. tdee-v1 takes 3.08 ms on a one-year history. |
 
-**Honest limitations of v7**
+### Game layer, trainer and safety nets
 
-- **Slow to learn.** Only 57% of synthetic users are within 150 kcal of their true expenditure on day 28. The first two weeks are no better than the formula, which is why the target stays on the formula until the estimate settles.
-- **Under-logging is absorbed.** If meals are under-logged, "you burn" is the expenditure that matches what was logged. The target still works in logged calories.
-- **The trend insight is a hint:** precision 0.397, recall 0.408 on synthetic weeks.
-- **Programs are a fixed catalog.** You cannot edit them or build your own yet. The progression engine uses each exercise's own rep zone, so a target can sit outside the program's rep range.
-- Synthetic users only, as for v6.
+| What | How it works |
+|---|---|
+| **XP, ranks, quests, streaks** | XP per set and session on a `100 × L^1.3` level curve, ranks E→S, a rule-generated daily quest, streak freezes; every formula is versioned. A missed day never removes XP, levels, ranks or skills. |
+| **Weekly boss raid (`boss-v1`)** | Each Monday a boss with HP sized to a week of your training; every set deals 1 damage. Beat it by Sunday for +150 XP and a title on your Hunter profile; if it survives, nothing is lost. [ADR-0022](docs/architecture/adr/0022-weekly-boss-raid.md) |
+| **Instructor Iskra Vey** | An original trainer character who speaks your insights on Today, with four expressions. She only wraps the engine's own sentence, so the numbers never change. A switch turns her into the plain System style. |
+| **Detailed muscle map** | 54 muscles and heads, front, back and a deep layer, in ASCEND's own artwork. Every exercise is mapped to heads by `muscle-map-v1`. [ADR-0021](docs/architecture/adr/0021-detailed-muscle-taxonomy.md) |
+| **Quick log and honest numbers** | Log a set, meal or weigh-in from Today; "rough · based on N" badges on numbers with too little data; Settings → Today's numbers lists the engine, version and data behind every number. |
+| **Backups, import and export** | One automatic `.ascendbak` snapshot per day (newest 14 kept), backups before updates and restores, restore with a database check; export to JSON or CSV and re-import. |
+| **Exercise library** | 873 free-exercise-db exercises plus calisthenics progressions and timed holds, each with a photo or a designed tile; add your own exercise with rules, the local AI or an optional online lookup (wger.de, Wikipedia), each field with its source. |
+| **Indian food log** | Approximate Indian foods (idli, dosa, sambar, chapati, dal, curd...) with katori and piece portions, daily totals and the adaptive calorie target. Food is logged by search; photo recognition is not in the app (see [ml/](ml/README.md)). |
 
-## What's in the MVP (v0.1.0)
+### What was in the MVP (v0.1.0)
 
 | Feature | Where |
 |---|---|
@@ -87,6 +122,34 @@ and motion that respects Reduce motion. Two more deterministic engines feed Fuel
 | **Calisthenics skill trees** (12 trees, unlock criteria from logged sets, estimates only with enough data) | `skills`, `pages/Skills.tsx` |
 | **Exercise gallery**: 873 free-exercise-db exercises + calisthenics progressions, timed holds, search and filters; every card has a photo or a designed tile | `workouts/library.py`, `pages/Library.tsx` |
 | **Add your own exercise**: rules → local AI → optional online research (wger.de, Wikipedia), every field with its source and confidence, a research report to confirm, a local lookup log | `workouts/custom.py`, ADR-0013 |
+
+## Honest limitations
+
+- **Evaluated on simulated users, not real people.** Every accuracy figure above comes from a seeded
+  synthetic-user simulator ([docs/ai/evaluation.md](docs/ai/evaluation.md)). No real-user study
+  exists yet. programs-v1's "half of a day's exercises" matching has not been checked against
+  real training logs.
+- **Recovery r ≈ 0.9 is partly circular.** It is measured against the simulator's own ground truth,
+  which uses the same model family as the engine. It shows the estimation works under those
+  assumptions, not that people recover this way.
+- **Stall detection is weak:** precision 0.113, recall 0.62 on synthetic stalls. That is why a stall
+  alone never triggers a deload.
+- **The adaptive TDEE is slow to learn.** Only 57% of synthetic users are within 150 kcal of their
+  true expenditure on day 28; the target stays on the formula until the estimate settles. If meals
+  are under-logged, "you burn" matches what was logged.
+- **The weight-trend insight is a hint:** precision 0.397, recall 0.408 on synthetic weeks.
+- **Programs are a fixed catalog.** You cannot edit them or build your own yet.
+- **The food classifier is not in the app.** The ML pipeline in [ml/](ml/README.md) runs end to end,
+  but only on synthetic smoke data (generated shapes, not food photos); its metrics say nothing
+  about real food recognition.
+- **The local-model path is tested with a mocked Ollama.** Real `qwen3:4b` phrasing is not covered
+  by tests; anything it writes is shown only if the coach's number guard passes. Without a model the
+  app shows template text and is fully functional.
+- **Unsigned installer.** SmartScreen warns until the project has a code-signing certificate.
+- Food values are approximate home-style figures, and BMR, e1RM and calorie burn are standard
+  estimation formulas. ASCEND is not medical or dietary advice.
+- Latency was measured on the 4-CPU Linux build machine (finishing a workout: p50 394.2 ms), not on
+  the target Windows laptop.
 
 ## Architecture
 
@@ -114,24 +177,38 @@ and motion that respects Reduce motion. Two more deterministic engines feed Fuel
 Details: [services/sidecar/README.md](services/sidecar/README.md),
 [apps/desktop/README.md](apps/desktop/README.md), and the full project docs in [docs/](docs/README.md).
 
+## Tech stack
+
+| Part | Stack |
+|---|---|
+| Desktop | Electron 45 (sandboxed renderer, context isolation, fuses set at pack time), React 19, TypeScript 6.0, Vite 8, Tailwind CSS 4 |
+| Engine (sidecar) | Python 3.12, FastAPI, Uvicorn, Pydantic 2, SQLAlchemy 2 + Alembic, SQLite (WAL), httpx |
+| Local AI (optional) | Ollama on `127.0.0.1:11434` with `qwen3:4b`; output passes a number guard |
+| Packaging | PyInstaller (sidecar exe) + electron-builder NSIS installer, built on GitHub Actions |
+| Tests and quality | pytest + Hypothesis, Vitest + Testing Library + jsdom, axe-core, ruff, mypy, ESLint, commitlint |
+| ML pipeline | PyTorch (MobileNetV3-Small), ONNX export with a parity gate, DVC, MLflow |
+| DevOps | GitHub Actions (CI on Ubuntu and Windows, ML, Windows installer + release), Docker for sidecar tests |
+
+Versions and the reasons for each choice: [docs/development/tech-stack.md](docs/development/tech-stack.md).
+
 ## Repository layout
 
 ```
 apps/desktop/        Electron + React app
 services/sidecar/    FastAPI engine, SQLite, Alembic, tests, PyInstaller spec
 packages/shared/     TypeScript types: API + typed IPC contract
-ml/                  food-classifier placeholder (DVC + MLflow stubs)
+ml/                  food-classifier pipeline (DVC + MLflow, synthetic smoke data)
 docker/              Dockerfile + compose for sidecar dev/tests
-docs/                project docs: architecture, ADRs, contracts, team plan
-scripts/             Windows PowerShell helpers
-.github/             CI, Windows installer workflow, CODEOWNERS
+docs/                project docs: architecture, ADRs, contracts, team plan, releases
+scripts/             PowerShell setup helper, contract drift and link checks, map generator
+.github/             CI, ML and Windows installer workflows, issue templates, CODEOWNERS
 ```
 
-## Quick start (Windows 11)
+## Developer quick start
 
-You need **Git**, **Node.js 22.22.2+** (22 LTS; newer works with npm) and **uv**.
-The sidecar uses **Python 3.12**; uv installs it *next to* your existing Python 3.14 and never
-touches it.
+You need **Git**, **Node.js 22.22.2 or newer** (22 LTS; newer works with npm) and **uv**.
+The sidecar uses **Python 3.12**; uv installs it *next to* any existing Python (3.14 is fine) and
+never touches it.
 
 ```powershell
 # 1. uv (Python version + package manager), once
@@ -139,8 +216,8 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 uv python install 3.12
 
 # 2. get the code
-git clone https://github.com/<you>/ascend.git      # or unzip ASCEND_repo.zip / clone the bundle
-cd ascend                                           # the zip unpacks to ascend-repo: cd ascend-repo
+git clone https://github.com/Lucifer-Newstar/Ascend-.git ascend
+cd ascend
 
 # 3. install everything (or run: powershell -ExecutionPolicy Bypass -File scripts\setup.ps1)
 cd services\sidecar; uv sync; uv run alembic upgrade head; cd ..\..
@@ -159,7 +236,7 @@ Expand-Archive $zip.FullName -DestinationPath node_modules\electron\dist -Force
 Set-Content node_modules\electron\path.txt "electron.exe" -NoNewline
 ```
 
-Optional AI coach:
+### Optional AI coach
 
 ```powershell
 # install Ollama from https://ollama.com, then:
@@ -194,71 +271,67 @@ cd services\sidecar; uv run python -m app.devtools.seed_demo --wipe
 Your data (one SQLite file, `ascend.db`) lives in `%APPDATA%\ASCEND\data`, whether you run the
 installed app, the dev Electron app or the sidecar on its own.
 
-### Common commands
+Full setup, including Docker, MLflow and troubleshooting: [docs/development/local-setup.md](docs/development/local-setup.md).
 
-`make help` lists them (Git Bash / WSL). Highlights:
+## Testing and CI
+
+`make help` lists the developer commands (Git Bash / WSL); each is a plain command you can also
+paste into PowerShell.
 
 | | |
 |---|---|
+| `make check` | everything CI runs: lint, types, tests, migrations, contract drift, build |
 | `make test` | pytest + vitest |
 | `make lint typecheck` | ruff, eslint, mypy, tsc |
 | `make build-sidecar` | PyInstaller → `services/sidecar/dist/ascend-sidecar/` |
 | `make dist-win` | Windows installer → `apps/desktop/release/` (run on Windows) |
 | `make docker-test` | lint + tests inside Docker |
 
-## CI/CD
+Workflows in [.github/workflows](.github/workflows/):
 
-- **`.github/workflows/ci.yml`** (every push/PR): ruff, mypy, pytest + coverage, Alembic upgrade
-  on a fresh DB; eslint, tsc, vitest, Vite build; PyInstaller build + smoke test of the binary;
-  tests inside the Docker image.
-- **`.github/workflows/release.yml`** (tags `v*` or manual): Windows matrix job that builds the
-  sidecar exe with PyInstaller and the NSIS installer with electron-builder, uploaded as an
-  artifact. **Not yet run on real Windows**; expect small fixes on its first run.
+- **`ci.yml`** (every push and PR, plus nightly): commit-message lint and a Markdown link check;
+  ruff, mypy, pytest with coverage, Alembic on a fresh database and the contract drift check on
+  Ubuntu and Windows; eslint, tsc, vitest and the Vite build on Ubuntu and Windows; the PyInstaller
+  sidecar build with a smoke test; the Docker test image.
+- **`ml.yml`**: ML lint and tests, and a smoke `dvc repro` of the pipeline on synthetic data.
+- **`release.yml`** (pushes to `main` that touch the app, version tags `v*`, or manual): on
+  `windows-latest`, builds and smoke-tests the sidecar exe, builds the NSIS installer and checks that
+  all Electron fuses are set. On a version tag it publishes the installer, `SHA256SUMS.txt` and the
+  notes from `docs/releases/<tag>.md` as a GitHub Release.
 
-## Status: what is verified
+How a release is cut: [docs/operations/release-process.md](docs/operations/release-process.md).
 
-Verified on Linux (CI-equivalent):
+### Verified for 1.0.0
 
-- 566 sidecar tests pass (engine unit tests, hypothesis property tests for the v6 and v7 engines, API tests with `TestClient`); ruff and mypy clean (108 source files).
-- Alembic migrations apply to a fresh SQLite database; WAL mode confirmed via `/health`.
-- tsc (renderer, Electron, shared), eslint and 316 vitest tests (53 files) pass; `vite build` succeeds.
+On Linux, at the 1.0.0 commit:
+
+- 666 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
+  with `TestClient`); ruff and mypy are clean (108 source files).
+- Alembic migrations apply to a fresh SQLite database and downgrade back to base.
+- tsc (renderer, Electron, shared), eslint and 353 vitest tests (59 files) pass;
+  `vite build` succeeds.
 - The contract drift check passes (81 implemented operations match 9 contracts).
-- The renderer was driven end to end against the running sidecar in headless Chromium
-  (onboarding data, logging sets with a PR, adding a meal, quest check-off, coach, history).
-- The PyInstaller sidecar binary builds, migrates and answers `/health` (Linux build).
-- The Docker test image builds and its tests pass.
-- Electron (Linux, under a virtual display): the app window opens, spawns the sidecar with the
-  stdin token, waits for `/health`, onboarding and the dashboard work over the IPC bridge, the
-  renderer has no Node access, and the sidecar exits when the app closes.
+- ML lint and tests pass.
 
-Not yet verified:
+On GitHub Actions: the CI, ML and installer workflows are green on `main`. The Windows installer is
+built on `windows-latest` with the sidecar smoke test and the fuse check; the v0.4.0 release was the
+first one published with its installer.
 
-- Electron on real Windows (paths, `uv` on PATH, window behaviour) has not been run.
-- The Windows installer (electron-builder + PyInstaller `.exe`) has not been built.
-- The Ollama path (coach, custom-exercise classifier and the v6 "Why?" phrasing) is tested with a
-  mocked server only; `qwen3:4b` answers are untested.
-- The v6 and v7 engines are evaluated on synthetic users only (docs/ai/evaluation.md); no real-user
-  validation exists yet. programs-v1's "half of a day's exercises" matching has not been checked
-  against real training logs.
-- Online research is tested against mocked wger.de and Wikipedia APIs. The live APIs were checked
-  by hand on 2026-10-20 from the dev machine: "pallof press" and "nordic curl" were found on wger
-  (via the Title Case variant), "Deadlift" got a Wikipedia summary only, "zercher squat" and
-  "spoto press" found nothing. wger's name filter is exact and case-sensitive and its search
-  endpoint answers 404.
+Not covered by automation: the installed app's screens on a real Windows PC (checked by hand), real
+`qwen3:4b` answers, and the live wger.de and Wikipedia APIs (tests use mocks; the live APIs were
+checked by hand on 2026-10-20).
 
-## Push to a new GitHub repo
+## Documentation
 
-1. On GitHub: **New repository** → name it `ascend` → leave "Add a README" **unchecked** → Create.
-2. Then, in this folder:
-
-```powershell
-git remote add origin https://github.com/Lucifer-Newstar/ascend.git
-git branch -M main
-git push -u origin main
-```
-
-If you received `ASCEND.bundle` instead of the folder: `git clone ASCEND.bundle ascend`, then
-`git remote remove origin` before step 2.
+- [docs/README.md](docs/README.md): the map of all project documentation
+- [System architecture](docs/architecture/system-architecture.md) and the
+  [ADRs](docs/architecture/adr/) (22 decisions)
+- [API contracts](docs/contracts/README.md) and the [IPC contract](docs/contracts/ipc-contract.md)
+- [AI and ML docs](docs/ai/README.md), including the [evaluation](docs/ai/evaluation.md)
+- [Security and privacy](docs/architecture/security-privacy.md) and [SECURITY.md](SECURITY.md)
+- [Project proposal](docs/project/proposal.md) and [roadmap](docs/project/roadmap.md)
+- Per-folder guides: [desktop](apps/desktop/README.md), [sidecar](services/sidecar/README.md),
+  [ml](ml/README.md), [docker](docker/README.md), [scripts](scripts/README.md)
 
 ## Team
 
