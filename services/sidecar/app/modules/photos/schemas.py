@@ -29,6 +29,12 @@ class PhotoOut(BaseModel):
     created_at: datetime
 
 
+class PhotoData(BaseModel):
+    id: int
+    mime: str
+    data_url: str
+
+
 class FeedbackStatus(BaseModel):
     # The user's switch (Settings > Progress photo feedback); always off under 18.
     enabled: bool

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from datetime import datetime
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from app.modules.photos.schemas import (
     FeedbackIn,
     FeedbackOut,
     FeedbackStatus,
+    PhotoData,
     PhotoIn,
     PhotoOut,
 )
@@ -75,6 +77,19 @@ def photo_file(photo_id: int, request: Request, db: Session = Depends(get_db)) -
     except LookupError as e:
         raise HTTPException(404, str(e)) from e
     return Response(path.read_bytes(), media_type=row.mime, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/{photo_id}/data", response_model=PhotoData)
+def photo_data(photo_id: int, request: Request, db: Session = Depends(get_db)) -> PhotoData:
+    """The image as a data URL, for the desktop renderer (its bridge to the sidecar carries
+    JSON only). Same bytes as /file: already without metadata."""
+    try:
+        row = service.get(db, photo_id)
+        path = service.file_path(_data_dir(request), row)
+    except LookupError as e:
+        raise HTTPException(404, str(e)) from e
+    encoded = base64.b64encode(path.read_bytes()).decode()
+    return PhotoData(id=row.id, mime=row.mime, data_url=f"data:{row.mime};base64,{encoded}")
 
 
 @router.delete("/{photo_id}", status_code=204)

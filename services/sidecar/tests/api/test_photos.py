@@ -77,6 +77,8 @@ def test_add_list_view_and_delete(client, settings):
     img = client.get(f"/photos/{p['id']}/file")
     assert img.status_code == 200 and img.headers["content-type"] == "image/jpeg"
     assert GPS not in img.content and img.headers["cache-control"] == "no-store"
+    data = client.get(f"/photos/{p['id']}/data").json()
+    assert data["data_url"] == "data:image/jpeg;base64," + base64.b64encode(img.content).decode()
     png = add(client, png_with_text(), taken_on="2026-04-10")
     png = png.json()
     assert png["mime"] == "image/png"

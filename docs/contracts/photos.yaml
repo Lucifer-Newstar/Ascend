@@ -164,6 +164,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+  /photos/{photo_id}/data:
+    get:
+      tags:
+      - photos
+      summary: Photo Data
+      description: 'The image as a data URL, for the desktop renderer (its bridge to the sidecar carries
+
+        JSON only). Same bytes as /file: already without metadata.'
+      operationId: photo_data_photos__photo_id__data_get
+      parameters:
+      - name: photo_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Photo Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoData'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -331,3 +361,20 @@ components:
       - older_id
       - newer_id
       title: FeedbackIn
+    PhotoData:
+      properties:
+        id:
+          type: integer
+          title: Id
+        mime:
+          type: string
+          title: Mime
+        data_url:
+          type: string
+          title: Data Url
+      type: object
+      required:
+      - id
+      - mime
+      - data_url
+      title: PhotoData
