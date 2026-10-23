@@ -73,8 +73,13 @@ def get_profile(db: Session = Depends(get_db)) -> ProfileOut:
 
 
 @router.put("/profile", response_model=ProfileOut)
-def put_profile(body: ProfileIn, db: Session = Depends(get_db)) -> ProfileOut:
+def put_profile(
+    body: ProfileIn, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> ProfileOut:
+    """Save the profile. Today's untouched training quest is drawn again, so it follows the
+    equipment and focus just saved (onboarding logs the first weigh-in itself)."""
     service.upsert_profile(db, body)
+    game.refresh_training_item(db, now)
     return _profile_out(db)
 
 

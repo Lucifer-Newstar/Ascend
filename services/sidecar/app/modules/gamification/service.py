@@ -224,7 +224,13 @@ def training_quest_started(db: Session, day: date) -> bool:
     return row is not None and (row.completed_at is not None or row.progress > 0)
 
 
-def resize_training_for_readiness(db: Session, now: datetime, band: str) -> None:
+def refresh_training_item(db: Session, now: datetime) -> None:
+    """v1.2: re-pick today's untouched training item after the profile (equipment, focus)
+    changes, so a quest drawn before setup never suggests gear the user does not have."""
+    resize_training_for_readiness(db, now, _band_today(db, now.date()))
+
+
+def resize_training_for_readiness(db: Session, now: datetime, band: str | None) -> None:
     """Regenerate today's training item for a new check-in band.
 
     Only an untouched item is resized: once a set has counted towards it, a later
