@@ -80,7 +80,8 @@ export function XpStatus({ game }: { game: GameSummary | undefined }) {
 }
 
 /**
- * The streak flame. Clicking it explains the rules: freezes cover missed days, and a missed
+ * The streak flame. Clicking it explains the rules: a reason by the next day keeps a missed
+ * day, two missed days in a row reset the streak, and a missed
  * day never removes XP, levels, ranks or skills (the next quest adds a Comeback item).
  */
 export function StreakButton({ streak: s }: { streak: GameSummary["streak"] }) {
@@ -110,14 +111,10 @@ export function StreakButton({ streak: s }: { streak: GameSummary["streak"] }) {
         <div id={id} role="dialog" aria-label="Streak" className="card panel-in absolute right-0 top-full z-40 mt-2 w-72 p-4 text-left shadow-[var(--shadow-panel)]">
           <p className="text-h3 text-ink">{s.current}-day streak</p>
           <p className="text-xs text-muted">Best {s.best} · {s.active_today ? "today counted" : "today not counted yet"}</p>
-          <div className="mt-3 flex items-center gap-2 text-xs text-muted">
-            <span className="flex gap-1" aria-hidden="true">
-              {[0, 1].map((i) => <span key={i} className={`h-3 w-3 rounded-sm border ${i < s.freezes_held ? "border-accent bg-accent/60" : "border-line-2"}`} />)}
-            </span>
-            {s.freezes_held} of 2 freezes held{s.freezes_used ? ` · ${s.freezes_used} used so far` : ""}
-          </div>
+          {s.excused > 0 && <p className="mt-2 text-xs text-muted">{s.excused} missed day{s.excused === 1 ? "" : "s"} kept with a reason</p>}
+          {s.reason_due && <p className="mt-2 text-xs text-warn">Yesterday is waiting for its reason: tell your trainer on Today.</p>}
           <ul className="mt-3 space-y-1.5 text-xs text-muted">
-            <li>Every 7 active days in a row earns a freeze (hold up to 2). A missed day spends one on its own.</li>
+            <li>Missed a day? Give the reason by the next day and the streak is kept. Two missed days in a row, or no reason, reset it.</li>
             <li><span className="font-medium text-ink">Progress is never lost.</span> A missed day never removes XP, levels, ranks or unlocked skills; the next day&apos;s quest adds a short Comeback item instead.</li>
           </ul>
         </div>

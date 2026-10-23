@@ -21,7 +21,7 @@ const profile: Profile = {
 
 const game = {
   xp: { total: 120, today: 120, level: 2, xp_into_level: 20, xp_for_next: 150, rank: "E", rank_title: "Awakened", daily_cap: 600, formula_version: "x" },
-  streak: { current: 1, best: 1, freezes_held: 0, freezes_used: 0, active_today: true },
+  streak: { current: 1, best: 1, excused: 0, reason_due: null, active_today: true },
   calm: { current: 0, best: 0, active_today: false },
   quest: [{ id: 1, day: "2026-10-20", kind: "training", code: "train_lats", title: "3 hard sets for lats", detail: "", metric: "sets:lats", target: 3, progress: 0, xp: 40, completed_at: null }],
 } as unknown as GameSummary;

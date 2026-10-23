@@ -10,7 +10,7 @@ import { finishLine, sessionCounted, WorkoutFinish } from "./WorkoutFinish";
 const set = (id: number, name = "Push-up"): WorkoutSet => ({ id, exercise_id: 1, exercise_name: name, weight_kg: 0, reps: 8, rpe: 8 }) as unknown as WorkoutSet;
 const result = (sets: number, xp: number, minutes = 12): FinishedWorkout =>
   ({ workout: { id: 1, sets: Array.from({ length: sets }, (_, i) => set(i + 1, i % 2 ? "Squat" : "Push-up")) }, xp_awarded: xp, active_minutes: minutes, hard_sets: sets }) as unknown as FinishedWorkout;
-const game = { xp: { level: 4, rank: "E", xp_into_level: 60, xp_for_next: 120, total: 400, today: 40, rank_title: "", daily_cap: 600, formula_version: "x" }, streak: { current: 5, best: 7, freezes_held: 0, freezes_used: 0, active_today: true }, calm: { current: 0, best: 0 }, quest: [] } as unknown as GameSummary;
+const game = { xp: { level: 4, rank: "E", xp_into_level: 60, xp_for_next: 120, total: 400, today: 40, rank_title: "", daily_cap: 600, formula_version: "x" }, streak: { current: 5, best: 7, excused: 0, reason_due: null, active_today: true }, calm: { current: 0, best: 0 }, quest: [] } as unknown as GameSummary;
 const boss = { name: "Iron Golem", hp_left: 120, days_left: 3, defeated: false } as unknown as BossRaid;
 
 function wrap(ui: React.ReactNode) {

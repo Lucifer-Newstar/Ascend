@@ -11,7 +11,7 @@ const dash = {
   nutrition: { kcal: 1200, protein_g: 80, carbs_g: 100, fat_g: 40 },
   game: {
     xp: { total: 5400, today: 120, level: 9, xp_into_level: 300, xp_for_next: 900, rank: "D", rank_title: "Initiate", daily_cap: 800, formula_version: "xp-v2" },
-    streak: { current: 4, best: 9, freezes_held: 1, freezes_used: 0, active_today: true },
+    streak: { current: 4, best: 9, excused: 0, reason_due: null, active_today: true },
     calm: { current: 0, best: 0 },
     quest: [{ id: 1, day: "2026-10-22", kind: "training", code: "train_lats", title: "3 hard sets for lats", detail: "", metric: "sets:latissimus_dorsi", target: 3, progress: 1, xp: 60, completed_at: null }],
   },

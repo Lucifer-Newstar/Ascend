@@ -83,6 +83,7 @@ import type {
   Food,
   FoodIn,
   GameSummary,
+  StreakInfo,
   ThemeInfo,
   HistoryDay,
   ImportIn,
@@ -244,6 +245,7 @@ export const api = {
   deleteMeal: (id: number) => call<null>("DELETE", `/meals/${id}`),
 
   game: () => call<GameSummary>("GET", "/game/summary"),
+  streakReason: (day: string, reason: string) => call<StreakInfo>("POST", "/game/streak/reason", { day, reason }),
   stats: () => call<Stats>("GET", "/game/stats"),
   boss: () => call<BossRaid>("GET", "/game/boss"),
   titles: () => call<EarnedTitle[]>("GET", "/game/titles"),

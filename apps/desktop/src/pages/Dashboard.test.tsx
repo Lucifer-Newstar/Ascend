@@ -33,7 +33,7 @@ const dashboard: Dashboard = {
   nutrition: { kcal: 1200, protein_g: 60, carbs_g: 150, fat_g: 40 },
   game: {
     xp: { total: 900, today: 30, level: 7, xp_into_level: 300, xp_for_next: 1000, rank: "D", rank_title: "Initiate", daily_cap: 600, formula_version: "xp-v1" },
-    streak: { current: 4, best: 9, freezes_held: 1, freezes_used: 0, active_today: true },
+    streak: { current: 4, best: 9, excused: 0, reason_due: null, active_today: true },
     calm: { current: 0, best: 0, active_today: false },
     quest: [item({}), item({ id: 2, kind: "recovery", title: "Take a 10-minute walk", detail: "Easy pace", metric: "manual", target: 1, progress: 0, xp: 15 })],
   },

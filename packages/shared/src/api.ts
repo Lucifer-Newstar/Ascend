@@ -523,12 +523,15 @@ export interface XpInfo {
   formula_version: string;
 }
 
+/** v1.2: a missed day is kept with a reason given by the next day (no more freezes). */
 export interface StreakInfo {
   current: number;
   best: number;
-  freezes_held: number;
-  freezes_used: number;
+  /** Missed days kept with a reason in the current streak. */
+  excused: number;
   active_today: boolean;
+  /** Yesterday was missed and can still get its reason today (ISO date), else null. */
+  reason_due: string | null;
 }
 
 export interface CalmStreak {

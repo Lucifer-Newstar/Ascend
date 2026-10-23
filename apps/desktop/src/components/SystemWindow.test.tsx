@@ -77,7 +77,7 @@ const quest = (over: Partial<QuestItem> = {}): QuestItem => ({
 
 const game = (level: number, rank: string, items: QuestItem[]): GameSummary => ({
   xp: { total: 100, today: 10, level, xp_into_level: 5, xp_for_next: 100, rank, rank_title: "Hunter", daily_cap: 500, formula_version: "v" },
-  streak: { current: 1, best: 1, freezes_held: 0, freezes_used: 0, active_today: true },
+  streak: { current: 1, best: 1, excused: 0, reason_due: null, active_today: true },
   calm: { current: 0, best: 0, active_today: false },
   quest: items,
 });

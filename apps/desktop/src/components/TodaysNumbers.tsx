@@ -30,7 +30,7 @@ export function todaysRows(d: Dashboard, stats: Stats | null, tdee: TdeeReport |
   const rows: Row[] = [
     { key: "level", name: "Level and rank", value: `Level ${x.level} · ${x.rank} (${x.rank_title})`, how: `Level from total XP (${x.formula_version}); rank from level.`, data: `${x.total} XP in total · ${x.xp_into_level} of ${x.xp_for_next} into this level` },
     { key: "xp-today", name: "XP today", value: `${x.today}`, how: `Sum of today's XP events, capped at ${x.daily_cap} a day.`, data: `daily cap ${x.daily_cap}` },
-    { key: "streak", name: "Streak", value: `${s.current} days`, how: "Days in a row with a finished workout, a completed quest item, or any quick log (a set, a meal or a weigh-in). Freezes cover a missed day.", data: `best ${s.best} · freezes held ${s.freezes_held}, used ${s.freezes_used} · ${s.active_today ? "today counts" : "nothing logged today yet"}` },
+    { key: "streak", name: "Streak", value: `${s.current} days`, how: "Days in a row with a finished workout, a completed quest item, or any quick log (a set, a meal or a weigh-in). A missed day is kept with a reason given by the next day; two missed days in a row reset it.", data: `best ${s.best} · ${s.excused} kept with a reason · ${s.active_today ? "today counts" : "nothing logged today yet"}` },
   ];
   for (const q of d.game.quest) {
     rows.push({ key: `quest-${q.id}`, name: `Quest: ${q.title}`, value: `${q.progress} / ${q.target}`, how: `Progress read from your logs (metric "${q.metric}"); +${q.xp} XP when done.`, data: q.completed_at ? "completed" : q.detail });

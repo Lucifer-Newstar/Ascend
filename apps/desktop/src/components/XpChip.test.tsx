@@ -11,7 +11,7 @@ vi.mock("../api/client", () => ({ api: { game: vi.fn(), updateSettings: vi.fn() 
 
 const summary = (total: number, level: number, into: number): GameSummary => ({
   xp: { total, today: 0, level, xp_into_level: into, xp_for_next: 500, rank: "E", rank_title: "Novice", daily_cap: 600, formula_version: "xp-v1" },
-  streak: { current: 2, best: 2, freezes_held: 0, freezes_used: 0, active_today: true },
+  streak: { current: 2, best: 2, excused: 0, reason_due: null, active_today: true },
   calm: { current: 0, best: 0, active_today: false },
   quest: [],
 });
@@ -94,15 +94,16 @@ describe("XpChip", () => {
     expect(screen.getByTestId("top-streak")).toHaveAccessibleName("2-day streak, details");
   });
 
-  it("explains the streak rules on click: freezes, and progress is never lost", async () => {
-    vi.mocked(api.game).mockResolvedValueOnce({ ...summary(250, 3, 250), streak: { current: 9, best: 12, freezes_held: 1, freezes_used: 1, active_today: false } });
+  it("explains the streak rules on click: reasons, and progress is never lost", async () => {
+    vi.mocked(api.game).mockResolvedValueOnce({ ...summary(250, 3, 250), streak: { current: 9, best: 12, excused: 1, reason_due: null, active_today: false } });
     render(renderChip(0, true));
     const button = await screen.findByRole("button", { name: /9-day streak, details/ });
     expect(button).toHaveAttribute("aria-expanded", "false");
     await userEvent.click(button);
     const pop = screen.getByRole("dialog", { name: "Streak" });
     expect(pop).toHaveTextContent("Best 12 · today not counted yet");
-    expect(pop).toHaveTextContent("1 of 2 freezes held · 1 used so far");
+    expect(pop).toHaveTextContent("1 missed day kept with a reason");
+    expect(pop).toHaveTextContent("Two missed days in a row, or no reason, reset it.");
     expect(pop).toHaveTextContent("never removes XP, levels, ranks or unlocked skills");
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: "Streak" })).toBeNull();

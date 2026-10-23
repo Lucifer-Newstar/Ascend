@@ -8,6 +8,7 @@ import { api } from "../api/client";
 import { BossRaidCard } from "../components/BossRaid";
 import { CheckinCard } from "../components/CheckinCard";
 import { FirstSteps } from "../components/FirstSteps";
+import { StreakReasonCard } from "../components/StreakReason";
 import { QuestWindow } from "../components/QuestWindow";
 import { Delayed, LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { StatusPanel } from "../components/StatusPanel";
@@ -56,6 +57,9 @@ export function DashboardPage({ refreshKey, onChanged, onNavigate, now }: {
     <div className="grid grid-cols-12 gap-6">
       {error && <div className="col-span-12"><StaleNotice message={error} onRetry={reload} /></div>}
       {onNavigate && data.game.xp.total === 0 && <FirstSteps onNavigate={onNavigate} />}
+      {data.game.streak.reason_due && (
+        <div className="col-span-12"><StreakReasonCard streak={data.game.streak} onSaved={onChanged ?? reload} /></div>
+      )}
       <div className="col-span-12 lg:col-span-8">
         <QuestWindow items={data.game.quest} rank={data.game.xp.rank} onComplete={complete} onStart={onNavigate ? () => onNavigate("workout") : undefined} />
       </div>

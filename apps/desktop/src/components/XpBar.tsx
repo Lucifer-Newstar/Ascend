@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { CountUp, useReducedMotion } from "../lib/motion";
 import { Confetti, Flash, Transient, useRise } from "./Celebrate";
-import { IconFlame, IconSnow } from "./Icons";
+import { IconFlame } from "./Icons";
 
 /** Rank colours come from the rank tokens in index.css (both themes meet AA on panels). */
 export const RANK_TOKENS: Record<string, string> = {
@@ -133,9 +133,7 @@ export function XpBar({ xp, streak }: { xp: XpInfo; streak: StreakInfo }) {
         <div className="mt-2 flex gap-4 text-xs text-muted">
           <span>+<CountUp value={xp.today} /> XP today <span className="text-faint">(cap {xp.daily_cap})</span></span>
           <StreakFlame current={streak.current} />
-          <span className="flex items-center gap-1" title="Earn 1 freeze per 7-day streak (max 2); used automatically on a missed day">
-            <IconSnow width={14} height={14} className="text-accent" /> {streak.freezes_held} freeze{streak.freezes_held === 1 ? "" : "s"}
-          </span>
+          {streak.excused > 0 && <span title="Missed days kept because you gave a reason by the next day">{streak.excused} kept with a reason</span>}
         </div>
         <span role="status" className="sr-only">{celebrate > 0 ? `Level up! You reached level ${xp.level}.` : ""}</span>
       </div>

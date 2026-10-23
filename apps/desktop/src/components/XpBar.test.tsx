@@ -13,7 +13,7 @@ const xp = (over: Partial<XpInfo> = {}): XpInfo => ({
   total: 1200, today: 40, level: 4, xp_into_level: 200, xp_for_next: 800, rank: "D", rank_title: "Apprentice",
   daily_cap: 600, formula_version: "xp-v1", ...over,
 });
-const streak = (current: number): StreakInfo => ({ current, best: 9, freezes_held: 1, freezes_used: 0, active_today: true });
+const streak = (current: number): StreakInfo => ({ current, best: 9, excused: 0, reason_due: null, active_today: true });
 
 const wrap = (settings: Partial<Settings> = {}) =>
   function W({ children }: { children: ReactNode }) {
