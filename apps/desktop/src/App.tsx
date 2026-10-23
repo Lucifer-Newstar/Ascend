@@ -160,7 +160,9 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   useEffect(() => {
     if (!freshStart) return;
     void api.updateTrainerState({ onboarded: true }).catch(() => undefined);
-    startTour("app");
+    // Start after this render settles (the tour opens the Today page first).
+    const id = window.setTimeout(() => startTour("app"), 0);
+    return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const onChatAction = (a: ChatAction) => {
