@@ -582,7 +582,9 @@ function SetTable({ label, sets, units, onEdit, onDelete, busy, justLogged }: {
   const [editing, setEditing] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
   return (
-    <table className="w-full text-sm" aria-label={label}>
+    // Scrolls sideways on a narrow window instead of squeezing the headers together.
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[480px] whitespace-nowrap text-sm" aria-label={label}>
       <thead>
         <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
           {hold ? (
@@ -656,6 +658,7 @@ function SetTable({ label, sets, units, onEdit, onDelete, busy, justLogged }: {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
