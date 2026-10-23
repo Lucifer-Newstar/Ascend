@@ -87,7 +87,7 @@ export function WorkoutFinish({ summary, onClose, onToday }: { summary: FinishSu
           }>
           <p className="font-display text-4xl font-bold text-ink" data-testid="finish-xp">+{r.xp_awarded} XP</p>
           <p className="mt-1 text-sm text-muted">
-            {count(r.workout.sets.length, "set")} · {count(r.hard_sets, "hard set")} · {Math.round(r.active_minutes)} min
+            {count(r.workout.sets.length, "set")} · {count(r.hard_sets, "hard set")} · {r.active_minutes < 1 ? "under 1 min" : `${Math.round(r.active_minutes)} min`}
           </p>
           {trainerOn && <p className="mt-3 rounded-md border border-line-2 bg-panel-2 px-3 py-2 text-sm text-ink" data-testid="finish-trainer">{line.text}</p>}
 
