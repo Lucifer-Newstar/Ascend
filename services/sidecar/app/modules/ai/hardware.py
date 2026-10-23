@@ -40,7 +40,7 @@ def _ram_bytes() -> int | None:
 
         st = MemoryStatus()
         st.dwLength = ctypes.sizeof(MemoryStatus)
-        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):  # type: ignore[attr-defined]
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):  # type: ignore[attr-defined,unused-ignore]
             return int(st.ullTotalPhys)
         return None
     try:
