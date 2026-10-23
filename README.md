@@ -8,9 +8,10 @@
 
 **An offline Windows desktop fitness RPG.** Log workouts and Indian meals, earn XP, clear daily
 quests, keep a streak and rank up from **E to S**, while a muscle map shows which muscles are
-under-trained, recovering or overreached. Everything runs and is stored on your own PC; an
-optional local AI coach (Ollama + `qwen3:4b`) explains your numbers, and the app works fully
-without it.
+under-trained, recovering or overreached. A trainer you pick watches your log, answers questions
+and proposes changes that run only when you confirm them. Everything runs and is stored on your
+own PC; an optional local AI (Ollama + `qwen3:4b`) words the trainer's answers, and the app works
+fully without it.
 
 ASCEND is our final-year project: an Electron + React desktop app, a FastAPI + SQLite engine
 that runs beside it, deterministic training and diet engines, and an MLOps pipeline.
@@ -20,6 +21,10 @@ that runs beside it, deterministic training and diet engines, and an MLOps pipel
 | Train: three-pane logger | Skills: tree canvas |
 |---|---|
 | ![Train](docs/screenshots/ASCEND_v5_Train.png) | ![Skills](docs/screenshots/ASCEND_v5_Skills.png) |
+| **Trainer chat: a proposed action waits for Confirm (1.1)** | **Planner: a week, the checks and a goal check (1.1)** |
+| ![Trainer chat](docs/screenshots/ASCEND_v11_Trainer_Chat.png) | ![Planner](docs/screenshots/ASCEND_v11_Planner.png) |
+| **Profile: Hunter card, achievements, blurred photos (1.1)** | **Share card: drawn locally, posted by you (1.1)** |
+| ![Profile](docs/screenshots/ASCEND_v11_Profile.png) | ![Share card](docs/screenshots/ASCEND_v11_Share_Card.png) |
 
 > Screens use demo data from `app.devtools.seed_demo`. The v0.1 MVP screens are kept in
 > [docs/screenshots](docs/screenshots/).
@@ -32,11 +37,12 @@ that runs beside it, deterministic training and diet engines, and an MLOps pipel
 ## Download and install
 
 1. Open the [latest release](https://github.com/Lucifer-Newstar/Ascend-/releases/latest) and download **`ASCEND-Setup-<version>.exe`**
-   (for 1.0.0: `ASCEND-Setup-1.0.0.exe`). `SHA256SUMS.txt` next to it lets you check the download.
+   (for 1.1.0: `ASCEND-Setup-1.1.0.exe`). `SHA256SUMS.txt` next to it lets you check the download.
 2. Run it. The installer is **not code-signed yet**, so Windows SmartScreen shows "Windows protected
    your PC": click **More info → Run anyway**.
 3. Pick a folder (default: `%LOCALAPPDATA%\Programs\ASCEND`, no admin rights needed) and finish.
-   ASCEND starts and walks you through the five-step first run.
+   ASCEND starts with one first-run flow: your profile, a baseline test, your trainer, then a
+   five-step tour.
 
 **System requirements:** Windows 10 or 11, 64-bit (x64). Nothing else: the engine ships inside the
 installer. For the optional AI coach, install [Ollama](https://ollama.com) and run
@@ -48,7 +54,7 @@ uninstall, and a reinstall picks it up again. The app also writes a daily automa
 Check a download in PowerShell (compare with the line for the file in `SHA256SUMS.txt`):
 
 ```powershell
-Get-FileHash .\ASCEND-Setup-1.0.0.exe -Algorithm SHA256
+Get-FileHash .\ASCEND-Setup-1.1.0.exe -Algorithm SHA256
 ```
 
 Release notes for each version: [GitHub Releases](https://github.com/Lucifer-Newstar/Ascend-/releases) and [docs/releases](docs/releases/);
@@ -63,13 +69,26 @@ the full history is in [CHANGELOG.md](CHANGELOG.md).
 | **Today ("Hunter HQ")** | The daily quest as a System window with time left, a status panel (STR, AGI, END, VIT, INT) where every number has a "Why?", up to three insights spoken by the trainer, Instructor Iskra Vey (switchable to a plain mode), the weekly boss raid ([ADR-0022](docs/architecture/adr/0022-weekly-boss-raid.md)), Quick log, check-in, fuel and the muscle map on a 12-column grid. |
 | **Train** | Keyboard-first logger: last session's sets in grey next to today's, the next set pre-filled from last time (Enter logs it), a rest bar (Space pauses), muscles hit and the skills the exercise feeds. |
 | **Skills** | A zoomable, pannable tree canvas per family; arrow keys move along the edges; a drawer shows the criteria, the estimate (only with enough data) and "Train this skill". |
-| **Ctrl+K** | Command bar: `bench 80x5 @8`, `log 3x8 pull-up`, `plank 45s`, `weight 81.4`, `add 2 eggs`, `train front lever`, a page name, or any question for the Coach. Rule-based, no model. |
-| **Awakening** | Five-step first run with an equipment checklist (respected by quests and skill suggestions) and a baseline test logged as a real session. |
+| **Ctrl+K** | Command bar: `bench 80x5 @8`, `log 3x8 pull-up`, `plank 45s`, `weight 81.4`, `add 2 eggs`, `train front lever`, a page name, or any question for your trainer. Data-changing commands are the allowlisted actions in [`command-vectors.json`](packages/shared/src/command-vectors.json). Rule-based, no model. |
+| **Awakening** | The first run: profile, an equipment checklist (respected by quests and skill suggestions), a baseline test logged as a real session, and your trainer, then straight into a five-step app tour. |
 | **Streaks** | Freezes cover missed days, and a missed day never removes XP, levels, ranks or skills; the next quest adds a short Comeback item instead. |
 | **Accessibility and motion** | WCAG AA colours in both themes (unit-tested), labelled controls, axe-clean screens, Reduce motion honoured everywhere, optional sound off by default. |
 
-Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages · **Enter** log the set shown ·
+Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages (Profile has none) · **Enter** log the set shown ·
 **Space** pause rest · arrows on the skill canvas.
+
+### New in 1.1
+
+| What | How it works |
+|---|---|
+| **Trainer and chat** | Pick one of four trainers. The chat (top bar) answers app questions from help notes (`trainer-kb-v1`), routes by rules before any AI call (`trainer-intents-v1`), checks goals, starts a tour of any page and says why it posted something. The Coach page is retired; its weekly review and deload cards are on Progress. |
+| **Content selector** | `player-state-v1` reads your level, category balance, readiness, consistency, diet adherence and weigh-in trend; `select-v1` picks what the trainer brings up from a data catalog with cooldowns and a cap of 3 posts a day. Never a hard item on a low-readiness day, never an eat-less item under 18. |
+| **Personalization** | `personalize-v1` and `quest-v3`: the daily quest's sets follow your level and readiness, and its nutrition item targets your own gap. `/selector/personalization` shows the reasons. |
+| **Actions with a confirm** | `actions-v1`: the chat, Ctrl+K or the local AI can propose a log entry, a program switch or an erase; it runs after Confirm on a card (erase needs the word typed), is audited, and can be undone where possible. |
+| **Planner** | Build a training week (`plangen-v1`), a day of Indian meals (`dietgen-v1`) and check a goal (`goalcheck-v2`, ICMR-NIN 2024). Save, follow or delete. No deficit under 18; **Hide calories** hides kcal. |
+| **Profile and photos** | Hunter card, achievements and private progress photos: stripped of EXIF/GPS, blurred until revealed, compared side by side, backed up. Optional AI feedback (`photo-feedback-v1`) on a local vision model: off by default, never under 18, no body-fat or weight comments. |
+| **Share cards** | `share-v1` text, drawn on your PC with no weight, photos or profile details: save, copy, X's own composer (an allowlisted link) or Instagram (save + copy caption). |
+| **Skills** | 17 built-in trees (five new) plus your own custom trees from library exercises; custom trees pay no XP. |
 
 ### Training and recovery engines
 
@@ -100,7 +119,7 @@ what the engines computed.
 |---|---|
 | **XP, ranks, quests, streaks** | XP per set and session on a `100 × L^1.3` level curve, ranks E→S, a rule-generated daily quest, streak freezes; every formula is versioned. A missed day never removes XP, levels, ranks or skills. |
 | **Weekly boss raid (`boss-v1`)** | Each Monday a boss with HP sized to a week of your training; every set deals 1 damage. Beat it by Sunday for +150 XP and a title on your Hunter profile; if it survives, nothing is lost. [ADR-0022](docs/architecture/adr/0022-weekly-boss-raid.md) |
-| **Instructor Iskra Vey** | An original trainer character who speaks your insights on Today, with four expressions. She only wraps the engine's own sentence, so the numbers never change. A switch turns her into the plain System style. |
+| **Trainers** | Instructor Iskra Vey and three more original trainers speak your insights on Today and in the chat, with portraits per mood. They only wrap the engine's own sentence, so the numbers never change. A switch turns them into the plain System style. |
 | **Detailed muscle map** | 54 muscles and heads, front, back and a deep layer, in ASCEND's own artwork. Every exercise is mapped to heads by `muscle-map-v1`. [ADR-0021](docs/architecture/adr/0021-detailed-muscle-taxonomy.md) |
 | **Quick log and honest numbers** | Log a set, meal or weigh-in from Today; "rough · based on N" badges on numbers with too little data; Settings → Today's numbers lists the engine, version and data behind every number. |
 | **Backups, import and export** | One automatic `.ascendbak` snapshot per day (newest 14 kept), backups before updates and restores, restore with a database check; export to JSON or CSV and re-import. |
@@ -119,7 +138,7 @@ what the engines computed.
 | Diet log: 31 approximate Indian foods (idli, dosa, sambar, chutneys, rice, chapati, dal, curd...) with katori/piece portions, daily totals | `nutrition` |
 | Coach: rule-based tips always; local Ollama `qwen3:4b` if running; **AI on/off toggle** | `coach` |
 | History by day (workouts + meals) and export to **JSON / CSV** | `progress/history.py` |
-| **Calisthenics skill trees** (12 trees, unlock criteria from logged sets, estimates only with enough data) | `skills`, `pages/Skills.tsx` |
+| **Calisthenics skill trees** (12 trees then, 17 plus custom trees since 1.1; unlock criteria from logged sets, estimates only with enough data) | `skills`, `pages/Skills.tsx` |
 | **Exercise gallery**: 873 free-exercise-db exercises + calisthenics progressions, timed holds, search and filters; every card has a photo or a designed tile | `workouts/library.py`, `pages/Library.tsx` |
 | **Add your own exercise**: rules → local AI → optional online research (wger.de, Wikipedia), every field with its source and confidence, a research report to confirm, a local lookup log | `workouts/custom.py`, ADR-0013 |
 
@@ -138,7 +157,15 @@ what the engines computed.
   true expenditure on day 28; the target stays on the formula until the estimate settles. If meals
   are under-logged, "you burn" matches what was logged.
 - **The weight-trend insight is a hint:** precision 0.397, recall 0.408 on synthetic weeks.
-- **Programs are a fixed catalog.** You cannot edit them or build your own yet.
+- **Built-in programs are a fixed catalog.** The Planner builds new programs from rules, but you
+  cannot edit an exercise inside a saved program yet; build a new one instead.
+- **Backups are unencrypted and include progress photos.** Keep `%APPDATA%\ASCEND` private and
+  copy backups to another drive yourself (encryption is planned, not in 1.1.0).
+- **AI photo feedback is tested with a mocked vision model.** Real model replies are filtered by
+  the photo guard at run time; with the feature off (the default) no model sees your photos.
+- **The trainer's own posts follow fixed rules.** The selector's thresholds were set by hand and
+  checked on synthetic users only.
+- **Instagram has no desktop posting route.** The app saves the image and copies the caption.
 - **The food classifier is not in the app.** The ML pipeline in [ml/](ml/README.md) runs end to end,
   but only on synthetic smoke data (generated shapes, not food photos); its metrics say nothing
   about real food recognition.
@@ -310,24 +337,27 @@ Workflows in [.github/workflows](.github/workflows/):
 
 How a release is cut: [docs/operations/release-process.md](docs/operations/release-process.md).
 
-### Verified for 1.0.0
+### Verified for 1.1.0
 
-On Linux, at the 1.0.0 commit:
+On Linux, at the 1.1.0 commit:
 
-- 666 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
-  with `TestClient`); ruff and mypy are clean (108 source files).
-- Alembic migrations apply to a fresh SQLite database and downgrade back to base.
-- tsc (renderer, Electron, shared), eslint and 353 vitest tests (59 files) pass;
-  `vite build` succeeds.
-- The contract drift check passes (81 implemented operations match 9 contracts).
-- ML lint and tests pass.
+- 837 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
+  with `TestClient`); ruff and mypy are clean (157 source files).
+- Alembic migrations apply to a fresh SQLite database (`0025`), downgrade to base and apply again.
+- tsc (renderer, Electron, shared), eslint (0 errors) and 411 vitest tests (66 files) pass, three
+  runs in a row; `vite build` succeeds.
+- The contract drift check passes (128 implemented operations match 16 contracts).
+- ML lint and tests pass (18 tests).
+- From a clean clone: the PyInstaller sidecar builds, passes the smoke test and contains no dev
+  tooling (`packaging/check_bundle.py`); `electron-builder --linux dir` packs the app with all
+  nine Electron fuses set (`build/fuses.cjs --check`). The Windows installer is built by
+  `release.yml` on `windows-latest`.
 
-On GitHub Actions: the CI, ML and installer workflows are green on `main`. The Windows installer is
-built on `windows-latest` with the sidecar smoke test and the fuse check; the v0.4.0 release was the
-first one published with its installer.
+On GitHub Actions: the CI, ML and installer workflows were green on `main` for 1.0.0; 1.1.0's
+runs start when it is pushed.
 
-Not covered by automation: the installed app's screens on a real Windows PC (checked by hand), real
-`qwen3:4b` answers, and the live wger.de and Wikipedia APIs (tests use mocks; the live APIs were
+Not covered by automation: the installed app's screens on a real Windows PC (check by hand before tagging), real
+`qwen3:4b` and vision-model answers, and the live wger.de and Wikipedia APIs (tests use mocks; the live APIs were
 checked by hand on 2026-10-20).
 
 ## Documentation

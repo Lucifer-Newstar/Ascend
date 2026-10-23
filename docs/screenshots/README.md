@@ -6,3 +6,7 @@ Regenerate after UI changes so the README stays honest.
 
 `ASCEND_v5_*.png` are the v5 interface (dark theme, 1440×900, demo data from
 `app.devtools.seed_demo`): Today, Train and Skills.
+
+`ASCEND_v11_*.png` are 1.1.0 (dark theme, 1440×900, Vite dev server against the real sidecar,
+demo data from `app.devtools.seed_demo`; the two progress photos are exercise-library images):
+the trainer chat with an action card, the Planner, the Profile page and a share card.
