@@ -56,9 +56,9 @@ the full history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
-### Screens
+### Screens and interaction
 
-| Screen | What it does |
+| What | How it works |
 |---|---|
 | **Today ("Hunter HQ")** | The daily quest as a System window with time left, a status panel (STR, AGI, END, VIT, INT) where every number has a "Why?", up to three insights spoken by the trainer, Instructor Iskra Vey (switchable to a plain mode), the weekly boss raid ([ADR-0022](docs/architecture/adr/0022-weekly-boss-raid.md)), Quick log, check-in, fuel and the muscle map on a 12-column grid. |
 | **Train** | Keyboard-first logger: last session's sets in grey next to today's, the next set pre-filled from last time (Enter logs it), a rest bar (Space pauses), muscles hit and the skills the exercise feeds. |
@@ -280,7 +280,7 @@ paste into PowerShell.
 
 | | |
 |---|---|
-| `make check` | everything CI runs: lint, types, tests, migrations, contract drift, build |
+| `make check` | everything CI runs: lint, types, tests, migrations, contract drift, Markdown links, build |
 | `make test` | pytest + vitest |
 | `make lint typecheck` | ruff, eslint, mypy, tsc |
 | `make build-sidecar` | PyInstaller → `services/sidecar/dist/ascend-sidecar/` |
