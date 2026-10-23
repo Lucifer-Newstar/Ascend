@@ -1,0 +1,443 @@
+# ASCEND contract — trainer
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — trainer
+  version: 0.1.0
+  description: 'The trainer as watcher and guide: rule-routed chat (trainer-intents-v1, trainer-kb-v1), the watcher
+    feed (watch-v1) and the first-run state. Only unknown questions reach the local model, under the number guard.
+    Owner: Jegatheesan (backend).'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: trainer
+  description: Trainer chat, watcher feed, first-run state
+paths:
+  /trainer/chat:
+    post:
+      summary: Post Chat
+      description: 'One chat turn. Rules route the message first; only an unknown question reaches the
+
+        local model (and its reply passes the number guard).'
+      operationId: post_chat_trainer_chat_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - trainer
+  /trainer/feed:
+    get:
+      summary: Get Feed
+      description: The watcher's messages (newest first). Reading it runs the watcher (watch-v1).
+      operationId: get_feed_trainer_feed_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedOut'
+      x-status: implemented
+      tags:
+      - trainer
+  /trainer/feed/read:
+    post:
+      summary: Read Feed
+      operationId: read_feed_trainer_feed_read_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedReadIn'
+        required: true
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - trainer
+  /trainer/state:
+    get:
+      summary: Get State
+      description: 'First-run state: onboarded, whether data exists, demo data, chosen trainer, tours.'
+      operationId: get_state_trainer_state_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainerState'
+      x-status: implemented
+      tags:
+      - trainer
+    put:
+      summary: Put State
+      operationId: put_state_trainer_state_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainerStateIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainerState'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - trainer
+  /trainer/kb:
+    get:
+      summary: Get Kb
+      description: The trainer's help notes (questions it answers without any AI).
+      operationId: get_kb_trainer_kb_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/KbEntryOut'
+                type: array
+                title: Response Get Kb Trainer Kb Get
+      x-status: implemented
+      tags:
+      - trainer
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: Per-launch token from Electron main.
+  schemas:
+    ChatAction:
+      properties:
+        kind:
+          type: string
+          enum:
+          - navigate
+          - tour
+          - planner
+          - trainer_picker
+          - proposal
+          - share
+          title: Kind
+        target:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target
+        label:
+          type: string
+          title: Label
+      type: object
+      required:
+      - kind
+      - label
+      title: ChatAction
+      description: 'Something the UI can do for the user from a reply: open a section, start a tour,
+
+        open the planner or the trainer picker, or show an action card (proposal_id).'
+    ChatIn:
+      properties:
+        text:
+          type: string
+          maxLength: 1000
+          title: Text
+          default: ''
+      additionalProperties: false
+      type: object
+      title: ChatIn
+    ChatOut:
+      properties:
+        reply:
+          type: string
+          title: Reply
+        mood:
+          type: string
+          enum:
+          - neutral
+          - proud
+          - warning
+          - hyped
+          title: Mood
+        intent:
+          type: string
+          title: Intent
+        source:
+          type: string
+          enum:
+          - rules
+          - faq
+          - ollama
+          title: Source
+        fallback_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fallback Reason
+        actions:
+          items:
+            $ref: '#/components/schemas/ChatAction'
+          type: array
+          title: Actions
+          default: []
+        suggestions:
+          items:
+            type: string
+          type: array
+          title: Suggestions
+          default: []
+        faq_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Faq Id
+        proposal:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Proposal
+      type: object
+      required:
+      - reply
+      - mood
+      - intent
+      - source
+      title: ChatOut
+    FeedMessage:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kind:
+          type: string
+          title: Kind
+        mood:
+          type: string
+          enum:
+          - neutral
+          - proud
+          - warning
+          - hyped
+          title: Mood
+        text:
+          type: string
+          title: Text
+        action_kind:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Action Kind
+        action_target:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Action Target
+        share:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Share
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        read:
+          type: boolean
+          title: Read
+      type: object
+      required:
+      - id
+      - kind
+      - mood
+      - text
+      - action_kind
+      - action_target
+      - share
+      - created_at
+      - read
+      title: FeedMessage
+    FeedOut:
+      properties:
+        messages:
+          items:
+            $ref: '#/components/schemas/FeedMessage'
+          type: array
+          title: Messages
+        unread:
+          type: integer
+          title: Unread
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - messages
+      - unread
+      - algo_version
+      title: FeedOut
+    FeedReadIn:
+      properties:
+        ids:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Ids
+      additionalProperties: false
+      type: object
+      title: FeedReadIn
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    KbEntryOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        question:
+          type: string
+          title: Question
+        section:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Section
+      type: object
+      required:
+      - id
+      - question
+      - section
+      title: KbEntryOut
+    TrainerState:
+      properties:
+        onboarded:
+          type: boolean
+          title: Onboarded
+        has_profile:
+          type: boolean
+          title: Has Profile
+        has_history:
+          type: boolean
+          title: Has History
+        demo_data:
+          type: boolean
+          title: Demo Data
+        trainer_id:
+          type: string
+          enum:
+          - iskra
+          - vera
+          - kai
+          - dario
+          title: Trainer Id
+        tours_done:
+          items:
+            type: string
+          type: array
+          title: Tours Done
+      type: object
+      required:
+      - onboarded
+      - has_profile
+      - has_history
+      - demo_data
+      - trainer_id
+      - tours_done
+      title: TrainerState
+    TrainerStateIn:
+      properties:
+        onboarded:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Onboarded
+        tour_done:
+          anyOf:
+          - type: string
+            maxLength: 24
+          - type: 'null'
+          title: Tour Done
+      additionalProperties: false
+      type: object
+      title: TrainerStateIn
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

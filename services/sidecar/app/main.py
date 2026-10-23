@@ -35,6 +35,7 @@ from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
 from app.modules.skills import service as skills_service
 from app.modules.skills.api import router as skills_router
+from app.modules.trainer.api import router as trainer_router
 from app.modules.workouts.api import deload_router, exercises_router, plans_router, prs_router
 from app.modules.workouts.api import router as workouts_router
 
@@ -270,6 +271,7 @@ def create_app(
         io_router,
         intelligence_router,
         planner_router,
+        trainer_router,
     ):
         app.include_router(router)
     return app

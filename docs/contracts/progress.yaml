@@ -67,8 +67,6 @@ paths:
       - progress
   /settings:
     get:
-      tags:
-      - progress
       summary: Get Settings
       operationId: get_settings_settings_get
       responses:
@@ -79,10 +77,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/SettingsOut'
       x-status: implemented
-    put:
       tags:
       - progress
+    put:
       summary: Put Settings
+      description: Partial update; omitted fields keep their stored value.
       operationId: put_settings_settings_put
       requestBody:
         content:
@@ -104,6 +103,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+      tags:
+      - progress
   /muscles:
     get:
       tags:
@@ -1101,6 +1102,16 @@ components:
           - type: boolean
           - type: 'null'
           title: Trainer
+        trainer_id:
+          anyOf:
+          - type: string
+            enum:
+            - iskra
+            - vera
+            - kai
+            - dario
+          - type: 'null'
+          title: Trainer Id
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1141,6 +1152,15 @@ components:
           type: boolean
           title: Trainer
           default: true
+        trainer_id:
+          type: string
+          enum:
+          - iskra
+          - vera
+          - kai
+          - dario
+          title: Trainer Id
+          default: iskra
       type: object
       required:
       - ai_enabled

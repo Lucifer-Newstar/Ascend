@@ -154,6 +154,19 @@
         "implemented": 11,
         "planned": 0
       }
+    },
+    {
+      "id": "trainer",
+      "package": "app.modules.trainer",
+      "contract": "trainer.yaml",
+      "path_prefixes": [
+        "/trainer"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 6,
+        "planned": 0
+      }
     }
   ]
 }

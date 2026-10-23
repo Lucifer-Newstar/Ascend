@@ -8,6 +8,7 @@ from app.modules.nutrition import models as nutrition_models  # noqa: F401
 from app.modules.planner import models as planner_models  # noqa: F401
 from app.modules.progress import models as progress_models  # noqa: F401
 from app.modules.skills import models as skills_models  # noqa: F401
+from app.modules.trainer import models as trainer_models  # noqa: F401
 from app.modules.workouts import models as workouts_models  # noqa: F401
 
 __all__ = ["Base"]

@@ -101,6 +101,7 @@ class MuscleStateOut(BaseModel):
 
 
 Units = Literal["metric", "imperial"]
+TrainerId = Literal["iskra", "vera", "kai", "dario"]
 Theme = Literal["dark", "light", "system"]
 
 
@@ -115,6 +116,8 @@ class SettingsOut(BaseModel):
     online_lookup: bool = False
     # v8: insights spoken by the trainer character (Instructor Iskra Vey); off = plain mode.
     trainer: bool = True
+    # v1.1: which trainer speaks (iskra, vera, kai, dario).
+    trainer_id: TrainerId = "iskra"
 
 
 class SettingsIn(StrictIn):
@@ -127,6 +130,7 @@ class SettingsIn(StrictIn):
     reduce_motion: bool | None = None
     online_lookup: bool | None = None
     trainer: bool | None = None
+    trainer_id: TrainerId | None = None
 
 
 class BodyMetricIn(StrictIn):

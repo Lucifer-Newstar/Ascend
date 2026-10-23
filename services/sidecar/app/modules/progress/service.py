@@ -19,6 +19,7 @@ from app.modules.progress.schemas import (
     SettingsIn,
     SettingsOut,
     Theme,
+    TrainerId,
     Units,
 )
 from app.modules.workouts.activity_seed import TIME_BASED_SECTIONS
@@ -92,7 +93,12 @@ def read_settings(db: Session) -> SettingsOut:
         reduce_motion=get_setting(db, "reduce_motion", "false") == "true",
         online_lookup=online_lookup(db),
         trainer=get_setting(db, "trainer", "true") == "true",
+        trainer_id=cast(TrainerId, _trainer_id(get_setting(db, "trainer_id", "iskra"))),
     )
+
+
+def _trainer_id(value: str) -> str:
+    return value if value in ("iskra", "vera", "kai", "dario") else "iskra"
 
 
 def update_settings(db: Session, data: SettingsIn) -> SettingsOut:
