@@ -44,9 +44,9 @@ GUIDELINES: tuple[tuple[str, str], ...] = (
         "added sugar low (under about 25 g a day).",
     ),
     (
-        "Cut down on HFSS foods",
-        "Foods high in fat, salt or sugar, such as chips, instant noodles, biscuits, fried snacks "
-        "and bakery items, are for once in a while.",
+        "Go easy on foods high in fat, salt or sugar",
+        "Chips, instant noodles, biscuits, fried snacks and bakery items (HFSS foods) are "
+        "for once in a while.",
     ),
     (
         "Use oils in moderation, and don't reuse frying oil",
@@ -286,13 +286,19 @@ def check_day(food_names: Iterable[str]) -> DayCheck:
         out.tips.append("Log your meals and I'll check them against India's food guidelines.")
         return out
     out.missing = [g for g in CORE if out.counts[g] == 0]
-    if "vegetables" in out.missing or "fruit" in out.missing:
+    no_veg, no_fruit = "vegetables" in out.missing, "fruit" in out.missing
+    if no_veg and no_fruit:
         out.tips.append("Add a vegetable or a piece of fruit: half the plate is the target.")
+    elif no_veg:
+        out.tips.append("No vegetables yet: a sabzi, salad or poriyal fills half the plate.")
+    elif no_fruit:
+        out.tips.append("No fruit yet: a banana, guava or orange is an easy add.")
     if "pulses" in out.missing and out.counts["eggs_fish_meat"] == 0:
         out.tips.append("No pulses yet: a katori of dal, chana or sprouts adds protein and fibre.")
     if len(out.hfss) >= 2:
         out.tips.append(
-            f"{len(out.hfss)} HFSS items today; swap the next one for fruit, curd or nuts."
+            f"{len(out.hfss)} foods high in fat, salt or sugar today; swap the next one for "
+            "fruit, curd or nuts."
         )
     if not out.tips:
         out.tips.append("A varied plate today. Keep the salt and added sugar low.")

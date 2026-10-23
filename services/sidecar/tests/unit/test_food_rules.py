@@ -29,7 +29,14 @@ def test_gaps_become_at_most_three_kind_tips():
     assert "vegetables" in check.missing and "fruit" in check.missing
     assert check.hfss == ["Potato chips", "Samosa", "Cola (soft drink)"]
     assert 1 <= len(check.tips) <= 3
-    assert any("3 HFSS" in t for t in check.tips)
+    assert any(t.startswith("3 foods high in fat, salt or sugar") for t in check.tips)
+
+
+def test_a_missing_vegetable_or_fruit_gets_its_own_tip():
+    no_fruit = fr.check_day(["Chapati", "Dal tadka", "Aloo gobi", "Curd (plain)", "Almonds"])
+    assert no_fruit.missing == ["fruit"] and no_fruit.tips[0].startswith("No fruit yet")
+    no_veg = fr.check_day(["Chapati", "Dal tadka", "Banana", "Curd (plain)", "Almonds"])
+    assert no_veg.missing == ["vegetables"] and no_veg.tips[0].startswith("No vegetables yet")
 
 
 def test_eggs_or_pulses_both_count_as_protein():
