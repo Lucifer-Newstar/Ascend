@@ -634,6 +634,34 @@ components:
           title: Algo Version
         why:
           $ref: '#/components/schemas/BossWhy'
+        tier:
+          type: string
+          title: Tier
+          default: C
+        category:
+          type: string
+          title: Category
+          default: strength
+        seasonal:
+          type: boolean
+          title: Seasonal
+          default: false
+        season:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Season
+        season_ends:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Season Ends
+        drop:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Drop
       type: object
       required:
       - week_start
