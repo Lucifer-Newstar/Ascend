@@ -19,7 +19,7 @@ hand-made weights and by its downgrade); "" means the muscle had no v7 region.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 TAXONOMY_VERSION = "muscles-v2"
 
@@ -51,6 +51,9 @@ class Muscle:
     legacy: str = ""
     deep: bool = False  # hidden under other muscles: drawn in the map's deep layer
     readiness_only: bool = False
+    # v1.2: `label` is the plain name every screen shows ("Hamstrings (outer)"); the
+    # anatomical name lives here for the detail views only ("Biceps femoris").
+    latin: str = ""
 
 
 def _m(
@@ -626,6 +629,65 @@ MUSCLES: tuple[Muscle, ...] = (
     ),
     _m("fibularis", "Fibularis", "Lower legs", "Legs", 24, 0, 0, 8, readiness_only=True),
 )
+
+# v1.2 plain-language names (the audit: beginners read "hamstrings", not "biceps femoris").
+PLAIN_NAMES: dict[str, str] = {
+    "pec_major_clavicular": "Upper chest",
+    "pec_major_sternal": "Mid and lower chest",
+    "pec_minor": "Inner chest",
+    "serratus_anterior": "Side ribs",
+    "latissimus_dorsi": "Lats",
+    "teres_major": "Lower lats",
+    "trap_upper": "Upper traps",
+    "trap_middle": "Middle traps",
+    "trap_lower": "Lower traps",
+    "rhomboids": "Mid back",
+    "infraspinatus": "Rotator cuff (back)",
+    "teres_minor": "Rotator cuff (small)",
+    "supraspinatus": "Rotator cuff (top)",
+    "subscapularis": "Rotator cuff (front)",
+    "erector_spinae": "Lower back",
+    "quadratus_lumborum": "Deep lower back",
+    "sternocleidomastoid": "Front of neck",
+    "splenius": "Back of neck",
+    "deltoid_anterior": "Front shoulders",
+    "deltoid_lateral": "Side shoulders",
+    "deltoid_posterior": "Rear shoulders",
+    "biceps_long": "Biceps (outer)",
+    "biceps_short": "Biceps (inner)",
+    "brachialis": "Upper arm (under the biceps)",
+    "triceps_lateral": "Triceps (outer)",
+    "triceps_long": "Triceps (back)",
+    "triceps_medial": "Triceps (inner)",
+    "brachioradialis": "Forearm (top)",
+    "wrist_flexors": "Forearm (inner)",
+    "wrist_extensors": "Forearm (outer)",
+    "rectus_abdominis": "Abs",
+    "external_obliques": "Side abs",
+    "internal_obliques": "Deep side abs",
+    "transversus_abdominis": "Deep core",
+    "iliopsoas": "Hip flexors",
+    "gluteus_maximus": "Glutes",
+    "gluteus_medius": "Side glutes",
+    "gluteus_minimus": "Deep glutes",
+    "tensor_fasciae_latae": "Outer hip",
+    "rectus_femoris": "Quads (middle)",
+    "vastus_lateralis": "Quads (outer)",
+    "vastus_medialis": "Quads (inner)",
+    "vastus_intermedius": "Quads (deep)",
+    "sartorius": "Long thigh muscle",
+    "adductor_longus": "Inner thighs",
+    "adductor_magnus": "Inner thighs (big)",
+    "gracilis": "Inner thighs (thin)",
+    "biceps_femoris": "Hamstrings (outer)",
+    "semitendinosus": "Hamstrings (inner)",
+    "semimembranosus": "Hamstrings (deep)",
+    "gastrocnemius": "Calves",
+    "soleus": "Lower calves",
+    "tibialis_anterior": "Shins",
+    "fibularis": "Outer shins",
+}
+MUSCLES = tuple(replace(m, label=PLAIN_NAMES.get(m.key, m.label), latin=m.label) for m in MUSCLES)
 
 MUSCLE_BY_KEY: dict[str, Muscle] = {m.key: m for m in MUSCLES}
 

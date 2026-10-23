@@ -41,6 +41,8 @@ class ContributingSet(BaseModel):
 class MuscleHistory(BaseModel):
     code: str
     label: str
+    # v1.2: the anatomical name, shown in this detail view only ("" when it matches label).
+    latin: str = ""
     days: int
     status: str
     es_7d: float
@@ -115,6 +117,7 @@ def muscle_history(db: Session, code: str, days: int, now: datetime) -> MuscleHi
     return MuscleHistory(
         code=code,
         label=muscle.label,
+        latin=muscle.latin if muscle.latin != muscle.label else "",
         days=days,
         status=current.status,
         es_7d=current.es_7d,

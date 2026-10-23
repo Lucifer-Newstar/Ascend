@@ -184,7 +184,8 @@ def _muscles(db: Session, now: datetime) -> list[Finding]:
                 },
             )
         )
-    over = [m for m in current if m.es_7d > m.weekly_high]
+    # Readiness-only muscles have no weekly range (0-0): never "above" it.
+    over = [m for m in current if m.weekly_high > 0 and m.es_7d > m.weekly_high]
     if over:
         top = max(over, key=lambda m: m.es_7d - m.weekly_high)
         found.append(
