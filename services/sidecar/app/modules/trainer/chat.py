@@ -131,8 +131,7 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
         return ChatOut(
             reply="I answer questions about the app, give a tour of any section, watch your log "
             "(PRs, missed sessions, overtraining, weigh-in trends) and tell you when a goal is "
-            "unrealistic. The planner builds workout and meal plans. I can also log a set, a meal "
-            "or a weigh-in, or switch your program, once you confirm.",
+            "unrealistic. The planner builds workout and meal plans.",
             mood="neutral",
             intent=k,
             source="rules",
@@ -153,7 +152,7 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
     if k == "erase":
         return ChatOut(
             reply="I can wipe your logs and keep the exercise library and food table. I make a "
-            "backup first. Do it from Settings > Erase my data.",
+            "backup first. Do it from Settings > Start fresh.",
             mood="warning",
             intent=k,
             source="rules",
@@ -217,7 +216,12 @@ def _route_coach_question(
 ) -> coach.CoachReply | None:
     """The Coach page's "Ask" box goes through the same routing: an app question gets the
     trainer's answer, never the muscle tip. Training questions stay with the coach."""
-    if classify(question).kind in ("unknown", "train_today"):
+    intent = classify(question)
+    if intent.kind in ("unknown", "train_today"):
+        return None
+    # A weak help-note match ("I did 80 kg for 5 reps" mentions reps) is a training
+    # question: the coach answers it. Only a clear app question is routed.
+    if intent.kind == "faq" and intent.entry and kb.score(intent.entry, question) < 2:
         return None
     out = respond(db, settings, now, question)
     return coach.CoachReply("rules", out.reply, f"trainer:{out.intent}", None, None)

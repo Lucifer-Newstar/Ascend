@@ -27,6 +27,7 @@ def test_ai_toggle_round_trip(client):
         "reduce_motion": False,
         "online_lookup": False,
         "trainer": True,
+        "trainer_id": "iskra",
     }
     assert client.get("/settings").json() == defaults
     assert client.put("/settings", json={"ai_enabled": False}).json() == {
@@ -47,6 +48,7 @@ def test_settings_partial_update_keeps_other_values(client):
         "reduce_motion": False,
         "online_lookup": False,
         "trainer": True,
+        "trainer_id": "iskra",
     }
 
 
