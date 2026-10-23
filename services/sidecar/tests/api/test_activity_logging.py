@@ -50,7 +50,7 @@ def test_unknown_section_on_start_is_422(client):
 
 
 def test_edit_duration_of_a_logged_round(client, profile):
-    pads = ex(client, "Muay Thai Pad Work")
+    pads = ex(client, "Heavy Bag Rounds")
     w = client.post("/workouts").json()
     s = client.post(
         f"/workouts/{w['id']}/sets", json={"exercise_id": pads["id"], "duration_s": 180}
