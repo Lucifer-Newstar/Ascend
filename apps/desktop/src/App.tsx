@@ -199,16 +199,12 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
     await update({ ai_enabled: !settings.ai_enabled });
     bump();
   };
-  const aiEnabled = settings.ai_enabled;
   // Level, rank, streak and quest state: the top bar and the System notices share one fetch.
   const game = useApi(api.game, [refreshKey]);
-  // Whether the local model is actually answering (for the AI status dot).
-  const coach = useApi(api.coachStatus, [aiEnabled]);
-  const aiState = !aiEnabled ? "off" : coach.data && !coach.data.ollama_available ? "rules" : "on";
   return (
-    <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
+    <Layout page={page} onNavigate={navigate} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
-      aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}
+      command={<CommandButton onOpen={() => setCommandOpen(true)} />}
       trainer={<TrainerChatButton icon={trainerById(settings.trainer_id).icon} name={trainerById(settings.trainer_id).name} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
       <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction}
         supports={["navigate", "tour", "trainer_picker", "planner"]} question={chatQuestion} onAsked={() => setChatQuestion(null)} onActionDone={bump} />

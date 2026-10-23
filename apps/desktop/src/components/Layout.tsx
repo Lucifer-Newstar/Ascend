@@ -23,22 +23,15 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
 /** Nav groups: a thin divider after these items (order and Ctrl+1…0 stay as before). */
 const GROUP_ENDS = new Set<Page>(["skills", "planner", "history"]);
 
-export type AiState = "on" | "rules" | "off";
-
-export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status, onlineResearch = false, aiState, aiModel, command, trainer }: {
+export function Layout({ page, onNavigate, children, title, subtitle, status, onlineResearch = false, command, trainer }: {
   page: Page;
   onNavigate: (p: Page) => void;
-  aiEnabled: boolean | null;
-  onToggleAi: () => void;
   title: string;
   subtitle?: string;
-  /** Shown in the header beside the AI switch (the level/XP chip). */
+  /** Shown in the header (the level/XP chip). */
   status?: ReactNode;
   /** Settings -> Online research is on: the app may contact wger.de and Wikipedia. */
   onlineResearch?: boolean;
-  /** "on" = local model answering, "rules" = AI on but the model is not running, "off". */
-  aiState?: AiState;
-  aiModel?: string | null;
   /** The command bar opener (Ctrl+K). */
   command?: ReactNode;
   /** The trainer chat opener (defaults to the trainer voice switch). */
@@ -124,7 +117,6 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
           )}
           {status && <span data-tour="xp">{status}</span>}
           {trainer ?? <TrainerToggle />}
-          <AiStatusDot aiEnabled={aiEnabled} state={aiState} model={aiModel} onToggle={onToggleAi} />
           {command && <span data-tour="command">{command}</span>}
           </div>
         </header>
@@ -132,26 +124,5 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
         <main ref={main} id="main" data-tour="main" tabIndex={0} className="relative z-[1] min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
       </div>
     </div>
-  );
-}
-
-const AI_WORDS: Record<AiState, { label: string; dot: string; tip: string }> = {
-  on: { label: "AI on", dot: "bg-good", tip: "The local model is running and words the coach's answers. Numbers always come from the engines." },
-  rules: { label: "AI on · rules", dot: "bg-warn", tip: "AI is on but the local model is not running, so the coach uses rule-based tips." },
-  off: { label: "AI off", dot: "bg-line-input", tip: "AI is off: the coach uses rule-based tips only. Everything else works the same." },
-};
-
-/** AI status dot (full / rules-only / off) that also switches AI on and off. */
-function AiStatusDot({ aiEnabled, state, model, onToggle }: { aiEnabled: boolean | null; state?: AiState; model?: string | null; onToggle: () => void }) {
-  const s: AiState = aiEnabled ? (state ?? "on") : "off";
-  const w = AI_WORDS[s];
-  return (
-    <button type="button" onClick={onToggle} disabled={aiEnabled === null} role="switch" aria-checked={Boolean(aiEnabled)}
-      aria-label={s === "rules" ? "AI coach (model not running, rule-based tips)" : "AI coach"} data-ai-state={s} data-tour="ai"
-      className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-xs text-muted transition-colors duration-150 hover:border-accent/50 hover:text-ink"
-      title={`${w.tip}${model && s === "on" ? ` Model: ${model}.` : ""} Click to turn AI ${aiEnabled ? "off" : "on"}.`}>
-      <span className={`h-2 w-2 rounded-full ${w.dot}`} aria-hidden="true" />
-      <span aria-hidden="true">{w.label}</span>
-    </button>
   );
 }

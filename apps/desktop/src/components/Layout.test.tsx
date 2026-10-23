@@ -8,7 +8,7 @@ import { Layout, type Page } from "./Layout";
 
 function renderAt(page: Page, title: string, onNavigate = vi.fn()) {
   return render(
-    <Layout page={page} onNavigate={onNavigate} aiEnabled={false} onToggleAi={() => {}} title={title}>
+    <Layout page={page} onNavigate={onNavigate} title={title}>
       <p>content</p>
     </Layout>,
   );
@@ -21,7 +21,7 @@ describe("Layout", () => {
     expect(screen.queryByRole("button", { name: "Online research on" })).toBeNull();
     expect(screen.getByText("Offline · data stays on this PC")).toBeInTheDocument();
     rerender(
-      <Layout page="dashboard" onNavigate={nav} aiEnabled={false} onToggleAi={() => {}} title="Dashboard" onlineResearch>
+      <Layout page="dashboard" onNavigate={nav} title="Dashboard" onlineResearch>
         <p>content</p>
       </Layout>,
     );
@@ -29,6 +29,12 @@ describe("Layout", () => {
     expect(nav).toHaveBeenCalledWith("settings");
     expect(screen.getByText(/only exercise names leave this PC/)).toBeInTheDocument();
     await expectNoAxeViolations(container);
+  });
+
+  it("has no AI status pill in the top bar (v1.2: AI setup lives in Settings)", () => {
+    renderAt("dashboard", "Today");
+    expect(screen.queryByRole("switch", { name: /AI coach/ })).toBeNull();
+    expect(screen.queryByText(/AI on|AI off/)).toBeNull();
   });
 
   it("marks the current page and navigates from the sidebar", async () => {
@@ -44,7 +50,7 @@ describe("Layout", () => {
     expect(document.title).toBe("Dashboard · ASCEND");
     expect(screen.getByRole("heading", { level: 1 })).not.toHaveFocus(); // not on first paint
     rerender(
-      <Layout page="diet" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Diet">
+      <Layout page="diet" onNavigate={vi.fn()} title="Diet">
         <p>content</p>
       </Layout>,
     );
@@ -58,7 +64,7 @@ describe("Layout", () => {
     main.scrollTop = 400;
     expect(main.scrollTop).toBe(400);
     rerender(
-      <Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Dashboard">
+      <Layout page="dashboard" onNavigate={vi.fn()} title="Dashboard">
         <p>content</p>
       </Layout>,
     );
@@ -68,7 +74,7 @@ describe("Layout", () => {
   it("does not grab focus on first load under StrictMode's double effects", () => {
     render(
       <StrictMode>
-        <Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Dashboard">
+        <Layout page="dashboard" onNavigate={vi.fn()} title="Dashboard">
           <p>content</p>
         </Layout>
       </StrictMode>,
@@ -93,12 +99,7 @@ describe("Layout", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveFocus();
   });
 
-  it("exposes the AI toggle as a switch", () => {
-    renderAt("dashboard", "Dashboard");
-    expect(screen.getByRole("switch", { name: /ai coach/i })).toHaveAttribute("aria-checked", "false");
-  });
-
-  it("has no axe violations", async () => {
+    it("has no axe violations", async () => {
     const { container } = renderAt("dashboard", "Dashboard");
     await expectNoAxeViolations(container);
   });
@@ -113,13 +114,4 @@ describe("Layout", () => {
     expect(screen.getByRole("button", { name: "Profile" })).toHaveAttribute("aria-keyshortcuts", "Control+8");
   });
 
-  it("shows the AI status: on, rules only (model not running) or off", () => {
-    const { rerender } = render(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled onToggleAi={() => {}} title="Today" aiState="on" aiModel="qwen3:4b"><p /></Layout>);
-    expect(screen.getByRole("switch", { name: "AI coach" })).toHaveAttribute("data-ai-state", "on");
-    expect(screen.getByText("AI on")).toBeInTheDocument();
-    rerender(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled onToggleAi={() => {}} title="Today" aiState="rules"><p /></Layout>);
-    expect(screen.getByRole("switch", { name: /model not running/ })).toHaveAttribute("aria-checked", "true");
-    rerender(<Layout page="dashboard" onNavigate={vi.fn()} aiEnabled={false} onToggleAi={() => {}} title="Today" aiState="rules"><p /></Layout>);
-    expect(screen.getByRole("switch", { name: "AI coach" })).toHaveAttribute("data-ai-state", "off");
-  });
 });
