@@ -20,6 +20,7 @@ import { TrainerPicker, TrainerPortrait, useTrainer } from "../components/Traine
 import { SystemWindow } from "../components/SystemWindow";
 import { RankBadge } from "../components/XpBar";
 import { kcal } from "../lib/format";
+import { hunterClass } from "../lib/loadout";
 import { CountUp } from "../lib/motion";
 import { useAppTheme, useOptionalPrefs, usePrefs } from "../lib/prefs";
 import { themeArt } from "../lib/themeArt";
@@ -72,7 +73,8 @@ export function EquipmentPicker({ value, onChange }: { value: EquipmentChoice[];
           );
         })}
       </div>
-      <p className="mt-2 text-xs text-muted">Train, Exercises, Skills, programs and quests only use what you tick.</p>
+      <p className="mt-2 text-sm text-ink" data-testid="hunter-class">Your class: <span className="font-semibold text-accent">{hunterClass(value).name}</span> <span className="text-xs text-muted">({hunterClass(value).blurb})</span></p>
+      <p className="mt-1 text-xs text-muted">Train, Exercises, Skills, programs and quests only use what you tick. New kit later unlocks more, like loot.</p>
     </fieldset>
   );
 }
@@ -481,7 +483,7 @@ function Awakened({ profile, equipment, onDone }: { profile: Profile; equipment:
       <div className="mt-4 flex items-center gap-4">
         {rank && <RankBadge rank={rank.rank} size={52} />}
         <div className="text-sm text-muted">
-          {rank ? <>Level <span className="font-semibold text-ink">{rank.level}</span> · Rank <span className="font-semibold text-ink">{rank.rank}</span></> : "Reading your rank…"}
+          {rank ? <>Level <span className="font-semibold text-ink">{rank.level}</span> · Rank <span className="font-semibold text-ink">{rank.rank}</span> · <span className="font-semibold text-accent">{hunterClass(equipment).name}</span></> : "Reading your rank…"}
           {result && (
             <div className="mt-0.5">Baseline logged: {result.sets_logged} test{result.sets_logged === 1 ? "" : "s"}, +{result.xp_awarded} XP{result.steps_unlocked.length ? ` · unlocked ${result.steps_unlocked.join(", ")}` : ""}.</div>
           )}

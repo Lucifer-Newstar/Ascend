@@ -18,6 +18,7 @@ import { ShareDialog } from "../components/ShareCard";
 import { TrainerPortrait, useTrainer } from "../components/Trainer";
 import { useToast } from "../components/Toast";
 import { Wardrobe, progressFrom } from "../components/Wardrobe";
+import { hunterClass } from "../lib/loadout";
 import { useOptionalPrefs } from "../lib/prefs";
 import { reencodePhoto, saveImage } from "../lib/share";
 import { useApi } from "../lib/useApi";
@@ -60,6 +61,7 @@ function HunterCard({ refreshKey }: { refreshKey: number }) {
         <div className="min-w-0">
           <p className="text-display-l text-ink" data-testid="hunter-name">{profile.data?.name ?? "Hunter"}</p>
           {xp && <p className="text-sm text-muted">Level {xp.level} · Rank {xp.rank} · {xp.rank_title}</p>}
+          {profile.data && <p className="text-sm font-semibold text-accent" data-testid="hunter-class">{hunterClass(profile.data.equipment).name}</p>}
           {game.data && <p className="text-sm text-muted">Streak {game.data.streak.current} days · best {game.data.streak.best}</p>}
           <p className="mt-1 text-[11px] text-muted">Trained by {trainer.name}</p>
         </div>

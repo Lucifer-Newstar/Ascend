@@ -56,6 +56,25 @@ export function hasGymKit(choices: readonly EquipmentChoice[] | null | undefined
   return !choices || choices.length === 0 || choices.includes("gym") || choices.includes("dumbbells");
 }
 
+export interface HunterClass {
+  name: "Home Hunter" | "Bar Ronin" | "Calisthenics Ronin" | "Iron Duelist" | "Iron Lifter";
+  blurb: string;
+}
+
+/**
+ * Your class, from your kit (v1.2): a full gym makes an Iron Lifter, dumbbells an Iron
+ * Duelist, rings a Calisthenics Ronin, a pull-up bar a Bar Ronin, and nothing at all a
+ * Home Hunter. Add kit later and the class (and what the app shows) grows with it.
+ */
+export function hunterClass(choices: readonly EquipmentChoice[] | null | undefined): HunterClass {
+  const c = new Set(choices ?? []);
+  if (c.has("gym")) return { name: "Iron Lifter", blurb: "Barbells, machines and everything else." };
+  if (c.has("dumbbells")) return { name: "Iron Duelist", blurb: "Dumbbell strength plus body weight." };
+  if (c.has("rings")) return { name: "Calisthenics Ronin", blurb: "Rings and body weight." };
+  if (c.has("pullup_bar")) return { name: "Bar Ronin", blurb: "A pull-up bar and the floor." };
+  return { name: "Home Hunter", blurb: "No kit needed: floor and body weight." };
+}
+
 export interface Loadout {
   /** null until the profile has loaded (or when there is none). */
   choices: EquipmentChoice[] | null;

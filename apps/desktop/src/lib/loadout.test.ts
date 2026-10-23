@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { allowedEquipment, fitsKit, hasGymKit, needsLabel } from "./loadout";
+import { allowedEquipment, fitsKit, hasGymKit, needsLabel, hunterClass } from "./loadout";
 
 describe("loadout", () => {
   it("filters nothing without a checklist or with a gym", () => {
@@ -26,5 +26,14 @@ describe("loadout", () => {
     expect(hasGymKit(["none"])).toBe(false);
     expect(hasGymKit(["dumbbells"])).toBe(true);
     expect(hasGymKit([])).toBe(true);
+  });
+
+  it("names your class from your kit", () => {
+    expect(hunterClass([]).name).toBe("Home Hunter");
+    expect(hunterClass(["none"]).name).toBe("Home Hunter");
+    expect(hunterClass(["pullup_bar"]).name).toBe("Bar Ronin");
+    expect(hunterClass(["pullup_bar", "rings"]).name).toBe("Calisthenics Ronin");
+    expect(hunterClass(["rings", "dumbbells"]).name).toBe("Iron Duelist");
+    expect(hunterClass(["dumbbells", "gym"]).name).toBe("Iron Lifter");
   });
 });
