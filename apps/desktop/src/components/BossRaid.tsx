@@ -106,7 +106,7 @@ export function BossRaidCard({ boss }: { boss: BossRaid }) {
       {open && (
         <div id={id} className="panel-in mt-2 rounded-md border border-line bg-panel-2 p-3 text-xs text-muted">
           <p className="text-ink">HP {boss.hp} comes from {SOURCE_WORDS[boss.hp_source]}: {boss.hp_note}.</p>
-          <p className="mt-1">{boss.why.formula} ({boss.algo_version}).</p>
+          <p className="mt-1">{boss.why.formula}.</p>
           <p className="mt-1">Week {boss.week_start} to {boss.week_end}. Titles earned so far: {boss.titles_earned}.</p>
         </div>
       )}

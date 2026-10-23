@@ -40,7 +40,7 @@ export function WeeklyReviewCard({ refreshKey }: { refreshKey: number }) {
             </ul>
           )}
           <p className="mt-3 text-[10px] text-faint">
-            {r.data.summary_source === "model" ? "Summary worded by the local AI from these numbers" : "Rule-based summary"} · {r.data.algo_version}
+            {r.data.summary_source === "model" ? "Summary worded by the local AI from these numbers" : "Rule-based summary"}
           </p>
         </>
       )}

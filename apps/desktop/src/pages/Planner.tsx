@@ -151,7 +151,7 @@ function WorkoutPlanner({ onChanged }: { onChanged: () => void }) {
             ))}
           </div>
           {(plan.draft.notes ?? []).length > 0 && <ul className="list-disc pl-4 text-xs text-muted">{plan.draft.notes!.map((n) => <li key={n}>{n}</li>)}</ul>}
-          <p className="text-[11px] text-muted">{plan.phrased_by === "ollama" ? "Notes worded by the local AI · plan from rules" : "Built by rules"} · {plan.algo_version}</p>
+          <p className="text-[11px] text-muted">{plan.phrased_by === "ollama" ? "Notes worded by the local AI · plan from rules" : "Built by rules"}</p>
           <div className="flex gap-2">
             <button type="button" className="btn-primary" onClick={() => void keep(true)}>Save and follow</button>
             <button type="button" className="btn-ghost" onClick={() => void keep(false)}>Save only</button>

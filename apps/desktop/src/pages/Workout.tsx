@@ -192,7 +192,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
       }
       const isHold = selected.measure === "hold";
       if (res.set.is_pr && isHold) toast(`New best hold! ${selected.name} ${res.set.duration_s} s · +${res.xp_awarded} XP`, "pr");
-      else if (res.set.is_pr) toast(`New PR! ${selected.name} e1RM ${toDisplayWeight(res.set.e1rm ?? 0, units)} ${weightUnit(units)} · +${res.xp_awarded} XP`, "pr");
+      else if (res.set.is_pr) toast(`New personal best! ${selected.name} · +${res.xp_awarded} XP`, "pr");
       else if (isHold) toast(`${res.set.duration_s} s hold logged · +${res.xp_awarded} XP`, "xp");
       else toast(`${selected.time_based ? formatDuration(res.set.duration_s ?? 0) + " logged" : "Set logged"} · +${res.xp_awarded} XP`, "xp");
       if (res.unlocks?.length) setAcquired(res.unlocks);
@@ -384,10 +384,11 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                     <XpGain logged={logged} className="bottom-10 right-4" />
                   </div>
                   {prevSets.length > 0 && <p className="mt-2 text-xs text-muted">Last time{lastDay ? ` (${lastDay})` : ""}: <span className="text-faint">{prevSets.map((s) => describeSet(s, units)).join(" · ")}</span></p>}
-                  <p className="mt-2 text-[11px] text-faint">
+                  <details className="mt-2 text-[11px] text-faint">
+                    <summary className="cursor-pointer">Details</summary>
                     Calories use the activity's MET value ({selected.met ?? "n/a"}) × your weight × time, an estimate.
                     {selected.muscles.length === 0 && " Stretching and meditation add no muscle load."}
-                  </p>
+                  </details>
                 </div>
               ) : selected.measure === "hold" ? (
                 <HoldSetForm key={selected.id} exercise={selected} units={units} busy={busy} onSubmit={(s) => logSet(s)}
@@ -404,13 +405,13 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                   >
                     <NumberField label="Reps" value={reps} step={1} onChange={setReps} />
                     <NumberField label={bodyweight ? `Added load (${weightUnit(units)})` : `Weight (${weightUnit(units)})`} value={weight} step={units === "imperial" ? 5 : 2.5} onChange={setWeight} />
-                    <RpeSelect value={rpe} onChange={setRpe} />
+                    <RpeSelect value={rpe} onChange={setRpe} label="Effort (1-10)" />
                     <span className="relative">
                       <button type="submit" className="btn-primary h-[38px] px-5" disabled={busy}>Log set</button>
                       <XpGain logged={logged} className="-top-5 right-2" />
                     </span>
                   </form>
-                  <p className="mt-2 text-[11px] text-faint">Enter logs the set shown; the next set fills in from the target. RPE 10 = no reps left, 8 = two left. PRs use the Epley e1RM (1–10 reps).</p>
+                  <p className="mt-2 text-[11px] text-faint">Enter logs the set shown. Effort: 10 = no reps left, 8 = two left.</p>
                 </>
               )}
               {!selected.time_based && <RestBar left={restLeft} total={REST_SECONDS} paused={restPaused} />}
@@ -457,7 +458,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                     <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line" aria-hidden="true">
                       <span className="block h-full origin-left rounded-full bg-ink/70" style={{ transform: `scaleX(${Math.min(1, m.weight)})` }} />
                     </span>
-                    <span className="w-8 text-right text-ink">×{m.weight}</span>
+                    <span className="w-14 text-right text-muted">{m.weight >= 1 ? "main" : "helper"}</span>
                   </li>
                 ))}
               </ul>
@@ -495,8 +496,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         )}
         {load.length > 0 && (
           <section className="card p-4" aria-labelledby="ctx-load">
-            <h2 id="ctx-load" className="card-title mb-1">Session muscle load</h2>
-            <p className="mb-3 text-[11px] text-faint">effective sets = muscle weight × effort (RPE)</p>
+            <h2 id="ctx-load" className="card-title mb-3">Muscles worked this session</h2>
             <ul className="space-y-1.5">
               {load.slice(0, 8).map(([muscle, es]) => (
                 <li key={muscle} className="flex items-center gap-2 text-xs">
@@ -504,20 +504,9 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                   <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
                     <span className="block h-full origin-left rounded-full bg-accent" style={{ transform: `scaleX(${Math.min(1, es / load[0][1])})` }} />
                   </span>
-                  <span className="w-8 text-right text-ink">{es.toFixed(1)}</span>
+                  <span className="w-14 text-right text-muted">{count(Math.round(es), "set")}</span>
                 </li>
               ))}
-            </ul>
-          </section>
-        )}
-        {!selected && load.length === 0 && (
-          <section className="card p-4 text-xs text-muted">
-            <h2 className="card-title mb-2">Keyboard</h2>
-            <ul className="space-y-1">
-              <li><kbd className="chip">Enter</kbd> log the set shown (the target)</li>
-              <li><kbd className="chip">Tab</kbd> reps → load → RPE</li>
-              <li><kbd className="chip">Space</kbd> pause or resume rest</li>
-              <li><kbd className="chip">Ctrl 2</kbd> open Train from anywhere</li>
             </ul>
           </section>
         )}
@@ -560,17 +549,17 @@ function SetTable({ label, sets, units, onEdit, onDelete, busy, justLogged }: {
           {hold ? (
             <>
               <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">Hold</th><th className="font-medium">Added {weightUnit(units)}</th>
-              <th className="font-medium">RPE</th><th className="w-24 font-medium"><span className="sr-only">Personal record</span></th><th><span className="sr-only">Actions</span></th>
+              <th className="font-medium">Effort</th><th className="w-24 font-medium"><span className="sr-only">Personal record</span></th><th><span className="sr-only">Actions</span></th>
             </>
           ) : timed ? (
             <>
               <th className="w-14 py-1 font-medium">#</th><th className="font-medium">Time</th><th className="font-medium">Distance</th>
-              <th className="font-medium">Avg HR</th><th className="font-medium">RPE</th><th><span className="sr-only">Actions</span></th>
+              <th className="font-medium">Avg HR</th><th className="font-medium">Effort</th><th><span className="sr-only">Actions</span></th>
             </>
           ) : (
             <>
               <th className="w-14 py-1 font-medium">Set</th><th className="font-medium">{weightUnit(units)}</th><th className="font-medium">Reps</th>
-              <th className="font-medium">RPE</th><th className="font-medium">e1RM</th><th className="w-24 font-medium"><span className="sr-only">Personal record</span></th><th><span className="sr-only">Actions</span></th>
+              <th className="font-medium">Effort</th><th className="font-medium">Strength est.</th><th className="w-24 font-medium"><span className="sr-only">Personal record</span></th><th><span className="sr-only">Actions</span></th>
             </>
           )}
         </tr>
@@ -686,7 +675,7 @@ function EditRow({ index, set, timed, hold = false, units, busy, onSave, onCance
         </>
       )}
       <td>
-        <select aria-label="Edit RPE" className="input h-8 w-20 py-0" value={rpe ?? ""} onChange={(e) => setRpe(e.target.value ? Number(e.target.value) : null)}>
+        <select aria-label="Edit effort" className="input h-8 w-20 py-0" value={rpe ?? ""} onChange={(e) => setRpe(e.target.value ? Number(e.target.value) : null)}>
           <option value="">–</option>
           {RPE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>

@@ -18,9 +18,9 @@ const ABBR: Record<Stat["key"], string> = { str: "STR", agi: "AGI", end: "END", 
 const INPUT_LABEL: Record<string, string> = {
   strength_steps_unlocked: "Strength-tree steps earned",
   strength_steps_total: "Strength-tree steps in total",
-  best_e1rm_kg_90d: "Best e1RM in 90 days (kg)",
+  best_e1rm_kg_90d: "Best estimated one-rep max in 90 days (kg)",
   bodyweight_kg: "Body weight (kg)",
-  relative_e1rm: "e1RM ÷ body weight",
+  relative_e1rm: "Estimated one-rep max ÷ body weight",
   skill_steps_unlocked: "Skill-tree steps earned",
   skill_steps_total: "Skill-tree steps in total",
   cardio_minutes: "Cardio minutes",
@@ -108,7 +108,7 @@ export function StatusPanel({ game, stats, title = null, name = null, titlesEarn
       <ul className="mt-4 space-y-2.5" aria-label="Stats">
         {stats ? stats.stats.map((s) => <StatRow key={s.key} stat={s} />) : <li className="text-xs text-muted">Stats load with your logs.</li>}
       </ul>
-      {stats && <p className="mt-3 text-[11px] text-faint">Computed from your last {stats.window_days} days of logs · {stats.version}</p>}
+      {stats && <p className="mt-3 text-[11px] text-faint">Computed from your last {stats.window_days} days of logs</p>}
     </section>
   );
 }

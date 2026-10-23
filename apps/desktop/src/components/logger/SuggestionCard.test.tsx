@@ -15,12 +15,12 @@ const base: ProgressionTarget = {
 };
 
 describe("SuggestionCard", () => {
-  it("shows the target, the change, the reason and the e1RM trend", async () => {
+  it("shows the target, the change, the reason and the strength trend", async () => {
     const onUse = vi.fn();
     const { container } = render(<SuggestionCard target={base} units="metric" decided={null} onUse={onUse} onKeep={vi.fn()} />);
-    expect(screen.getByTestId("suggestion-target")).toHaveTextContent("3 × 6 @ 62.5 kg RPE 8");
+    expect(screen.getByTestId("suggestion-target")).toHaveTextContent("3 × 6 @ 62.5 kg effort 8");
     expect(screen.getByTestId("suggestion-change")).toHaveTextContent("+2.5 kg");
-    expect(screen.getByTestId("suggestion-e1rm")).toHaveTextContent("Smoothed e1RM 81.2 kg · best 84 kg · +1.4% a week");
+    expect(screen.getByTestId("suggestion-e1rm")).toHaveTextContent("Strength estimate 81.2 kg · best 84 kg · +1.4% a week");
     await userEvent.click(screen.getByRole("button", { name: "Use it" }));
     expect(onUse).toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Why 3 × 6 @ 62.5 kg?" }));

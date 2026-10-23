@@ -72,7 +72,7 @@ export function TimedSetForm({
         {section === "meditation" ? (
           <div />
         ) : (
-          <RpeSelect value={rpe} onChange={setRpe} label={showHr ? "RPE (effort)" : "Intensity (RPE)"} />
+          <RpeSelect value={rpe} onChange={setRpe} label="Effort (1-10)" />
         )}
         <button type="submit" className="btn-primary h-[38px] px-5" disabled={busy}>
           {section === "meditation" ? "Log sit" : "Log"}

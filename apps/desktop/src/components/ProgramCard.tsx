@@ -69,7 +69,7 @@ export function ProgramCard({ refreshKey = 0, onPick }: {
           </ul>
           <p className="mt-3 text-xs text-muted">{p.reason}</p>
           <div className="mt-2">
-            <WhyButton label="Why this session?" title={`${p.algo_version}: what is next`} why={p.why} />
+            <WhyButton label="Why this session?" title="What is next" why={p.why} />
           </div>
         </>
       )}

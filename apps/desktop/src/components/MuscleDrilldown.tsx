@@ -117,7 +117,7 @@ export function MuscleDrilldown({ code, onClose: onClosed }: { code: string; onC
               </table>
             )}
           </div>
-          <p className="text-[10px] text-faint">Effective sets = muscle share × effort from RPE · {h.data.formula_version} · estimates</p>
+          <p className="text-[10px] text-faint">Hard sets, with helper muscles counted as part of a set · estimates</p>
         </div>
       )}
     </section>

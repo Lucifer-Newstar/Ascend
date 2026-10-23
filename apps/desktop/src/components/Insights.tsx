@@ -43,7 +43,7 @@ export function buildInsights(tip: CoachReply | null, review: WeeklyReview | nul
       code: f.code,
       severity: 0,
       title: f.title,
-      why: `${f.detail}${f.proposal ? ` Suggestion: ${f.proposal}` : ""} (weekly review ${review?.week_start} to ${review?.week_end}, ${review?.algo_version}).`,
+      why: `${f.detail}${f.proposal ? ` Suggestion: ${f.proposal}` : ""} (weekly review ${review?.week_start} to ${review?.week_end}).`,
       source: "Weekly review",
     });
   }

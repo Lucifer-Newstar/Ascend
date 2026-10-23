@@ -22,7 +22,7 @@ export function NumberField({ label, value, step, onChange, min = 0 }: {
 
 export const RPE_OPTIONS = [5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
-export function RpeSelect({ value, onChange, label = "RPE (effort)" }: { value: number | null; onChange: (v: number | null) => void; label?: string }) {
+export function RpeSelect({ value, onChange, label = "Effort (1-10)" }: { value: number | null; onChange: (v: number | null) => void; label?: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs text-muted">{label}</span>

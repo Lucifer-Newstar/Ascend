@@ -30,7 +30,7 @@ export function TdeePanel({ refreshKey = 0, index = 5, className = "col-span-12 
   const series = d?.series ?? [];
   return (
     <Panel id="tdee" index={index} className={className} title="Energy & expenditure"
-      hint={d ? `${STATUS_LABEL[d.status]} · ${d.algo_version}` : undefined}
+      hint={d ? STATUS_LABEL[d.status] : undefined}
       action={d && <span className={`chip ${d.status === "adaptive" ? "border-good/50 text-good" : ""}`}>{STATUS_LABEL[d.status]}</span>}
       loading={r.loading && !d} error={!d ? (r.status === 404 ? null : r.error ?? null) : null} onRetry={r.reload} skeletonLines={6}
       empty={!d && r.status === 404 ? { title: "No profile yet.", hint: "Finish onboarding to get an estimate." } : null}>
@@ -121,7 +121,7 @@ export function InsightsPanel({ refreshKey = 0, index = 6, className = "col-span
   const [showChecks, setShowChecks] = useState(false);
   return (
     <Panel id="insights" index={index} className={className} title="This week's diet insights"
-      hint={d ? `7 days to ${shortDate(d.week_end)} · fixed rules (${d.algo_version}), every number computed` : undefined}
+      hint={d ? `7 days to ${shortDate(d.week_end)} · fixed rules, every number computed` : undefined}
       action={d && (
         <button type="button" className="text-xs text-accent hover:underline" aria-expanded={showChecks} onClick={() => setShowChecks((s) => !s)}>
           {showChecks ? "Hide rules" : "Rules checked"}

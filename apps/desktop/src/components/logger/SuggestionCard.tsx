@@ -75,7 +75,7 @@ export function SuggestionCard({ target, units, decided, busy, onUse, onKeep, ex
       {!first && (
         <p className="mt-1 text-lg font-semibold text-ink" data-testid="suggestion-target">
           {describeTarget(t, units)}
-          {t.rpe !== null && <>{" "}<span className="ml-1 text-sm font-normal text-muted">RPE {fmt(t.rpe)}</span></>}
+          {t.rpe !== null && <>{" "}<span className="ml-1 text-sm font-normal text-muted">effort {fmt(t.rpe)}</span></>}
         </p>
       )}
       <p className="mt-1 text-sm text-muted">{t.why}</p>
@@ -87,7 +87,7 @@ export function SuggestionCard({ target, units, decided, busy, onUse, onKeep, ex
       )}
       {e && e.current !== null && (
         <p className="mt-1 text-xs text-muted" data-testid="suggestion-e1rm">
-          {e.unit === "kg" ? "Smoothed e1RM" : e.unit === "s" ? "Best hold" : "Best set"} {show(e.current)} {unit} · best {show(e.best ?? e.current)} {unit}
+          {e.unit === "kg" ? "Strength estimate" : e.unit === "s" ? "Best hold" : "Best set"} {show(e.current)} {unit} · best {show(e.best ?? e.current)} {unit}
           {e.trend_pct_week !== null && ` · ${e.trend_pct_week >= 0 ? "+" : ""}${e.trend_pct_week}% a week`}
           {t.stalled && <span className="ml-1 text-warn">· stalled {t.stall_sessions} sessions</span>}
         </p>
