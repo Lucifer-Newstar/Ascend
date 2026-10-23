@@ -1105,3 +1105,34 @@ nav[aria-label="Main"] button:not([aria-current]) svg {
     display: none;
   }
 }
+
+/* v1.2 lock screen: the hunter tile lifts on hover; going in zooms it and fades the screen. */
+.lock-tile {
+  transition: transform var(--dur-base) ease, border-color var(--dur-base) ease;
+}
+.lock-tile:hover,
+.lock-tile:focus-visible {
+  transform: translateY(-3px);
+}
+.lock-screen {
+  transition: opacity 380ms ease;
+}
+.lock-leaving {
+  opacity: 0;
+}
+.lock-leaving .lock-tile {
+  transform: scale(1.08);
+  transition: transform 380ms ease;
+}
+:root[data-motion="reduce"] .lock-screen,
+:root[data-motion="reduce"] .lock-tile {
+  transition: none;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lock-screen,
+  .lock-tile {
+    transition: none;
+    transform: none;
+  }
+}

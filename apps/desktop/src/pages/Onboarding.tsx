@@ -16,14 +16,14 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 
 import { api } from "../api/client";
 import { BackupsPanel } from "../components/BackupsPanel";
+import { LandingArt } from "../components/LandingArt";
 import { TrainerPicker, TrainerPortrait, useTrainer } from "../components/Trainer";
 import { SystemWindow } from "../components/SystemWindow";
 import { RankBadge } from "../components/XpBar";
 import { kcal } from "../lib/format";
 import { hunterClass } from "../lib/loadout";
 import { CountUp } from "../lib/motion";
-import { useAppTheme, useOptionalPrefs, usePrefs } from "../lib/prefs";
-import { themeArt } from "../lib/themeArt";
+import { useOptionalPrefs, usePrefs } from "../lib/prefs";
 import { CM_PER_IN, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
 
 const ACTIVITY: { id: ProfileIn["activity"]; label: string }[] = [
@@ -379,16 +379,6 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         )}
       </div>
     </main>
-  );
-}
-
-/** The theme's landing art behind the first-run screens, under a scrim (none on Light/Dark). */
-function LandingArt({ dim = false }: { dim?: boolean }) {
-  const art = themeArt(useAppTheme(), "landing");
-  if (!art) return null;
-  return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0"
-      style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.7) 45%, rgba(0,0,0,${dim ? 0.6 : 0.2}) 100%), url("${art}")`, backgroundSize: "cover", backgroundPosition: "center" }} />
   );
 }
 

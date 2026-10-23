@@ -1,9 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
-import type { ChatAction, EraseResult, Settings } from "@ascend/shared";
+import type { ChatAction, EraseResult, GameSummary, Settings } from "@ascend/shared";
 
 import { api } from "./api/client";
 import { Layout, type Page } from "./components/Layout";
+import { LockScreen } from "./components/LockScreen";
 import { ErrorState, Loading } from "./components/States";
 import { SystemEvents } from "./components/SystemEvents";
 import { FirstRunCard } from "./components/FirstRun";
@@ -78,6 +79,9 @@ export default function App() {
   const [freshStart, setFreshStart] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [game, setGame] = useState<GameSummary | null>(null);
+  // v1.2: every launch opens on the lock screen (new players go to onboarding instead).
+  const [locked, setLocked] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -87,6 +91,7 @@ export default function App() {
       .then(() => Promise.all([api.dashboard(), api.settings()]))
       .then(([d, s]) => {
         setHasProfile(d.has_profile);
+        setGame(d.game);
         setSettings(s);
       })
       .catch((e: Error) => setBootError(e.message));
@@ -114,8 +119,10 @@ export default function App() {
       <ToastProvider>
         {!hasProfile ? (
           <Suspense fallback={<Loading label="Loading…" />}>
-            <Onboarding onDone={() => { setFreshStart(true); setHasProfile(true); bump(); }} />
+            <Onboarding onDone={() => { setFreshStart(true); setLocked(false); setHasProfile(true); bump(); }} />
           </Suspense>
+        ) : locked ? (
+          <LockScreen game={game} onEnter={() => { setLocked(false); navigate("dashboard"); }} />
         ) : (
           <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} freshStart={freshStart}
             onErased={() => { setFreshStart(false); setHasProfile(false); bump(); }} />
