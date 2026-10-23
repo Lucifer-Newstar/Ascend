@@ -81,7 +81,7 @@ export function RunThrough({
       <div className="relative z-10 mx-auto grid w-full max-w-5xl flex-1 grid-cols-1 items-center gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="rounded-xl bg-panel p-6 text-center">
           <p className="text-sm text-muted">{resting ? (paused ? "Rest paused" : "Rest") : "Your set"}</p>
-          <p className="event-title font-display text-[7rem] font-bold leading-none text-ink" role="timer" aria-live="off" data-testid="run-clock">
+          <p className="font-display text-[7rem] font-bold leading-none text-ink" role="timer" aria-live="off" data-testid="run-clock">
             {resting ? clock(restLeft) : "GO"}
           </p>
           {resting && (

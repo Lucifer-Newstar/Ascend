@@ -30,7 +30,7 @@ export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => v
         )}
         <SystemWindow variant="warning" title="Weekly boss" modal onClose={onClose} initialFocus={close} className="bg-panel"
           actions={<button ref={close} type="button" className="btn-primary" onClick={onClose}>Close</button>}>
-          <h2 className="event-title text-display-l text-ink">{boss.name}</h2>
+          <h2 className="text-display-l text-ink">{boss.name}</h2>
           <p className="mt-1 text-sm text-muted">{boss.defeated ? "Defeated this week" : `${boss.days_left === 0 ? "Last day" : `${boss.days_left} day${boss.days_left === 1 ? "" : "s"} left`} · beat it by Sunday`}</p>
           <div className="mt-4">
             <div className="mb-1 flex justify-between text-xs text-muted">

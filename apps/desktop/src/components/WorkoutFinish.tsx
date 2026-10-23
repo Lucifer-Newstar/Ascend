@@ -84,7 +84,7 @@ export function WorkoutFinish({ summary, onClose, onToday }: { summary: FinishSu
               <button ref={done} type="button" className="btn-primary" onClick={onClose}>Done</button>
             </>
           }>
-          <p className="event-title font-display text-4xl font-bold text-ink" data-testid="finish-xp">+{r.xp_awarded} XP</p>
+          <p className="font-display text-4xl font-bold text-ink" data-testid="finish-xp">+{r.xp_awarded} XP</p>
           <p className="mt-1 text-sm text-muted">
             {count(r.workout.sets.length, "set")} · {count(r.hard_sets, "hard set")} · {Math.round(r.active_minutes)} min
           </p>
