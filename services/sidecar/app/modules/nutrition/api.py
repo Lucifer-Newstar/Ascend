@@ -9,8 +9,17 @@ from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.intelligence import diet_service
-from app.modules.nutrition import service
-from app.modules.nutrition.schemas import DayLog, FoodIn, FoodOut, MealIn, MealLoggedOut
+from app.modules.nutrition import food_rules, service
+from app.modules.nutrition.schemas import (
+    DayLog,
+    FoodGroupCount,
+    FoodGuideline,
+    FoodGuideOut,
+    FoodIn,
+    FoodOut,
+    MealIn,
+    MealLoggedOut,
+)
 from app.modules.progress import service as progress
 
 router = APIRouter(tags=["nutrition"])
@@ -82,4 +91,31 @@ def day_log(
         kcal_target=target[0] if target else None,
         kcal_target_source=target[1] if target else None,  # type: ignore[arg-type]
         protein_target_g=energy.protein_target_g if energy else None,
+    )
+
+
+@router.get("/meals/guide", response_model=FoodGuideOut)
+def food_guide(
+    day: date | None = None, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> FoodGuideOut:
+    """India's food guidelines (ICMR-NIN 2024) in plain words, and which food groups the
+    day's logged meals cover. Rough guidance from food names; never changes the targets."""
+    d = day or now.date()
+    names = [i.food_name for m in service.meals_on(db, d) for i in m.items]
+    check = food_rules.check_day(names)
+    return FoodGuideOut(
+        day=d,
+        source=food_rules.SOURCE,
+        version=food_rules.ALGO_VERSION,
+        guidelines=[FoodGuideline(title=t, detail=x) for t, x in food_rules.GUIDELINES],
+        foods_logged=check.foods,
+        groups=[
+            FoodGroupCount(
+                key=g, label=food_rules.GROUP_LABEL[g], count=n, core=g in food_rules.CORE
+            )
+            for g, n in check.counts.items()
+        ],
+        missing=[food_rules.GROUP_LABEL[g] for g in check.missing],
+        hfss=check.hfss,
+        tips=check.tips,
     )

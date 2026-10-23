@@ -88,3 +88,30 @@ class DayLog(BaseModel):
 class MealLoggedOut(BaseModel):
     meal: MealOut
     xp_awarded: int
+
+
+class FoodGuideline(BaseModel):
+    title: str
+    detail: str
+
+
+class FoodGroupCount(BaseModel):
+    key: str
+    label: str
+    count: int
+    core: bool
+
+
+class FoodGuideOut(BaseModel):
+    """v1.2 food rules: India's food guidelines (ICMR-NIN 2024) and a rough check of one
+    day's logged meals against them. Guidance only; it never changes your targets."""
+
+    day: date
+    source: str
+    version: str
+    guidelines: list[FoodGuideline]
+    foods_logged: int
+    groups: list[FoodGroupCount]
+    missing: list[str]
+    hfss: list[str]
+    tips: list[str]

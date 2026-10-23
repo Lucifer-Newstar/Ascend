@@ -285,8 +285,8 @@ paths:
       - nutrition
   /scans/{scan_id}/items:
     post:
-      summary: Add an item to a scan by tapping the photo (classifier-first scan, ADR-0012); queues classification of that
-        crop
+      summary: Add an item to a scan by tapping the photo (classifier-first scan, ADR-0012); queues classification
+        of that crop
       operationId: add_scan_item
       parameters:
       - name: scan_id
@@ -372,6 +372,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+  /meals/guide:
+    get:
+      summary: Food Guide
+      description: 'India''s food guidelines (ICMR-NIN 2024) in plain words, and which food groups the
+
+        day''s logged meals cover. Rough guidance from food names; never changes the targets.'
+      operationId: food_guide_meals_guide_get
+      parameters:
+      - name: day
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Day
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodGuideOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - nutrition
 components:
   securitySchemes:
     launchToken:
@@ -894,3 +927,92 @@ components:
       - kcal
       title: FoodIn
       description: A food the user adds themselves; nutrients are per ONE portion.
+    FoodGroupCount:
+      properties:
+        key:
+          type: string
+          title: Key
+        label:
+          type: string
+          title: Label
+        count:
+          type: integer
+          title: Count
+        core:
+          type: boolean
+          title: Core
+      type: object
+      required:
+      - key
+      - label
+      - count
+      - core
+      title: FoodGroupCount
+    FoodGuideOut:
+      properties:
+        day:
+          type: string
+          format: date
+          title: Day
+        source:
+          type: string
+          title: Source
+        version:
+          type: string
+          title: Version
+        guidelines:
+          items:
+            $ref: '#/components/schemas/FoodGuideline'
+          type: array
+          title: Guidelines
+        foods_logged:
+          type: integer
+          title: Foods Logged
+        groups:
+          items:
+            $ref: '#/components/schemas/FoodGroupCount'
+          type: array
+          title: Groups
+        missing:
+          items:
+            type: string
+          type: array
+          title: Missing
+        hfss:
+          items:
+            type: string
+          type: array
+          title: Hfss
+        tips:
+          items:
+            type: string
+          type: array
+          title: Tips
+      type: object
+      required:
+      - day
+      - source
+      - version
+      - guidelines
+      - foods_logged
+      - groups
+      - missing
+      - hfss
+      - tips
+      title: FoodGuideOut
+      description: 'v1.2 food rules: India''s food guidelines (ICMR-NIN 2024) and a rough check of one
+
+        day''s logged meals against them. Guidance only; it never changes your targets.'
+    FoodGuideline:
+      properties:
+        title:
+          type: string
+          title: Title
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - title
+      - detail
+      title: FoodGuideline

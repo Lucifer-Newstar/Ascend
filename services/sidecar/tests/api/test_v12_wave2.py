@@ -228,3 +228,26 @@ def test_the_quest_follows_your_program(client: TestClient, profile, clock) -> N
         i for i in client.get("/game/summary").json()["quest"] if i["code"] == "plan_session"
     )
     assert item["progress"] == 1
+
+
+# --- food rules (item 14) -----------------------------------------------------------------
+
+
+def food_id(client: TestClient, name: str) -> int:
+    return next(
+        f["id"] for f in client.get("/foods", params={"q": name}).json() if f["name"] == name
+    )
+
+
+def test_the_food_guide_checks_todays_meals(client: TestClient) -> None:
+    empty = client.get("/meals/guide").json()
+    assert empty["source"] == "Dietary Guidelines for Indians, ICMR-NIN 2024"
+    assert len(empty["guidelines"]) >= 8 and empty["foods_logged"] == 0
+    items = [{"food_id": food_id(client, n), "portions": 1} for n in ("Idli", "Sambar", "Samosa")]
+    assert client.post("/meals", json={"meal_type": "breakfast", "items": items}).status_code == 201
+    g = client.get("/meals/guide").json()
+    assert g["foods_logged"] == 3
+    counts = {x["key"]: x["count"] for x in g["groups"]}
+    assert counts["cereals_millets"] == 1 and counts["pulses"] == 1
+    assert "Vegetables" in g["missing"] and g["hfss"] == ["Samosa"]
+    assert 1 <= len(g["tips"]) <= 3
