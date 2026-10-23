@@ -60,6 +60,9 @@ class BossRaid(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
     defeated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+    # boss-v2: the tier the raid was spawned at (a seasonal boss follows your level);
+    # None on raids from before v1.2 (their tier comes from the boss's name).
+    tier: Mapped[str | None] = mapped_column(String(1), nullable=True)
 
 
 class StreakReason(Base):

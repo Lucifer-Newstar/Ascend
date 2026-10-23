@@ -16,8 +16,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-ALGO_VERSION = "boss-v1"
-BONUS_XP = 150
+ALGO_VERSION = "boss-v2"
+BONUS_XP = 150  # a C-tier boss; see TIER_BONUS_XP
 HP_MIN = 12
 HP_MAX = 150
 HP_STARTER = 20
@@ -66,6 +66,129 @@ BOSS_GATES: dict[str, tuple[str, str]] = {
 }
 LEVEL_ORDER = ("beginner", "intermediate", "advanced", "expert")
 
+# boss-v2 (v1.2): every boss has a tier (E to S, the same letters as hunter ranks) and a
+# display category (strength, calisthenics, cardio, martial arts). The tier scales the HP
+# and the bonus, so the ladder climbs: an E boss is a lighter week than an S boss.
+TIERS = ("E", "D", "C", "B", "A", "S")
+BOSS_TIER: dict[str, str] = {
+    "Iron Golem": "E",
+    "Ash Wyvern": "E",
+    "Frost Colossus": "D",
+    "Stone Basilisk": "D",
+    "Storm Chimera": "C",
+    "Grave Warden": "C",
+    "Crimson Ogre": "B",
+    "Obsidian Hydra": "B",
+    "Thunder Behemoth": "A",
+    "Venom Manticore": "A",
+    "Dusk Leviathan": "A",
+    "Bone Titan": "S",
+}
+BOSS_CATEGORY: dict[str, str] = {
+    "Iron Golem": "strength",
+    "Frost Colossus": "strength",
+    "Grave Warden": "strength",
+    "Thunder Behemoth": "strength",
+    "Bone Titan": "strength",
+    "Stone Basilisk": "calisthenics",
+    "Storm Chimera": "calisthenics",
+    "Obsidian Hydra": "calisthenics",
+    "Ash Wyvern": "cardio",
+    "Dusk Leviathan": "cardio",
+    "Crimson Ogre": "martial_arts",
+    "Venom Manticore": "martial_arts",
+}
+TIER_HP_SCALE = {"E": 0.8, "D": 0.9, "C": 1.0, "B": 1.1, "A": 1.2, "S": 1.3}
+TIER_BONUS_XP = {"E": 100, "D": 125, "C": 150, "B": 175, "A": 200, "S": 250}
+LEVEL_TIER = {"beginner": "D", "intermediate": "B", "advanced": "A", "expert": "S"}
+
+
+@dataclass(frozen=True)
+class Season:
+    """A limited-time boss: it shows up every other week while its season runs (the
+    first week of the season included) and drops its own cosmetic when beaten. Its tier
+    follows your level, so it is a fair fight at every rank."""
+
+    boss: str
+    title: str
+    name: str  # the season's name, shown on the boss card
+    months: tuple[int, ...]
+    category: str
+    drop: str  # the cosmetic it drops (frontend catalog id)
+
+
+SEASONS: tuple[Season, ...] = (
+    Season("Winter Wraith", "Wraithbane", "Winter", (12, 1, 2), "cardio", "pet_spirit_wolf"),
+    Season(
+        "Shadow Sovereign",
+        "Sovereign's Bane",
+        "Shadow Season",
+        (3, 4, 5),
+        "strength",
+        "outfit_shadow_monarch",
+    ),
+    Season(
+        "Monsoon Serpent",
+        "Serpent Tamer",
+        "Monsoon",
+        (6, 7, 8, 9),
+        "calisthenics",
+        "weapon_energy_gauntlet",
+    ),
+    Season(
+        "Harvest Colossus",
+        "Harvest Breaker",
+        "Harvest Festival",
+        (10, 11),
+        "martial_arts",
+        "set_harvest_festival",
+    ),
+)
+SEASON_BY_BOSS = {s.boss: s for s in SEASONS}
+
+
+def season_for(d: date) -> Season:
+    return next(s for s in SEASONS if d.month in s.months)
+
+
+def season_start(week: date) -> date:
+    """The first Monday of the season that `week` (a Monday) belongs to."""
+    season = season_for(week)
+    year = week.year if week.month >= season.months[0] else week.year - 1
+    first_day = date(year, season.months[0], 1)
+    return first_day + timedelta(days=(7 - first_day.weekday()) % 7)
+
+
+def season_end(week: date) -> date:
+    """The last day of the season that `week` belongs to."""
+    season = season_for(week)
+    d = week
+    while season_for(d + timedelta(days=1)) is season:
+        d += timedelta(days=1)
+    return d
+
+
+def seasonal_week(week: date) -> bool:
+    """Is the seasonal boss out this week? The first week of a season, then every other
+    week until the season ends."""
+    return ((week - season_start(week)).days // 7) % 2 == 0
+
+
+def tier_of(name: str, level: str | None = None) -> str:
+    if name in SEASON_BY_BOSS:
+        return LEVEL_TIER.get(level or "beginner", "D")
+    return BOSS_TIER.get(name, "C")
+
+
+def category_of(name: str) -> str:
+    if name in SEASON_BY_BOSS:
+        return SEASON_BY_BOSS[name].category
+    return BOSS_CATEGORY.get(name, "strength")
+
+
+def bonus_for(tier: str) -> int:
+    return TIER_BONUS_XP.get(tier, BONUS_XP)
+
 
 def eligible_bosses(level: str, low_readiness: bool = False) -> list[tuple[str, str]]:
     rank = LEVEL_ORDER.index(level) if level in LEVEL_ORDER else 0
@@ -84,10 +207,16 @@ def boss_for(
     level: str | None = None,
     under: str | None = None,
     low_readiness: bool = False,
+    seasonal: bool = False,
 ) -> tuple[str, str]:
     """The boss and title for the week that starts on `week` (a Monday). Without a level,
     the fixed rotation of all twelve; with one, a rotation over the bosses that level may
-    face, preferring the one that guards `under` (the most under-trained category)."""
+    face, preferring the one that guards `under` (the most under-trained category). With
+    `seasonal`, a seasonal week brings the season's boss instead (never on a low-readiness
+    day)."""
+    if seasonal and not low_readiness and seasonal_week(week):
+        s = season_for(week)
+        return (s.boss, s.title)
     if level is None:
         return BOSSES[(week.toordinal() // 7) % len(BOSSES)]
     pool = eligible_bosses(level, low_readiness) or list(BOSSES[:1])
@@ -105,6 +234,14 @@ class Hp:
 
 def clamp(n: float) -> int:
     return int(max(HP_MIN, min(HP_MAX, round(n))))
+
+
+def scaled(hp: Hp, tier: str) -> Hp:
+    """The tier's share of a week's training (E 80% ... S 130%)."""
+    k = TIER_HP_SCALE.get(tier, 1.0)
+    if k == 1.0:
+        return hp
+    return Hp(clamp(hp.hp * k), hp.source, f"{hp.note}; tier {tier}: x{k:g}")
 
 
 def hp_for(

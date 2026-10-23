@@ -36,3 +36,48 @@ def test_each_set_deals_one_damage_and_the_boss_falls_on_the_set_that_empties_it
     assert boss.outcome(12, days) == boss.Outcome(15, MON + timedelta(days=4))
     assert boss.outcome(10, days).defeated_on == MON + timedelta(days=2)
     assert boss.outcome(16, days) == boss.Outcome(15, None)
+
+
+# --- boss-v2 (v1.2): tiers and seasons ----------------------------------------------------
+
+
+def test_every_boss_has_a_tier_and_a_category_and_the_ladder_climbs():
+    for name, _ in boss.BOSSES:
+        assert boss.BOSS_TIER[name] in boss.TIERS
+        assert boss.BOSS_CATEGORY[name] in ("strength", "calisthenics", "cardio", "martial_arts")
+    assert boss.BOSS_TIER["Bone Titan"] == "S"
+    scales = [boss.TIER_HP_SCALE[t] for t in boss.TIERS]
+    bonuses = [boss.TIER_BONUS_XP[t] for t in boss.TIERS]
+    assert scales == sorted(scales) and bonuses == sorted(bonuses)
+    hp = boss.Hp(40, "history", "median")
+    assert boss.scaled(hp, "E").hp == 32 and boss.scaled(hp, "S").hp == 52
+    assert boss.scaled(hp, "C") == hp
+
+
+def test_each_season_has_its_boss_every_other_week():
+    assert [s.boss for s in boss.SEASONS] == [
+        "Winter Wraith",
+        "Shadow Sovereign",
+        "Monsoon Serpent",
+        "Harvest Colossus",
+    ]
+    months = sorted(m for s in boss.SEASONS for m in s.months)
+    assert months == list(range(1, 13))  # one season at a time, all year
+    first = boss.season_start(date(2026, 10, 19))
+    assert first == date(2026, 10, 5)  # the first Monday of October
+    assert boss.season_end(date(2026, 10, 19)) == date(2026, 11, 30)
+    weeks = [first + timedelta(weeks=n) for n in range(6)]
+    assert [boss.seasonal_week(w) for w in weeks] == [True, False, True, False, True, False]
+    assert boss.boss_for(first, "beginner", seasonal=True)[0] == "Harvest Colossus"
+    # never on a low-readiness day, and never without the seasonal flag
+    assert (
+        boss.boss_for(first, "beginner", low_readiness=True, seasonal=True)[0] != "Harvest Colossus"
+    )
+    assert boss.boss_for(first, "beginner")[0] != "Harvest Colossus"
+
+
+def test_a_seasonal_boss_follows_your_level():
+    assert boss.tier_of("Winter Wraith", "beginner") == "D"
+    assert boss.tier_of("Winter Wraith", "expert") == "S"
+    assert boss.tier_of("Iron Golem", "expert") == "E"  # regular bosses keep their own tier
+    assert boss.category_of("Harvest Colossus") == "martial_arts"

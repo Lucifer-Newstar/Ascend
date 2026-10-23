@@ -114,6 +114,13 @@ class BossOut(BaseModel):
     titles_earned: int
     algo_version: str
     why: BossWhy
+    # boss-v2 (v1.2)
+    tier: str = "C"
+    category: str = "strength"
+    seasonal: bool = False
+    season: str | None = None
+    season_ends: date | None = None
+    drop: str | None = None
 
 
 class TitleOut(BaseModel):

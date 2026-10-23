@@ -102,6 +102,7 @@ def hunter_stats(
 @router.get("/boss", response_model=BossOut)
 def boss_raid(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> BossOut:
     raid, out = boss_service.current(db, now)
+    season = boss.SEASON_BY_BOSS.get(raid.name)
     week_end = raid.week_start + timedelta(days=6)
     return BossOut(
         week_start=raid.week_start,
@@ -114,7 +115,7 @@ def boss_raid(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -
         days_left=max(0, (week_end - now.date()).days),
         defeated=raid.defeated_at is not None,
         defeated_at=raid.defeated_at,
-        bonus_xp=boss.BONUS_XP,
+        bonus_xp=raid.xp_awarded or boss_service.bonus(raid),
         hp_source=raid.hp_source,
         hp_note=raid.hp_note,
         titles_earned=len(boss_service.titles(db)),
@@ -123,15 +124,23 @@ def boss_raid(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -
             formula=(
                 "HP = a week of your training (program sets, else the median sets per week "
                 "over the last 4 weeks, else 20), clamped 12-150; each training set this "
-                "week deals 1 damage; beaten at 0 HP by Sunday"
+                "week deals 1 damage; the tier scales it (E 80% to S 130%); beaten at 0 HP "
+                "by Sunday"
             ),
             inputs={
                 "hp": raid.hp,
                 "hp_source": raid.hp_source,
                 "sets_this_week": out.damage,
-                "bonus_xp": boss.BONUS_XP,
+                "bonus_xp": raid.xp_awarded or boss_service.bonus(raid),
+                "tier": boss_service.tier(raid),
             },
         ),
+        tier=boss_service.tier(raid),
+        category=boss.category_of(raid.name),
+        seasonal=season is not None,
+        season=season.name if season else None,
+        season_ends=boss.season_end(raid.week_start) if season else None,
+        drop=season.drop if season else None,
     )
 
 

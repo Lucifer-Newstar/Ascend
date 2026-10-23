@@ -1,4 +1,6 @@
-"""Weekly boss raid service (boss-v1, ADR-0022): spawn, damage, defeat and titles."""
+"""Weekly boss raid service (boss-v2, ADR-0022): spawn, damage, defeat and titles.
+
+boss-v2 (v1.2) adds tiers (E to S, scaling HP and bonus) and seasonal bosses."""
 
 from __future__ import annotations
 
@@ -55,8 +57,11 @@ def _spawn(db: Session, week: date, now: datetime) -> BossRaid:
     from app.modules.selector.service import player_state
 
     state = player_state(db, now)
-    name, title = boss.boss_for(week, state.level, state.most_under(), state.low_readiness)
-    hp = _hp(db, week)
+    name, title = boss.boss_for(
+        week, state.level, state.most_under(), state.low_readiness, seasonal=True
+    )
+    tier = boss.tier_of(name, state.level)
+    hp = boss.scaled(_hp(db, week), tier)
     raid = BossRaid(
         week_start=week,
         name=name,
@@ -67,10 +72,22 @@ def _spawn(db: Session, week: date, now: datetime) -> BossRaid:
         algo_version=boss.ALGO_VERSION,
         created_at=now,
         xp_awarded=0,
+        tier=tier,
     )
     db.add(raid)
     db.flush()
     return raid
+
+
+def tier(raid: BossRaid) -> str:
+    return raid.tier or boss.tier_of(raid.name)
+
+
+def bonus(raid: BossRaid) -> int:
+    """The bonus for beating it: by tier from boss-v2 on; boss-v1 raids keep 150."""
+    if raid.algo_version == "boss-v1":
+        return boss.BONUS_XP
+    return boss.bonus_for(tier(raid))
 
 
 def settle(db: Session, raid: BossRaid, now: datetime) -> boss.Outcome:
@@ -82,14 +99,14 @@ def settle(db: Session, raid: BossRaid, now: datetime) -> boss.Outcome:
     if out.defeated_on is not None and raid.defeated_at is None:
         at = times[raid.hp - 1]
         raid.defeated_at = at
-        raid.xp_awarded = boss.BONUS_XP
+        raid.xp_awarded = bonus(raid)
         db.add(
             XpEvent(
                 day=at.date(),
                 at=at,
                 source=SOURCE,
                 ref_id=raid.id,
-                amount=boss.BONUS_XP,
+                amount=raid.xp_awarded,
                 formula_version=boss.ALGO_VERSION,
                 note=f"Boss raid cleared: {raid.name}",
             )
