@@ -25,6 +25,7 @@ describe("BossRaidCard", () => {
   it("shows HP, damage, the reward before it is earned, and Why", async () => {
     const { container } = renderCard(boss);
     expect(screen.getByRole("heading", { name: "Iron Golem" })).toBeInTheDocument();
+    expect(screen.getByTestId("boss-art")).toHaveAttribute("alt", "Iron Golem, this week's boss");
     expect(screen.getByRole("progressbar", { name: "Iron Golem HP" })).toHaveAttribute("aria-valuenow", "15");
     expect(screen.getByText("+150 XP")).toBeInTheDocument();
     expect(screen.getByText("Title: Golem Breaker")).toBeInTheDocument();

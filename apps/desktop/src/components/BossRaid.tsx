@@ -7,6 +7,7 @@
 import type { BossRaid } from "@ascend/shared";
 import { useEffect, useId, useRef, useState } from "react";
 
+import { bossArt } from "../lib/bosses";
 import { play } from "../lib/sound";
 import { Confetti } from "./Celebrate";
 import { TrainerSays, useTrainerOn } from "./Trainer";
@@ -63,7 +64,12 @@ export function BossRaidCard({ boss }: { boss: BossRaid }) {
       {moment && <p className="sr-only" role="status">{boss.name} defeated. Plus {boss.bonus_xp} XP and the title {boss.title}.</p>}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Crest defeated={boss.defeated} />
+          {bossArt(boss.name) ? (
+            <img src={bossArt(boss.name)!} alt={`${boss.name}, this week's boss`} width={72} height={72} data-testid="boss-art"
+              className={`h-[72px] w-[72px] rounded-lg border object-cover ${boss.defeated ? "border-good/60 grayscale" : "border-bad/50"}`} />
+          ) : (
+            <Crest defeated={boss.defeated} />
+          )}
           <div>
             <p className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-bad">Weekly boss raid</p>
             <h2 id={`${id}-t`} className="text-display-l text-ink">{boss.name}</h2>

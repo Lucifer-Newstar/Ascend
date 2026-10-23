@@ -86,3 +86,85 @@ The app ships only the 256 px `.webp` expressions and the 64 px icon (this folde
 | trainer-warning.webp | 13922 |
 
 Render cost: 6 requests × 2 candidates = 12 images at the provider's published rate of about $0.053 per 1024x1024 high-quality image, ≈ $0.63 (estimated).
+
+---
+
+# v1.1 roster and boss art
+
+Date: 2026-10-23. The v1.1 trainer images in this folder and the boss images in `../bosses/` were generated for this project. No prompt named an existing franchise, character or artist.
+
+## Common method
+
+**Image model:** GPT Image 2.5 (OpenAI), called through the fal.ai API. Endpoints: `openai/gpt-image-2.5/sunburst/text-to-image` (trainer main portraits, bosses) and `openai/gpt-image-2.5/sunburst/edit` (trainer expressions). All requests: 1024x1024, `quality: "high"`, PNG output, 2 candidates per request. Trainer requests used `background: "transparent"`; boss requests used an opaque background.
+
+**Style:** written to match the existing trainer (Instructor Iskra Vey, see `apps/desktop/src/assets/trainer/ART_PROVENANCE.md`): clean modern anime cel-shading, crisp dark lineart, hard-edged two-tone shading, cyan rim light from the right, flat colours, head-and-shoulders bust framing, transparent background.
+
+**Trainer workflow:** one main (neutral) portrait per character by text-to-image; the proud, warning and hyped expressions by the edit endpoint with that main portrait as the only reference image. Each edit prompt restates the character's face, hair, outfit and style, keeps the framing, and changes only expression and arm pose. Every candidate was inspected at full size for identity consistency, hands (five fingers), eyes, stray text/logos, and modesty (fully clothed, no suggestive pose).
+
+**Post-processing (Python/Pillow + NumPy):** alpha values ≥ 250 snapped to 255 and ≤ 8 to 0 (the model's opaque alpha is 254); premultiplied-alpha Lanczos resize to 256x256; WebP lossy colour quality 82, alpha_quality 90, method 6. Icons: a 64x64 face crop of the neutral portrait, encoded the same way. Bosses: Lanczos resize to 384x384, WebP quality 82 (no alpha). No metadata written.
+
+## Name checks (web search, 2026-10-23)
+
+The suggested names were searched with and without "anime"/"character" and replaced:
+
+| Suggested | Result | Final name |
+|---|---|---|
+| Vera Nyx | Pen name of a published romance author (Amazon, Goodreads) and an Instagram creator | **Vera Kestrine** — no results for "Vera Kestrine" or "Vera Kestrine" character |
+| Kai Arashi | Used by a manga creator on a creator platform and by game player characters; "Arashi" is also a well-known band | **Kai Hoshimura** — one unrelated result (a name list); none as a character |
+| Dario Vance | Name of a recording artist, a fan-module NPC and chatbot characters | **Dario Halvorn** — no results |
+
+Other candidates rejected after searching: Vera Solenne, Vera Kade, Vera Ashvale (real authors/artists), Kai Tenrai (fan-wiki character), Kai Renshiro (web-novel protagonist), Kai Ardent (musician), Dario Castellane (real person).
+
+## Trainers
+
+Iskra Vey is unchanged and remains the fourth choice.
+
+### Vera Kestrine (`vera`)
+
+Playful-confident hype coach, teasing but kind. Mid-20s, athletic. Long straight black hair with a violet streak, violet eyes, small silver studs. Cropped black/violet track jacket with cyan trim over a high-neck navy sports top, black fingerless gloves. Default pose: hand on hip, other hand on the jacket collar.
+
+- Main portrait: 2 candidates; candidate 2 chosen (more modest top). Prompt (short): "Character portrait of an original character: a strikingly attractive, confident woman in her mid-20s with an athletic, fit build, long straight glossy black hair falling past her shoulders with one vivid violet streak through the front left strand, side-swept bangs, large bright violet eyes with sharp eyeliner-style lashes, a playful confident half-smirk, light warm skin, small silver stud earrings. She wears a …" + common style block.
+- Proud: closed-lip delighted smile, eyebrow raised, same pose. Warning: unimpressed frown and pout, arms crossed. Hyped: open-mouthed cheer, right fist raised with cyan sparks.
+- All expressions accepted on the first attempt.
+
+### Kai Hoshimura (`kai`)
+
+Charming, high-energy hype-man. Mid-20s, athletic. Tousled black hair, amber-gold eyes. Charcoal compression shirt under an open black jacket with cyan trim (sleeves pushed up), black wrist wraps. Default pose: arms crossed.
+
+- Main portrait: 2 candidates; candidate 2 chosen. Prompt (short): "Character portrait of an original character: a handsome, charming man in his mid-20s with an athletic muscular build, tousled messy black hair with a few strands falling over his forehead, warm bright amber-gold eyes, an easy confident grin showing a hint of teeth, light tan skin, defined jaw, clean-shaven. He wears a fitted dark charcoal compression training shirt with a crew neck under an open black bomber-style …" + common style block.
+- Proud: wide grin. Warning: stern, open palm raised in a "stop" gesture. Hyped: shouting cheer, fist pumped with cyan sparks.
+- All expressions accepted on the first attempt. The hyped pose shows the forearm below the pushed-up sleeve, matching the main portrait.
+
+### Dario Halvorn (`dario`)
+
+Calm strategist / tactician. Early 30s, tall. Swept-back dark-brown hair, short beard, steel-grey eyes. Long navy tactical coat with violet piping and a glowing violet diamond collar insignia, worn open over a black training shirt, black tactical gloves. Default pose: hand at chin.
+
+- Main portrait: 2 candidates; candidate 2 chosen. Prompt (short): "Character portrait of an original character: a tall, handsome, composed man in his early 30s with a lean athletic build, short neat dark-brown hair swept back with a slight wave, a short well-groomed dark beard, calm intelligent steel-grey eyes, olive skin, a strong brow. He wears a long dark navy tactical coat with a high stand-up collar and thin violet piping along the collar and front edge, worn open over a …" + common style block.
+- Proud: subtle half-smile. Warning: cold stare, open palm "stop" gesture. Hyped: fierce grin, fist raised with violet sparks.
+- All expressions accepted on the first attempt.
+
+Edit prompt template (all expressions): "Edit the reference image of <character description>. Keep exactly the same person … same clean anime cel-shading … same head-and-shoulders camera framing. Change only the expression and arm pose as follows: <expression>. Every visible hand has exactly five fingers, correctly jointed. Tasteful, fully clothed. Fully transparent background … No text, no letters, no logo, no watermark."
+
+## Bosses
+
+Same cel-shaded style, menacing but not gory, bust/creature portrait on a dark navy background with cyan/violet particles and mist. Shared prompt block (short): "Menacing but not gory: no blood, no wounds, no gore. Clean modern anime cel-shading in the style of a dark fantasy game boss card … strong cool cyan rim light, glowing eyes … Square bust portrait … slightly low camera … Dark atmospheric background: deep navy-black gradient with faint drifting cyan and violet glowing particles and soft mist … No text."
+
+| File | Name | Design (prompt, short) | Notes |
+|---|---|---|---|
+| `bosses/iron-golem.webp` | Iron Golem | a towering humanoid construct built from riveted dark gunmetal iron plates and heavy bolts, a blocky helm-like head with a narrow horizontal visor slit glowing bright cyan, glowing cyan seams and … | Re-rolled: first pass cropped the head at the top edge; the prompt was changed to require the whole head with space above. |
+| `bosses/ash-wyvern.webp` | Ash Wyvern | a lean draconic wyvern with charcoal-black scales dusted with pale grey ash, glowing ember-orange cracks along its neck, swept-back horns, narrow glowing orange eyes, jaws half open showing sharp … | Best of 2 candidates, first pass. |
+| `bosses/frost-colossus.webp` | Frost Colossus | a gigantic humanoid giant made of pale blue glacial ice and packed snow, jagged ice-crystal crown growing from its head, deep-set glowing icy-white eyes, frost beard of icicles, heavy shoulders … | Re-rolled: first pass cropped the ice crown; same prompt change. |
+| `bosses/stone-basilisk.webp` | Stone Basilisk | a huge serpent-lizard with rough granite-grey scales like cracked stone, a crest of rocky spikes on its head, large glowing yellow-green slit-pupil eyes, mouth slightly open with fangs and a forked … | Best of 2 candidates, first pass. |
+| `bosses/storm-chimera.webp` | Storm Chimera | a beast with the head of a dark-maned lion at the centre, a curling-horned goat head beside it and a serpent-headed tail rising over its shoulder, storm-grey fur, crackling blue-white lightning … | Best of 2 candidates, first pass. |
+| `bosses/grave-warden.webp` | Grave Warden | a tall spectral knight in tarnished dark armour and a tattered black hooded cloak, the face inside the hood a dark void with two glowing pale-cyan eyes and a faint skull-shaped helm visor, a heavy … | Best of 2 candidates, first pass. |
+| `bosses/crimson-ogre.webp` | Crimson Ogre | a hulking ogre with deep crimson-red skin, two thick curved horns, a heavy brow, glowing amber eyes, small tusks jutting from its lower jaw, a scowling snarl, a spiked iron collar and leather … | Best of 2 candidates, first pass. |
+| `bosses/obsidian-hydra.webp` | Obsidian Hydra | a hydra with three serpentine dragon heads on long necks rising from one body, glossy black obsidian scales with sharp glassy edges catching cyan light, thin glowing violet fissures between the … | Best of 2 candidates, first pass. |
+| `bosses/thunder-behemoth.webp` | Thunder Behemoth | an enormous horned beast like a colossal armoured bull-rhino, dark slate-blue hide with heavy plated armour on its head and shoulders, two great forward-curving horns, glowing electric-cyan eyes, … | Best of 2 candidates, first pass. |
+| `bosses/venom-manticore.webp` | Venom Manticore | a manticore with a lion-like body and dark purple-black mane, a fierce lion-like monstrous face with glowing toxic-green eyes and sharp fangs, bat-like wings folded behind it, a huge segmented … | Re-rolled for stronger green venom and eyes. |
+| `bosses/dusk-leviathan.webp` | Dusk Leviathan | a colossal sea serpent rising out of dark water at twilight, deep indigo and violet scales with glowing bioluminescent cyan spots along its body, finned frill around its head, long jaw with rows of … | Best of 2 candidates, first pass. |
+| `bosses/bone-titan.webp` | Bone Titan | a gigantic armoured giant whose body is a stylised frame of bleached ivory bone plates and a horned skull-like helm, hollow eye sockets with bright glowing cyan lights inside, dark tattered banners … | Best of 2 candidates, first pass. |
+
+## Files
+
+Trainers (256x256 RGBA WebP; icons 64x64): `trainers/<id>-neutral.webp`, `-proud.webp`, `-warning.webp`, `-hyped.webp`, `-icon.webp` for `vera`, `kai`, `dario`.
+Bosses (384x384 WebP): `bosses/<slug>.webp`.

@@ -26,8 +26,8 @@ import { grams } from "../lib/format";
 import { CountUp } from "../lib/motion";
 import { isOffline, useApi } from "../lib/useApi";
 
-export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }: {
-  onOpenCoach: () => void;
+export function DashboardPage({ onOpenChat, refreshKey, onChanged, onNavigate }: {
+  onOpenChat: () => void;
   refreshKey: number;
   onChanged?: () => void;
   onNavigate?: (p: Page) => void;
@@ -88,7 +88,7 @@ export function DashboardPage({ onOpenCoach, refreshKey, onChanged, onNavigate }
       <DeloadCard refreshKey={refreshKey} onlyWhenRecommended className="col-span-12" />
 
       <div className="col-span-12 lg:col-span-7">
-        <InsightsCard tip={tip} review={review} onOpenCoach={onOpenCoach} />
+        <InsightsCard tip={tip} review={review} onOpenChat={onOpenChat} />
       </div>
       <div className="col-span-12 space-y-6 self-start lg:col-span-5">
         <section className="card card-hover p-5" aria-labelledby="checkin-title">

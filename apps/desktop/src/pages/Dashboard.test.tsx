@@ -57,7 +57,7 @@ function renderPage(onNavigate = vi.fn()) {
   return render(
     <PrefsProvider initial={{ ...DEFAULT_SETTINGS, reduce_motion: true }} save={vi.fn()}>
       <ToastProvider>
-        <DashboardPage refreshKey={0} onOpenCoach={vi.fn()} onNavigate={onNavigate} />
+        <DashboardPage refreshKey={0} onOpenChat={vi.fn()} onNavigate={onNavigate} />
       </ToastProvider>
     </PrefsProvider>,
   );

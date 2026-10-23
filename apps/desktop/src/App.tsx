@@ -15,7 +15,7 @@ import { XpStatus } from "./components/XpChip";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { usePageShortcuts } from "./lib/shortcuts";
 import { tourFor, type Tour } from "./lib/tours";
-import { TRAINER_ICON } from "./lib/trainer";
+import { trainerById } from "./lib/trainer";
 import { useApi } from "./lib/useApi";
 import { DashboardPage } from "./pages/Dashboard";
 
@@ -179,7 +179,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
       aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}
-      trainer={<TrainerChatButton icon={TRAINER_ICON} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
+      trainer={<TrainerChatButton icon={trainerById(settings.trainer_id).icon} name={trainerById(settings.trainer_id).name} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
       <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction} />
       {tour && <TourOverlay tour={tour} onDone={() => { void api.updateTrainerState({ tour_done: tour.id }).catch(() => undefined); setTour(null); }} />}
       {trainerState.data && !trainerState.data.onboarded && !welcomeDone && !tour && (
@@ -190,7 +190,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
-      {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenCoach={() => navigate("coach")} />}
+      {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenChat={() => setChatOpen(true)} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
       {page === "library" && <LibraryPage onNavigate={navigate} refreshKey={refreshKey} />}
       {page === "skills" && <SkillsPage onNavigate={navigate} onChanged={bump} />}

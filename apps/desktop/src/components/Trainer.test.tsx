@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { moodFor, numbersIn, trainerLine } from "../lib/trainer";
 import { expectNoAxeViolations } from "../test/axe";
 import { InsightsCard } from "./Insights";
-import { TrainerToggle } from "./Trainer";
+import { TrainerPicker, TrainerPortrait, TrainerToggle } from "./Trainer";
 
 const tip = { text: "Bench 62.5 kg × 6 next time: you beat 60 kg × 8 at RPE 8.", tip_code: "raised", source: "rules" } as unknown as CoachReply;
 const review = {
@@ -19,7 +19,7 @@ function renderCard(trainer: boolean, save = vi.fn(async (p) => ({ ...DEFAULT_SE
   return render(
     <PrefsProvider initial={{ ...DEFAULT_SETTINGS, trainer }} save={save}>
       <TrainerToggle />
-      <InsightsCard tip={tip} review={review} onOpenCoach={() => {}} />
+      <InsightsCard tip={tip} review={review} onOpenChat={() => {}} />
     </PrefsProvider>,
   );
 }
@@ -72,5 +72,27 @@ describe("trainer voice", () => {
     await userEvent.click(toggle);
     expect(save).toHaveBeenCalledWith({ trainer: true });
     await waitFor(() => expect(screen.getByRole("heading", { name: "Iskra's briefing" })).toBeInTheDocument());
+  });
+});
+
+describe("trainer roster (v1.1)", () => {
+  it("lists four trainers and saves the pick", async () => {
+    const save = vi.fn(async (p) => ({ ...DEFAULT_SETTINGS, ...p }));
+    const { container } = render(
+      <PrefsProvider initial={{ ...DEFAULT_SETTINGS, trainer_id: "iskra" }} save={save}>
+        <TrainerPicker />
+        <TrainerPortrait mood="neutral" />
+      </PrefsProvider>,
+    );
+    const radios = screen.getAllByRole("radio");
+    expect(radios.map((r) => r.getAttribute("data-trainer"))).toEqual(["iskra", "vera", "kai", "dario"]);
+    expect(screen.getByRole("radio", { name: /Instructor Iskra Vey/ })).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(screen.getByRole("radio", { name: /Vera Kestrine/ }));
+    await waitFor(() => expect(save).toHaveBeenCalledWith({ trainer_id: "vera" }));
+    await waitFor(() => expect(screen.getByRole("radio", { name: /Vera Kestrine/ })).toHaveAttribute("aria-checked", "true"));
+    const portraits = screen.getAllByTestId("trainer-portrait");
+    expect(portraits[portraits.length - 1]).toHaveAttribute("data-trainer", "vera");
+    expect(screen.getByAltText("Vera Kestrine, calm")).toBeInTheDocument();
+    await expectNoAxeViolations(container);
   });
 });

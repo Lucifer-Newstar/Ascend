@@ -8,9 +8,9 @@
 import type { CoachReply, WeeklyReview } from "@ascend/shared";
 import { useId, useState } from "react";
 
-import { moodFor, trainerLine, TRAINER_SHORT } from "../lib/trainer";
+import { moodFor, trainerLine } from "../lib/trainer";
 import { IconSpark } from "./Icons";
-import { TrainerSays, useTrainerOn } from "./Trainer";
+import { TrainerSays, useTrainer, useTrainerOn } from "./Trainer";
 
 interface Insight {
   key: string;
@@ -74,14 +74,15 @@ function InsightRow({ insight, trainer, position }: { insight: Insight; trainer:
   );
 }
 
-export function InsightsCard({ tip, review, onOpenCoach }: { tip: CoachReply | null; review: WeeklyReview | null; onOpenCoach: () => void }) {
+export function InsightsCard({ tip, review, onOpenChat }: { tip: CoachReply | null; review: WeeklyReview | null; onOpenChat: () => void }) {
   const items = buildInsights(tip, review);
   const trainer = useTrainerOn();
+  const who = useTrainer();
   return (
     <section className="card h-full p-5" aria-labelledby="insights-title">
       <div className="mb-3 flex items-center justify-between">
-        <h2 id="insights-title" className="card-title">{trainer ? `${TRAINER_SHORT}'s briefing` : "Insights"}</h2>
-        <button type="button" className="text-xs text-accent hover:underline" onClick={onOpenCoach}>Ask the coach →</button>
+        <h2 id="insights-title" className="card-title">{trainer ? `${who.short}'s briefing` : "Insights"}</h2>
+        <button type="button" className="text-xs text-accent hover:underline" onClick={onOpenChat}>Ask your trainer →</button>
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-muted">Nothing to flag yet. Insights appear once there is a week of logs.</p>

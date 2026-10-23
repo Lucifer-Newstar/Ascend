@@ -6,9 +6,8 @@
 import type { EraseResult, TrainerState } from "@ascend/shared";
 import { useEffect, useRef, useState } from "react";
 
-import { TRAINER_NAME } from "../lib/trainer";
 import { EraseDialog } from "./EraseData";
-import { TrainerPortrait } from "./Trainer";
+import { TrainerPortrait, useTrainer } from "./Trainer";
 
 export function FirstRunCard({
   state,
@@ -21,6 +20,7 @@ export function FirstRunCard({
   onDone: () => void;
   onErased: (r: EraseResult) => void;
 }) {
+  const trainer = useTrainer();
   const [erasing, setErasing] = useState(false);
   const first = useRef<HTMLButtonElement>(null);
   useEffect(() => first.current?.focus(), []);
@@ -33,7 +33,7 @@ export function FirstRunCard({
           <div className="min-w-0">
             <h2 id="welcome-title" className="text-lg font-semibold text-ink">{hasData ? "Welcome to ASCEND 1.1" : "You're set up"}</h2>
             <p className="mt-1 text-sm text-muted">
-              I&apos;m {TRAINER_NAME}, your trainer. I watch your log, answer questions and show you around. Open the chat any time from Trainer in the top bar.
+              I&apos;m {trainer.name}, your trainer. I watch your log, answer questions and show you around. Open the chat any time from Trainer in the top bar.
             </p>
             {hasData && (
               <p className="mt-2 text-sm text-ink" data-testid="welcome-data-note">

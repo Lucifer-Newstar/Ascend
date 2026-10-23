@@ -7,13 +7,20 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { useReducedMotion } from "../lib/motion";
 import { useOptionalPrefs } from "../lib/prefs";
-import { TRAINER_ART, TRAINER_ICON, TRAINER_NAME, moodLabel, type TrainerMood } from "../lib/trainer";
+import { ROSTER, moodLabel, trainerById, type TrainerMood, type TrainerProfile } from "../lib/trainer";
 
 export function useTrainerOn(): boolean {
   return useOptionalPrefs()?.settings.trainer !== false;
 }
 
-export function TrainerPortrait({ mood, size = 72, className = "" }: { mood: TrainerMood; size?: number; className?: string }) {
+/** The trainer the user picked (Settings, or "change trainer" in the chat). */
+export function useTrainer(): TrainerProfile {
+  return trainerById(useOptionalPrefs()?.settings.trainer_id);
+}
+
+export function TrainerPortrait({ mood, size = 72, className = "", trainer }: { mood: TrainerMood; size?: number; className?: string; trainer?: TrainerProfile }) {
+  const chosen = useTrainer();
+  const t = trainer ?? chosen;
   const reduce = useReducedMotion();
   const [shown, setShown] = useState(mood);
   const [prev, setPrev] = useState<TrainerMood | null>(null);
@@ -34,19 +41,21 @@ export function TrainerPortrait({ mood, size = 72, className = "" }: { mood: Tra
       style={{ width: size, height: size }}
       data-mood={shown}
       data-testid="trainer-portrait"
+      data-trainer={t.id}
     >
-      {prev && <img src={TRAINER_ART[prev]} alt="" className="trainer-fade-out absolute inset-0 h-full w-full object-cover object-top" />}
-      <img src={TRAINER_ART[shown]} alt={moodLabel(shown)} className={`absolute inset-0 h-full w-full object-cover object-top ${prev ? "trainer-fade-in" : ""}`} />
+      {prev && <img src={t.art[prev]} alt="" className="trainer-fade-out absolute inset-0 h-full w-full object-cover object-top" />}
+      <img src={t.art[shown]} alt={moodLabel(shown, t.name)} className={`absolute inset-0 h-full w-full object-cover object-top ${prev ? "trainer-fade-in" : ""}`} />
     </span>
   );
 }
 
 export function TrainerSays({ mood, children, size = 56 }: { mood: TrainerMood; children: ReactNode; size?: number }) {
+  const t = useTrainer();
   return (
     <div className="flex items-start gap-3" data-testid="trainer-says">
       <TrainerPortrait mood={mood} size={size} />
       <div className="trainer-bubble relative min-w-0 flex-1 rounded-lg border border-line-2 bg-panel-2/80 px-3 py-2">
-        <span className="sr-only">{TRAINER_NAME} says: </span>
+        <span className="sr-only">{t.name} says: </span>
         {children}
       </div>
     </div>
@@ -56,6 +65,7 @@ export function TrainerSays({ mood, children, size = 56 }: { mood: TrainerMood; 
 /** Top-bar switch: trainer voice on, or plain System mode. */
 export function TrainerToggle() {
   const prefs = useOptionalPrefs();
+  const t = useTrainer();
   if (!prefs) return null;
   const on = prefs.settings.trainer !== false;
   return (
@@ -63,11 +73,34 @@ export function TrainerToggle() {
       type="button"
       onClick={() => void prefs.update({ trainer: !on })}
       aria-pressed={on}
-      title={on ? `${TRAINER_NAME} speaks your insights. Click for plain mode.` : "Plain mode. Click to bring the trainer back."}
+      title={on ? `${t.name} speaks your insights. Click for plain mode.` : "Plain mode. Click to bring the trainer back."}
       className={`flex items-center gap-2 rounded-full border px-2 py-1 text-xs transition-colors ${on ? "border-accent/50 text-ink" : "border-line-2 text-muted hover:text-ink"}`}
     >
-      <img src={TRAINER_ICON} alt="" width={22} height={22} className={`rounded-full ${on ? "" : "opacity-50 grayscale"}`} />
+      <img src={t.icon} alt="" width={22} height={22} className={`rounded-full ${on ? "" : "opacity-50 grayscale"}`} />
       Trainer
     </button>
+  );
+}
+
+/** Pick who speaks. Saved at once; the chat and every card switch voice and portrait. */
+export function TrainerPicker({ onPicked }: { onPicked?: (t: TrainerProfile) => void }) {
+  const prefs = useOptionalPrefs();
+  const current = useTrainer();
+  return (
+    <div role="radiogroup" aria-label="Choose your trainer" className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="trainer-picker">
+      {ROSTER.map((t) => {
+        const on = t.id === current.id;
+        return (
+          <button key={t.id} type="button" role="radio" aria-checked={on} data-trainer={t.id}
+            onClick={() => { void prefs?.update({ trainer_id: t.id }); onPicked?.(t); }}
+            className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors ${on ? "border-accent bg-accent/10" : "border-line-2 hover:border-accent/50"}`}>
+            <TrainerPortrait mood={on ? "proud" : "neutral"} size={96} trainer={t} />
+            <span className="text-sm font-semibold text-ink">{t.name}</span>
+            <span className="text-[11px] uppercase tracking-wider text-accent">{t.style}</span>
+            <span className="text-xs text-muted">{t.blurb}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }

@@ -14,21 +14,20 @@ import { IconDatabase } from "../components/Icons";
 import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
 import { TodaysNumbers } from "../components/TodaysNumbers";
-import { TrainerPortrait } from "../components/Trainer";
+import { TrainerPicker, TrainerPortrait, useTrainer } from "../components/Trainer";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { ErrorState } from "../components/States";
 import { useToast } from "../components/Toast";
 import { kcal } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { play, setSoundPrefs, soundPrefs, type SoundPrefs } from "../lib/sound";
-import { TRAINER_NAME } from "../lib/trainer";
 import { isOffline, useApi } from "../lib/useApi";
 import { ProfileForm } from "./Onboarding";
 
 const stagger = (i: number): CSSProperties => ({ ["--i" as string]: i }) as CSSProperties;
 
 const SHORTCUTS: [string, string][] = [
-  ["Ctrl+K", "Command bar: log a set (\"bench 80x5 @8\"), a hold, a meal or your weight, open a page, or ask the Coach"],
+  ["Ctrl+K", "Command bar: log a set (\"bench 80x5 @8\"), a hold, a meal or your weight, open a page, or ask your trainer"],
   ["Ctrl+1 … Ctrl+9, Ctrl+0", "Open a page, in sidebar order"],
   ["Tab / Shift+Tab", "Move between controls; the first Tab offers “Skip to content”"],
   ["Alt+← / Alt+→", "Back / forward between pages"],
@@ -42,6 +41,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData, onErased }: { 
   const tdee = useApi(() => api.tdee(7), [profile.data]);
   const toast = useToast();
   const { settings, update } = usePrefs();
+  const trainer = useTrainer();
   const aiEnabled = settings.ai_enabled;
 
   async function save(patch: Partial<Settings>, message: string) {
@@ -115,7 +115,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData, onErased }: { 
               <span>
                 Trainer
                 <br />
-                <span className="text-xs text-muted">{TRAINER_NAME} speaks your insights. Off shows the same facts in plain System style.</span>
+                <span className="text-xs text-muted">{trainer.name} speaks your insights. Off shows the same facts in plain System style.</span>
               </span>
             </span>
             <input
@@ -129,6 +129,34 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData, onErased }: { 
         </section>
       </div>
       <div className="col-span-12 space-y-5 md:col-span-6 2xl:col-span-7">
+        <section className="card rise-in space-y-4 p-5" style={stagger(4)} aria-labelledby="trainer-title" id="trainer">
+          <h2 id="trainer-title" className="card-title">Your trainer</h2>
+          <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
+          <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />
+        </section>
+        <section className="card rise-in space-y-4 p-5" style={stagger(4)} aria-labelledby="privacy-title" id="privacy">
+          <h2 id="privacy-title" className="card-title">Privacy & photos</h2>
+          <label className="flex items-center justify-between gap-4">
+            <span className="text-sm text-ink">
+              Hide calories
+              <br />
+              <span className="text-xs text-muted">Hides calorie numbers across the app. Targets still work underneath; protein stays visible.</span>
+            </span>
+            <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.hide_calories)}
+              onChange={(e) => save({ hide_calories: e.target.checked }, e.target.checked ? "Calories hidden" : "Calories shown")} />
+          </label>
+          <label className="flex items-center justify-between gap-4">
+            <span className="text-sm text-ink">
+              Progress photo feedback (local AI)
+              <br />
+              <span className="text-xs text-muted">Off by default. Compares two of your photos with a vision model on this PC. Never estimates body fat or weight, never comments on looks. Not available under 18.</span>
+            </span>
+            <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.photo_feedback)} data-testid="photo-feedback-toggle"
+              disabled={p.age < 18}
+              onChange={(e) => save({ photo_feedback: e.target.checked }, e.target.checked ? "Photo feedback: on" : "Photo feedback: off")} />
+          </label>
+          {p.age < 18 && <p className="text-xs text-muted" data-testid="photo-feedback-minor">Photo feedback is off for under-18s.</p>}
+        </section>
         <section className="card rise-in space-y-4 p-5" style={stagger(4)} aria-labelledby="units-title">
           <h2 id="units-title" className="card-title">Units & training</h2>
           <div className="flex items-center justify-between gap-4">
@@ -199,6 +227,8 @@ const SECTIONS: [string, string][] = [
   ["ai-title", "AI setup"],
   ["online-title", "Online research"],
   ["appearance-title", "Appearance"],
+  ["trainer-title", "Your trainer"],
+  ["privacy-title", "Privacy & photos"],
   ["units-title", "Units & training"],
   ["data-title", "Your data"],
   ["erase-title-section", "Start fresh"],

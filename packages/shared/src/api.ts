@@ -616,6 +616,10 @@ export interface Settings {
   trainer?: boolean;
   /** v1.1: which trainer speaks. */
   trainer_id?: TrainerId;
+  /** v1.1: hide calorie numbers across the app (targets still work underneath). */
+  hide_calories?: boolean;
+  /** v1.1: local AI feedback on progress photos. Off by default; always off under 18. */
+  photo_feedback?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------

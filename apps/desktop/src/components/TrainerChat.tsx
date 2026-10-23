@@ -11,8 +11,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "../api/client";
 import { fallbackLabel } from "../lib/fallback";
 import { useOptionalPrefs } from "../lib/prefs";
-import { TRAINER_NAME, type TrainerMood } from "../lib/trainer";
-import { TrainerPortrait } from "./Trainer";
+import { type TrainerMood } from "../lib/trainer";
+import { TrainerPortrait, useTrainer } from "./Trainer";
 
 export const START_SUGGESTIONS = ["Give me a tour", "What can you do?", "What should I train today?", "How does XP work?"];
 
@@ -46,6 +46,7 @@ export function TrainerChat({
   greeting?: string;
 }) {
   const prefs = useOptionalPrefs();
+  const trainer = useTrainer();
   const aiOn = prefs?.settings.ai_enabled !== false;
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
@@ -127,7 +128,7 @@ export function TrainerChat({
       <header className="flex items-center gap-3 border-b border-line px-4 py-3">
         <TrainerPortrait mood={(last?.role === "trainer" && last.mood) || "neutral"} size={40} />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-semibold text-ink">{TRAINER_NAME}</h2>
+          <h2 className="truncate text-sm font-semibold text-ink">{trainer.name}</h2>
           <p className="text-[11px] text-muted">{aiOn ? "Rules first, local AI for the rest" : "AI off · answering from my notes"}</p>
         </div>
         <button type="button" onClick={onClose} className="rounded-md px-2 py-1 text-muted hover:bg-panel-2 hover:text-ink" aria-label="Close chat">
@@ -139,7 +140,7 @@ export function TrainerChat({
         {msgs.map((m) => (
           <li key={m.id} className={m.role === "user" ? "flex justify-end" : "flex"}>
             <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${m.role === "user" ? "bg-accent/15 text-ink" : "border border-line-2 bg-panel-2/80 text-ink"}`}>
-              {m.role === "trainer" && <span className="sr-only">{TRAINER_NAME}: </span>}
+              {m.role === "trainer" && <span className="sr-only">{trainer.name}: </span>}
               {m.notice && <span className="mb-1 block text-[10px] uppercase tracking-wider text-accent">Noticed</span>}
               <p className="whitespace-pre-wrap">{m.text}</p>
               {m.reply?.fallback_reason && <p className="mt-1 text-[11px] text-muted">{fallbackLabel(m.reply.fallback_reason)}</p>}
@@ -197,10 +198,10 @@ export function TrainerChat({
 }
 
 /** Top-bar button that opens the chat, with a dot for unread notices. */
-export function TrainerChatButton({ onOpen, unread = 0, icon }: { onOpen: () => void; unread?: number; icon: string }) {
+export function TrainerChatButton({ onOpen, unread = 0, icon, name = "your trainer" }: { onOpen: () => void; unread?: number; icon: string; name?: string }) {
   return (
     <button type="button" onClick={onOpen} data-tour="trainer"
-      title={`Chat with ${TRAINER_NAME}`}
+      title={`Chat with ${name}`}
       aria-label={unread ? `Trainer chat, ${unread} new` : "Trainer chat"}
       className="relative flex items-center gap-2 rounded-full border border-accent/50 px-2 py-1 text-xs text-ink transition-colors hover:bg-accent/10">
       <img src={icon} alt="" width={22} height={22} className="rounded-full" />
