@@ -1,16 +1,21 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
-import type { Settings } from "@ascend/shared";
+import type { ChatAction, EraseResult, Settings } from "@ascend/shared";
 
 import { api } from "./api/client";
 import { Layout, type Page } from "./components/Layout";
 import { CommandBar, CommandButton, isCommandKey } from "./components/CommandBar";
 import { ErrorState, Loading } from "./components/States";
 import { SystemEvents } from "./components/SystemEvents";
-import { ToastProvider } from "./components/Toast";
+import { FirstRunCard } from "./components/FirstRun";
+import { ToastProvider, useToast } from "./components/Toast";
+import { TourOverlay } from "./components/Tour";
+import { TrainerChat, TrainerChatButton } from "./components/TrainerChat";
 import { XpStatus } from "./components/XpChip";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { usePageShortcuts } from "./lib/shortcuts";
+import { tourFor, type Tour } from "./lib/tours";
+import { TRAINER_ICON } from "./lib/trainer";
 import { useApi } from "./lib/useApi";
 import { DashboardPage } from "./pages/Dashboard";
 
@@ -109,15 +114,45 @@ export default function App() {
             <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
           </Suspense>
         ) : (
-          <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} />
+          <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} onErased={() => { setHasProfile(false); bump(); }} />
         )}
       </ToastProvider>
     </PrefsProvider>
   );
 }
 
-function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void }) {
+function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void; onErased: () => void }) {
   const { settings, update } = usePrefs();
+  const toast = useToast();
+  // Trainer: chat drawer, guided tours, the one-time 1.1 welcome and the watcher's unread count.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [tour, setTour] = useState<Tour | null>(null);
+  const trainerState = useApi(api.trainerState, [refreshKey]);
+  const feed = useApi(api.trainerFeed, [refreshKey, chatOpen]);
+  const [welcomeDone, setWelcomeDone] = useState(false);
+  const markOnboarded = () => {
+    setWelcomeDone(true);
+    void api.updateTrainerState({ onboarded: true }).catch(() => undefined);
+  };
+  const startTour = useCallback((target: string | null) => {
+    const t = tourFor(target);
+    if (!t) return;
+    setChatOpen(false);
+    if (t.page) navigate(t.page);
+    // Let the page render its elements before the spotlight measures them.
+    window.setTimeout(() => setTour(t), 60);
+  }, [navigate]);
+  const onChatAction = (a: ChatAction) => {
+    if (a.kind === "navigate" && a.target && a.target in TITLES) {
+      navigate(a.target as Page);
+    } else if (a.kind === "tour") {
+      startTour(a.target);
+    }
+  };
+  const erased = (r: EraseResult) => {
+    toast(r.safety_backup ? "Your data was erased. A backup was saved first." : "Your data was erased.", "info");
+    onErased();
+  };
   usePageShortcuts(navigate);
   // Ctrl+K (Cmd+K on a Mac) opens the command bar from anywhere.
   const [commandOpen, setCommandOpen] = useState(false);
@@ -143,7 +178,13 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
   return (
     <Layout page={page} onNavigate={navigate} aiEnabled={aiEnabled} onToggleAi={toggleAi} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
-      aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}>
+      aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}
+      trainer={<TrainerChatButton icon={TRAINER_ICON} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
+      <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction} />
+      {tour && <TourOverlay tour={tour} onDone={() => { void api.updateTrainerState({ tour_done: tour.id }).catch(() => undefined); setTour(null); }} />}
+      {trainerState.data && !trainerState.data.onboarded && !welcomeDone && !tour && (
+        <FirstRunCard state={trainerState.data} onDone={markOnboarded} onTour={() => { markOnboarded(); startTour("app"); }} onErased={erased} />
+      )}
       <SystemEvents game={game.data ?? undefined} notices={api.notices} />
       <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} onChanged={bump} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
@@ -158,7 +199,7 @@ function Shell({ page, navigate, refreshKey, bump }: { page: Page; navigate: (p:
       {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
-      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} />}
+      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} onErased={erased} />}
       </Suspense>
       </div>
     </Layout>

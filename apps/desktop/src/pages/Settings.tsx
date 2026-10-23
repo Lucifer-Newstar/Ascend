@@ -1,13 +1,15 @@
 /**
  * Settings (12-column grid): a sticky section index (3 columns) beside the settings cards
- * (9 columns): profile and targets, AI coach, online research, appearance, units, your data,
- * shortcuts and about.
+ * (9 columns): profile and targets, AI setup, online research, appearance, units, your data,
+ * start fresh, shortcuts and about.
  */
-import type { Settings } from "@ascend/shared";
+import type { EraseResult, Settings } from "@ascend/shared";
 import { useState, type CSSProperties } from "react";
 
 import { api } from "../api/client";
+import { AiSetupPanel } from "../components/AiSetupPanel";
 import { BackupsPanel } from "../components/BackupsPanel";
+import { EraseDataPanel } from "../components/EraseData";
 import { IconDatabase } from "../components/Icons";
 import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
@@ -34,7 +36,7 @@ const SHORTCUTS: [string, string][] = [
   ["Esc", "Close an open detail panel"],
 ];
 
-export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi: () => void; onChanged: () => void; onOpenData: () => void }) {
+export function SettingsPage({ onToggleAi, onChanged, onOpenData, onErased }: { onToggleAi: () => void; onChanged: () => void; onOpenData: () => void; onErased?: (r: EraseResult) => void }) {
   const profile = useApi(api.profile, []);
   // Fuel uses the adaptive weekly target once tdee-v1 has set one (ADR-0018); say so here too.
   const tdee = useApi(() => api.tdee(7), [profile.data]);
@@ -81,13 +83,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
         </p>
       </section>
       <div className="col-span-12 space-y-5 md:col-span-6 2xl:col-span-5">
-        <section className="card rise-in p-5" style={stagger(2)} aria-labelledby="ai-title">
-          <h2 id="ai-title" className="card-title mb-3">AI coach</h2>
-          <label className="flex items-center justify-between gap-4">
-            <span className="text-sm text-ink">Use local AI (Ollama · qwen3:4b)<br /><span className="text-xs text-muted">Off = rule-based tips only. Nothing leaves this PC either way.</span></span>
-            <input type="checkbox" className="h-5 w-5 accent-accent" checked={Boolean(aiEnabled)} onChange={onToggleAi} />
-          </label>
-        </section>
+        <AiSetupPanel aiEnabled={Boolean(aiEnabled)} onToggleAi={onToggleAi} onChanged={onChanged} />
         <OnlineResearch enabled={Boolean(settings.online_lookup)} onChange={(on) => save({ online_lookup: on }, on ? "Online research: on" : "Online research: off")} />
         <section className="card rise-in space-y-4 p-5" style={stagger(3)} aria-labelledby="appearance-title">
           <h2 id="appearance-title" className="card-title">Appearance</h2>
@@ -166,6 +162,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
           <p className="mb-3 text-sm text-muted">Import history from Strong or Hevy, or export everything you logged.</p>
           <button type="button" className="btn-ghost" onClick={onOpenData}><IconDatabase width={16} height={16} /> Open Import & export</button>
         </section>
+        {onErased && <EraseDataPanel onErased={onErased} />}
         <section className="card rise-in p-5" style={stagger(5)} aria-labelledby="numbers-title" id="todays-numbers">
           <h2 id="numbers-title" tabIndex={-1} className="card-title mb-1 outline-none">Today&apos;s numbers</h2>
           <p className="mb-3 text-sm text-muted">Every number on Today, the engine that computed it and the data behind it. Numbers marked rough rest on too little data so far.</p>
@@ -199,11 +196,12 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData }: { onToggleAi
 
 const SECTIONS: [string, string][] = [
   ["profile-title", "Profile & targets"],
-  ["ai-title", "AI coach"],
+  ["ai-title", "AI setup"],
   ["online-title", "Online research"],
   ["appearance-title", "Appearance"],
   ["units-title", "Units & training"],
   ["data-title", "Your data"],
+  ["erase-title-section", "Start fresh"],
   ["numbers-title", "Today's numbers"],
   ["backups-title", "Backups"],
   ["keys-title", "Keyboard shortcuts"],

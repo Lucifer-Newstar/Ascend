@@ -42,6 +42,14 @@ import type {
   WorkoutSet,
   CoachReply,
   CoachStatus,
+  CoachWarm,
+  ChatReply,
+  TrainerFeed,
+  TrainerState,
+  KbEntry,
+  AiSetup,
+  AiTest,
+  EraseResult,
   Dashboard,
   DayLog,
   Exercise,
@@ -215,6 +223,20 @@ export const api = {
   coachStatus: () => call<CoachStatus>("GET", "/coach/status"),
   coachTip: () => call<CoachReply>("GET", "/coach/tip"),
   coachAsk: (question: string) => call<CoachReply>("POST", "/coach/ask", { question }),
+  coachWarm: () => call<CoachWarm>("POST", "/coach/warm"),
+
+  trainerChat: (text: string) => call<ChatReply>("POST", "/trainer/chat", { text }),
+  trainerFeed: () => call<TrainerFeed>("GET", "/trainer/feed"),
+  trainerFeedRead: (ids: number[] | null = null) => call<null>("POST", "/trainer/feed/read", { ids }),
+  trainerState: () => call<TrainerState>("GET", "/trainer/state"),
+  updateTrainerState: (patch: { onboarded?: boolean; tour_done?: string }) => call<TrainerState>("PUT", "/trainer/state", patch),
+  trainerKb: () => call<KbEntry[]>("GET", "/trainer/kb"),
+
+  aiSetup: () => call<AiSetup>("GET", "/ai/setup"),
+  aiModel: (model: string | null) => call<AiSetup>("PUT", "/ai/model", { model }),
+  aiTest: () => call<AiTest>("POST", "/ai/test"),
+  /** "Start fresh": deletes the user's data after a safety backup; keeps the library. */
+  eraseData: (keep_preferences = true) => call<EraseResult>("POST", "/data/erase", { confirm: "erase", keep_preferences }),
 
   bodyMetrics: (days = 90) => call<BodyMetric[]>("GET", `/body-metrics?days=${days}`),
   logWeight: (weight_kg: number, waist_cm?: number | null) =>

@@ -21,6 +21,7 @@ vi.mock("../api/client", () => ({
     backups: vi.fn().mockResolvedValue([]),
     clearOnlineLog: vi.fn().mockResolvedValue(undefined),
     tdee: vi.fn().mockResolvedValue({ algo_version: "tdee-v1", target_source: "adaptive", target_kcal: 2790 }),
+    aiSetup: vi.fn().mockRejectedValue(new Error("engine offline")),
   },
 }));
 

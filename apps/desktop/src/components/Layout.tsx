@@ -23,7 +23,7 @@ const GROUP_ENDS = new Set<Page>(["skills", "history", "coach"]);
 
 export type AiState = "on" | "rules" | "off";
 
-export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status, onlineResearch = false, aiState, aiModel, command }: {
+export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, title, subtitle, status, onlineResearch = false, aiState, aiModel, command, trainer }: {
   page: Page;
   onNavigate: (p: Page) => void;
   aiEnabled: boolean | null;
@@ -39,6 +39,8 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
   aiModel?: string | null;
   /** The command bar opener (Ctrl+K). */
   command?: ReactNode;
+  /** The trainer chat opener (defaults to the trainer voice switch). */
+  trainer?: ReactNode;
   children: ReactNode;
 }) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -80,7 +82,7 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
             const key = i === 9 ? 0 : i + 1;
             return (
               <li key={id} className={GROUP_ENDS.has(id) ? "mb-2 border-b border-line pb-2" : undefined}>
-              <button type="button" onClick={() => onNavigate(id)} aria-current={active ? "page" : undefined}
+              <button type="button" onClick={() => onNavigate(id)} aria-current={active ? "page" : undefined} data-tour={`nav-${id}`}
                 title={`${label} (Ctrl+${key})`} aria-keyshortcuts={`Control+${key}`}
                 className={`group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-150 ${active ? "bg-accent/10 font-medium text-accent" : "text-muted hover:bg-panel-2 hover:text-ink"}`}>
                 {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-accent" />}
@@ -115,14 +117,14 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
               Online research on
             </button>
           )}
-          {status}
-          <TrainerToggle />
+          {status && <span data-tour="xp">{status}</span>}
+          {trainer ?? <TrainerToggle />}
           <AiStatusDot aiEnabled={aiEnabled} state={aiState} model={aiModel} onToggle={onToggleAi} />
-          {command}
+          {command && <span data-tour="command">{command}</span>}
           </div>
         </header>
         {/* tabIndex 0: a page with no controls (e.g. a long History) must still scroll from the keyboard. */}
-        <main ref={main} id="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
+        <main ref={main} id="main" data-tour="main" tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-8 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">{children}</main>
       </div>
     </div>
   );
@@ -140,7 +142,7 @@ function AiStatusDot({ aiEnabled, state, model, onToggle }: { aiEnabled: boolean
   const w = AI_WORDS[s];
   return (
     <button type="button" onClick={onToggle} disabled={aiEnabled === null} role="switch" aria-checked={Boolean(aiEnabled)}
-      aria-label={s === "rules" ? "AI coach (model not running, rule-based tips)" : "AI coach"} data-ai-state={s}
+      aria-label={s === "rules" ? "AI coach (model not running, rule-based tips)" : "AI coach"} data-ai-state={s} data-tour="ai"
       className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-xs text-muted transition-colors duration-150 hover:border-accent/50 hover:text-ink"
       title={`${w.tip}${model && s === "on" ? ` Model: ${model}.` : ""} Click to turn AI ${aiEnabled ? "off" : "on"}.`}>
       <span className={`h-2 w-2 rounded-full ${w.dot}`} aria-hidden="true" />

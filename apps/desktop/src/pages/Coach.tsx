@@ -11,6 +11,7 @@ import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { IconSpark } from "../components/Icons";
 import { PageGrid, Panel } from "../components/Page";
 import { TrainerPortrait, useTrainerOn } from "../components/Trainer";
+import { replySourceLabel } from "../lib/fallback";
 import { moodFor } from "../lib/trainer";
 import { useApi } from "../lib/useApi";
 
@@ -21,11 +22,6 @@ interface Msg {
   /** Set on a failed answer: the question to resend with Retry. */
   failedQuestion?: string;
 }
-
-const FALLBACK_LABEL: Record<string, string> = {
-  ai_disabled: "AI is off, so this is a rule-based tip.",
-  ollama_unavailable: "Local AI not found (start Ollama and run `ollama pull qwen3:4b`). Showing a rule-based tip.",
-};
 
 export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null; refreshKey: number }) {
   const trainer = useTrainerOn();
@@ -121,7 +117,7 @@ export function CoachPage({ aiEnabled, refreshKey }: { aiEnabled: boolean | null
                 )}
                 {m.reply && (
                   <div className="mt-1.5 text-[11px] text-faint">
-                    {m.reply.source === "ollama" ? `Local AI · ${m.reply.model}` : FALLBACK_LABEL[m.reply.fallback_reason ?? ""] ?? "Rule-based tip (AI didn't answer in time)."}
+                    {replySourceLabel(m.reply)}
                   </div>
                 )}
               </div>

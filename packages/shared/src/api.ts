@@ -573,7 +573,11 @@ export interface CoachReply {
   text: string;
   tip_code: string;
   model: string | null;
-  /** "ai_disabled", "ollama_unavailable", "ollama_error: …" or "check_failed: numbers|banned". */
+  /**
+   * Why a rule-based answer stands in for the model's: "ai_disabled", "ollama_unavailable",
+   * "timeout", "model_error" or "guard_rejected". A tip_code starting "trainer:" means the
+   * question was answered by the trainer's rules (not a training question).
+   */
   fallback_reason: string | null;
   /** Validator results for a model reply, e.g. {numbers: "pass", banned: "pass"}. */
   checks?: Record<string, string> | null;
@@ -610,6 +614,8 @@ export interface Settings {
   online_lookup?: boolean;
   /** v8: insights spoken by the trainer character; false = plain System mode. Default true. */
   trainer?: boolean;
+  /** v1.1: which trainer speaks. */
+  trainer_id?: TrainerId;
 }
 
 // --- progress ---------------------------------------------------------------------
@@ -1061,4 +1067,101 @@ export interface RestoreResult {
   backup_created_at: string;
   schema_revision: string;
   safety_backup: string;
+}
+
+// --- trainer (v1.1) ------------------------------------------------------------------
+
+export type TrainerId = "iskra" | "vera" | "kai" | "dario";
+export type TrainerMoodName = "neutral" | "proud" | "warning" | "hyped";
+export type FallbackReason = "ai_disabled" | "ollama_unavailable" | "timeout" | "model_error" | "guard_rejected";
+
+export interface ChatAction {
+  kind: "navigate" | "tour" | "planner" | "trainer_picker" | "proposal" | "share";
+  target: string | null;
+  label: string;
+}
+
+export interface ChatReply {
+  reply: string;
+  mood: TrainerMoodName;
+  intent: string;
+  source: "rules" | "faq" | "ollama";
+  fallback_reason: FallbackReason | null;
+  actions: ChatAction[];
+  suggestions: string[];
+  faq_id: string | null;
+  proposal: Record<string, unknown> | null;
+}
+
+export interface FeedMessage {
+  id: number;
+  kind: string;
+  mood: TrainerMoodName;
+  text: string;
+  action_kind: string | null;
+  action_target: string | null;
+  share: Record<string, unknown> | null;
+  created_at: string;
+  read: boolean;
+}
+
+export interface TrainerFeed {
+  messages: FeedMessage[];
+  unread: number;
+  algo_version: string;
+}
+
+export interface TrainerState {
+  onboarded: boolean;
+  has_profile: boolean;
+  has_history: boolean;
+  demo_data: boolean;
+  trainer_id: TrainerId;
+  tours_done: string[];
+}
+
+export interface KbEntry {
+  id: string;
+  question: string;
+  section: string | null;
+}
+
+export interface EraseResult {
+  erased: Record<string, number>;
+  /** The "pre-erase" safety backup's file name (null for an in-memory database). */
+  safety_backup: string | null;
+}
+
+// --- AI setup (ai-tiers-v1) ------------------------------------------------------------
+
+export interface AiSetup {
+  ai_enabled: boolean;
+  tier: "rules" | "ai";
+  ollama_installed: boolean;
+  ollama_running: boolean;
+  ollama_version: string | null;
+  models: { name: string; size_gb: number }[];
+  model: string;
+  model_installed: boolean;
+  recommended: { model: string | null; size_gb: number | null; reason: string; pull_command: string | null };
+  hardware: { ram_gb: number | null; vram_gb: number | null; gpu: string | null };
+  failures: number;
+  suggestion: string | null;
+  smaller_model: string | null;
+  vision: { model: string; installed: boolean; pull_command: string };
+  algo_version: string;
+}
+
+export interface AiTest {
+  ok: boolean;
+  model: string;
+  seconds: number;
+  reason: FallbackReason | null;
+  reply: string;
+}
+
+export interface CoachWarm {
+  loaded: boolean;
+  model: string;
+  seconds: number;
 }
