@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import { bossArt } from "../lib/bosses";
 import { useAppTheme } from "../lib/prefs";
 import { themeArt } from "../lib/themeArt";
+import { EventBackdrop } from "./EventBackdrop";
 import { SystemWindow } from "./SystemWindow";
 import { TrainerSays, useTrainerOn } from "./Trainer";
 import { bossLine } from "./BossRaid";
@@ -39,7 +40,7 @@ export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => v
   }, [onClose]);
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="boss-screen" role="dialog" aria-modal="true" aria-label={`${boss.name}, weekly boss`}>
-      <div className="event-art" style={art ? { ["--event-bg" as string]: `url(${art})` } : { background: "rgba(0,0,0,0.75)" }} aria-hidden="true" />
+      <EventBackdrop art={art} />
       <div className="relative z-10 grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
         {portrait && (
           <img src={portrait} alt={`${boss.name}, this week's boss`} width={320} height={320} data-testid="boss-screen-art"

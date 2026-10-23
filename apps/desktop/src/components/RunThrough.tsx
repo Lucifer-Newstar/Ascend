@@ -12,6 +12,7 @@ import { count } from "../lib/format";
 import { useKeepAwake } from "../lib/keepAwake";
 import { useAppTheme } from "../lib/prefs";
 import { themeArt } from "../lib/themeArt";
+import { EventBackdrop } from "./EventBackdrop";
 import { ExerciseArt } from "./ExerciseArt";
 import { TrainerPortrait, useTrainerOn } from "./Trainer";
 
@@ -73,7 +74,7 @@ export function RunThrough({
   return createPortal(
     <div ref={root} role="dialog" aria-modal="true" aria-label="Full-screen timer" data-testid="run-through"
       className="fixed inset-0 z-50 flex flex-col bg-bg p-8">
-      <div className="event-art" style={art ? { ["--event-bg" as string]: `url(${art})` } : { background: "var(--color-bg)" }} aria-hidden="true" />
+      <EventBackdrop art={art} solid />
       <div className="relative z-10 flex items-center justify-between">
         <span className="rounded-md bg-panel px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.2em] text-muted">[ Timer ] screen stays awake</span>
         <button type="button" className="btn-ghost bg-panel" onClick={onExit}>Exit (Esc)</button>

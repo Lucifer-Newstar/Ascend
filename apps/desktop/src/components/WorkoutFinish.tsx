@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import { count } from "../lib/format";
 import { useAppTheme } from "../lib/prefs";
 import { themeArt } from "../lib/themeArt";
+import { EventBackdrop } from "./EventBackdrop";
 import { Confetti } from "./Celebrate";
 import { SystemWindow } from "./SystemWindow";
 import { TrainerPortrait, useTrainer, useTrainerOn } from "./Trainer";
@@ -68,7 +69,7 @@ export function WorkoutFinish({ summary, onClose, onToday }: { summary: FinishSu
   const exercises = exerciseList(r);
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="workout-finish">
-      <div className="event-art" style={art ? { ["--event-bg" as string]: `url(${art})` } : { background: "rgba(0,0,0,0.7)" }} aria-hidden="true" />
+      <EventBackdrop art={art} />
       {counted && <Confetti pieces={18} />}
       <div className="relative z-10 grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
         {trainerOn && (
