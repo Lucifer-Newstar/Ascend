@@ -13,7 +13,7 @@ infrastructure.
 ## Primary responsibilities
 
 - Repo tooling: npm workspaces + uv layout, pre-commit (ruff, mypy, eslint, prettier,
-  gitleaks), `.gitattributes`, Dependabot, actions pinned by SHA
+  gitleaks), `.gitattributes`, Dependabot security alerts, actions pinned by SHA
 - **CI** (GitHub Actions): lint → types → unit → integration → migration upgrade tests →
   contract drift → build sidecar → build installer → packaged smoke test; caches; matrix
   `windows-latest` + `ubuntu-latest`
