@@ -27,8 +27,8 @@ export function FirstRunCard({
   useEffect(() => first.current?.focus(), []);
   const hasData = state.has_history;
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(3,7,18,0.6)] p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="welcome-title" className="w-full max-w-lg rounded-xl border border-accent/50 bg-panel p-6 shadow-2xl">
+    <div className="fixed inset-0 z-40 flex overflow-y-auto bg-[rgba(3,7,18,0.6)] p-4" onMouseDown={(e) => { if (e.target === e.currentTarget && !erasing) onDone(); }}>
+      <div role="dialog" aria-modal="true" aria-labelledby="welcome-title" className="m-auto w-full max-w-lg rounded-xl border border-accent/50 bg-panel p-6 shadow-2xl">
         <div className="flex items-start gap-4">
           <TrainerPortrait mood="hyped" size={88} />
           <div className="min-w-0">

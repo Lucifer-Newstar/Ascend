@@ -138,7 +138,7 @@ export function SystemWindow({
       aria-labelledby={labelledBy ?? headerId}
       aria-describedby={describedBy}
       tabIndex={modal ? -1 : undefined}
-      className={`sys-window ${modal ? "w-full max-w-md" : ""} ${className}`}
+      className={`sys-window ${modal ? "m-auto w-full max-w-md" : ""} ${className}`}
       style={style}
       data-variant={variant}
       data-motion={reduce ? "reduced" : "full"}
@@ -164,7 +164,7 @@ export function SystemWindow({
 
   if (!modal) return body;
   return (
-    <div className="sys-backdrop fixed inset-0 z-50 grid place-items-center p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose?.(); }}>
+    <div className="sys-backdrop fixed inset-0 z-50 flex overflow-y-auto p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose?.(); }}>
       {body}
     </div>
   );

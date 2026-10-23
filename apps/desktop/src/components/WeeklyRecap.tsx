@@ -102,13 +102,13 @@ export function RecapPlayer({ recap, onClose }: { recap: WeekRecap; onClose: () 
   // A portal, so a parent card's transform can't pin the full-screen player inside it.
   return createPortal(
     <div role="dialog" aria-modal="true" aria-labelledby="recap-player-title" data-testid="recap-player"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg p-6">
-      <div className="w-full max-w-4xl space-y-3 rounded-xl border border-line bg-panel p-4">
+      className="fixed inset-0 z-50 flex overflow-y-auto bg-bg p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="m-auto w-full max-w-4xl space-y-3 rounded-xl border border-line bg-panel p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 id="recap-player-title" className="card-title">Your week · {weekLabel(recap)}</h2>
           <button type="button" className="btn-ghost" onClick={onClose}>Close</button>
         </div>
-        <canvas ref={canvas} width={RECAP_W} height={RECAP_H} className="aspect-video w-full rounded-lg border border-line"
+        <canvas ref={canvas} width={RECAP_W} height={RECAP_H} className="mx-auto block aspect-video w-full max-w-[calc((100vh_-_12rem)*16/9)] rounded-lg border border-line"
           role="img" aria-label={slides.map((s) => `${s.kicker}: ${s.count !== undefined ? `${s.count} ${s.unit ?? ""}` : s.big}. ${s.lines.join(" ")}`).join(" ")} />
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className="btn-ghost" onClick={() => setRun((n) => n + 1)}>Replay</button>

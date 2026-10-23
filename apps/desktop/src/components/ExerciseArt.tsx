@@ -8,10 +8,14 @@
  * end position) as a smooth 2-frame loop; `loop="hover"` plays it only while the card is
  * hovered. Reduce motion shows the first frame only. `formTips` turns the library's
  * instructions into three short tips.
+ *
+ * v1.2 part 2: the ~25 most used moves (lib/animations.ts) play a proper looping animation
+ * instead; reduce motion shows its still first frame.
  */
 import { useState, type ReactNode } from "react";
 import type { Exercise, Section } from "@ascend/shared";
 
+import { animationFor } from "../lib/animations";
 import { MUSCLE_PATHS } from "../lib/bodyMapPaths";
 import { muscleShort } from "../lib/muscles";
 import { BodySvg } from "./MuscleFigure";
@@ -157,7 +161,19 @@ export function formTips(instructions: readonly string[] | null | undefined, max
 export function ExerciseArt({ exercise, className = "", loop = false }: { exercise: ArtExercise; className?: string; loop?: boolean | "hover" }) {
   const [broken, setBroken] = useState(false);
   const [noSecond, setNoSecond] = useState(false);
+  const [noAnim, setNoAnim] = useState(false);
+  const anim = loop && !noAnim ? animationFor(exercise) : null;
   const frame2 = loop ? secondFrame(exercise.image) : null;
+  if (anim && !broken) {
+    return (
+      <span className={`exercise-loop relative block w-full overflow-hidden bg-white ${loop === "hover" ? "loop-on-hover" : ""} ${className}`} data-testid="exercise-anim">
+        <img src={anim.still} alt="" loading="lazy" decoding="async" data-testid="exercise-photo" onError={() => setBroken(true)}
+          className="absolute inset-0 h-full w-full object-contain" />
+        <img src={anim.anim} alt="" loading="lazy" decoding="async" data-testid="exercise-anim-img" onError={() => setNoAnim(true)}
+          className="exercise-anim absolute inset-0 h-full w-full object-contain" />
+      </span>
+    );
+  }
   if (exercise.image && !broken && frame2 && !noSecond) {
     return (
       <span className={`exercise-loop relative block w-full overflow-hidden bg-white ${loop === "hover" ? "loop-on-hover" : ""} ${className}`} data-testid="exercise-loop">

@@ -962,7 +962,7 @@ nav[aria-label="Main"] button:not([aria-current]) svg {
 /* Event screens (level-up, boss, workout finish, timer): bright art behind a dark radial
    scrim, and the big number gets a text shadow, so it reads on every theme. */
 .event-art {
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
   background:
@@ -1087,5 +1087,21 @@ nav[aria-label="Main"] button:not([aria-current]) svg {
   .exercise-frame-2 {
     animation: none;
     opacity: 0;
+  }
+}
+/* v1.2: proper animations for the top moves (animated WebP over its still first frame) */
+.loop-on-hover .exercise-anim {
+  opacity: 0;
+}
+.group:hover .loop-on-hover .exercise-anim,
+.loop-on-hover:hover .exercise-anim {
+  opacity: 1;
+}
+:root[data-motion="reduce"] .exercise-anim {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .exercise-anim {
+    display: none;
   }
 }

@@ -75,7 +75,7 @@ export function RunThrough({
   const pct = resting && restTotal > 0 ? Math.round((restLeft / restTotal) * 100) : 0;
   return createPortal(
     <div ref={root} role="dialog" aria-modal="true" aria-label="Full-screen timer" data-testid="run-through"
-      className="fixed inset-0 z-50 flex flex-col bg-bg p-8">
+      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-bg p-8">
       <EventBackdrop art={art} solid />
       <div className="relative z-10 flex items-center justify-between">
         <span className="rounded-md bg-panel px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.2em] text-muted">[ Timer ] screen stays awake</span>

@@ -5,6 +5,7 @@
  */
 import type { ShareCardText } from "@ascend/shared";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { api } from "../api/client";
 import { copyToClipboard, drawCard, openShareLink, saveImage } from "../lib/share";
@@ -42,15 +43,20 @@ export function ShareDialog({ payload, onClose }: { payload: Record<string, unkn
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(3,7,18,0.6)] p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="share-title" className="w-full max-w-md rounded-xl border border-accent/50 bg-panel p-5 shadow-2xl" data-testid="share-dialog">
-        <h2 id="share-title" className="text-lg font-semibold text-ink">Share</h2>
+  // On <body>, and it scrolls: on a 768 px (or 125 % scaled) screen the card, the buttons and
+  // Close all stay reachable. A click on the backdrop closes it.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex overflow-y-auto bg-[rgba(3,7,18,0.6)] p-4" data-testid="share-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div role="dialog" aria-modal="true" aria-labelledby="share-title" className="m-auto max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-accent/50 bg-panel p-5 shadow-2xl" data-testid="share-dialog">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="share-title" className="text-lg font-semibold text-ink">Share</h2>
+          <button type="button" className="btn-ghost px-3 py-1 text-sm" onClick={onClose}>Close</button>
+        </div>
         {error && <p role="alert" className="mt-2 text-sm text-bad">{error}</p>}
         {card && (
           <>
             {image ? (
-              <img src={image} alt={`${card.title}: ${card.headline}`} className="mt-3 w-full rounded-lg border border-line-2" />
+              <img src={image} alt={`${card.title}: ${card.headline}`} className="mx-auto mt-3 block max-h-[40vh] w-auto max-w-full rounded-lg border border-line-2 object-contain" data-testid="share-image" />
             ) : (
               <div className="mt-3 rounded-lg border border-accent/40 bg-panel-2 p-5" data-testid="share-preview">
                 <p className="text-[11px] uppercase tracking-wider text-accent">{card.title}</p>
@@ -69,10 +75,8 @@ export function ShareDialog({ payload, onClose }: { payload: Record<string, unkn
             <p className="mt-2 text-[11px] text-muted">Only the achievement is on the card: no weight, photos or profile details. Nothing is posted for you.</p>
           </>
         )}
-        <div className="mt-4 flex justify-end">
-          <button type="button" className="btn-ghost" onClick={onClose}>Close</button>
-        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

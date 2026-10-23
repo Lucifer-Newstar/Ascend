@@ -68,10 +68,10 @@ export function WorkoutFinish({ summary, onClose, onToday }: { summary: FinishSu
   const pct = xp && xp.xp_for_next > 0 ? Math.min(100, Math.round((xp.xp_into_level / xp.xp_for_next) * 100)) : 0;
   const exercises = exerciseList(r);
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="workout-finish">
+    <div className="fixed inset-0 z-50 flex overflow-y-auto p-6" data-testid="workout-finish" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <EventBackdrop art={art} />
       {counted && <Confetti pieces={18} />}
-      <div className="relative z-10 grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
+      <div className="relative z-10 m-auto grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
         {trainerOn && (
           <div className="hidden flex-col items-center gap-2 md:flex">
             <TrainerPortrait mood={line.mood} size={220} className="shadow-2xl" />

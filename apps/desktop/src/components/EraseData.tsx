@@ -38,9 +38,9 @@ export function EraseDialog({ onClose, onErased }: { onClose: () => void; onEras
   // Rendered on <body>: inside an animated card the fixed overlay was clipped and the next
   // card painted over its confirm field (v1.1 audit).
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(3,7,18,0.7)] p-4" data-testid="erase-overlay">
+    <div className="fixed inset-0 z-50 flex overflow-y-auto bg-[rgba(3,7,18,0.7)] p-4" data-testid="erase-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
       <div role="alertdialog" aria-modal="true" aria-labelledby="erase-title" aria-describedby="erase-body"
-        className="w-full max-w-md rounded-xl border border-bad/60 bg-panel p-5 shadow-2xl">
+        className="m-auto w-full max-w-md rounded-xl border border-bad/60 bg-panel p-5 shadow-2xl">
         <h2 id="erase-title" className="text-lg font-semibold text-ink">Erase my data</h2>
         <div id="erase-body" className="mt-2 space-y-2 text-sm text-muted">
           <p>This deletes your profile, workouts, meals, weigh-ins, check-ins, XP, quests, photos and custom exercises.</p>

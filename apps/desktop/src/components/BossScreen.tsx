@@ -41,9 +41,9 @@ export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => v
     };
   }, [onClose]);
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="boss-screen" role="dialog" aria-modal="true" aria-label={`${boss.name}, ${boss.seasonal ? "seasonal" : "weekly"} boss`}>
+    <div className="fixed inset-0 z-50 flex overflow-y-auto p-6" data-testid="boss-screen" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} role="dialog" aria-modal="true" aria-label={`${boss.name}, ${boss.seasonal ? "seasonal" : "weekly"} boss`}>
       <EventBackdrop art={art} />
-      <div className="relative z-10 grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
+      <div className="relative z-10 m-auto grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
         {portrait && (
           <img src={portrait} alt={`${boss.name}, this week's boss`} width={320} height={320} data-testid="boss-screen-art"
             className={`mx-auto h-[300px] w-[300px] shrink-0 rounded-2xl border-2 object-cover shadow-2xl ${boss.defeated ? "border-good/70 grayscale" : "border-bad/70"}`} />
