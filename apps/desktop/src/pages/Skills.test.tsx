@@ -1,5 +1,5 @@
 import type { SkillDetail, SkillSummary } from "@ascend/shared";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,7 +8,12 @@ import { ToastProvider } from "../components/Toast";
 import { axeViolations } from "../test/axe";
 import { skillKeyFromHash, SkillsPage } from "./Skills";
 
-vi.mock("../api/client", () => ({ api: { skills: vi.fn(), skill: vi.fn(), trainSkill: vi.fn() } }));
+vi.mock("../api/client", () => ({
+  api: {
+    skills: vi.fn(), skill: vi.fn(), trainSkill: vi.fn(), exercises: vi.fn(),
+    customSkills: vi.fn().mockResolvedValue([]), createCustomSkill: vi.fn(), deleteCustomSkill: vi.fn(),
+  },
+}));
 
 const summary = (over: Partial<SkillSummary> = {}): SkillSummary => ({
   key: "front_lever", name: "Front lever", family: "levers", summary: "Horizontal under the bar, face up.", stretch: false,
@@ -142,5 +147,26 @@ describe("Skill tree canvas", () => {
     expect(within(canvas).getByRole("button", { name: /Tuck front lever/ })).toHaveFocus();
     await userEvent.keyboard("{Home}");
     expect(current).toHaveFocus();
+  });
+
+  it("makes a custom skill from library exercises", async () => {
+    vi.mocked(api.skills).mockResolvedValue([summary()]);
+    vi.mocked(api.skill).mockResolvedValue(detail());
+    vi.mocked(api.exercises).mockResolvedValue([{ id: 41, name: "Hollow Body Hold" } as never]);
+    vi.mocked(api.createCustomSkill).mockResolvedValue({ id: 1, key: "custom_1", name: "Hollow line", family: "core", summary: "", steps: [], created_at: "", updated_at: "" });
+    render(<ToastProvider><SkillsPage onNavigate={vi.fn()} onChanged={vi.fn()} /></ToastProvider>);
+    await userEvent.click(await screen.findByRole("button", { name: "Make a skill" }));
+    await userEvent.type(screen.getByLabelText("Name"), "Hollow line");
+    await userEvent.click(screen.getByRole("button", { name: "Save skill" }));
+    expect(await screen.findByText("Pick an exercise from the list for every step.")).toHaveAttribute("role", "alert");
+    await userEvent.type(screen.getByLabelText("Step 1 exercise"), "hollow");
+    await userEvent.click(await screen.findByRole("button", { name: "Hollow Body Hold" }));
+    await userEvent.click(screen.getByLabelText("Hold"));
+    await userEvent.clear(screen.getByLabelText("Step 1 seconds"));
+    await userEvent.type(screen.getByLabelText("Step 1 seconds"), "30");
+    await userEvent.click(screen.getByRole("button", { name: "Save skill" }));
+    await waitFor(() => expect(api.createCustomSkill).toHaveBeenCalledWith({
+      name: "Hollow line", family: "core", steps: [{ exercise_id: 41, sets: 3, reps: null, hold_s: 30 }],
+    }));
   });
 });

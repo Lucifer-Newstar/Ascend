@@ -372,6 +372,28 @@ export interface SkillSummary {
   last_trained: string | null;
   sessions_28d: number;
   rusty: boolean;
+  /** A tree the user made (v1.1); it tracks like the built-in ones and pays no XP. */
+  custom?: boolean;
+}
+
+export interface CustomSkillStepIn {
+  name?: string;
+  exercise_id: number;
+  sets: number;
+  reps?: number | null;
+  hold_s?: number | null;
+  added_kg?: number;
+}
+
+export interface CustomSkill {
+  id: number;
+  key: string;
+  name: string;
+  family: string;
+  summary: string;
+  steps: { name: string; exercise: string; exercise_id: number; sets: number; reps: number | null; hold_s: number | null; added_kg: number }[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SkillDetail extends SkillSummary {

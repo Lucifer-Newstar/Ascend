@@ -9,6 +9,7 @@ import type { SkillCriterion, SkillDetail, SkillFamily, SkillStep, SkillSummary 
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
+import { CustomSkills } from "../components/CustomSkills";
 import type { Page } from "../components/Layout";
 import { IconCheck, IconLock } from "../components/Icons";
 import { Segmented } from "../components/Segmented";
@@ -101,6 +102,7 @@ function SkillGrid({ onOpen, onNavigate, onChanged }: { onOpen: (key: string) =>
           ))}
         </ul>
       )}
+      <CustomSkills onChanged={() => { list.reload(); onChanged(); }} />
     </div>
   );
 }
