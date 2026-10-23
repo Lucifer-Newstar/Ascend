@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -106,6 +106,10 @@ TrainerId = Literal["iskra", "vera", "kai", "dario"]
 # the v1.2 themes (gamification/themes.py says which are unlocked).
 Theme = Literal["dark", "light", "system", "shadow", "crimson", "frost", "emerald", "solar"]
 BackgroundArt = Literal["on", "dim", "off"]
+AvatarLook = Literal["male", "female"]
+# A cosmetic id from the app's catalog ("" = nothing in that slot). The catalog and its
+# unlock rules live in the app (new item = art + one entry); the sidecar stores the pick.
+CosmeticId = Annotated[str, Field(max_length=40, pattern=r"^[a-z0-9_]*$")]
 
 
 class SettingsOut(BaseModel):
@@ -127,6 +131,14 @@ class SettingsOut(BaseModel):
     photo_feedback: bool = False
     # v1.2: the theme's background art behind the pages: on, dimmed, or off (plain colour).
     background_art: BackgroundArt = "on"
+    # v1.2: the avatar's look (body-neutral: rank shows as gear and aura, never body
+    # changes), what it wears, and whether faith-flavoured themed cosmetics are shown.
+    avatar: AvatarLook = "male"
+    outfit: str = ""
+    relic: str = ""
+    pet: str = ""
+    weapon: str = ""
+    themed_cosmetics: bool = True
 
 
 class SettingsIn(StrictIn):
@@ -143,6 +155,12 @@ class SettingsIn(StrictIn):
     hide_calories: bool | None = None
     photo_feedback: bool | None = None
     background_art: BackgroundArt | None = None
+    avatar: AvatarLook | None = None
+    outfit: CosmeticId | None = None
+    relic: CosmeticId | None = None
+    pet: CosmeticId | None = None
+    weapon: CosmeticId | None = None
+    themed_cosmetics: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

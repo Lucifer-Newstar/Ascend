@@ -1179,6 +1179,47 @@ components:
             - 'off'
           - type: 'null'
           title: Background Art
+        avatar:
+          anyOf:
+          - type: string
+            enum:
+            - male
+            - female
+          - type: 'null'
+          title: Avatar
+        outfit:
+          anyOf:
+          - type: string
+            maxLength: 40
+            pattern: ^[a-z0-9_]*$
+          - type: 'null'
+          title: Outfit
+        relic:
+          anyOf:
+          - type: string
+            maxLength: 40
+            pattern: ^[a-z0-9_]*$
+          - type: 'null'
+          title: Relic
+        pet:
+          anyOf:
+          - type: string
+            maxLength: 40
+            pattern: ^[a-z0-9_]*$
+          - type: 'null'
+          title: Pet
+        weapon:
+          anyOf:
+          - type: string
+            maxLength: 40
+            pattern: ^[a-z0-9_]*$
+          - type: 'null'
+          title: Weapon
+        themed_cosmetics:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Themed Cosmetics
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1249,6 +1290,33 @@ components:
           - 'off'
           title: Background Art
           default: 'on'
+        avatar:
+          type: string
+          enum:
+          - male
+          - female
+          title: Avatar
+          default: male
+        outfit:
+          type: string
+          title: Outfit
+          default: ''
+        relic:
+          type: string
+          title: Relic
+          default: ''
+        pet:
+          type: string
+          title: Pet
+          default: ''
+        weapon:
+          type: string
+          title: Weapon
+          default: ''
+        themed_cosmetics:
+          type: boolean
+          title: Themed Cosmetics
+          default: true
       type: object
       required:
       - ai_enabled

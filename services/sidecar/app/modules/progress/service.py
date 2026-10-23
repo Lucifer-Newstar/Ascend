@@ -15,6 +15,7 @@ from app.modules.nutrition import tdee as tdee_engine
 from app.modules.progress import energy, muscle_load
 from app.modules.progress.models import MuscleLoadEvent, Profile, Setting
 from app.modules.progress.schemas import (
+    AvatarLook,
     BackgroundArt,
     EnergyTargets,
     ProfileIn,
@@ -129,7 +130,21 @@ def read_settings(db: Session) -> SettingsOut:
         hide_calories=get_setting(db, "hide_calories", "false") == "true",
         photo_feedback=get_setting(db, "photo_feedback", "false") == "true" and not _minor(db),
         background_art=cast(BackgroundArt, _art(get_setting(db, "background_art", "on"))),
+        avatar=cast(AvatarLook, _avatar(db, get_setting(db, "avatar", ""))),
+        outfit=get_setting(db, "outfit", ""),
+        relic=get_setting(db, "relic", ""),
+        pet=get_setting(db, "pet", ""),
+        weapon=get_setting(db, "weapon", ""),
+        themed_cosmetics=get_setting(db, "themed_cosmetics", "true") == "true",
     )
+
+
+def _avatar(db: Session, value: str) -> str:
+    """The avatar look you picked, else the one matching your profile, else male."""
+    if value in ("male", "female"):
+        return value
+    p = get_profile(db)
+    return "female" if p is not None and p.sex == "female" else "male"
 
 
 def _art(value: str) -> str:

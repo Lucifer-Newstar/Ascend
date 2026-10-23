@@ -32,6 +32,12 @@ def test_ai_toggle_round_trip(client):
         "trainer_id": "iskra",
         "hide_calories": False,
         "photo_feedback": False,
+        "avatar": "male",
+        "outfit": "",
+        "relic": "",
+        "pet": "",
+        "weapon": "",
+        "themed_cosmetics": True,
     }
     assert client.get("/settings").json() == defaults
     assert client.put("/settings", json={"ai_enabled": True}).json() == {
@@ -57,6 +63,12 @@ def test_settings_partial_update_keeps_other_values(client):
         "hide_calories": False,
         "photo_feedback": False,
         "background_art": "on",
+        "avatar": "male",
+        "outfit": "",
+        "relic": "",
+        "pet": "",
+        "weapon": "",
+        "themed_cosmetics": True,
     }
 
 

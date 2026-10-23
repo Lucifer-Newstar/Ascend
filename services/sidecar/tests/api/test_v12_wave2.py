@@ -125,3 +125,23 @@ def test_the_weekly_boss_says_its_tier_and_season(client: TestClient, profile, c
         assert b["season"] and b["drop"] and b["season_ends"] >= b["week_end"]
     else:
         assert b["season"] is None and b["drop"] is None
+
+
+# --- avatar and cosmetics (items 4-6) -----------------------------------------------------
+
+
+def test_the_avatar_follows_the_profile_until_you_pick_one(client: TestClient, profile) -> None:
+    s = client.get("/settings").json()
+    assert s["avatar"] == "male" and s["outfit"] == "" and s["themed_cosmetics"] is True
+    s = client.put(
+        "/settings", json={"avatar": "female", "outfit": "outfit_ronin", "pet": "pet_tiger_cub"}
+    ).json()
+    assert (s["avatar"], s["outfit"], s["pet"], s["relic"]) == (
+        "female",
+        "outfit_ronin",
+        "pet_tiger_cub",
+        "",
+    )
+    s = client.put("/settings", json={"outfit": "", "themed_cosmetics": False}).json()
+    assert s["outfit"] == "" and s["themed_cosmetics"] is False
+    assert client.put("/settings", json={"outfit": "../evil"}).status_code == 422
