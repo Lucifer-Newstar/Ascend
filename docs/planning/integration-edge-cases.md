@@ -1,5 +1,9 @@
 # Integration Edge Cases — Cross-Member Risk Register
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > Where two lanes meet, things break. This register lists the known seams, what can go
 > wrong, and who guards each. Maintainer: Team Lead. Review at every phase gate.
 > Severity: **H** = blocks a release · **M** = user-visible bug · **L** = annoyance.

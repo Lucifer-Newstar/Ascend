@@ -1,5 +1,9 @@
 # Tracker — through v1.0
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > **Status board for phases 0–3.** Updated by the lead after each weekly sync.
 > Legend: ⬜ not started · 🟨 in progress · ✅ done · ⛔ blocked · ➡ moved (see decision log).
 > Last updated: 2026-10-20 (planning; nothing started).

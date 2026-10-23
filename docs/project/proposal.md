@@ -1,5 +1,9 @@
 # ASCEND — Project Proposal
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > **An offline Windows desktop fitness RPG with an on-device AI coach.**
 > Team project led by Navin Jairam M. Proposal date: 2026-10-20.
 > Source of truth for features and numbers: *ASCEND Product + Engineering Plan v2*

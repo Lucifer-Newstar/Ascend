@@ -1,5 +1,9 @@
 # Product Vision
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > How the finished ASCEND v1.x looks and behaves, from the user's seat. Scope and
 > release split: [features.md](features.md). Mockups (rendered HTML/CSS at 1920×1080)
 > live in the v2 plan; the HTML doubles as the starting point for React components.

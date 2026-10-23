@@ -1,5 +1,9 @@
 # Phase 0 Kickoff
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > The first ASCEND team meeting: what it decides, what everyone leaves with, and the
 > first issues. Facilitator: Navin (script in
 > [kickoff-guide.md](../members/navin-lead/kickoff-guide.md)).

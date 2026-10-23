@@ -1,5 +1,9 @@
 # Roadmap
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > Milestone-level view. Phase detail: [phases.md](../planning/phases.md).
 > Calendar: [timeline.md](../planning/timeline.md). **All dates are estimates.**
 >

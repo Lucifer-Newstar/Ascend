@@ -108,6 +108,14 @@ docs/
 └── screenshots/                   ← app screenshots used by the README
 ```
 
+## 1a. Design-only documents
+
+These describe plans, not the shipped app, and each one opens with a "Design record" note:
+`project/proposal.md`, `project/roadmap.md`, everything in `planning/`, and each member's
+`members/*/phase-plan.md`. The UML diagrams in `architecture/uml/` and the research notes in
+`research/` are design material too. For what the app does today, read the
+[README](../README.md), the [CHANGELOG](../CHANGELOG.md), `architecture/` and `contracts/`.
+
 ## 2. Index by Topic
 
 | Topic | Go to |

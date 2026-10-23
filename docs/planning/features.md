@@ -1,5 +1,9 @@
 # Features — Locked Scope
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > **What ASCEND builds, in which release, who leads it, and how it is accepted.**
 > Source: ASCEND plan v2 §03 "What ships when". Releases: **v1.0** = MVP (~7 Feb 2027,
 > estimate), **v1.1** = within ~6 weeks after, **Later** = real but optional.

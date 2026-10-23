@@ -1,5 +1,9 @@
 # Phases
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > **What each phase delivers, how it is demonstrated, and how lanes hand off.**
 > Dates: [timeline.md](timeline.md) (estimates). Per-member commit-sized tasks: each
 > member's `phase-plan.md` in [members/](../members/README.md).

@@ -1,5 +1,9 @@
 # Dhanush · Frontend Phase Plan
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../../README.md) and the [CHANGELOG](../../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > **Purpose:** my delivery, handoffs and commit-sized tasks by phase. Shared scope: [features](../../planning/features.md). Gates: [phases](../../planning/phases.md). Dates (estimates): [timeline](../../planning/timeline.md). Tick a box when the commit is merged. AI tasks and their design docs: [ai-roadmap](../../ai/ai-roadmap.md).
 
 | Phase | I deliver | I need | Handoff / completion check |

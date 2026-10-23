@@ -1,5 +1,9 @@
 # Timeline
 
+> **Design record, not a description of the shipped app.** Written to plan the build; where it
+> differs from the code, the [README](../../README.md) and the [CHANGELOG](../../CHANGELOG.md) describe what
+> ASCEND 1.1.0 actually does.
+
 > **All dates are estimates**, assuming each member gives ~8–10 hours a week (estimate)
 > around final-year coursework. Exam weeks are not yet known — the lead adjusts this
 > page once the semester calendar is out. Phases: [phases.md](phases.md).
