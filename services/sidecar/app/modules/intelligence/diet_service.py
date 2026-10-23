@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.modules.intelligence import insights as ins
 from app.modules.intelligence import tdee as td
 from app.modules.nutrition.models import Meal, MealItem
+from app.modules.nutrition.tdee import energy_goal
 from app.modules.progress import service as progress
 from app.modules.progress.models import BodyMetric
 
@@ -27,7 +28,8 @@ def profile_input(db: Session) -> td.Profile | None:
         height_cm=p.height_cm,
         weight_kg=p.weight_kg,
         activity=p.activity,
-        goal=p.goal,
+        # tdee-v1 and insights-v1 work to this goal: no deficit under 18 or below BMI 18.5
+        goal=energy_goal(p.goal, p.weight_kg, p.height_cm, p.age),
     )
 
 

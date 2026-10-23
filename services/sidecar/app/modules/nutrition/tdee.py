@@ -39,6 +39,24 @@ def tdee(bmr: float, activity: Activity) -> float:
     return bmr * ACTIVITY_FACTORS[activity]
 
 
+# The planner's own safety lines (planner/validate.py): no deficit for a growing body and
+# none below a healthy BMI. The daily target follows them too.
+ADULT_AGE = 18
+MIN_BMI_FOR_DEFICIT = 18.5
+
+
+def energy_goal(goal: str, weight_kg: float, height_cm: float, age: int) -> str:
+    """The goal the calorie target is worked out for: "cut" counts as "maintain" under 18
+    or below a BMI of 18.5, so a "lose fat" choice never sets a deficit there."""
+    if goal != "cut":
+        return goal
+    if age < ADULT_AGE:
+        return "maintain"
+    if height_cm > 0 and weight_kg / (height_cm / 100) ** 2 < MIN_BMI_FOR_DEFICIT:
+        return "maintain"
+    return goal
+
+
 def calorie_target(tdee_kcal: float, goal: Goal) -> int:
     # Never recommend below 1200 kcal: a safety floor, not a target.
     return max(1200, round(tdee_kcal + GOAL_ADJUSTMENT[goal]))

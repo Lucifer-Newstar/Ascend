@@ -3,6 +3,7 @@ import pytest
 from app.modules.nutrition.tdee import (
     bmr_mifflin_st_jeor,
     calorie_target,
+    energy_goal,
     protein_target_g,
     tdee,
 )
@@ -38,3 +39,11 @@ def test_invalid_inputs_raise():
 
 def test_protein_target():
     assert protein_target_g(70, "bulk") == 112
+
+
+def test_no_deficit_below_bmi_18_5_or_under_18():
+    # 45 kg at 170 cm is a BMI of 15.6: "lose fat" must not set a 500 kcal deficit
+    assert energy_goal("cut", 45, 170, 21) == "maintain"
+    assert energy_goal("cut", 70, 175, 16) == "maintain"
+    assert energy_goal("cut", 70, 175, 21) == "cut"
+    assert energy_goal("bulk", 45, 170, 21) == "bulk"

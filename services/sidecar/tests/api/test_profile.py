@@ -10,6 +10,23 @@ def test_onboarding_computes_estimated_targets(client, profile):
     assert e["is_estimate"] is True
 
 
+def test_underweight_lose_fat_gets_a_maintenance_target_not_a_deficit(client):
+    """QA pass 4: 45 kg at 170 cm (BMI 15.6) picking "Lose fat" got 1,442 kcal, a 500 kcal
+    deficit, although the planner refuses deficits below a BMI of 18.5."""
+    body = {
+        "age": 21,
+        "sex": "male",
+        "height_cm": 170,
+        "weight_kg": 45,
+        "goal": "cut",
+        "activity": "sedentary",
+    }
+    e = client.put("/profile", json=body).json()["energy"]
+    assert e["kcal_target"] == e["tdee"]
+    adaptive = client.get("/intelligence/tdee").json()
+    assert adaptive["formula_target_kcal"] == e["tdee"]
+
+
 def test_profile_validation(client):
     r = client.put(
         "/profile",

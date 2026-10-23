@@ -57,7 +57,13 @@ def energy_for(profile: Profile) -> EnergyTargets:
     return EnergyTargets(
         bmr=round(bmr),
         tdee=round(total),
-        kcal_target=tdee_engine.calorie_target(total, goal),
+        kcal_target=tdee_engine.calorie_target(
+            total,
+            cast(
+                tdee_engine.Goal,
+                tdee_engine.energy_goal(goal, profile.weight_kg, profile.height_cm, profile.age),
+            ),
+        ),
         protein_target_g=tdee_engine.protein_target_g(profile.weight_kg, goal),
         formula_version=tdee_engine.FORMULA_VERSION,
     )
