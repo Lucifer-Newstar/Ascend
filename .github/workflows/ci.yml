@@ -1,6 +1,8 @@
 # Continuous integration: runs on every push and pull request.
 #
 # Jobs (independent ones run in parallel):
+#   commits   -> commitlint over the pushed commits
+#   docs      -> every relative link in the repo's Markdown files resolves (scripts/check_md_links.py)
 #   sidecar   -> ruff lint + format check, mypy, pytest (with coverage), Alembic upgrade check,
 #                contract drift (OpenAPI vs docs/contracts)
 #   desktop   -> eslint, tsc (renderer + Electron + shared), vitest, vite build
@@ -8,7 +10,8 @@
 #   docker    -> hadolint, compose config for every profile, tests in the test image, and the
 #                runtime image started read-only / non-root until it reports healthy
 #
-# The Windows installer lives in release.yml (it is slow, so it runs on tags / manually).
+# The Windows installer lives in release.yml (pushes to main that touch the app, version tags,
+# manual runs).
 name: CI
 
 on:
@@ -48,6 +51,14 @@ jobs:
       - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
         with:
           configFile: commitlint.config.mjs
+
+  docs:
+    name: Docs (relative Markdown links)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check relative links
+        run: python3 scripts/check_md_links.py
 
   sidecar:
     name: Sidecar (lint, types, tests) · ${{ matrix.os }}
