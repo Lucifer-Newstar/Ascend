@@ -3,6 +3,10 @@
 `record` stores an event in events_outbox inside the caller's transaction, so an event
 exists exactly when the change that caused it was committed. Readers (the /events
 stream, the dispatcher below) work from the table, never from memory.
+
+Status (v1.1.0): wired but unused. No consumer is registered (app.state.outbox_consumers
+is empty) and the desktop app does not subscribe to /events yet; it refreshes by request.
+Kept for the planned live updates (docs/contracts/ipc-contract.md §3, events:subscribe).
 """
 
 from __future__ import annotations

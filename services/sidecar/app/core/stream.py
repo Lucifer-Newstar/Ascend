@@ -3,6 +3,10 @@
 Each outbox row becomes one SSE message whose `event:` is the UI-facing name from
 docs/contracts/system.yaml (ServerEvent) and whose `id:` is the outbox id, so a client
 that reconnects with Last-Event-ID resumes exactly where it stopped.
+
+Status (v1.1.0): wired but unused. No consumer is registered (app.state.outbox_consumers
+is empty) and the desktop app does not subscribe to /events yet; it refreshes by request.
+Kept for the planned live updates (docs/contracts/ipc-contract.md §3, events:subscribe).
 """
 
 from __future__ import annotations

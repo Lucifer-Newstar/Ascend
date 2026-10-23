@@ -3,6 +3,10 @@
 Started from the app lifespan: every `interval` seconds it delivers due events to the
 registered consumers (app.state.outbox_consumers) and once an hour prunes old rows.
 Each pass uses its own session and commits, so a slow consumer never holds a request.
+
+Status (v1.1.0): wired but unused. No consumer is registered (app.state.outbox_consumers
+is empty) and the desktop app does not subscribe to /events yet; it refreshes by request.
+Kept for the planned live updates (docs/contracts/ipc-contract.md §3, events:subscribe).
 """
 
 from __future__ import annotations
