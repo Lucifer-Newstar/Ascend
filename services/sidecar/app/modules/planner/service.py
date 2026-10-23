@@ -73,7 +73,9 @@ def flags_out(flags: list[goalcheck.Flag]) -> list[FlagOut]:
 def check(body: GoalCheckIn) -> GoalCheckOut:
     flags: list[goalcheck.Flag] = []
     if body.weight_kg and body.target_weight_kg and body.weeks:
-        flags += goalcheck.check_weight_goal(body.weight_kg, body.target_weight_kg, body.weeks)
+        flags += goalcheck.check_weight_goal(
+            body.weight_kg, body.target_weight_kg, body.weeks, body.height_cm
+        )
     if body.weight_kg and body.target_weight_kg:
         flags += goalcheck.check_age(body.age, body.target_weight_kg < body.weight_kg)
     if body.protein_g is not None and body.weight_kg:
@@ -138,6 +140,16 @@ def _library(db: Session) -> dict[str, Exercise]:
     return {e.name: e for e in db.scalars(select(Exercise).where(Exercise.archived.is_(False)))}
 
 
+def baseline_capacity(p: object | None) -> dict[str, int | None]:
+    """Max push-ups / pull-ups from the onboarding baseline test (None when not tested)."""
+    base = getattr(p, "baseline", None) or {}
+    out: dict[str, int | None] = {}
+    for key in ("pushups", "pullups"):
+        v = base.get(key) if isinstance(base, dict) else None
+        out[key] = int(v) if isinstance(v, int | float) else None
+    return out
+
+
 def draft_workout(db: Session, settings: Settings, body: WorkoutPlanIn) -> WorkoutPlanOut:
     p = progress.get_profile(db)
     experience = body.experience or (p.experience if p and p.experience else "beginner")
@@ -153,6 +165,7 @@ def draft_workout(db: Session, settings: Settings, body: WorkoutPlanIn) -> Worko
         minutes=body.minutes,
         available=lambda n: n in lib and equipment_rules.fits(lib[n].equipment, allowed),
         is_hold=lambda n: n in lib and lib[n].measure == "hold",
+        capacity=baseline_capacity(p),
     )
     summary, phrased = phrase(db, settings, gen.summary, body.use_ai)
     draft = ProgramDraft(

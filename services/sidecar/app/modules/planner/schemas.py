@@ -36,6 +36,8 @@ class GoalCheckIn(StrictIn):
     lift_target_kg: float | None = Field(default=None, gt=0, le=600)
     lift_weeks: float | None = Field(default=None, gt=0, le=520)
     age: int | None = Field(default=None, ge=13, le=100)
+    # v1.2: with the height, a gain from an underweight start is judged as a catch-up gain.
+    height_cm: float | None = Field(default=None, ge=100, le=250)
 
 
 class GoalCheckOut(BaseModel):

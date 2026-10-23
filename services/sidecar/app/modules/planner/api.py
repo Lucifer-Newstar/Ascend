@@ -21,14 +21,20 @@ from app.modules.planner.schemas import (
     WorkoutPlanIn,
     WorkoutPlanOut,
 )
+from app.modules.progress import service as progress
 from app.modules.workouts import programs_service
 
 router = APIRouter(prefix="/planner", tags=["planner"])
 
 
 @router.post("/check", response_model=GoalCheckOut)
-def check(body: GoalCheckIn) -> GoalCheckOut:
-    """goalcheck-v1: flag unrealistic or unsafe goals (each flag with its numbers)."""
+def check(body: GoalCheckIn, db: Session = Depends(get_db)) -> GoalCheckOut:
+    """goalcheck-v1: flag unrealistic or unsafe goals (each flag with its numbers). Without a
+    height in the request, the profile's height is used."""
+    if body.height_cm is None:
+        p = progress.get_profile(db)
+        if p is not None:
+            body = body.model_copy(update={"height_cm": p.height_cm})
     return service.check(body)
 
 

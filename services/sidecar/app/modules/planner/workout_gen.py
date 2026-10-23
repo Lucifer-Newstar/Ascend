@@ -12,7 +12,7 @@ exercise from the user's own log, exactly as for the built-in programs.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -199,6 +199,48 @@ class GeneratedProgram:
     algo_version: str = ALGO_VERSION
 
 
+# v1.2: timed holds are dosed in seconds (rep_low/rep_high hold seconds for them).
+HOLD_SECONDS: dict[str, tuple[int, int]] = {
+    "beginner": (20, 30),
+    "intermediate": (30, 45),
+    "advanced": (45, 60),
+}
+# v1.2: moves whose reps a beginner may not have yet; capped by the baseline test.
+BAR_PULLS = frozenset({"Pull-up", "Chin-up", "Chest-to-bar Pull-up"})
+FLOOR_PUSHES = frozenset(
+    {"Push-up", "Diamond Push-up", "Archer Push-up", "Pike Push-up", "Elevated Pike Push-up"}
+)
+EASIER_PULLS = ("Negative Pull-up", "Inverted Row", "Scapular Pull-up")
+EASIER_PUSHES = ("Incline Push-up", "Incline Push-Up Medium")
+MIN_PULLUPS = 3  # below this, bar pulls become negatives / rows
+MIN_PUSHUPS = 5  # below this, floor push-ups become incline push-ups
+
+
+def _fit_to_capacity(
+    ex: str,
+    lo: int,
+    hi: int,
+    capacity: Mapping[str, int | None],
+    usable: Callable[[str], bool],
+) -> tuple[str, int, int] | None:
+    """Swap or cap a move the user cannot do for that many reps yet (baseline test).
+    None means "leave this slot out"."""
+    pulls, pushes = capacity.get("pullups"), capacity.get("pushups")
+    if ex in BAR_PULLS and pulls is not None:
+        if pulls < MIN_PULLUPS:
+            easier = next((e for e in EASIER_PULLS if usable(e)), None)
+            return (easier, 3, 5) if easier else None
+        hi = min(hi, pulls)
+        lo = min(lo, max(1, round(pulls * 0.6)))
+    elif ex in FLOOR_PUSHES and pushes is not None:
+        if pushes < MIN_PUSHUPS:
+            easier = next((e for e in EASIER_PUSHES if usable(e)), None)
+            return (easier, 5, 8) if easier else None
+        hi = min(hi, pushes)
+        lo = min(lo, max(1, round(pushes * 0.6)))
+    return ex, min(lo, hi), hi
+
+
 def tier_for(choices: Sequence[str]) -> Tier:
     picked = set(choices)
     if not picked or "gym" in picked:
@@ -245,9 +287,13 @@ def generate(
     minutes: int,
     available: Callable[[str], bool],
     is_hold: Callable[[str], bool] = lambda _n: False,
+    capacity: Mapping[str, int | None] | None = None,
 ) -> GeneratedProgram:
     """Build a program. `available(name)` says whether the user can do an exercise (it is
-    in the library and fits their equipment); `is_hold(name)` marks timed holds."""
+    in the library and fits their equipment); `is_hold(name)` marks timed holds (dosed in
+    seconds); `capacity` carries the baseline test (max push-ups / pull-ups), so nobody is
+    asked for 10-15 chin-ups when they can do one."""
+    cap = dict(capacity or {})
     days_per_week = max(1, min(MAX_DAYS, days_per_week))
     tier = tier_for(equipment)
     per_day = exercises_per_day(minutes)
@@ -271,10 +317,19 @@ def generate(
             k = slot_use.get(slot, 0) + repeat
             slot_use[slot] = slot_use.get(slot, 0) + 1
             ex = cands[k % len(cands)]
-            used.add(ex)
             sets, lo, hi, rpe, rest = _dose(focus, slot, len(out), experience)
+            taken = frozenset(used)
+
+            def usable(n: str, taken: frozenset[str] = taken) -> bool:
+                return available(n) and n not in taken
+
+            fitted = _fit_to_capacity(ex, lo, hi, cap, usable)
+            if fitted is None:
+                continue
+            ex, lo, hi = fitted
+            used.add(ex)
             if is_hold(ex):
-                lo, hi = 1, 1
+                lo, hi = HOLD_SECONDS[experience]
             out.append(SlotOut(ex, sets, lo, hi, rpe, rest))
         suffix = f" {repeat + 1}" if SPLITS[days_per_week].count(dtype) > 1 else ""
         days.append(

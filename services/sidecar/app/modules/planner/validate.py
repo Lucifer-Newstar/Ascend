@@ -59,13 +59,29 @@ def _r(x: float, n: int = 1) -> float:
     return round(x, n)
 
 
-def safe_weeks(weight_kg: float, target_kg: float) -> int:
-    """Weeks to reach the target at a sustainable pace (0.75 %/wk down, 0.35 %/wk up)."""
+# v1.2: someone below a healthy BMI regains weight faster than a lean lifter adds muscle;
+# about 0.25-0.5 kg a week is the usual guidance for a healthy catch-up gain, so the plan
+# uses 0.4 kg a week (warn above 0.75, block above 1 kg a week).
+UNDERWEIGHT_SAFE_GAIN_KG_WEEK = 0.4
+UNDERWEIGHT_GAIN_WARN_KG_WEEK = 0.75
+UNDERWEIGHT_GAIN_BLOCK_KG_WEEK = 1.0
+
+
+def is_underweight(weight_kg: float, height_cm: float | None) -> bool:
+    return bool(height_cm) and weight_kg / (height_cm / 100) ** 2 < MIN_BMI  # type: ignore[operator]
+
+
+def safe_weeks(weight_kg: float, target_kg: float, height_cm: float | None = None) -> int:
+    """Weeks to reach the target at a sustainable pace (0.75 %/wk down, 0.35 %/wk up, or
+    0.4 kg/wk up from an underweight start)."""
     diff = target_kg - weight_kg
     if abs(diff) < 0.05:
         return 0
-    pct = SAFE_LOSS_PCT if diff < 0 else SAFE_GAIN_PCT
-    per_week = weight_kg * pct / 100
+    if diff > 0 and is_underweight(weight_kg, height_cm):
+        per_week = UNDERWEIGHT_SAFE_GAIN_KG_WEEK
+    else:
+        pct = SAFE_LOSS_PCT if diff < 0 else SAFE_GAIN_PCT
+        per_week = weight_kg * pct / 100
     return max(1, round(abs(diff) / per_week))
 
 
@@ -97,9 +113,11 @@ def check_weight_goal(
         "kg_per_week": _r(abs(rate), 2),
         "pct_per_week": _r(abs(pct), 2),
         "weeks": _r(weeks),
-        "safe_weeks": float(safe_weeks(weight_kg, target_kg)),
+        "safe_weeks": float(safe_weeks(weight_kg, target_kg, height_cm)),
     }
     realistic = int(nums["safe_weeks"])
+    if diff > 0 and is_underweight(weight_kg, height_cm):
+        return flags + _underweight_gain_flags(diff, weeks, abs(rate), realistic, nums)
     if diff < 0 and abs(pct) > LOSS_MAX_PCT:
         flags.append(
             Flag(
@@ -230,6 +248,43 @@ def check_protein(protein_g: float, weight_kg: float) -> list[Flag]:
             )
         ]
     return []
+
+
+def _underweight_gain_flags(
+    diff: float, weeks: float, rate: float, realistic: int, nums: dict[str, float]
+) -> list[Flag]:
+    """Gaining from an underweight start: a healthy catch-up gain, not a lean bulk."""
+    if rate > UNDERWEIGHT_GAIN_BLOCK_KG_WEEK:
+        return [
+            Flag(
+                "gain_too_fast",
+                "block",
+                f"Gaining {_r(diff)} kg in {_r(weeks):g} weeks is {nums['kg_per_week']} kg a "
+                f"week, more than your body can build well. About {realistic} weeks at "
+                f"{UNDERWEIGHT_SAFE_GAIN_KG_WEEK} kg a week is a strong, steady pace.",
+                nums,
+            )
+        ]
+    if rate > UNDERWEIGHT_GAIN_WARN_KG_WEEK:
+        return [
+            Flag(
+                "gain_fast",
+                "warn",
+                f"{nums['kg_per_week']} kg a week is quick. It can work early on; about "
+                f"{realistic} weeks is the comfortable version. Eat a little more each week "
+                "and keep training.",
+                nums,
+            )
+        ]
+    return [
+        Flag(
+            "gain_on_track",
+            "info",
+            f"{nums['kg_per_week']} kg a week is a healthy pace for you. About {realistic} weeks "
+            "at a steady pace; eat regular meals with protein in each and train 3 days a week.",
+            nums,
+        )
+    ]
 
 
 def check_schedule(days_per_week: int, minutes: int, experience: Experience) -> list[Flag]:
