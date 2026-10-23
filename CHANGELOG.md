@@ -105,7 +105,8 @@ before it migrates it. Release notes: [docs/releases/v1.2.0.md](docs/releases/v1
 - "What should I train today?" with no program suggests a starting program for your kit instead
   of the day's protein tip; the program list scrolls so the exercise library stays on screen;
   body-weight sets show "BW", not 0 kg; a goal estimate in another year shows its years; a
-  program's "next day" reason uses plain words and a short date.
+  program's "next day" reason uses plain words and a short date; the session log scrolls
+  sideways on narrow windows; a repeated toast replaces the last one instead of stacking.
 
 ### Removed
 
