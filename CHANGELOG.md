@@ -27,6 +27,9 @@ before it migrates it. Release notes: [docs/releases/v1.2.0.md](docs/releases/v1
 - **System intro and a three-step onboarding**: Begin or Restore my data, then your body (empty
   fields, no placeholder numbers), your goal in plain words and your kit. Your weight is saved as
   your first weigh-in.
+- **Lock screen on every launch**: the landing art with your hunter tile (avatar, name, level and
+  rank) and the time, like a desktop sign-in. Click it or press Enter to zoom into Today. No
+  password (ASCEND has none).
 - **Big trainer with moods** (neutral, hyped, proud, warning) on Today and in the chat, with new
   Iskra and Vera art. **Trainer reminders**: today's workout, a missed day's reason, a streak at
   risk, water and the check-in, as a desktop notification and a bubble on Today (Settings >
