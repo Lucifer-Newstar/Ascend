@@ -155,6 +155,9 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on("second-instance", () => BrowserWindow.getAllWindows()[0]?.focus());
+  // Windows shows desktop notifications (the trainer's reminders) only for an app with an
+  // AppUserModelID; it matches the installer's appId.
+  if (process.platform === "win32") app.setAppUserModelId("app.ascend.desktop");
 
   app.whenReady().then(async () => {
     registerIpc();

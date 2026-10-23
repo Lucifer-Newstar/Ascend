@@ -157,6 +157,15 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
               <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.trainer !== false}
                 onChange={(e) => save({ trainer: e.target.checked }, e.target.checked ? "Trainer: on" : "Trainer: off (plain mode)")} />
             </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Reminders
+                <br />
+                <span className="text-xs text-muted">A desktop notification and a bubble on Today for what is pending: today&apos;s workout, a missed day&apos;s reason, a streak at risk, water and the check-in. Once a day each, only while the app is open.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.reminders !== false}
+                onChange={(e) => save({ reminders: e.target.checked }, e.target.checked ? "Reminders on" : "Reminders off")} />
+            </label>
             <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
             <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />
           </section>

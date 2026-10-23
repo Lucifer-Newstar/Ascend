@@ -9,6 +9,7 @@ import { BossRaidCard } from "../components/BossRaid";
 import { CheckinCard } from "../components/CheckinCard";
 import { FirstSteps } from "../components/FirstSteps";
 import { StreakReasonCard } from "../components/StreakReason";
+import { TrainerHero } from "../components/TrainerHero";
 import { QuestWindow } from "../components/QuestWindow";
 import { Delayed, LoadingLayout, SkeletonCard } from "../components/Skeleton";
 import { StatusPanel } from "../components/StatusPanel";
@@ -20,7 +21,7 @@ import { isOffline, useApi } from "../lib/useApi";
 /** The morning check-in shows until noon (local time). */
 export const isMorning = (d: Date = new Date()): boolean => d.getHours() < 12;
 
-export function DashboardPage({ refreshKey, onChanged, onNavigate, now }: {
+export function DashboardPage({ refreshKey, onChanged, onNavigate, onOpenChat, now }: {
   /** Kept for callers; the trainer chat is opened from the top bar. */
   onOpenChat?: () => void;
   refreshKey: number;
@@ -57,6 +58,9 @@ export function DashboardPage({ refreshKey, onChanged, onNavigate, now }: {
     <div className="grid grid-cols-12 gap-6">
       {error && <div className="col-span-12"><StaleNotice message={error} onRetry={reload} /></div>}
       {onNavigate && data.game.xp.total === 0 && <FirstSteps onNavigate={onNavigate} />}
+      <div className="col-span-12">
+        <TrainerHero game={data.game} name={profile.data?.name ?? null} refreshKey={refreshKey} onNavigate={onNavigate} onOpenChat={onOpenChat} now={now} />
+      </div>
       {data.game.streak.reason_due && (
         <div className="col-span-12"><StreakReasonCard streak={data.game.streak} onSaved={onChanged ?? reload} /></div>
       )}

@@ -708,6 +708,8 @@ export interface Settings {
   weapon?: string;
   /** v1.2: show the optional faith-flavoured themed cosmetics. Default true. */
   themed_cosmetics?: boolean;
+  /** v1.2: the trainer's reminders (desktop notification + Today bubble). Default true. */
+  reminders?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------

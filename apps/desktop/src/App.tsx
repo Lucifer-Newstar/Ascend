@@ -12,6 +12,7 @@ import { TourOverlay } from "./components/Tour";
 import { TrainerChat, TrainerChatButton } from "./components/TrainerChat";
 import { XpStatus } from "./components/XpChip";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
+import { useReminderNotifications } from "./lib/reminderNotifications";
 import { isChatKey, usePageShortcuts } from "./lib/shortcuts";
 import { tourFor, type Tour } from "./lib/tours";
 import { trainerById } from "./lib/trainer";
@@ -194,6 +195,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   };
   // Level, rank, streak and quest state: the top bar and the System notices share one fetch.
   const game = useApi(api.game, [refreshKey]);
+  useReminderNotifications({ game: game.data, enabled: settings.reminders !== false, trainerName: trainerById(settings.trainer_id).name, refreshKey, onNavigate: navigate });
   return (
     <Layout page={page} onNavigate={navigate} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
