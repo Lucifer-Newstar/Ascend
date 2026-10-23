@@ -10,7 +10,7 @@ import { skillKeyFromHash, SkillsPage } from "./Skills";
 
 vi.mock("../api/client", () => ({
   api: {
-    skills: vi.fn(), skill: vi.fn(), trainSkill: vi.fn(), exercises: vi.fn(),
+    skills: vi.fn(), skill: vi.fn(), skillDetails: vi.fn(), trainSkill: vi.fn(), exercises: vi.fn(),
     customSkills: vi.fn().mockResolvedValue([]), createCustomSkill: vi.fn(), deleteCustomSkill: vi.fn(),
   },
 }));
@@ -50,6 +50,7 @@ beforeEach(() => {
     summary({ key: "planche", name: "Planche", family: "push", stretch: true, current_step: null, current_step_name: null, pct_to_next: 0, steps_unlocked: 0, sessions_28d: 0 }),
   ]);
   vi.mocked(api.skill).mockReset().mockResolvedValue(detail());
+  vi.mocked(api.skillDetails).mockReset().mockResolvedValue([detail()]);
   vi.mocked(api.trainSkill).mockReset().mockResolvedValue({ skill_key: "front_lever", added: 2, already_planned: 0, items: [], message: "Added 2 Front lever items to today's quest." });
   window.location.hash = "skills";
   sessionStorage.clear();
@@ -129,6 +130,13 @@ describe("Skill tree canvas", () => {
     expect(within(drawer).getByRole("heading", { name: "Advanced tuck" })).toBeInTheDocument();
     expect(within(drawer).getByText(/Estimate: about 15 days/)).toBeInTheDocument();
     expect(await axeViolations(container)).toEqual([]);
+  });
+
+  it("loads every tree for the canvas in one call instead of one request per tree", async () => {
+    renderPage();
+    await screen.findByTestId("step-drawer");
+    expect(api.skillDetails).toHaveBeenCalledTimes(1);
+    expect(api.skill).not.toHaveBeenCalled();
   });
 
   it("moves along the edges with the arrow keys and selects with Enter", async () => {

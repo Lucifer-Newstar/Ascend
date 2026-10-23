@@ -129,7 +129,13 @@ function TreeView({ keys, family, onOpen, onNavigate, onChanged }: {
 }) {
   const joined = keys.join(",");
   const [tick, setTick] = useState(0);
-  const details = useApi(() => Promise.all(keys.map((k) => api.skill(k))), [joined, tick]);
+  // One call for every tree (the sidecar has /skills/details for this page); asking once per
+  // tree queued 17 requests and kept the canvas blank for about 2 s with a full save.
+  const details = useApi(async () => {
+    const all = await api.skillDetails();
+    const byKey = new Map(all.map((t) => [t.key, t]));
+    return keys.map((k) => byKey.get(k)).filter((t): t is SkillDetail => t !== undefined);
+  }, [joined, tick]);
   const [selected, setSelected] = useState<string | null>(null);
   const trees = details.data ?? [];
   // Select the first current step when the family changes.
