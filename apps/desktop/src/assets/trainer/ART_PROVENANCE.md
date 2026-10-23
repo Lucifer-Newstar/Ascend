@@ -168,3 +168,19 @@ Same cel-shaded style, menacing but not gory, bust/creature portrait on a dark n
 
 Trainers (256x256 RGBA WebP; icons 64x64): `trainers/<id>-neutral.webp`, `-proud.webp`, `-warning.webp`, `-hyped.webp`, `-icon.webp` for `vera`, `kai`, `dario`.
 Bosses (384x384 WebP): `bosses/<slug>.webp`.
+
+## v1.2 art (October 2026)
+
+All of the following is original art made for ASCEND and approved by the project lead
+before it was added. None of it references an existing franchise, character or artist.
+
+- **Trainers:** new half-body mood art (neutral, hyped, proud, warning) and icons for
+  Iskra Vey (`trainer-*.webp`) and Vera Kestrine (`vera-*.webp`). They are 512 px on the
+  app's navy background, so the trainer can be shown large on Today and in chat. Kai and
+  Dario keep their v1.1 art.
+- **Avatars** (`assets/avatars`): a male and a female hunter at the E, C, A and S stages.
+  They are body-neutral: rank shows as gear and aura, never as body changes.
+- **Cosmetics** (`assets/cosmetics`): 4 outfit sets (male and female), 4 relics, 4 pets
+  and 4 weapons. Faith-flavoured looks carry neutral names and are optional.
+- **Seasonal bosses** (`assets/bosses`): Harvest Colossus, Winter Wraith, Monsoon Serpent
+  and Shadow Sovereign. Iron Golem and Grave Warden were redrawn; Bone Titan is unchanged.
