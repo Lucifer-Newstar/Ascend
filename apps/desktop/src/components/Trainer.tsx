@@ -87,7 +87,7 @@ export function TrainerPicker({ onPicked }: { onPicked?: (t: TrainerProfile) => 
   const prefs = useOptionalPrefs();
   const current = useTrainer();
   return (
-    <div role="radiogroup" aria-label="Choose your trainer" className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="trainer-picker">
+    <div role="radiogroup" aria-label="Choose your trainer" className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3" data-testid="trainer-picker">
       {ROSTER.map((t) => {
         const on = t.id === current.id;
         return (
