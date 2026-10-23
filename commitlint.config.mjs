@@ -32,6 +32,8 @@ export default {
         "architecture",
         // v8 feature areas
         "trainer", "map", "muscles", "library", "today", "game", "backup",
+        // 1.1 feature areas
+        "planner", "selector", "actions", "skills", "photos", "share", "profile",
         // Dependabot's ML requirement bumps
         "ml-deps",
       ],
