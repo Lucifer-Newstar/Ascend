@@ -4,7 +4,7 @@
  * the HP left, the days left, the reward and the trainer's line; Esc or Close leaves.
  */
 import type { BossRaid } from "@ascend/shared";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { bossArt } from "../lib/bosses";
@@ -20,15 +20,32 @@ export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => v
   const close = useRef<HTMLButtonElement>(null);
   const portrait = bossArt(boss.name);
   const left = boss.hp > 0 ? boss.hp_left / boss.hp : 0;
+  // A dialog of its own (not a modal System window, which would centre itself over the
+  // portrait): focus moves to Close, Esc closes.
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    close.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      previous?.focus?.();
+    };
+  }, [onClose]);
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="boss-screen">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="boss-screen" role="dialog" aria-modal="true" aria-label={`${boss.name}, weekly boss`}>
       <div className="event-art" style={art ? { ["--event-bg" as string]: `url(${art})` } : { background: "rgba(0,0,0,0.75)" }} aria-hidden="true" />
       <div className="relative z-10 grid w-full max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
         {portrait && (
           <img src={portrait} alt={`${boss.name}, this week's boss`} width={320} height={320} data-testid="boss-screen-art"
-            className={`mx-auto h-[320px] w-[320px] rounded-2xl border-2 object-cover shadow-2xl ${boss.defeated ? "border-good/70 grayscale" : "border-bad/70"}`} />
+            className={`mx-auto h-[300px] w-[300px] shrink-0 rounded-2xl border-2 object-cover shadow-2xl ${boss.defeated ? "border-good/70 grayscale" : "border-bad/70"}`} />
         )}
-        <SystemWindow variant="warning" title="Weekly boss" modal onClose={onClose} initialFocus={close} className="bg-panel"
+        <SystemWindow variant="warning" title="Weekly boss" className="min-w-0 bg-panel"
           actions={<button ref={close} type="button" className="btn-primary" onClick={onClose}>Close</button>}>
           <h2 className="text-display-l text-ink">{boss.name}</h2>
           <p className="mt-1 text-sm text-muted">{boss.defeated ? "Defeated this week" : `${boss.days_left === 0 ? "Last day" : `${boss.days_left} day${boss.days_left === 1 ? "" : "s"} left`} · beat it by Sunday`}</p>
