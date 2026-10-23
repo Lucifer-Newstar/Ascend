@@ -5,5 +5,5 @@
  */
 export function EventBackdrop({ art, solid = false }: { art: string | null; solid?: boolean }) {
   if (art) return <div className="event-art" style={{ ["--event-bg" as string]: `url(${art})` }} aria-hidden="true" />;
-  return <div className={`absolute inset-0 ${solid ? "bg-bg" : "bg-[rgba(3,7,18,0.86)]"}`} aria-hidden="true" />;
+  return <div className={`absolute inset-0 ${solid ? "bg-bg" : ""}`} style={solid ? undefined : { background: "rgb(3 7 18 / 0.86)" }} aria-hidden="true" data-testid="event-scrim" />;
 }
