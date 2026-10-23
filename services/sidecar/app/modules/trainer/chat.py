@@ -71,6 +71,7 @@ def _goal(db: Session, intent: Intent) -> ChatOut:
         )
     target = round(p.weight_kg + change, 1)
     flags = goalcheck.check_weight_goal(p.weight_kg, target, weeks, p.height_cm)
+    flags += goalcheck.check_age(p.age, change < 0)
     if flags:
         worst = goalcheck.worst(flags)
         return ChatOut(

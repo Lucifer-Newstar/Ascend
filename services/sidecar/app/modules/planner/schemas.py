@@ -35,6 +35,7 @@ class GoalCheckIn(StrictIn):
     lift_current_kg: float | None = Field(default=None, gt=0, le=600)
     lift_target_kg: float | None = Field(default=None, gt=0, le=600)
     lift_weeks: float | None = Field(default=None, gt=0, le=520)
+    age: int | None = Field(default=None, ge=13, le=100)
 
 
 class GoalCheckOut(BaseModel):

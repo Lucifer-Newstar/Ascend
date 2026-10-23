@@ -1112,6 +1112,11 @@ components:
             - dario
           - type: 'null'
           title: Trainer Id
+        hide_calories:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Hide Calories
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1161,6 +1166,10 @@ components:
           - dario
           title: Trainer Id
           default: iskra
+        hide_calories:
+          type: boolean
+          title: Hide Calories
+          default: false
       type: object
       required:
       - ai_enabled

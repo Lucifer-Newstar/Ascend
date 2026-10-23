@@ -74,6 +74,8 @@ def check(body: GoalCheckIn) -> GoalCheckOut:
     flags: list[goalcheck.Flag] = []
     if body.weight_kg and body.target_weight_kg and body.weeks:
         flags += goalcheck.check_weight_goal(body.weight_kg, body.target_weight_kg, body.weeks)
+    if body.weight_kg and body.target_weight_kg:
+        flags += goalcheck.check_age(body.age, body.target_weight_kg < body.weight_kg)
     if body.protein_g is not None and body.weight_kg:
         flags += goalcheck.check_protein(body.protein_g, body.weight_kg)
     if body.days_per_week is not None:
@@ -100,6 +102,7 @@ def profile_flags(db: Session) -> list[goalcheck.Flag]:
     flags: list[goalcheck.Flag] = []
     if p.target_weight_kg:
         flags += goalcheck.check_weight_goal(p.weight_kg, p.target_weight_kg, 0, p.height_cm)
+    flags += goalcheck.check_age(p.age, p.goal == "cut")
     e = progress.energy_for(p)
     flags += goalcheck.check_calories(e.kcal_target, p.sex, e.bmr)
     return flags
@@ -344,6 +347,10 @@ def draft_diet(db: Session, settings: Settings, body: DietPlanIn) -> DietPlanOut
     flags = goalcheck.check_calories(kcal, p.sex, e.bmr)
     if flags:  # below the floor: plan at the floor and say so
         kcal = goalcheck.kcal_floor(p.sex, e.bmr)
+    under_18 = goalcheck.check_age(p.age, kcal < e.tdee - 50)
+    if under_18:  # no deficit plans for under-18s: plan at maintenance and say so
+        flags += under_18
+        kcal = round(e.tdee)
     gen = diet_gen.generate(kcal, e.protein_target_g, _foods(db), body.diet)
     flags += goalcheck.check_protein(
         sum(d.protein_g for d in gen.days) / len(gen.days), p.weight_kg

@@ -118,6 +118,8 @@ class SettingsOut(BaseModel):
     trainer: bool = True
     # v1.1: which trainer speaks (iskra, vera, kai, dario).
     trainer_id: TrainerId = "iskra"
+    # v1.1: hide calorie numbers across the app (targets still work underneath).
+    hide_calories: bool = False
 
 
 class SettingsIn(StrictIn):
@@ -131,6 +133,7 @@ class SettingsIn(StrictIn):
     online_lookup: bool | None = None
     trainer: bool | None = None
     trainer_id: TrainerId | None = None
+    hide_calories: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

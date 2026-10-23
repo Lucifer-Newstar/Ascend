@@ -631,6 +631,13 @@ components:
             exclusiveMinimum: 0.0
           - type: 'null'
           title: Lift Weeks
+        age:
+          anyOf:
+          - type: integer
+            maximum: 100.0
+            minimum: 13.0
+          - type: 'null'
+          title: Age
       additionalProperties: false
       type: object
       title: GoalCheckIn

@@ -98,3 +98,20 @@ def test_diet_below_floor_is_raised_to_the_floor(client: TestClient, profile: di
 
 def test_diet_needs_a_profile(client: TestClient) -> None:
     assert client.post("/planner/diet", json={}).status_code == 409
+
+
+def test_under_18_gets_no_deficit_plan(client) -> None:
+    client.put(
+        "/profile",
+        json={"name": "Arun", "age": 16, "sex": "male", "height_cm": 170, "weight_kg": 70,
+              "goal": "cut", "activity": "moderate"},
+    )  # fmt: skip
+    r = client.post("/planner/diet", json={}).json()
+    codes = [f["code"] for f in r["flags"]]
+    assert "under_18_no_deficit" in codes
+    tdee = client.get("/profile").json()["energy"]["tdee"]
+    assert abs(r["kcal_target"] - tdee) <= 1
+    chk = client.post(
+        "/planner/check", json={"weight_kg": 70, "target_weight_kg": 66, "weeks": 10, "age": 16}
+    ).json()
+    assert chk["worst"] == "block"

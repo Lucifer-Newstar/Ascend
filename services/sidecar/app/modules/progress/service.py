@@ -94,6 +94,7 @@ def read_settings(db: Session) -> SettingsOut:
         online_lookup=online_lookup(db),
         trainer=get_setting(db, "trainer", "true") == "true",
         trainer_id=cast(TrainerId, _trainer_id(get_setting(db, "trainer_id", "iskra"))),
+        hide_calories=get_setting(db, "hide_calories", "false") == "true",
     )
 
 

@@ -11,6 +11,8 @@ Sources (docs/architecture/trainer-and-planner.md has the links):
   - protein 1.4-2.0 g/kg/day for people who train (ISSN position stand, Jaeger et al. 2017)
   - calorie floor: low-calorie diets of ~1,200 (women) / ~1,500 (men) kcal are the usual
     unsupervised lower bound; we also never go below the estimated BMR
+  - ICMR-NIN Dietary Guidelines for Indians 2024: ~0.5 kg/week loss considered safe,
+    reducing diets >= 1,000 kcal/day, protein RDA 0.83 g/kg; no deficit plans under 18
 These are ASCEND's thresholds, informed by those sources; they are not medical advice.
 """
 
@@ -19,7 +21,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-ALGO_VERSION = "goalcheck-v1"
+ALGO_VERSION = "goalcheck-v2"
 
 Severity = Literal["info", "warn", "block"]
 Experience = Literal["beginner", "intermediate", "advanced"]
@@ -34,6 +36,13 @@ PROTEIN_LOW_G_PER_KG = 1.4
 PROTEIN_HIGH_G_PER_KG = 3.0
 KCAL_FLOOR = {"female": 1200, "male": 1500}
 MIN_BMI = 18.5
+# ICMR-NIN Dietary Guidelines for Indians (2024): about 0.5 kg a week is considered safe,
+# reducing diets should not go below about 1,000 kcal a day (our floor above is stricter),
+# and the protein RDA for adults is 0.83 g per kg (food first, no supplement advice).
+ICMR_SAFE_LOSS_KG_WEEK = 0.5
+ICMR_REDUCING_DIET_MIN_KCAL = 1000
+PROTEIN_RDA_G_PER_KG = 0.83
+ADULT_AGE = 18
 # Best realistic weekly e1RM gain (% per week) by training age; twice this is impossible.
 STRENGTH_PCT_PER_WEEK: dict[str, float] = {"beginner": 2.5, "intermediate": 1.0, "advanced": 0.5}
 
@@ -114,6 +123,17 @@ def check_weight_goal(
                 nums,
             )
         )
+    elif diff < 0 and abs(rate) > ICMR_SAFE_LOSS_KG_WEEK:
+        flags.append(
+            Flag(
+                "loss_above_icmr",
+                "info",
+                f"{nums['kg_per_week']} kg a week is within the 1% range, but India's dietary "
+                f"guidelines (ICMR-NIN 2024) call about {ICMR_SAFE_LOSS_KG_WEEK} kg a week safe. "
+                f"Slower is gentler.",
+                {**nums, "icmr_kg_per_week": ICMR_SAFE_LOSS_KG_WEEK},
+            )
+        )
     elif diff > 0 and pct > GAIN_BLOCK_PCT:
         flags.append(
             Flag(
@@ -159,9 +179,36 @@ def check_calories(kcal: float, sex: str, bmr: float) -> list[Flag]:
     return []
 
 
+def check_age(age: int | None, deficit: bool) -> list[Flag]:
+    """No calorie-deficit plans for under-18s: growing bodies need maintenance energy."""
+    if age is None or age >= ADULT_AGE or not deficit:
+        return []
+    return [
+        Flag(
+            "under_18_no_deficit",
+            "block",
+            f"At {age}, I won't plan a calorie deficit; you are still growing. I'll plan at "
+            f"maintenance and focus on training, sleep and protein. Talk to a doctor or a "
+            f"dietitian about weight.",
+            {"age": float(age)},
+        )
+    ]
+
+
 def check_protein(protein_g: float, weight_kg: float) -> list[Flag]:
     per_kg = protein_g / weight_kg
     nums = {"protein_g": float(round(protein_g)), "g_per_kg": _r(per_kg)}
+    if per_kg < PROTEIN_RDA_G_PER_KG:
+        return [
+            Flag(
+                "protein_below_rda",
+                "warn",
+                f"{round(protein_g)} g of protein is {_r(per_kg)} g per kg, below the "
+                f"{PROTEIN_RDA_G_PER_KG} g per kg everyone needs (ICMR-NIN 2024). Add dal, "
+                f"paneer, curd, eggs or chicken before anything else.",
+                nums,
+            )
+        ]
     if per_kg < PROTEIN_LOW_G_PER_KG:
         return [
             Flag(

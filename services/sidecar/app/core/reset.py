@@ -23,7 +23,17 @@ REFERENCE_TABLES = frozenset({"exercises", "exercise_muscles", "foods", "alembic
 
 # App preferences kept by "start fresh"; every other settings key is about the user.
 PREFERENCE_KEYS = frozenset(
-    {"ai_enabled", "units", "theme", "reduce_motion", "online_lookup", "trainer", "trainer_id"}
+    {
+        "ai_enabled",
+        "units",
+        "theme",
+        "reduce_motion",
+        "online_lookup",
+        "trainer",
+        "trainer_id",
+        "coach_model",
+        "hide_calories",
+    }
 )
 
 PHOTOS_DIR = "photos"

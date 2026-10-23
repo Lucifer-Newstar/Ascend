@@ -53,3 +53,16 @@ def test_schedule_and_strength() -> None:
     assert codes(g.check_strength_goal(100, 105, 4, "intermediate")) == ["strength_ambitious"]
     assert g.check_strength_goal(100, 105, 12, "intermediate") == []
     assert g.worst(g.check_strength_goal(60, 100, 4, "beginner")) == "block"
+
+
+def test_icmr_safe_loss_note_and_rda_and_under_18() -> None:
+    # 80 kg -> 77 kg in 5 weeks = 0.6 kg/week (0.75%): inside 1%/week, above ICMR-NIN's 0.5.
+    flags = g.check_weight_goal(80, 77, 5)
+    assert [f.code for f in flags] == ["loss_above_icmr"]
+    assert flags[0].severity == "info" and flags[0].numbers["icmr_kg_per_week"] == 0.5
+    assert g.check_weight_goal(72, 70, 5) == []  # 0.4 kg/week
+    rda = g.check_protein(45, 70)  # 0.64 g/kg
+    assert rda[0].code == "protein_below_rda" and "0.83" in rda[0].message
+    assert g.check_age(16, deficit=True)[0].code == "under_18_no_deficit"
+    assert g.check_age(16, deficit=False) == []
+    assert g.check_age(18, deficit=True) == []
