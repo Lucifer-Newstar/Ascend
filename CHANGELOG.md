@@ -9,6 +9,28 @@ where a number you see could change. User-facing release notes live in
 
 ## [Unreleased]
 
+### Fixed
+
+- **Clean install.** Development runs and demo data now use `%APPDATA%\ASCEND-dev`, so they can
+  no longer pre-fill the installed app (the demo seeder refuses the installed app's folder).
+  **Settings > Start fresh** (and "start fresh" in the trainer chat) erases your data after a
+  backup and keeps the exercise library and food table.
+- **Coach answers.** "Hello", "what can you do" or "erase my data" no longer get the day's
+  muscle tip: questions are routed by rules before any AI call. Each fallback has its own
+  reason and label (switched off, not running, timed out, model error, failed the safety
+  check); a cold model gets 60 s on its first answer and is kept loaded for 30 minutes.
+- **Windows CI.** The Dashboard and AddExercise page tests no longer time out on Windows runners.
+
+### Added
+
+- **Trainer chat** from the top bar: help notes (`trainer-kb-v1`), intent routing
+  (`trainer-intents-v1`), goal checks, and the watcher feed (`watch-v1`).
+- **Guided tours**: a first-run app tour and a tour of any page on request.
+- **AI setup** in Settings (`ai-tiers-v1`): Ollama and model detection, RAM/VRAM, a model
+  recommendation, model picker and test. The app works fully without a model.
+- Rule-based workout and diet planners with goal checks (`plangen-v1`, `dietgen-v1`,
+  `goalcheck-v1`) on the sidecar (the Planner page follows).
+
 ## [1.0.0] - 2026-10-23
 
 The first stable release. No new features (the feature freeze after v8 holds): 1.0.0 is the

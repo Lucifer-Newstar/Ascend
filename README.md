@@ -254,8 +254,15 @@ setx OLLAMA_CONTEXT_LENGTH 2048
 # then quit Ollama from the tray and start it again
 ```
 
-Toggle **AI coach** in the top bar. With it off (or Ollama not running) the coach gives
-rule-based tips; nothing else changes.
+**The AI is optional, in tiers.** Without Ollama (or on a PC that can't run a model) the whole
+app works in rule-based mode: the trainer chat answers greetings, app questions and tours from
+its own notes, plans and goal checks use rules, and only free-form wording and photo feedback
+are off. **Settings > AI setup** shows whether Ollama is installed and running, the models
+you have pulled, your RAM and (NVIDIA) VRAM, and recommends a model: `qwen3:4b` with 4 GB of
+VRAM, `qwen3:1.7b` with 2 GB (or 16 GB of RAM), `qwen3:0.6b` otherwise. It has a test button
+and, after three failed or timed-out answers, offers a smaller model or rule-based mode. When
+a rule-based answer stands in for the model's, the reply says why (switched off, not running,
+timed out, model error, or the reply failed the safety check).
 
 ### Other ways to run
 
@@ -264,12 +271,14 @@ rule-based tips; nothing else changes.
 cd services\sidecar; uv run python -m app --dev      # API + docs: http://127.0.0.1:8765/docs
 npm run dev -w apps/desktop                          # app: http://localhost:5173
 
-# demo data (wipes your local data first!)
+# demo data (wipes the dev data folder first; refuses the installed app's folder)
 cd services\sidecar; uv run python -m app.devtools.seed_demo --wipe
 ```
 
-Your data (one SQLite file, `ascend.db`) lives in `%APPDATA%\ASCEND\data`, whether you run the
-installed app, the dev Electron app or the sidecar on its own.
+The installed app keeps your data (one SQLite file, `ascend.db`) in `%APPDATA%\ASCEND\data`.
+Development runs (the sidecar on its own, `make seed`, and the unpackaged Electron app) use
+`%APPDATA%\ASCEND-dev\data` instead, so demo data never lands in the installed app. To wipe the
+installed app's data, use **Settings > Start fresh** (it backs up first).
 
 Full setup, including Docker, MLflow and troubleshooting: [docs/development/local-setup.md](docs/development/local-setup.md).
 
