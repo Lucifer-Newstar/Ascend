@@ -1,7 +1,7 @@
 import type { GameSummary } from "@ascend/shared";
 import { describe, expect, it } from "vitest";
 
-import { pendingReminders, reminderMood, toNotify } from "./reminders";
+import { pendingReminders, quietLine, reminderMood, toNotify } from "./reminders";
 
 const game = (over: Partial<GameSummary["streak"]> = {}, quest: Partial<GameSummary["quest"][number]>[] = []) =>
   ({
@@ -38,5 +38,12 @@ describe("trainer reminders", () => {
     expect(toNotify(items, "2026-10-23", store).map((r) => r.key)).toEqual(["streak", "workout"]);
     expect(toNotify(items, "2026-10-23", store)).toEqual([]);
     expect(toNotify(items, "2026-10-24", store)).toHaveLength(2);
+  });
+
+  it("says the day is done only when today's quest is done", () => {
+    const open = [{ code: "train_3", completed_at: null }, { code: "protein", completed_at: "2026-10-23T10:00:00" }];
+    expect(quietLine(game({ active_today: true }, open))).toBe("You trained today, nice. 1 quest item still open if you want the XP.");
+    expect(quietLine(game({}, [...open, { code: "steps", completed_at: null }]))).toBe("Nothing urgent. 2 quest items are open for when you're ready.");
+    expect(quietLine(game({ active_today: true }, [{ code: "train_3", completed_at: "2026-10-23T10:00:00" }]))).toMatch(/^Everything for today is done/);
   });
 });

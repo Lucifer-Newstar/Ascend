@@ -7,7 +7,7 @@
 import type { GameSummary } from "@ascend/shared";
 
 import { api } from "../api/client";
-import { pendingReminders, reminderMood, type Reminder } from "../lib/reminders";
+import { pendingReminders, quietLine, reminderMood, type Reminder } from "../lib/reminders";
 import { useApi } from "../lib/useApi";
 import type { Page } from "./Layout";
 import { TrainerPortrait, useTrainer, useTrainerOn } from "./Trainer";
@@ -74,7 +74,7 @@ export function TrainerHero({ game, name, refreshKey = 0, onNavigate, onOpenChat
         <div className="trainer-bubble relative min-w-0 flex-1 rounded-xl border border-line-2 bg-panel-2/80 px-4 py-3">
           <p className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-accent">{t.name}</p>
           <p className="text-h3 text-ink">{greeting(at, name)}</p>
-          {items.length ? list : <p className="mt-1 text-sm text-muted">Everything for today is done. Rest well; I&apos;ll have tomorrow ready.</p>}
+          {items.length ? list : <p className="mt-1 text-sm text-muted" data-testid="trainer-quiet">{quietLine(game)}</p>}
           {onOpenChat && (
             <button type="button" className="btn-ghost mt-3 text-xs" onClick={onOpenChat}>Ask {t.short} (Ctrl+K)</button>
           )}

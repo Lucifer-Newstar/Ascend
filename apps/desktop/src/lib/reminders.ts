@@ -58,6 +58,18 @@ export function pendingReminders({ game, nextSession, checkedIn, now }: Reminder
   return out;
 }
 
+/**
+ * What the trainer says when nothing is pending. "Everything is done" only when today's
+ * quest really is done (QA: it said so beside a 0/3 training quest).
+ */
+export function quietLine(game: GameSummary | null | undefined): string {
+  const left = game ? game.quest.filter((q) => !q.completed_at).length : 0;
+  if (left === 0) return "Everything for today is done. Rest well; I'll have tomorrow ready.";
+  const items = `${left} quest item${left === 1 ? "" : "s"}`;
+  if (game?.streak.active_today) return `You trained today, nice. ${items} still open if you want the XP.`;
+  return `Nothing urgent. ${items} ${left === 1 ? "is" : "are"} open for when you're ready.`;
+}
+
 /** The trainer's mood for the bubble: a warning when something is at stake, else hyped, else proud. */
 export function reminderMood(items: Reminder[]): "warning" | "hyped" | "proud" {
   if (items.some((r) => r.urgent)) return "warning";
