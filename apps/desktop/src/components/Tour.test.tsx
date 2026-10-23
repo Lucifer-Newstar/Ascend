@@ -37,7 +37,8 @@ describe("TourOverlay", () => {
 
   it("has a tour for every section and the app", () => {
     expect(tourFor(null)).toBe(APP_TOUR);
-    expect(APP_TOUR.steps.length).toBeLessThanOrEqual(5);
+    expect(APP_TOUR.steps.length).toBeLessThanOrEqual(3); // v1.2: three steps at most
+    expect(APP_TOUR.steps.map((s) => s.title).join(" ")).not.toMatch(/AI|Ollama/);
     for (const id of Object.keys(SECTION_TOURS)) {
       const t = tourFor(id)!;
       expect(t.steps[0].target).toBe(`nav-${t.page}`);

@@ -1,11 +1,13 @@
 /**
- * First run ("Awakening"): five short steps, every one skippable, nothing behind a wall.
+ * First run (v1.2): a System intro screen, three short steps, then the reveal.
  *
- * 1. Name, units and body data.  2. Focus, calorie goal, activity and days per week.
- * 3. Equipment checklist (quests and skill suggestions only use what is ticked).
- * 4. Baseline test: max push-ups, pull-ups or a dead hang, a plank and squats in 60 s,
- *    logged as one real session, so it seeds XP and rank, the skill trees and the stats.
- * 5. "[SYSTEM] You have been selected": rank, starting targets and the first daily quest.
+ * Intro: the trainer big on screen over the theme's landing art, with Begin and
+ * "Restore my data" (backups found on this PC).
+ * 1. Your body: empty fields, no made-up numbers; goal weight is optional.
+ * 2. Your goal in plain words, how active you are and how many days a week.
+ * 3. Your kit (quests, programs and skills only use what is ticked).
+ * Reveal: rank, daily targets (formula details on request), trainer, the first quest and an
+ * optional 5-minute baseline test. The weight from step 1 is saved as the first weigh-in.
  *
  * `ProfileForm` (the same fields on one form) is also used in Settings.
  */
@@ -13,30 +15,34 @@ import type { BaselineIn, BaselineOut, EquipmentChoice, Focus, Profile, ProfileI
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { api } from "../api/client";
-import { TrainerPicker } from "../components/Trainer";
+import { BackupsPanel } from "../components/BackupsPanel";
+import { TrainerPicker, TrainerPortrait, useTrainer } from "../components/Trainer";
 import { SystemWindow } from "../components/SystemWindow";
 import { RankBadge } from "../components/XpBar";
 import { kcal } from "../lib/format";
 import { CountUp } from "../lib/motion";
-import { usePrefs } from "../lib/prefs";
+import { useAppTheme, useOptionalPrefs, usePrefs } from "../lib/prefs";
+import { themeArt } from "../lib/themeArt";
 import { CM_PER_IN, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
 
-const DEFAULTS: ProfileIn = { name: "", age: 21, sex: "male", height_cm: 172, weight_kg: 68, goal: "maintain", activity: "moderate", focus: "strength", equipment: [] };
-
 const ACTIVITY: { id: ProfileIn["activity"]; label: string }[] = [
-  { id: "sedentary", label: "Sedentary (desk, little exercise)" },
-  { id: "light", label: "Light (1–3 sessions a week)" },
-  { id: "moderate", label: "Moderate (3–5 sessions a week)" },
-  { id: "active", label: "Active (6–7 sessions a week)" },
-  { id: "very_active", label: "Very active (physical job + training)" },
+  { id: "sedentary", label: "Mostly sitting (desk, little exercise)" },
+  { id: "light", label: "A little active (1–3 sessions a week)" },
+  { id: "moderate", label: "Active (3–5 sessions a week)" },
+  { id: "active", label: "Very active (6–7 sessions a week)" },
+  { id: "very_active", label: "Physical job plus training" },
 ];
 
-export const FOCUS: { id: Focus; label: string; hint: string; goal: ProfileIn["goal"] }[] = [
-  { id: "strength", label: "Strength", hint: "Heavier lifts, low reps", goal: "maintain" },
-  { id: "muscle", label: "Muscle", hint: "Size: more volume, a small surplus", goal: "bulk" },
-  { id: "skills", label: "Skills", hint: "Calisthenics: levers, handstands, muscle-ups", goal: "maintain" },
-  { id: "fat_loss", label: "Fat loss", hint: "Keep strength in a deficit", goal: "cut" },
+/** Goals in plain words. Each sets the focus and the calorie direction (no Cut/Bulk to pick). */
+export const GOALS: { id: string; label: string; hint: string; focus: Focus | null; goal: ProfileIn["goal"] }[] = [
+  { id: "lose_fat", label: "Lose fat", hint: "Get leaner and keep your strength", focus: "fat_loss", goal: "cut" },
+  { id: "build_muscle", label: "Build muscle", hint: "Grow bigger, eat a little more", focus: "muscle", goal: "bulk" },
+  { id: "get_stronger", label: "Get stronger", hint: "Lift or pull more than before", focus: "strength", goal: "maintain" },
+  { id: "skills", label: "Learn bodyweight skills", hint: "Pull-ups, handstands, levers", focus: "skills", goal: "maintain" },
+  { id: "fit", label: "Just get fit", hint: "Feel better, move more, build a habit", focus: null, goal: "maintain" },
 ];
+
+export const goalIdFor = (focus: Focus | null | undefined): string => GOALS.find((g) => g.focus === (focus ?? null))?.id ?? "fit";
 
 export const EQUIPMENT: { id: EquipmentChoice; label: string; hint: string }[] = [
   { id: "none", label: "No equipment", hint: "Floor and body weight" },
@@ -59,19 +65,19 @@ export function EquipmentPicker({ value, onChange }: { value: EquipmentChoice[];
             <label key={e.id} className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors duration-150 ${on ? "border-accent bg-accent/10" : "border-line-2 hover:border-line-input"}`}>
               <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]" checked={on} onChange={() => toggle(e.id)} />
               <span>
-                <span className={`block text-sm ${on ? "text-ink" : "text-ink"}`}>{e.label}</span>
+                <span className="block text-sm text-ink">{e.label}</span>
                 <span className="block text-xs text-muted">{e.hint}</span>
               </span>
             </label>
           );
         })}
       </div>
-      <p className="mt-2 text-xs text-muted">Quests and skill suggestions only use what you tick. Nothing ticked: nothing is filtered.</p>
+      <p className="mt-2 text-xs text-muted">Train, Exercises, Skills, programs and quests only use what you tick.</p>
     </fieldset>
   );
 }
 
-function Choice<T extends string>({ legend, value, options, onChange }: { legend: string; value: T; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
+function Choice<T extends string>({ legend, value, options, onChange }: { legend: string; value: T | ""; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
   return (
     <fieldset>
       <legend className="mb-1.5 text-xs text-muted">{legend}</legend>
@@ -85,47 +91,133 @@ function Choice<T extends string>({ legend, value, options, onChange }: { legend
   );
 }
 
-function BodyFields({ form, set, units }: { form: ProfileIn; set: <K extends keyof ProfileIn>(k: K, v: ProfileIn[K]) => void; units: Units }) {
-  const imperial = units === "imperial";
-  const height = imperial ? Math.round(form.height_cm / CM_PER_IN) : form.height_cm;
-  const weight = toDisplayWeight(form.weight_kg, units);
-  // Keyed by units: switching units re-reads the stored kg/cm; typing never round-trips.
+function GoalChoice({ value, onChange }: { value: string; onChange: (id: string) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <NumberInput label="Age" unit="yrs" initial={form.age} onChange={(n) => set("age", n)} />
-      <NumberInput key={`h-${units}`} label="Height" unit={imperial ? "in" : "cm"} initial={height} onChange={(n) => set("height_cm", imperial ? Math.round(n * CM_PER_IN * 10) / 10 : n)} />
-      <NumberInput key={`w-${units}`} label="Weight" unit={weightUnit(units)} step={0.1} initial={weight} onChange={(n) => set("weight_kg", Math.round(fromDisplayWeight(n, units) * 10) / 10)} />
-    </div>
+    <fieldset>
+      <legend className="mb-1.5 text-xs text-muted">Your goal</legend>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {GOALS.map((g) => {
+          const on = value === g.id;
+          return (
+            <button key={g.id} type="button" aria-pressed={on} onClick={() => onChange(g.id)}
+              className={`rounded-md border p-3 text-left transition-colors duration-150 ${on ? "border-accent bg-accent/10" : "border-line-2 hover:border-line-input"}`}>
+              <span className={`block text-sm font-medium ${on ? "text-accent" : "text-ink"}`}>{g.label}</span>
+              <span className="block text-xs text-muted">{g.hint}</span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 
-function NumberInput({ label, unit, initial, onChange, step = 1 }: { label: string; unit: string; initial: number; onChange: (n: number) => void; step?: number }) {
-  const [text, setText] = useState(String(initial));
+/** A number field that starts empty (no made-up defaults); "" means not filled in. */
+function NumberField({ label, unit, value, onChange, step = 1, required = true, optional = false }: {
+  label: string; unit: string; value: string; onChange: (s: string) => void; step?: number; required?: boolean; optional?: boolean;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs text-muted">{label}</span>
+      <span className="mb-1.5 block text-xs text-muted">{label}{optional && " (optional)"}</span>
       <div className="relative">
-        <input className="input pr-10" type="number" step={step} value={text} required
-          onChange={(e) => { setText(e.target.value); if (e.target.value !== "") onChange(Number(e.target.value)); }} />
+        <input className="input pr-10" type="number" inputMode="decimal" step={step} min={0} value={value} required={required}
+          onChange={(e) => onChange(e.target.value)} />
         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-faint">{unit}</span>
       </div>
     </label>
   );
 }
 
-/** Profile form, used in Settings (onboarding asks the same over several steps). */
+interface Draft {
+  name: string;
+  age: string;
+  sex: ProfileIn["sex"] | "";
+  height: string;
+  weight: string;
+  target: string;
+  goalId: string;
+  activity: ProfileIn["activity"] | "";
+  equipment: EquipmentChoice[];
+}
+
+const EMPTY: Draft = { name: "", age: "", sex: "", height: "", weight: "", target: "", goalId: "", activity: "", equipment: [] };
+
+function draftFrom(p: ProfileIn, units: Units): Draft {
+  const imperial = units === "imperial";
+  return {
+    name: p.name,
+    age: String(p.age),
+    sex: p.sex,
+    height: String(imperial ? Math.round(p.height_cm / CM_PER_IN) : p.height_cm),
+    weight: String(toDisplayWeight(p.weight_kg, units)),
+    target: p.target_weight_kg ? String(toDisplayWeight(p.target_weight_kg, units)) : "",
+    goalId: goalIdFor(p.focus),
+    activity: p.activity,
+    equipment: p.equipment ?? [],
+  };
+}
+
+/** The profile the draft describes, or the first thing still missing. */
+export function profileFrom(d: Draft, units: Units): ProfileIn | string {
+  const imperial = units === "imperial";
+  const age = Number(d.age);
+  const height = Number(d.height);
+  const weight = Number(d.weight);
+  if (!d.age || !(age >= 13 && age <= 100)) return "Enter your age (13 or older).";
+  if (!d.sex) return "Pick the body type for the calorie formula.";
+  if (!d.height || height <= 0) return "Enter your height.";
+  if (!d.weight || weight <= 0) return "Enter your weight.";
+  const goal = GOALS.find((g) => g.id === d.goalId) ?? GOALS[GOALS.length - 1];
+  const target = d.target === "" ? null : Math.round(fromDisplayWeight(Number(d.target), units) * 10) / 10;
+  return {
+    name: d.name.trim(),
+    age: Math.round(age),
+    sex: d.sex,
+    height_cm: imperial ? Math.round(height * CM_PER_IN * 10) / 10 : height,
+    weight_kg: Math.round(fromDisplayWeight(weight, units) * 10) / 10,
+    target_weight_kg: target,
+    goal: goal.goal,
+    focus: goal.focus,
+    activity: d.activity || "light",
+    equipment: d.equipment,
+  };
+}
+
+function BodyFields({ d, put, units }: { d: Draft; put: <K extends keyof Draft>(k: K, v: Draft[K]) => void; units: Units }) {
+  const imperial = units === "imperial";
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-3">
+        <NumberField label="Age" unit="yrs" value={d.age} onChange={(s) => put("age", s)} />
+        <NumberField label="Height" unit={imperial ? "in" : "cm"} value={d.height} onChange={(s) => put("height", s)} />
+        <NumberField label="Weight" unit={weightUnit(units)} step={0.1} value={d.weight} onChange={(s) => put("weight", s)} />
+      </div>
+      <Choice legend="Body type (for the calorie formula)" value={d.sex} options={[{ id: "male", label: "Male" }, { id: "female", label: "Female" }]} onChange={(v) => put("sex", v)} />
+      <div className="w-1/2 pr-1.5">
+        <NumberField label="Goal weight" unit={weightUnit(units)} step={0.1} value={d.target} onChange={(s) => put("target", s)} required={false} optional />
+      </div>
+    </>
+  );
+}
+
+/** Profile form, used in Settings (onboarding asks the same over three steps). */
 export function ProfileForm({ initial, onSaved, submitLabel }: { initial?: ProfileIn; onSaved: (p: Profile) => void; submitLabel: string }) {
-  const [form, setForm] = useState<ProfileIn>({ ...DEFAULTS, focus: null, ...initial });
+  const units = useOptionalPrefs()?.settings.units ?? "metric";
+  const [d, setD] = useState<Draft>(initial ? draftFrom(initial, units) : EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const set = <K extends keyof ProfileIn>(k: K, v: ProfileIn[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const put = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    const body = profileFrom(d, units);
+    if (typeof body === "string") {
+      setError(body);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      onSaved(await api.saveProfile(form));
+      onSaved(await api.saveProfile(body));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -137,81 +229,64 @@ export function ProfileForm({ initial, onSaved, submitLabel }: { initial?: Profi
     <form onSubmit={submit} className="space-y-4">
       <label className="block">
         <span className="mb-1.5 block text-xs text-muted">Name (optional)</span>
-        <input className="input" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="What should the coach call you?" />
+        <input className="input" value={d.name} onChange={(e) => put("name", e.target.value)} placeholder="What should your trainer call you?" />
       </label>
-      <BodyFields form={form} set={set} units="metric" />
-      <div className="grid grid-cols-2 gap-3">
-        <Choice legend="Sex (for the BMR formula)" value={form.sex} options={[{ id: "male", label: "Male" }, { id: "female", label: "Female" }]} onChange={(v) => set("sex", v)} />
-        <Choice legend="Calorie goal" value={form.goal} options={[{ id: "cut", label: "Cut" }, { id: "maintain", label: "Maintain" }, { id: "bulk", label: "Bulk" }]} onChange={(v) => set("goal", v)} />
-      </div>
+      <BodyFields d={d} put={put} units={units} />
+      <GoalChoice value={d.goalId} onChange={(id) => put("goalId", id)} />
       <label className="block">
-        <span className="mb-1.5 block text-xs text-muted">Activity level</span>
-        <select className="input" value={form.activity} onChange={(e) => set("activity", e.target.value as ProfileIn["activity"])}>
+        <span className="mb-1.5 block text-xs text-muted">How active are you?</span>
+        <select className="input" value={d.activity} onChange={(e) => put("activity", e.target.value as ProfileIn["activity"])}>
           {ACTIVITY.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
         </select>
       </label>
-      <EquipmentPicker value={form.equipment ?? []} onChange={(v) => set("equipment", v)} />
-      {error && <p className="text-sm text-bad">{error}</p>}
+      <EquipmentPicker value={d.equipment} onChange={(v) => put("equipment", v)} />
+      {error && <p className="text-sm text-bad" role="alert">{error}</p>}
       <button className="btn-primary w-full" disabled={saving}>{saving ? "Saving…" : submitLabel}</button>
     </form>
   );
 }
 
-const TITLES = ["Who is training?", "What are you training for?", "What can you train with?", "Baseline test", "Awakened"];
+const TITLES = ["Your body", "Your goal", "Your kit"];
 const SUBTITLES = [
   "Free, offline, no account. Everything stays on this PC.",
-  "This sets your calorie estimate and what the daily quest leans towards.",
-  "Never suggested: anything you cannot do with what you have.",
-  "One max effort each, rested in between. It seeds your rank, skill trees and stats. Skip what you cannot do.",
-  "",
+  "Pick what matters most. You can change it any time.",
+  "Nothing you can't do with what you have will be suggested.",
 ];
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Stage = "landing" | "restore" | 1 | 2 | 3 | "reveal";
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const { settings, update } = usePrefs();
-  const [step, setStep] = useState<Step>(1);
-  const [form, setForm] = useState<ProfileIn>(DEFAULTS);
+  const [stage, setStage] = useState<Stage>("landing");
+  const [d, setD] = useState<Draft>(EMPTY);
   const [units, setUnits] = useState<Units>(settings.units);
   const [days, setDays] = useState(settings.sessions_per_week || 3);
-  const [goalTouched, setGoalTouched] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [result, setResult] = useState<BaselineOut | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
-  const set = <K extends keyof ProfileIn>(k: K, v: ProfileIn[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const put = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
 
   // Each step moves focus to its heading, so a screen reader announces the new step.
   useEffect(() => {
-    if (step > 1) heading.current?.focus();
-  }, [step]);
+    if (typeof stage === "number") heading.current?.focus();
+  }, [stage]);
 
   async function saveProfile() {
-    setBusy(true);
-    setError(null);
-    try {
-      const p = await api.saveProfile(form);
-      await update({ units, sessions_per_week: days });
-      setProfile(p);
-      setStep(4);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function runBaseline(b: BaselineIn | null) {
-    setError(null);
-    if (!b) {
-      setStep(5);
+    const body = profileFrom(d, units);
+    if (typeof body === "string") {
+      setError(body);
       return;
     }
     setBusy(true);
+    setError(null);
     try {
-      setResult(await api.baseline(b));
-      setStep(5);
+      const p = await api.saveProfile(body);
+      await update({ units, sessions_per_week: days });
+      // The weight just entered is the first weigh-in, so Progress has a start from day 1.
+      await api.logWeight(body.weight_kg).catch(() => undefined);
+      setProfile(p);
+      setStage("reveal");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -221,92 +296,240 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
   const next = (e: FormEvent) => {
     e.preventDefault();
-    if (step === 3) void saveProfile();
-    else setStep((s) => (s + 1) as Step);
+    if (stage === 1) {
+      const body = profileFrom({ ...d, goalId: d.goalId || "fit" }, units);
+      if (typeof body === "string") return setError(body);
+    }
+    if (stage === 2 && !d.goalId) return setError("Pick a goal (or “Just get fit”).");
+    setError(null);
+    if (stage === 3) void saveProfile();
+    else if (typeof stage === "number") setStage((stage + 1) as Stage);
   };
-  const back = () => setStep((s) => Math.max(1, s - 1) as Step);
+  const back = () => {
+    setError(null);
+    setStage((s) => (s === 1 ? "landing" : typeof s === "number" ? ((s - 1) as Stage) : s));
+  };
+
+  if (stage === "landing" || stage === "restore") {
+    return <Landing restoring={stage === "restore"} onBegin={() => setStage(1)} onRestore={() => setStage("restore")} onBack={() => setStage("landing")} />;
+  }
 
   return (
-    <main className="grid min-h-full place-items-center bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--color-accent)_9%,transparent),transparent_60%)] p-8">
-      <div className={`w-full ${step === 5 ? "max-w-[620px]" : "max-w-[560px]"}`}>
-        {step < 5 ? (
-          <div className="card panel-in p-8" key={step}>
+    <main className="relative grid min-h-full place-items-center overflow-hidden bg-bg p-8">
+      <LandingArt dim />
+      <div className={`relative w-full ${stage === "reveal" ? "max-w-[640px]" : "max-w-[560px]"}`}>
+        {stage !== "reveal" ? (
+          <div className="card panel-in p-8" key={stage}>
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <div className="font-display text-sm font-bold tracking-[0.3em] text-accent">ASCEND</div>
-                <Steps current={step} />
+                <Steps current={stage} />
               </div>
-              <h1 ref={heading} tabIndex={-1} className="text-display-l mt-3 text-ink focus:outline-none">{TITLES[step - 1]}</h1>
-              <p className="mt-1 text-sm text-muted">{SUBTITLES[step - 1]}</p>
+              <h1 ref={heading} tabIndex={-1} className="text-display-l mt-3 text-ink focus:outline-none">{TITLES[stage - 1]}</h1>
+              <p className="mt-1 text-sm text-muted">{SUBTITLES[stage - 1]}</p>
             </div>
-            {step === 4 ? (
-              <BaselineStep form={form} units={units} equipment={form.equipment ?? []} busy={busy} error={error} onBack={back} onSubmit={runBaseline} />
-            ) : (
-              <form onSubmit={next} className="space-y-5" aria-label={TITLES[step - 1]}>
-                {step === 1 && (
-                  <>
-                    <label className="block">
-                      <span className="mb-1.5 block text-xs text-muted">Name (optional)</span>
-                      <input className="input" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="What should the coach call you?" autoFocus />
-                    </label>
-                    <Choice legend="Units" value={units} options={[{ id: "metric", label: "Metric (kg, cm)" }, { id: "imperial", label: "Imperial (lb, in)" }]} onChange={setUnits} />
-                    <BodyFields form={form} set={set} units={units} />
-                    <Choice legend="Sex (for the BMR formula)" value={form.sex} options={[{ id: "male", label: "Male" }, { id: "female", label: "Female" }]} onChange={(v) => set("sex", v)} />
-                  </>
-                )}
-                {step === 2 && (
-                  <>
-                    <fieldset>
-                      <legend className="mb-1.5 text-xs text-muted">Focus</legend>
-                      <div className="grid grid-cols-2 gap-2">
-                        {FOCUS.map((f) => (
-                          <button key={f.id} type="button" aria-pressed={form.focus === f.id}
-                            onClick={() => { set("focus", f.id); if (!goalTouched) set("goal", f.goal); }}
-                            className={`rounded-md border p-3 text-left transition-colors duration-150 ${form.focus === f.id ? "border-accent bg-accent/10" : "border-line-2 hover:border-line-input"}`}>
-                            <span className={`block text-sm font-medium ${form.focus === f.id ? "text-accent" : "text-ink"}`}>{f.label}</span>
-                            <span className="block text-xs text-muted">{f.hint}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </fieldset>
-                    <Choice legend="Calorie goal" value={form.goal} options={[{ id: "cut", label: "Cut" }, { id: "maintain", label: "Maintain" }, { id: "bulk", label: "Bulk" }]} onChange={(v) => { setGoalTouched(true); set("goal", v); }} />
-                    <div className="grid grid-cols-[1.7fr_1fr] gap-3">
-                      <label className="block">
-                        <span className="mb-1.5 block text-xs text-muted">Activity level</span>
-                        <select className="input" value={form.activity} onChange={(e) => set("activity", e.target.value as ProfileIn["activity"])}>
-                          {ACTIVITY.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
-                        </select>
-                      </label>
-                      <label className="block">
-                        <span className="mb-1.5 block text-xs text-muted">Training days per week</span>
-                        <select className="input" value={days} onChange={(e) => setDays(Number(e.target.value))}>
-                          {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
-                        </select>
-                      </label>
-                    </div>
-                  </>
-                )}
-                {step === 3 && <EquipmentPicker value={form.equipment ?? []} onChange={(v) => set("equipment", v)} />}
-                {error && <p className="text-sm text-bad" role="alert">{error}</p>}
-                <Nav step={step} busy={busy} onBack={back} onSkip={step > 1 ? () => (step === 3 ? void saveProfile() : setStep((s) => (s + 1) as Step)) : undefined}
-                  nextLabel={step === 3 ? (busy ? "Saving…" : "Save and continue") : "Continue"} />
-              </form>
-            )}
+            <form onSubmit={next} noValidate className="space-y-5" aria-label={TITLES[stage - 1]}>
+              {stage === 1 && (
+                <>
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs text-muted">Name (optional)</span>
+                    <input className="input" value={d.name} onChange={(e) => put("name", e.target.value)} placeholder="What should your trainer call you?" autoFocus />
+                  </label>
+                  <Choice legend="Units" value={units} options={[{ id: "metric", label: "Metric (kg, cm)" }, { id: "imperial", label: "Imperial (lb, in)" }]} onChange={setUnits} />
+                  <BodyFields d={d} put={put} units={units} />
+                </>
+              )}
+              {stage === 2 && (
+                <>
+                  <GoalChoice value={d.goalId} onChange={(id) => put("goalId", id)} />
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs text-muted">How active are you now?</span>
+                    <select className="input" value={d.activity || "light"} onChange={(e) => put("activity", e.target.value as ProfileIn["activity"])}>
+                      {ACTIVITY.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs text-muted">Days a week you can train</span>
+                    <select className="input" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+                      {[2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} days{n === 3 ? " (a great start)" : ""}</option>)}
+                    </select>
+                  </label>
+                </>
+              )}
+              {stage === 3 && <EquipmentPicker value={d.equipment} onChange={(v) => put("equipment", v)} />}
+              {error && <p className="text-sm text-bad" role="alert">{error}</p>}
+              <div className="flex items-center gap-2 pt-2">
+                <button type="button" className="btn-ghost" onClick={back} disabled={busy}>Back</button>
+                <button type="submit" className="btn-primary ml-auto px-6" disabled={busy}>
+                  {stage === 3 ? (busy ? "Saving…" : "Finish") : "Next"}
+                </button>
+              </div>
+            </form>
           </div>
         ) : (
-          profile && <Awakened profile={profile} result={result} onDone={onDone} />
+          profile && <Awakened profile={profile} equipment={d.equipment} onDone={onDone} />
         )}
       </div>
     </main>
   );
 }
 
-function Nav({ step, busy, onBack, onSkip, nextLabel }: { step: number; busy: boolean; onBack: () => void; onSkip?: () => void; nextLabel: string }) {
+/** The theme's landing art behind the first-run screens, under a scrim (none on Light/Dark). */
+function LandingArt({ dim = false }: { dim?: boolean }) {
+  const art = themeArt(useAppTheme(), "landing");
+  if (!art) return null;
   return (
-    <div className="flex items-center gap-2 pt-2">
-      {step > 1 && <button type="button" className="btn-ghost" onClick={onBack} disabled={busy}>Back</button>}
-      {onSkip && <button type="button" className="btn-ghost ml-auto" onClick={onSkip} disabled={busy}>Skip</button>}
-      <button type="submit" className={`btn-primary px-6 ${onSkip ? "" : "ml-auto"}`} disabled={busy}>{nextLabel}</button>
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0"
+      style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.7) 45%, rgba(0,0,0,${dim ? 0.6 : 0.2}) 100%), url("${art}")`, backgroundSize: "cover", backgroundPosition: "center" }} />
+  );
+}
+
+/** The System intro: the trainer big on screen, Begin or Restore my data. */
+function Landing({ restoring, onBegin, onRestore, onBack }: {
+  restoring: boolean; onBegin: () => void; onRestore: () => void; onBack: () => void;
+}) {
+  const trainer = useTrainer();
+  const begin = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (!restoring) begin.current?.focus(); }, [restoring]);
+  return (
+    <main className="relative flex min-h-full items-center overflow-hidden bg-bg" data-testid="landing">
+      <LandingArt />
+      <div className="relative z-[1] grid w-full grid-cols-12 items-center gap-6 px-12 py-10">
+        <div className="col-span-12 max-w-[520px] lg:col-span-6">
+          <div className="font-display text-sm font-bold tracking-[0.3em] text-accent">[ SYSTEM ]</div>
+          {!restoring ? (
+            <>
+              <h1 className="text-display-xl event-title mt-3 text-white">A new Hunter has awakened.</h1>
+              <p className="event-title mt-3 text-base text-white/90">
+                {trainer.name} will train you from where you are today: a daily quest, a plan for your kit and a rank that climbs with every set.
+                Free, offline, and everything stays on this PC.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button ref={begin} type="button" className="btn-primary px-8 py-3 text-base" onClick={onBegin}>Begin</button>
+                <button type="button" className="btn-ghost border-white/40 bg-black/40 px-6 py-3 text-base text-white" onClick={onRestore}>Restore my data</button>
+              </div>
+            </>
+          ) : (
+            <div className="card mt-4 space-y-3 p-5">
+              <h1 className="text-h2 text-ink">Restore my data</h1>
+              <p className="text-sm text-muted">
+                Backups ASCEND saved on this PC are listed below. To use a backup from another PC, copy its .ascendbak file into the
+                backups folder inside ASCEND&apos;s data folder, then come back here. Your Strong or Hevy history can be imported later in Settings &gt; Data &amp; backups.
+              </p>
+              {/* A restore reloads the app, which then opens on the restored profile. */}
+              <BackupsPanel />
+              <button type="button" className="btn-ghost" onClick={onBack}>Back</button>
+            </div>
+          )}
+        </div>
+        {!restoring && (
+          <div className="col-span-12 hidden justify-center lg:col-span-6 lg:flex">
+            <TrainerPortrait mood="proud" size={320} />
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function Awakened({ profile, equipment, onDone }: { profile: Profile; equipment: EquipmentChoice[]; onDone: () => void }) {
+  const [quest, setQuest] = useState<QuestItem[] | null>(null);
+  const [rank, setRank] = useState<{ rank: string; level: number } | null>(null);
+  const [result, setResult] = useState<BaselineOut | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const loadGame = () => api.game().then((g) => {
+    setQuest(g.quest);
+    setRank({ rank: g.xp.rank, level: g.xp.level });
+  }).catch(() => setQuest([]));
+  useEffect(() => { void loadGame(); }, []);
+
+  async function runBaseline(b: BaselineIn | null) {
+    setError(null);
+    if (!b) {
+      setTesting(false);
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await api.baseline(b);
+      setResult(r);
+      setRank({ rank: r.rank, level: r.level });
+      setTesting(false);
+      void loadGame();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (testing) {
+    return (
+      <div className="card panel-in p-8">
+        <h1 className="text-display-l text-ink">Baseline test</h1>
+        <p className="mb-5 mt-1 text-sm text-muted">One max effort each, rested in between. It seeds your rank, skill trees and plan targets. Leave out anything you can&apos;t do.</p>
+        <BaselineStep equipment={equipment} busy={busy} error={error} onBack={() => setTesting(false)} onSubmit={(b) => void runBaseline(b)} />
+      </div>
+    );
+  }
+  return (
+    <SystemWindow variant="notice" title="System" rank={rank?.rank} testId="awakened"
+      actions={<button type="button" className="btn-primary px-6" onClick={onDone}>Enter ASCEND</button>}>
+      <h1 className="text-display-l text-ink">You have been selected.</h1>
+      <div className="mt-4 flex items-center gap-4">
+        {rank && <RankBadge rank={rank.rank} size={52} />}
+        <div className="text-sm text-muted">
+          {rank ? <>Level <span className="font-semibold text-ink">{rank.level}</span> · Rank <span className="font-semibold text-ink">{rank.rank}</span></> : "Reading your rank…"}
+          {result && (
+            <div className="mt-0.5">Baseline logged: {result.sets_logged} test{result.sets_logged === 1 ? "" : "s"}, +{result.xp_awarded} XP{result.steps_unlocked.length ? ` · unlocked ${result.steps_unlocked.join(", ")}` : ""}.</div>
+          )}
+        </div>
+      </div>
+      {!result && (
+        <div className="mt-4 rounded-lg border border-line-2 bg-panel-2 p-3">
+          <p className="text-sm text-ink">Take the 5-minute baseline test? <span className="text-muted">(optional)</span></p>
+          <p className="text-xs text-muted">Push-ups, a plank, squats and (with a bar) pull-ups. Your plan&apos;s targets then start from what you can really do.</p>
+          <button type="button" className="btn-ghost mt-2 px-3 py-1.5 text-xs" onClick={() => setTesting(true)}>Take the test</button>
+        </div>
+      )}
+      <div className="mt-5 grid grid-cols-2 gap-2">
+        <Stat label="Daily target" value={profile.energy.kcal_target} unit="kcal" accent />
+        <Stat label="Protein" value={profile.energy.protein_target_g} unit="g" />
+      </div>
+      <details className="mt-2 text-xs text-muted">
+        <summary className="cursor-pointer text-accent">How is this worked out?</summary>
+        <p className="mt-1">Resting burn (BMR) {kcal(profile.energy.bmr)} kcal × your activity = daily burn (TDEE) {kcal(profile.energy.tdee)} kcal, then adjusted for your goal. An estimate: real needs vary by a few hundred kcal, and it adapts to your weigh-ins.</p>
+      </details>
+      <div className="mt-5">
+        <p className="text-sm font-semibold text-ink">Pick your trainer</p>
+        <p className="mb-2 text-xs text-muted">Same advice from each, different voice. Change it any time in Settings.</p>
+        <TrainerPicker />
+      </div>
+      <h2 className="mt-5 text-xs font-semibold uppercase tracking-wider text-faint">Your first daily quest</h2>
+      {quest === null ? <p className="mt-2 text-sm text-muted">Generating…</p> : quest.length === 0 ? <p className="mt-2 text-sm text-muted">It appears on Today.</p> : (
+        <ul className="mt-2 space-y-1.5">
+          {quest.map((q) => (
+            <li key={q.id} className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="text-ink">{q.title}</span>
+              <span className="shrink-0 text-xs text-xp">+{q.xp} XP</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SystemWindow>
+  );
+}
+
+/** "Step 1 of 3" with three small bars; the current and done steps are filled. */
+function Steps({ current }: { current: number }) {
+  return (
+    <div className="flex items-center gap-2 text-[11px] text-muted" aria-label={`Step ${current} of 3`} role="img">
+      <span aria-hidden="true">Step {current} of 3</span>
+      {[1, 2, 3].map((n) => (
+        <span key={n} aria-hidden="true" className={`h-1 w-5 rounded-full transition-colors duration-200 ${n <= current ? "bg-accent" : "bg-line-2"}`} />
+      ))}
     </div>
   );
 }
@@ -345,9 +568,7 @@ function TestTimer({ mode, onDone, label }: { mode: "countdown" | "stopwatch"; o
   );
 }
 
-function BaselineStep({ form, units, equipment, busy, error, onBack, onSubmit }: {
-  form: ProfileIn;
-  units: Units;
+function BaselineStep({ equipment, busy, error, onBack, onSubmit }: {
   equipment: EquipmentChoice[];
   busy: boolean;
   error: string | null;
@@ -355,7 +576,7 @@ function BaselineStep({ form, units, equipment, busy, error, onBack, onSubmit }:
   onSubmit: (b: BaselineIn | null) => void;
 }) {
   const hasBar = equipment.length === 0 || equipment.some((e) => e === "pullup_bar" || e === "rings" || e === "gym");
-  const [v, setV] = useState<Record<string, string>>({ pushups: "", pullups: "", dead_hang_s: "", plank_s: "", squats_60s: "", bodyweight: String(toDisplayWeight(form.weight_kg, units)) });
+  const [v, setV] = useState<Record<string, string>>({ pushups: "", pullups: "", dead_hang_s: "", plank_s: "", squats_60s: "" });
   const put = (k: string, s: string) => setV((x) => ({ ...x, [k]: s }));
   const n = (k: string) => (v[k] === "" ? null : Math.max(0, Math.round(Number(v[k]))));
   const row = (k: string, label: string, hint: string, unit: string, extra?: ReactNode) => (
@@ -373,16 +594,14 @@ function BaselineStep({ form, units, equipment, busy, error, onBack, onSubmit }:
   );
   function submit(e: FormEvent) {
     e.preventDefault();
-    const bw = v.bodyweight === "" ? null : fromDisplayWeight(Number(v.bodyweight), units);
     const body: BaselineIn = {
       pushups: n("pushups"),
       pullups: hasBar ? n("pullups") : null,
       dead_hang_s: hasBar ? n("dead_hang_s") : null,
       plank_s: n("plank_s"),
       squats_60s: n("squats_60s"),
-      bodyweight_kg: bw && Math.abs(bw - form.weight_kg) > 0.05 ? Math.round(bw * 10) / 10 : null,
     };
-    const any = [body.pushups, body.pullups, body.dead_hang_s, body.plank_s, body.squats_60s, body.bodyweight_kg].some((x) => x);
+    const any = [body.pushups, body.pullups, body.dead_hang_s, body.plank_s, body.squats_60s].some((x) => x);
     onSubmit(any ? body : null);
   }
   return (
@@ -395,84 +614,12 @@ function BaselineStep({ form, units, equipment, busy, error, onBack, onSubmit }:
         <TestTimer mode="stopwatch" label="plank timer" onDone={(s) => put("plank_s", String(s))} />)}
       {row("squats_60s", "Bodyweight squats in 60 s", "Hips to knee height, stand tall each rep.", "reps",
         <TestTimer mode="countdown" label="squat timer" onDone={() => undefined} />)}
-      <label className="block">
-        <span className="mb-1.5 block text-xs text-muted">Body weight today (optional)</span>
-        <div className="relative w-40">
-          <input className="input pr-10" type="number" step={0.1} value={v.bodyweight} onChange={(e) => put("bodyweight", e.target.value)} />
-          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-faint">{weightUnit(units)}</span>
-        </div>
-      </label>
       {error && <p className="text-sm text-bad" role="alert">{error}</p>}
       <div className="flex items-center gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onBack} disabled={busy}>Back</button>
-        <button type="button" className="btn-ghost ml-auto" onClick={() => onSubmit(null)} disabled={busy}>Skip the test</button>
+        <button type="button" className="btn-ghost ml-auto" onClick={onBack} disabled={busy}>Not now</button>
         <button type="submit" className="btn-primary px-6" disabled={busy}>{busy ? "Logging…" : "Log my baseline"}</button>
       </div>
     </form>
-  );
-}
-
-function Awakened({ profile, result, onDone }: { profile: Profile; result: BaselineOut | null; onDone: () => void }) {
-  const [quest, setQuest] = useState<QuestItem[] | null>(null);
-  const [rank, setRank] = useState<{ rank: string; level: number } | null>(result ? { rank: result.rank, level: result.level } : null);
-  useEffect(() => {
-    api.game().then((g) => {
-      setQuest(g.quest);
-      setRank({ rank: g.xp.rank, level: g.xp.level });
-    }).catch(() => setQuest([]));
-  }, []);
-  const enter = useRef<HTMLButtonElement>(null);
-  return (
-    <SystemWindow variant="notice" title="System" rank={rank?.rank} testId="awakened"
-      actions={<button ref={enter} type="button" className="btn-primary px-6" onClick={onDone}>Enter ASCEND</button>}>
-      <h1 className="text-display-l text-ink">You have been selected.</h1>
-      <div className="mt-4 flex items-center gap-4">
-        {rank && <RankBadge rank={rank.rank} size={52} />}
-        <div className="text-sm text-muted">
-          {rank ? <>Level <span className="font-semibold text-ink">{rank.level}</span> · Rank <span className="font-semibold text-ink">{rank.rank}</span></> : "Reading your rank…"}
-          {result ? (
-            <div className="mt-0.5">Baseline logged: {result.sets_logged} test{result.sets_logged === 1 ? "" : "s"}, +{result.xp_awarded} XP{result.steps_unlocked.length ? ` · unlocked ${result.steps_unlocked.join(", ")}` : ""}.</div>
-          ) : (
-            <div className="mt-0.5">No baseline yet: your first logged sets will seed your rank and skill trees.</div>
-          )}
-        </div>
-      </div>
-      <div className="mt-5 grid grid-cols-4 gap-2">
-        <Stat label="BMR" value={profile.energy.bmr} unit="kcal" />
-        <Stat label="TDEE" value={profile.energy.tdee} unit="kcal" />
-        <Stat label="Daily target" value={profile.energy.kcal_target} unit="kcal" accent />
-        <Stat label="Protein" value={profile.energy.protein_target_g} unit="g" />
-      </div>
-      <p className="mt-2 text-xs text-muted">Estimates from the Mifflin-St Jeor equation × an activity factor. Real needs vary by a few hundred kcal.</p>
-      <div className="mt-5">
-        <p className="text-sm font-semibold text-ink">Pick your trainer</p>
-        <p className="mb-2 text-xs text-muted">Same advice from each, different voice. Change it any time in Settings.</p>
-        <TrainerPicker />
-      </div>
-      <h2 className="mt-5 text-xs font-semibold uppercase tracking-wider text-faint">Your first daily quest</h2>
-      {quest === null ? <p className="mt-2 text-sm text-muted">Generating…</p> : quest.length === 0 ? <p className="mt-2 text-sm text-muted">It appears on Today.</p> : (
-        <ul className="mt-2 space-y-1.5">
-          {quest.map((q) => (
-            <li key={q.id} className="flex items-baseline justify-between gap-3 text-sm">
-              <span className="text-ink">{q.title}</span>
-              <span className="shrink-0 text-xs text-xp">+{q.xp} XP</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SystemWindow>
-  );
-}
-
-/** "Step 1 of 5" with five small bars; the current and done steps are filled. */
-function Steps({ current }: { current: number }) {
-  return (
-    <div className="flex items-center gap-2 text-[11px] text-muted" aria-label={`Step ${current} of 5`} role="img">
-      <span aria-hidden="true">Step {current} of 5</span>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} aria-hidden="true" className={`h-1 w-5 rounded-full transition-colors duration-200 ${n <= current ? "bg-accent" : "bg-line-2"}`} />
-      ))}
-    </div>
   );
 }
 

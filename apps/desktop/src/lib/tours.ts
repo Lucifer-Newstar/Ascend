@@ -24,13 +24,12 @@ const nav = (id: Page, title: string, body: string): TourStep => ({ target: `nav
 export const APP_TOUR: Tour = {
   id: "app",
   page: "dashboard",
-  // Five steps at most (scope review): the rest is one "tour me through …" away.
+  // v1.2: three steps at most (Today, Train, the trainer chat); the rest is one
+  // "tour me through …" away.
   steps: [
-    nav("dashboard", "Today", "Your daily quests, rings, streak and the weekly boss. Start here each day. Next to continue, Esc to stop."),
-    nav("workout", "Train", "Log sets here. Every set is saved instantly and the engine suggests your next target."),
-    nav("diet", "Fuel", "Log meals with Indian portions; calories and protein update straight away."),
-    { target: "ai", title: "Local AI (optional)", body: "The app works fully without AI. With Ollama installed, a local model words answers on this PC. Settings > AI setup checks your PC." },
-    { target: "trainer", title: "Ask me anything", body: "Open the chat for help, a tour of any page (\"tour me through skills\"), or to check a goal. Ctrl+K jumps anywhere." },
+    nav("dashboard", "Today", "Your daily quest, today's workout, your streak and the weekly boss. Start here each day. Next to continue, Esc to stop."),
+    nav("workout", "Train", "Your program's exercises are here. Tap one, log your reps, and the set is saved instantly."),
+    { target: "trainer", title: "Ask your trainer", body: "Ask anything (\"what should I train today?\"), or just type \"10 pushups\" to log it. Ctrl+K opens this chat anywhere." },
   ],
 };
 
