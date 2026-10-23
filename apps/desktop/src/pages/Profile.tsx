@@ -12,9 +12,13 @@ import { useEffect, useState, type ChangeEvent } from "react";
 
 import { api } from "../api/client";
 import { PageGrid, Panel } from "../components/Page";
+import { Avatar } from "../components/Avatar";
+import { BossLadder } from "../components/BossLadder";
 import { ShareDialog } from "../components/ShareCard";
 import { TrainerPortrait, useTrainer } from "../components/Trainer";
 import { useToast } from "../components/Toast";
+import { Wardrobe, progressFrom } from "../components/Wardrobe";
+import { useOptionalPrefs } from "../lib/prefs";
 import { reencodePhoto, saveImage } from "../lib/share";
 import { useApi } from "../lib/useApi";
 
@@ -27,6 +31,8 @@ export function ProfilePage({ refreshKey }: { refreshKey: number }) {
     <PageGrid label="Profile">
       <HunterCard refreshKey={refreshKey} />
       <Achievements refreshKey={refreshKey} onShare={setShare} />
+      <WardrobePanel refreshKey={refreshKey} />
+      <BossLadderPanel refreshKey={refreshKey} />
       <Gallery />
       {share && <ShareDialog payload={share} onClose={() => setShare(null)} />}
     </PageGrid>
@@ -39,12 +45,18 @@ function HunterCard({ refreshKey }: { refreshKey: number }) {
   const stats = useApi(api.stats, [refreshKey]);
   const titles = useApi(api.titles, [refreshKey]);
   const trainer = useTrainer();
+  const prefs = useOptionalPrefs();
   const xp = game.data?.xp;
+  const s = prefs?.settings;
   return (
     <Panel id="hunter" index={0} className="col-span-12 xl:col-span-5" title="Hunter card"
       loading={profile.loading && !profile.data} error={!profile.data ? profile.error ?? null : null} onRetry={profile.reload}>
       <div className="flex items-start gap-4">
-        <TrainerPortrait mood="proud" size={72} />
+        {xp ? (
+          <Avatar look={s?.avatar ?? "male"} rank={xp.rank} outfit={s?.outfit} weapon={s?.weapon} relic={s?.relic} pet={s?.pet} height={150} />
+        ) : (
+          <TrainerPortrait mood="proud" size={72} />
+        )}
         <div className="min-w-0">
           <p className="text-display-l text-ink" data-testid="hunter-name">{profile.data?.name ?? "Hunter"}</p>
           {xp && <p className="text-sm text-muted">Level {xp.level} · Rank {xp.rank} · {xp.rank_title}</p>}
@@ -68,6 +80,30 @@ function HunterCard({ refreshKey }: { refreshKey: number }) {
           <ul className="mt-1 flex flex-wrap gap-1.5">{titles.data!.map((t) => <li key={`${t.title}-${t.boss}`} className="chip border-accent/50 text-ink">{t.title}</li>)}</ul>
         </div>
       )}
+    </Panel>
+  );
+}
+
+function BossLadderPanel({ refreshKey }: { refreshKey: number }) {
+  const ladder = useApi(api.bosses, [refreshKey]);
+  return (
+    <Panel id="boss-ladder" index={3} className="col-span-12" title="Boss ladder"
+      hint="Weekly bosses from E to S by category, and the seasonal bosses with their drops."
+      loading={ladder.loading && !ladder.data} error={!ladder.data ? ladder.error ?? null : null} onRetry={ladder.reload}>
+      {ladder.data && <BossLadder bosses={ladder.data} />}
+    </Panel>
+  );
+}
+
+function WardrobePanel({ refreshKey }: { refreshKey: number }) {
+  const game = useApi(api.game, [refreshKey]);
+  const prs = useApi(api.prs, [refreshKey]);
+  const titles = useApi(api.titles, [refreshKey]);
+  return (
+    <Panel id="wardrobe" index={2} className="col-span-12" title="Wardrobe"
+      hint="Outfits, weapons, relics and pets, earned by rank, streaks, PRs and bosses."
+      loading={game.loading && !game.data} error={!game.data ? game.error ?? null : null} onRetry={game.reload}>
+      <Wardrobe progress={progressFrom(game.data, prs.data?.length ?? 0, titles.data)} />
     </Panel>
   );
 }
@@ -143,7 +179,7 @@ function Gallery() {
   }
 
   return (
-    <Panel id="gallery" index={2} className="col-span-12" title="Progress photos"
+    <Panel id="gallery" index={4} className="col-span-12" title="Progress photos"
       hint="Private: they stay in your data folder, are included in backups, and carry no location or camera data."
       action={<button type="button" className="btn-ghost px-2 py-1 text-xs" aria-pressed={reveal} onClick={() => setReveal((r) => !r)}>{reveal ? "Blur photos" : "Show photos"}</button>}
       loading={photos.loading && !photos.data} error={!photos.data ? photos.error ?? null : null} onRetry={photos.reload}>
