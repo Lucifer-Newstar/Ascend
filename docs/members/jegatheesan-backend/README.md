@@ -9,6 +9,20 @@ Own the sidecar: a FastAPI modular monolith that stores everything in SQLite, tu
 and meals into numbers through deterministic engines, and talks to Ollama for the coach —
 with a rules fallback for every AI path.
 
+## Status at 1.0.0 (2026-10-23)
+
+The responsibilities below are the plan from 2026-10-20. What shipped in this area:
+
+- **Delivered:** the FastAPI modular monolith (`workouts`, `nutrition`, `gamification`,
+  `progress`, `skills`, `intelligence`, `coach`, `io`) with SQLite in WAL mode, 19 Alembic
+  migrations, the event bus with a transactional outbox, token and Host checks; the deterministic
+  engines (recovery-v2, prog-v1, tdee-v1, insights-v1, programs-v1, boss-v1, XP, quests, streaks,
+  ranks); the Ollama client with timeouts and the coach's number guard; Strong, Hevy, JSON and CSV
+  import/export and `.ascendbak` backups with daily snapshots.
+- **Planned here, not in 1.0.0:** the GPU/CPU job queue and the model manager runtime (no model
+  downloads), the meal-scan pipeline, the Open Food Facts import, the injury and red-flag coach
+  flows and structured logging.
+
 ## Primary responsibilities
 
 - Sidecar core: config, DB (WAL pragmas), Alembic migrations, security middleware,

@@ -10,6 +10,21 @@ the Docker images the team uses for ML and dev observability. Works closely with
 Team Lead, who decides releases and owns the MLOps pipeline that runs on this
 infrastructure.
 
+## Status at 1.0.0 (2026-10-23)
+
+The responsibilities below are the plan from 2026-10-20. What shipped in this area:
+
+- **Delivered:** `ci.yml` (commitlint, Markdown link check, ruff, mypy, pytest with coverage,
+  Alembic, contract drift, eslint, tsc, vitest and the Vite build on Ubuntu and Windows, the
+  PyInstaller sidecar with a smoke test, Docker tests and a read-only non-root runtime image);
+  `release.yml` (PyInstaller sidecar + NSIS installer on `windows-latest`, Electron fuse check,
+  publish to GitHub Releases with `SHA256SUMS.txt` and notes on `v*` tags); `ml.yml`; actions
+  pinned by SHA; pre-commit (ruff, mypy, eslint, hadolint, gitleaks, commit messages); the Docker
+  Compose profiles for tests, dev, web and MLflow; app icons and fuses.
+- **Planned here, not in 1.0.0:** auto-update (`latest.yml`, beta/stable channels), the CycloneDX
+  SBOM, a packaged-installer smoke test, Playwright and visual regression, Prometheus/Grafana,
+  the CUDA training image and `model-release.yml`. Prettier was left out of pre-commit.
+
 ## Primary responsibilities
 
 - Repo tooling: npm workspaces + uv layout, pre-commit (ruff, mypy, eslint, prettier,

@@ -9,6 +9,20 @@ Hold the whole picture: keep the architecture coherent and documented, run the t
 rhythm, own the ML half of the product (the food classifier and the pipeline that trains,
 gates and ships it), and decide when a build is good enough to release.
 
+## Status at 1.0.0 (2026-10-23)
+
+The responsibilities below are the plan from 2026-10-20. What shipped in this area:
+
+- **Delivered:** the architecture and 22 ADRs; engine specs and the synthetic-user evaluation
+  ([docs/ai/evaluation.md](../../ai/evaluation.md)); the ML pipeline in `ml/` (prepare, train,
+  ONNX export with a parity gate, evaluate, DVC stages, MLflow, CI smoke run on synthetic data);
+  releases 0.1.0 to 1.0.0 with the CHANGELOG and release notes; the security-review fixes.
+- **Planned here, not in 1.0.0:** a food classifier trained on real, licensed photos (the
+  pipeline has only run on synthetic smoke data, and no model ships in the app), the evaluation
+  gate workflow, drift reports, retraining from corrections, model-only releases and the beta
+  channel. The local-model benchmark covers `qwen3:4b` speed on the reference laptop only (see the
+  README's Ollama tuning note).
+
 ## Primary responsibilities
 
 - Architecture + ADRs; reviewer for contracts, process boundaries and the stack
