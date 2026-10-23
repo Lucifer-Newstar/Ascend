@@ -53,13 +53,14 @@ export function count(n: number, singular: string, plural = `${singular}s`): str
 
 /**
  * A date range like "24 Nov – 15 Dec", with the years when either end is not this year
- * ("24 Nov 2027 – 15 Aug 2028"): without them a range a year away read as next month.
+ * ("Nov 2027 – Aug 2028"): without them a range a year away read as next month.
  */
 export function dateRange(fromIso: string, toIso: string, today = new Date()): string {
   const from = new Date(`${fromIso.slice(0, 10)}T00:00:00`);
   const to = new Date(`${toIso.slice(0, 10)}T00:00:00`);
   const y = today.getFullYear();
   const withYear = from.getFullYear() !== y || to.getFullYear() !== y;
-  const f = (d: Date) => d.toLocaleDateString("en-GB", withYear ? { day: "numeric", month: "short", year: "numeric" } : { day: "numeric", month: "short" });
+  // Across years the day adds nothing a reader needs: "Nov 2027 – Aug 2028".
+  const f = (d: Date) => d.toLocaleDateString("en-GB", withYear ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" });
   return `${f(from)} – ${f(to)}`;
 }
