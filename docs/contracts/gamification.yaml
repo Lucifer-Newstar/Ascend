@@ -24,8 +24,8 @@ security:
 - launchToken: []
 tags:
 - name: gamification
-  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own grant (a deleted
-    set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
+  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own
+    grant (a deleted set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
 paths:
   /game/summary:
     get:
@@ -224,6 +224,35 @@ paths:
                 type: array
                 title: Response List Themes Game Themes Get
       x-status: implemented
+  /game/streak/reason:
+    post:
+      summary: Streak Reason
+      description: 'v1.2: say why a day was missed. Given by the end of the next day, it keeps the
+
+        streak; two missed days in a row still reset it.'
+      operationId: streak_reason_game_streak_reason_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreakReasonIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreakOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - gamification
 components:
   securitySchemes:
     launchToken:
@@ -320,23 +349,26 @@ components:
         best:
           type: integer
           title: Best
-        freezes_held:
+        excused:
           type: integer
-          title: Freezes Held
-        freezes_used:
-          type: integer
-          title: Freezes Used
+          title: Excused
+          default: 0
         active_today:
           type: boolean
           title: Active Today
+        reason_due:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Reason Due
       type: object
       required:
       - current
       - best
-      - freezes_held
-      - freezes_used
       - active_today
       title: StreakOut
+      description: 'v1.2: a missed day is kept with a reason given by the next day (no more freezes).'
     ValidationError:
       properties:
         loc:
@@ -698,3 +730,19 @@ components:
       - requirement
       title: ThemeOut
       description: 'v1.2: one app theme, whether it is free or earned, and how to earn it.'
+    StreakReasonIn:
+      properties:
+        day:
+          type: string
+          format: date
+          title: Day
+        reason:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Reason
+      type: object
+      required:
+      - day
+      - reason
+      title: StreakReasonIn
