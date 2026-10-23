@@ -638,6 +638,13 @@ components:
             minimum: 13.0
           - type: 'null'
           title: Age
+        height_cm:
+          anyOf:
+          - type: number
+            maximum: 250.0
+            minimum: 100.0
+          - type: 'null'
+          title: Height Cm
       additionalProperties: false
       type: object
       title: GoalCheckIn

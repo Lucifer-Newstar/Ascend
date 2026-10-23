@@ -202,11 +202,16 @@ paths:
       - coach
   /coach/weekly-review/latest:
     get:
-      summary: Latest weekly review
-      operationId: latest_review
+      tags:
+      - coach
+      summary: Latest Weekly Review
+      description: 'Review of the last 7 days: every finding from the fixed rules, the top 3 by
+
+        severity, and a template summary that only repeats the findings'' numbers.'
+      operationId: latest_weekly_review_coach_weekly_review_latest_get
       responses:
         '200':
-          description: OK
+          description: Successful Response
           content:
             application/json:
               schema:
@@ -218,14 +223,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-status: implemented
-      tags:
-      - coach
-      description: Computed on request for the last 7 days. `proposals` are added when the proposals table lands
-        (Phase 2).
   /coach/explain:
     post:
-      summary: Explain an engine result ("why?" on a tip card, finding or number). Model text is validated; template
-        on failure (ADR-0011)
+      summary: Explain an engine result ("why?" on a tip card, finding or number). Model text is validated; template on failure
+        (ADR-0011)
       operationId: explain_result
       requestBody:
         required: true
@@ -690,3 +691,35 @@ components:
       - model
       - seconds
       title: WarmOut
+    FindingOut:
+      properties:
+        code:
+          type: string
+          title: Code
+        severity:
+          type: integer
+          title: Severity
+        title:
+          type: string
+          title: Title
+        detail:
+          type: string
+          title: Detail
+        proposal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Proposal
+        numbers:
+          additionalProperties: true
+          type: object
+          title: Numbers
+      type: object
+      required:
+      - code
+      - severity
+      - title
+      - detail
+      - proposal
+      - numbers
+      title: FindingOut

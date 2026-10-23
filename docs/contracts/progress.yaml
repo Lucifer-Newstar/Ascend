@@ -169,29 +169,42 @@ paths:
       x-status: implemented
   /muscles/{code}/history:
     get:
-      summary: 'Muscle drill-down: 1 to 30 days'
-      operationId: muscle_history
+      tags:
+      - progress
+      summary: Muscle History
+      description: 'Drill-down for one muscle: daily effective sets and readiness for 1-30 days,
+
+        the sets that loaded it, and a plain-language suggestion from the status rules.'
+      operationId: muscle_history_muscles__code__history_get
       parameters:
       - name: code
         in: path
         required: true
         schema:
           type: string
+          title: Code
       - name: days
         in: query
         required: false
         schema:
           type: integer
-          default: 7
-          minimum: 1
           maximum: 30
+          minimum: 1
+          default: 7
+          title: Days
       responses:
         '200':
-          description: OK
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MuscleHistory'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Not found
           content:
@@ -199,8 +212,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-status: implemented
-      tags:
-      - progress
   /body-metrics:
     get:
       summary: Body metrics with trend weight
@@ -305,17 +316,24 @@ paths:
     delete:
       tags:
       - progress
-      summary: Delete a weigh-in
-      operationId: delete_body_metric
+      summary: Delete Body Metric
+      operationId: delete_body_metric_body_metrics__metric_id__delete
       parameters:
       - name: metric_id
         in: path
         required: true
         schema:
           type: integer
+          title: Metric Id
       responses:
         '204':
-          description: Deleted
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Not found
           content:
@@ -545,6 +563,12 @@ components:
           $ref: '#/components/schemas/XpOut'
         streak:
           $ref: '#/components/schemas/StreakOut'
+        calm:
+          $ref: '#/components/schemas/CalmStreakOut'
+          default:
+            current: 0
+            best: 0
+            active_today: false
         quest:
           items:
             $ref: '#/components/schemas/QuestItemOut'
@@ -1032,6 +1056,21 @@ components:
           - type: number
           - type: 'null'
           title: Rpe
+        duration_s:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Duration S
+        distance_m:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Distance M
+        avg_hr:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Avg Hr
         e1rm:
           anyOf:
           - type: number
@@ -1044,6 +1083,10 @@ components:
           type: string
           format: date-time
           title: Performed At
+        measure:
+          type: string
+          title: Measure
+          default: reps
       type: object
       required:
       - id
@@ -1263,6 +1306,10 @@ components:
           type: string
           format: date
           title: Day
+        section:
+          type: string
+          title: Section
+          default: gym
         started_at:
           type: string
           format: date-time
@@ -1278,6 +1325,14 @@ components:
             $ref: '#/components/schemas/SetOut'
           type: array
           title: Sets
+        source:
+          type: string
+          title: Source
+          default: app
+        title:
+          type: string
+          title: Title
+          default: ''
       type: object
       required:
       - id
@@ -1344,65 +1399,60 @@ components:
       - eff_sets
       - readiness
     MuscleHistory:
-      type: object
       properties:
         code:
           type: string
-          examples:
-          - hamstrings
-        days:
-          type: integer
-        target_low:
-          type: number
-        target_high:
-          type: number
-        daily:
-          type: array
-          items:
-            $ref: '#/components/schemas/MuscleDay'
-        contributing_sets:
-          type: array
-          items:
-            type: object
-            properties:
-              set_id:
-                type: integer
-              exercise:
-                type: string
-              weight:
-                type: number
-              effort:
-                type: number
-              es:
-                type: number
-              at:
-                type: string
-                format: date-time
-        suggestion:
-          type:
-          - string
-          - 'null'
+          title: Code
         label:
           type: string
+          title: Label
+        latin:
+          type: string
+          title: Latin
+          default: ''
+        days:
+          type: integer
+          title: Days
         status:
           type: string
-          enum:
-          - under
-          - optimal
-          - recovering
-          - over
-          - no_data
+          title: Status
         es_7d:
           type: number
+          title: Es 7D
+        target_low:
+          type: number
+          title: Target Low
+        target_high:
+          type: number
+          title: Target High
         readiness:
           type: number
+          title: Readiness
         ready_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ready At
+        daily:
+          items:
+            $ref: '#/components/schemas/MuscleDay'
+          type: array
+          title: Daily
+        contributing_sets:
+          items:
+            $ref: '#/components/schemas/ContributingSet'
+          type: array
+          title: Contributing Sets
+        suggestion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Suggestion
         formula_version:
           type: string
+          title: Formula Version
+      type: object
       required:
       - code
       - label
@@ -1417,6 +1467,7 @@ components:
       - contributing_sets
       - suggestion
       - formula_version
+      title: MuscleHistory
     BodyMetricIn:
       type: object
       properties:
@@ -1824,3 +1875,51 @@ components:
       required:
       - taken_at
       title: BaselineResult
+    CalmStreakOut:
+      properties:
+        current:
+          type: integer
+          title: Current
+        best:
+          type: integer
+          title: Best
+        active_today:
+          type: boolean
+          title: Active Today
+      type: object
+      required:
+      - current
+      - best
+      - active_today
+      title: CalmStreakOut
+      description: Days in a row with at least one meditation sit (same freeze rules).
+    ContributingSet:
+      properties:
+        set_id:
+          type: integer
+          title: Set Id
+        at:
+          type: string
+          format: date-time
+          title: At
+        exercise:
+          type: string
+          title: Exercise
+        weight:
+          type: number
+          title: Weight
+        effort:
+          type: number
+          title: Effort
+        es:
+          type: number
+          title: Es
+      type: object
+      required:
+      - set_id
+      - at
+      - exercise
+      - weight
+      - effort
+      - es
+      title: ContributingSet

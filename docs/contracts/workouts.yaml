@@ -222,8 +222,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
-      description: Lifts send weight_kg + reps; time-based sections (cardio, martial_arts, flexibility, meditation)
-        must send duration_s (422 otherwise).
+      description: Lifts send weight_kg + reps; time-based sections (cardio, martial_arts, flexibility, meditation) must send
+        duration_s (422 otherwise).
   /workouts/{workout_id}/finish:
     post:
       tags:
@@ -361,19 +361,28 @@ paths:
       - workouts
   /workouts/{workout_id}/sets/{set_id}:
     patch:
-      summary: Edit a logged set (re-runs PR, XP, muscle load via events)
-      operationId: edit_set
+      tags:
+      - workouts
+      summary: Edit Set
+      description: 'Fix a logged set. PRs for the exercise and the set''s muscle load are re-derived.
+
+        If the set is no longer a PR its PR XP is reversed (a new row in the append-only
+
+        ledger); an edit never pays XP.'
+      operationId: edit_set_workouts__workout_id__sets__set_id__patch
       parameters:
       - name: workout_id
         in: path
         required: true
         schema:
           type: integer
+          title: Workout Id
       - name: set_id
         in: path
         required: true
         schema:
           type: integer
+          title: Set Id
       requestBody:
         required: true
         content:
@@ -382,11 +391,17 @@ paths:
               $ref: '#/components/schemas/SetPatch'
       responses:
         '200':
-          description: OK
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SetOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Not found
           content:
@@ -394,27 +409,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-status: implemented
+    delete:
       tags:
       - workouts
-      description: PRs for the exercise and the set's muscle load are re-derived; XP already awarded is kept (append-only
-        ledger).
-    delete:
-      summary: Delete a logged set
-      operationId: delete_set
+      summary: Delete Set
+      operationId: delete_set_workouts__workout_id__sets__set_id__delete
       parameters:
       - name: workout_id
         in: path
         required: true
         schema:
           type: integer
+          title: Workout Id
       - name: set_id
         in: path
         required: true
         schema:
           type: integer
+          title: Set Id
       responses:
         '204':
-          description: Deleted
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Not found
           content:
@@ -422,8 +443,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-status: implemented
-      tags:
-      - workouts
   /prs:
     get:
       summary: Personal records
@@ -448,10 +467,14 @@ paths:
       - workouts
   /plans/current:
     get:
+      tags:
+      - workouts
       summary: The active training plan
       description: 'The program the user follows: its days, the next session with prog-v1 targets, sessions
 
-        done and the reason the next day is next.'
+        done and the reason the next day is next. `null` when no program is chosen yet (an
+
+        ordinary answer, not an error, so the app logs nothing red for it).'
       operationId: current_plan_plans_current_get
       responses:
         '200':
@@ -459,12 +482,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlanOut'
+                anyOf:
+                - $ref: '#/components/schemas/PlanOut'
+                - type: 'null'
+                title: Response Current Plan Plans Current Get
         '404':
           description: No program chosen
       x-status: implemented
-      tags:
-      - workouts
     put:
       summary: Follow a program
       description: 'Start following a built-in program from today; a previous choice ends. Choosing the
@@ -2119,6 +2143,15 @@ components:
           type: integer
           title: Done Sets
           default: 0
+        measure:
+          type: string
+          title: Measure
+          default: reps
+        section:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Section
       type: object
       required:
       - exercise_id
@@ -2189,3 +2222,20 @@ components:
       - inputs
       title: Why
       description: 'The "Why?" of one number: the formula in words and every input with its value.'
+    SignalOut:
+      properties:
+        code:
+          type: string
+          title: Code
+        active:
+          type: boolean
+          title: Active
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - code
+      - active
+      - detail
+      title: SignalOut

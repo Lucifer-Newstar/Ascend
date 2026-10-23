@@ -48,7 +48,7 @@
       ],
       "owner": "jegatheesan-backend",
       "operations": {
-        "implemented": 4,
+        "implemented": 6,
         "planned": 6
       }
     },
@@ -61,7 +61,7 @@
       ],
       "owner": "jegatheesan-backend",
       "operations": {
-        "implemented": 5,
+        "implemented": 6,
         "planned": 4
       }
     },
@@ -125,7 +125,7 @@
       ],
       "owner": "jegatheesan-backend",
       "operations": {
-        "implemented": 8,
+        "implemented": 9,
         "planned": 0
       }
     },

@@ -240,6 +240,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+  /skills/details:
+    get:
+      tags:
+      - skills
+      summary: List Skill Details
+      description: Every tree in full (steps, criteria, feeders, ETA) in one call, for the Skills page.
+      operationId: list_skill_details_skills_details_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SkillDetail'
+                type: array
+                title: Response List Skill Details Skills Details Get
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -415,6 +433,10 @@ components:
           type: boolean
           title: Custom
           default: false
+        fits_equipment:
+          type: boolean
+          title: Fits Equipment
+          default: true
         steps:
           items:
             $ref: '#/components/schemas/StepOut'
@@ -555,6 +577,10 @@ components:
           type: boolean
           title: Custom
           default: false
+        fits_equipment:
+          type: boolean
+          title: Fits Equipment
+          default: true
       type: object
       required:
       - key

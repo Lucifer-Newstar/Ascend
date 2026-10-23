@@ -24,8 +24,8 @@ security:
 - launchToken: []
 tags:
 - name: gamification
-  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own
-    grant (a deleted set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
+  description: Humane game layer — XP is never taken away for missing a day; only a correction reverses its own grant (a deleted
+    set, a PR edited away, a skill step whose proof was deleted), as a new negative ledger row
 paths:
   /game/summary:
     get:
@@ -175,7 +175,7 @@ paths:
       - gamification
   /game/boss:
     get:
-      summary: "This week's boss raid: HP, damage from logged sets, reward and title (boss-v1, ADR-0022)"
+      summary: 'This week''s boss raid: HP, damage from logged sets, reward and title (boss-v1, ADR-0022)'
       operationId: boss_raid_game_boss_get
       responses:
         '200':
@@ -204,6 +204,26 @@ paths:
       x-status: implemented
       tags:
       - gamification
+  /game/themes:
+    get:
+      tags:
+      - gamification
+      summary: List Themes
+      description: 'v1.2 app themes: Light, Dark and Shadow are free; the rest unlock from your record
+
+        (best streak, rank, bosses beaten) and stay unlocked once earned.'
+      operationId: list_themes_game_themes_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ThemeOut'
+                type: array
+                title: Response List Themes Game Themes Get
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -644,3 +664,37 @@ components:
       - earned_at
       title: TitleOut
       description: 'A title earned by beating a weekly boss: the only source of titles.'
+    ThemeOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        tagline:
+          type: string
+          title: Tagline
+        free:
+          type: boolean
+          title: Free
+        unlocked:
+          type: boolean
+          title: Unlocked
+        requirement:
+          type: string
+          title: Requirement
+        progress:
+          type: string
+          title: Progress
+          default: ''
+      type: object
+      required:
+      - key
+      - name
+      - tagline
+      - free
+      - unlocked
+      - requirement
+      title: ThemeOut
+      description: 'v1.2: one app theme, whether it is free or earned, and how to earn it.'

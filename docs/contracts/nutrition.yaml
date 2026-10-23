@@ -58,6 +58,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+    post:
+      tags:
+      - nutrition
+      summary: Add Food
+      description: Add a food of your own (v1.2 "add my own food"); it is searchable and loggable at once.
+      operationId: add_food_foods_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
   /meals:
     post:
       tags:
@@ -259,8 +285,8 @@ paths:
       - nutrition
   /scans/{scan_id}/items:
     post:
-      summary: Add an item to a scan by tapping the photo (classifier-first scan, ADR-0012); queues classification
-        of that crop
+      summary: Add an item to a scan by tapping the photo (classifier-first scan, ADR-0012); queues classification of that
+        crop
       operationId: add_scan_item
       parameters:
       - name: scan_id
@@ -322,6 +348,30 @@ paths:
       x-status: planned
       tags:
       - nutrition
+  /foods/{food_id}:
+    delete:
+      tags:
+      - nutrition
+      summary: Delete Food
+      description: Remove a food you added (built-in foods and foods already in a meal stay).
+      operationId: delete_food_foods__food_id__delete
+      parameters:
+      - name: food_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Food Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
 components:
   securitySchemes:
     launchToken:
@@ -795,3 +845,52 @@ components:
       required:
       - x
       - y
+    FoodIn:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          minLength: 1
+          title: Name
+        portion_label:
+          type: string
+          maxLength: 30
+          minLength: 1
+          title: Portion Label
+          default: 1 portion
+        portion_g:
+          type: number
+          maximum: 2000.0
+          exclusiveMinimum: 0.0
+          title: Portion G
+          default: 100
+        kcal:
+          type: number
+          maximum: 3000.0
+          minimum: 0.0
+          title: Kcal
+        protein_g:
+          type: number
+          maximum: 300.0
+          minimum: 0.0
+          title: Protein G
+          default: 0
+        carbs_g:
+          type: number
+          maximum: 500.0
+          minimum: 0.0
+          title: Carbs G
+          default: 0
+        fat_g:
+          type: number
+          maximum: 300.0
+          minimum: 0.0
+          title: Fat G
+          default: 0
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - kcal
+      title: FoodIn
+      description: A food the user adds themselves; nutrients are per ONE portion.
