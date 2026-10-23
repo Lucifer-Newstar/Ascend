@@ -251,3 +251,42 @@ def test_the_food_guide_checks_todays_meals(client: TestClient) -> None:
     assert counts["cereals_millets"] == 1 and counts["pulses"] == 1
     assert "Vegetables" in g["missing"] and g["hfss"] == ["Samosa"]
     assert 1 <= len(g["tips"]) <= 3
+
+
+# --- weekly recap (item 13) ---------------------------------------------------------------
+
+
+def test_the_weekly_recap_counts_the_week_and_stays_body_neutral(
+    client: TestClient, profile, clock
+) -> None:
+    from tests.api.test_workouts import exercise_id
+
+    clock.now -= timedelta(days=clock.now.weekday())  # Monday
+    empty = client.get("/progress/recap").json()
+    assert empty["sessions"] == 0 and empty["sets"] == 0 and empty["prs"] == []
+    assert empty["headline"].startswith("A quiet week")
+    bench = exercise_id(client, "Barbell Bench Press")
+    for day, reps in ((0, 8), (2, 10)):
+        w = client.post("/workouts").json()["id"]
+        for _ in range(3):
+            body = {"exercise_id": bench, "weight_kg": 40, "reps": reps, "rpe": 8}
+            assert client.post(f"/workouts/{w}/sets", json=body).status_code == 201
+        assert client.post(f"/workouts/{w}/finish").status_code == 200
+        if day == 0:
+            clock.now += timedelta(days=2)
+    client.get("/game/boss")  # Today spawns the week's boss
+    r = client.get("/progress/recap").json()
+    assert r["week_start"] == (clock.now - timedelta(days=2)).date().isoformat()
+    assert r["sessions"] == 2 and r["active_days"] == 2 and r["sets"] == 6
+    assert r["volume_kg"] == 40 * (8 * 3 + 10 * 3)
+    assert r["sections"] == [{"section": "gym", "sets": 6}]
+    assert r["best_day"]["sets"] == 3 and r["xp"] > 0
+    assert [p["exercise"] for p in r["prs"]] == ["Barbell Bench Press"]
+    assert r["boss"] is not None and r["boss"]["tier"] in "EDCBAS"
+    assert r["complete"] is False and r["rank"] == "E" and r["level"] >= 1
+    assert "weight" not in r and "avg_weight_kg" not in r  # body-neutral: no body numbers
+    later = client.get("/progress/recap", params={"week": r["week_end"]}).json()
+    assert later["week_start"] == r["week_start"]
+    nxt = (clock.now + timedelta(days=7)).date().isoformat()
+    following = client.get("/progress/recap", params={"week": nxt}).json()
+    assert following["sessions"] == 0 and following["last_week_sessions"] == 2

@@ -490,6 +490,41 @@ paths:
       x-status: implemented
       tags:
       - progress
+  /progress/recap:
+    get:
+      summary: Progress Recap
+      description: 'The weekly recap (v1.2): the week (Monday to Sunday) holding `week`, this week by
+
+        default. Sessions, sets, minutes, records, XP, the boss and the streak; no body numbers.
+
+        The desktop app turns it into a short video on this PC.'
+      operationId: progress_recap_progress_recap_get
+      parameters:
+      - name: week
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Week
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeekRecap'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - progress
 components:
   securitySchemes:
     launchToken:
@@ -2027,3 +2062,182 @@ components:
       - effort
       - es
       title: ContributingSet
+    RecapBestDay:
+      properties:
+        day:
+          type: string
+          format: date
+          title: Day
+        sets:
+          type: integer
+          title: Sets
+      type: object
+      required:
+      - day
+      - sets
+      title: RecapBestDay
+    RecapBoss:
+      properties:
+        name:
+          type: string
+          title: Name
+        title:
+          type: string
+          title: Title
+        tier:
+          type: string
+          title: Tier
+        defeated:
+          type: boolean
+          title: Defeated
+      type: object
+      required:
+      - name
+      - title
+      - tier
+      - defeated
+      title: RecapBoss
+    RecapPr:
+      properties:
+        exercise:
+          type: string
+          title: Exercise
+        weight_kg:
+          type: number
+          title: Weight Kg
+        reps:
+          type: integer
+          title: Reps
+        image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image
+      type: object
+      required:
+      - exercise
+      - weight_kg
+      - reps
+      title: RecapPr
+    RecapSection:
+      properties:
+        section:
+          type: string
+          title: Section
+        sets:
+          type: integer
+          title: Sets
+      type: object
+      required:
+      - section
+      - sets
+      title: RecapSection
+    WeekRecap:
+      properties:
+        week_start:
+          type: string
+          format: date
+          title: Week Start
+        week_end:
+          type: string
+          format: date
+          title: Week End
+        complete:
+          type: boolean
+          title: Complete
+        sessions:
+          type: integer
+          title: Sessions
+        active_days:
+          type: integer
+          title: Active Days
+        sets:
+          type: integer
+          title: Sets
+        active_minutes:
+          type: number
+          title: Active Minutes
+        volume_kg:
+          type: number
+          title: Volume Kg
+        xp:
+          type: integer
+          title: Xp
+        prs:
+          items:
+            $ref: '#/components/schemas/RecapPr'
+          type: array
+          title: Prs
+        sections:
+          items:
+            $ref: '#/components/schemas/RecapSection'
+          type: array
+          title: Sections
+        best_day:
+          anyOf:
+          - $ref: '#/components/schemas/RecapBestDay'
+          - type: 'null'
+        boss:
+          anyOf:
+          - $ref: '#/components/schemas/RecapBoss'
+          - type: 'null'
+        streak:
+          type: integer
+          title: Streak
+        excused_days:
+          type: integer
+          title: Excused Days
+        meal_days:
+          type: integer
+          title: Meal Days
+        checkins:
+          type: integer
+          title: Checkins
+        level:
+          type: integer
+          title: Level
+        rank:
+          type: string
+          title: Rank
+        rank_title:
+          type: string
+          title: Rank Title
+        last_week_sessions:
+          type: integer
+          title: Last Week Sessions
+        last_week_sets:
+          type: integer
+          title: Last Week Sets
+        headline:
+          type: string
+          title: Headline
+        version:
+          type: string
+          title: Version
+          default: recap-v1
+      type: object
+      required:
+      - week_start
+      - week_end
+      - complete
+      - sessions
+      - active_days
+      - sets
+      - active_minutes
+      - volume_kg
+      - xp
+      - prs
+      - sections
+      - best_day
+      - boss
+      - streak
+      - excused_days
+      - meal_days
+      - checkins
+      - level
+      - rank
+      - rank_title
+      - last_week_sessions
+      - last_week_sets
+      - headline
+      title: WeekRecap

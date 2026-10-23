@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
@@ -21,6 +21,7 @@ from app.modules.progress import (
     drilldown,
     energy,
     history,
+    recap,
     service,
     weekly,
 )
@@ -299,6 +300,18 @@ def progress_weekly(
 ) -> list[weekly.WeekSummary]:
     """Per-week sessions, sets, lifting volume, minutes, XP, average intake and weight."""
     return weekly.weekly(db, now, weeks)
+
+
+@router.get("/progress/recap", response_model=recap.WeekRecap)
+def progress_recap(
+    week: date | None = None,
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> recap.WeekRecap:
+    """The weekly recap (v1.2): the week (Monday to Sunday) holding `week`, this week by
+    default. Sessions, sets, minutes, records, XP, the boss and the streak; no body numbers.
+    The desktop app turns it into a short video on this PC."""
+    return recap.week_recap(db, now, week)
 
 
 # --- readiness check-in -------------------------------------------------------------
