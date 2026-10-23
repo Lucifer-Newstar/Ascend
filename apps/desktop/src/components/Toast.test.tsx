@@ -26,6 +26,19 @@ describe("ToastProvider", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Engine offline");
   });
 
+  it("replaces the same message instead of stacking it", async () => {
+    render(
+      <ToastProvider>
+        <Trigger text="Set logged" />
+      </ToastProvider>,
+    );
+    const fire = screen.getByRole("button", { name: "fire" });
+    await userEvent.click(fire);
+    await userEvent.click(fire);
+    await userEvent.click(fire);
+    expect(screen.getAllByText("Set logged")).toHaveLength(1);
+  });
+
   it("can be dismissed", async () => {
     render(
       <ToastProvider>

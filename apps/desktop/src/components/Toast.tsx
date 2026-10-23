@@ -29,7 +29,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback(
     (text: string, tone: Tone = "info") => {
       const id = Date.now() + Math.random();
-      setItems((xs) => [...xs, { id, text, tone }]);
+      // The same message again replaces the old one instead of stacking ("Set logged" x3
+      // covered the session log's Edit buttons).
+      setItems((xs) => [...xs.filter((x) => x.text !== text || x.tone !== tone), { id, text, tone }]);
       setTimeout(() => dismiss(id), TOAST_MS[tone]);
     },
     [dismiss],
