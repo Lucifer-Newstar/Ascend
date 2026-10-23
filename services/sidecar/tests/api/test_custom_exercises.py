@@ -113,6 +113,7 @@ def test_model_failure_falls_back_to_rules(client, monkeypatch):
 
 
 def test_no_model_installed_is_reported_not_fatal(client):
+    client.put("/settings", json={"ai_enabled": True})  # switched on, model not running
     a = analyze(client, "Zercher Squat")  # tests point Ollama at a closed port
     assert a["ai"]["status"] == "unavailable"
     assert a["proposal"]["pattern"] == "squat"

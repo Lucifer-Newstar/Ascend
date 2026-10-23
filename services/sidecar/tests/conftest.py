@@ -22,6 +22,23 @@ class FakeClock:
         return self.now
 
 
+@pytest.fixture(autouse=True)
+def _no_local_ai(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests never depend on a local model server being installed on the machine: "installed"
+    follows the fakes the AI tests patch in (`ollama.server_info` / `ollama.is_available`);
+    on the closed test port it is False."""
+    from app.modules.coach import ollama
+    from app.modules.progress import service as progress_service
+
+    def installed() -> bool:
+        version, models = ollama.server_info("http://127.0.0.1:9", timeout=0.2)
+        return bool(version and models) or ollama.is_available(
+            "http://127.0.0.1:9", "probe", timeout=0.2
+        )
+
+    monkeypatch.setattr(progress_service, "local_ai_installed", installed)
+
+
 @pytest.fixture
 def clock() -> FakeClock:
     return FakeClock(datetime(2026, 10, 20, 9, 0, 0))

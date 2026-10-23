@@ -20,7 +20,8 @@ def test_profile_validation(client):
 
 def test_ai_toggle_round_trip(client):
     defaults = {
-        "ai_enabled": True,
+        # v1.2: off by default when no local AI is installed (tests stub the probe to "none").
+        "ai_enabled": False,
         "units": "metric",
         "theme": "dark",
         "sessions_per_week": 3,
@@ -32,18 +33,19 @@ def test_ai_toggle_round_trip(client):
         "photo_feedback": False,
     }
     assert client.get("/settings").json() == defaults
-    assert client.put("/settings", json={"ai_enabled": False}).json() == {
+    assert client.put("/settings", json={"ai_enabled": True}).json() == {
         **defaults,
-        "ai_enabled": False,
+        "ai_enabled": True,
     }
-    assert client.get("/settings").json()["ai_enabled"] is False
+    assert client.get("/settings").json()["ai_enabled"] is True
+    assert client.put("/settings", json={"ai_enabled": False}).json()["ai_enabled"] is False
 
 
 def test_settings_partial_update_keeps_other_values(client):
     client.put("/settings", json={"theme": "light", "units": "imperial"})
     r = client.put("/settings", json={"sessions_per_week": 4}).json()
     assert r == {
-        "ai_enabled": True,
+        "ai_enabled": False,
         "units": "imperial",
         "theme": "light",
         "sessions_per_week": 4,
@@ -74,3 +76,12 @@ def test_settings_validation(client):
     assert client.put("/settings", json={"theme": "neon"}).status_code == 422
     assert client.put("/settings", json={"sessions_per_week": 9}).status_code == 422
     assert client.put("/settings", json={"reduce_motion": "sometimes"}).status_code == 422
+
+
+def test_ai_defaults_on_only_when_local_ai_is_installed(client, monkeypatch):
+    from app.modules.progress import service as progress_service
+
+    monkeypatch.setattr(progress_service, "local_ai_installed", lambda: True)
+    assert client.get("/settings").json()["ai_enabled"] is True
+    client.put("/settings", json={"ai_enabled": False})  # the user's own choice wins
+    assert client.get("/settings").json()["ai_enabled"] is False

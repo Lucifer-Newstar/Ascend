@@ -70,6 +70,7 @@ def test_banned_phrases_fall_back_too(client, profile, clock, monkeypatch):
 
 
 def test_model_down_or_ai_off_uses_the_template(client, profile, clock, monkeypatch):
+    client.put("/settings", json={"ai_enabled": True})  # switched on, model not running
     bench = bench_target(client, clock)
     # conftest points the model host at a closed port
     e = client.get(f"/intelligence/progression/{bench}/explanation").json()

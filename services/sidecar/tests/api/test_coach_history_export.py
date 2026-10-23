@@ -16,6 +16,7 @@ def log_workout(client):
 
 
 def test_coach_falls_back_to_rules_when_ollama_missing(client, profile):
+    client.put("/settings", json={"ai_enabled": True})  # switched on, model not running
     r = client.get("/coach/tip").json()
     assert r["source"] == "rules"
     assert r["fallback_reason"] == "ollama_unavailable"
@@ -80,7 +81,7 @@ def test_a_timeout_is_named_and_counted(client, profile, monkeypatch):
 
 def test_coach_status(client):
     assert client.get("/coach/status").json() == {
-        "ai_enabled": True,
+        "ai_enabled": False,
         "ollama_available": False,
         "model": "qwen3:4b",
     }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from typing import cast
 
@@ -76,8 +77,38 @@ def set_setting(db: Session, key: str, value: str) -> None:
         row.value = value
 
 
+_AI_PROBE_TTL_S = 300.0
+_ai_probe: tuple[float, bool] | None = None
+
+
+def local_ai_installed() -> bool:
+    """Whether a local model server answers on this PC with at least one model pulled.
+
+    Probed once every few minutes (a refused localhost connection returns at once), so a
+    settings read never waits on it for long."""
+    global _ai_probe
+    now = time.monotonic()
+    if _ai_probe is not None and now - _ai_probe[0] < _AI_PROBE_TTL_S:
+        return _ai_probe[1]
+    from app.core.config import load_settings
+    from app.modules.coach import ollama
+
+    try:
+        version, models = ollama.server_info(load_settings().ollama_host, timeout=0.5)
+        installed = version is not None and len(models) > 0
+    except Exception:  # noqa: BLE001 - any failure means "not installed" here
+        installed = False
+    _ai_probe = (now, installed)
+    return installed
+
+
 def ai_enabled(db: Session) -> bool:
-    return get_setting(db, "ai_enabled", "true") == "true"
+    """The user's switch when they set it; otherwise on only when local AI is installed
+    (v1.2: the app is rules-first, so a PC without a local model starts with AI off)."""
+    row = db.get(Setting, "ai_enabled")
+    if row is not None:
+        return row.value == "true"
+    return local_ai_installed()
 
 
 def online_lookup(db: Session) -> bool:
