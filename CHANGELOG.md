@@ -1,10 +1,95 @@
 # Changelog
 
-All notable changes to ASCEND. Versions follow [Semantic Versioning](https://semver.org/);
-entries are grouped from Conventional Commits and written for users first.
-Formula and model versions are listed where a number you see could change.
+All notable changes to ASCEND are documented in this file. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries are grouped from
+Conventional Commits and written for users first. Formula and model versions are listed
+where a number you see could change. User-facing release notes live in
+[docs/releases](docs/releases/).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-10-23
+
+The first stable release. No new features (the feature freeze after v8 holds): 1.0.0 is the
+0.4.0 app with the version made final, every document checked against the code, and a
+release pipeline that publishes notes and checksums. Release notes:
+[docs/releases/v1.0.0.md](docs/releases/v1.0.0.md).
+
+**What ASCEND 1.0.0 is:** an offline Windows desktop fitness RPG. A keyboard-first workout
+logger with progression targets (`prog-v1`) and four built-in programs (`programs-v1`); a
+54-muscle recovery map (`recovery-v2`, `muscles-v2`); an Indian food log with an adaptive
+calorie target (`tdee-v1`) and weekly insights (`insights-v1`); XP, ranks E to S, daily
+quests, streak freezes, calisthenics skill trees and a weekly boss raid (`boss-v1`) with
+Instructor Iskra Vey; daily automatic backups, restore, JSON/CSV export and Strong/Hevy
+import; an optional local AI coach (Ollama, `qwen3:4b`) that only rephrases the engines'
+numbers. Everything runs and is stored on the user's PC.
+
+### Added
+- GitHub Releases now carry `SHA256SUMS.txt` next to the installer, and the release text
+  comes from `docs/releases/<tag>.md`; a release drafted by hand is updated instead of
+  failing the publish job.
+- CI job "docs": every relative link in the repo's Markdown files must resolve
+  (`scripts/check_md_links.py`).
+- Release notes for 1.0.0 in `docs/releases/v1.0.0.md`.
+
+### Changed
+- Version 1.0.0 everywhere (packages, lockfiles, sidecar, bug-report template). The
+  installer is `ASCEND-Setup-1.0.0.exe`, and Settings → About, `/health`, exports and
+  backups report 1.0.0.
+- Documentation checked against the code: the README (download and install from Releases,
+  the SmartScreen step, features, limitations, verified counts), the docs index, tech stack,
+  local setup, contributing, release process, SECURITY.md and the folder READMEs.
+- Package metadata (repository, homepage, bugs) points at the GitHub repository.
+
+### Security
+- Contains every fix from the October 2026 external review (3 high, 6 medium, 22 low
+  findings; first shipped in 0.4.0, see below and [SECURITY.md](SECURITY.md)). Still open:
+  the installer is unsigned, and backups are stored unencrypted (L14).
+
+## [0.4.0] - 2026-10-23
+
+Tagged on `main` after the security-review fixes. The version files still said 0.3.0 when
+the tag was pushed, so this release's installer is named `ASCEND-Setup-0.3.0.exe`; the app
+inside is the 0.4.0 code. It was the first release whose installer was built and published
+by the release workflow.
+
+### Security (October 2026 external review)
+- **Electron 45.0.0** replaces the unsupported Electron 33 (H1).
+- **Release build fixed and hardened:** `build/fuses.cjs` and the icons are committed, all
+  nine Electron 45 fuses are set at pack time through `@electron/fuses` 2, and release.yml
+  fails when a fuse is not set (H2).
+- **The sidecar ignores inherited `ASCEND_*` settings**, `NODE_OPTIONS` and
+  `ELECTRON_RUN_AS_NODE`; the packaged sidecar takes its token from stdin and binds
+  127.0.0.1 (H3).
+- Backups: a bad backup file no longer breaks the list or the daily backup (M1); restore
+  accepts only files from the backups folder, with a size cap, an integrity check and no
+  triggers or views (M2).
+- Production CSP `connect-src 'self'` (M3); `OLLAMA_HOST` normalised and loopback only
+  unless `ASCEND_OLLAMA_ALLOW_REMOTE=1` (M4).
+- Complete, re-importable exports with local-date file names (M5) and CSV formula-injection
+  protection (L15).
+- Release job alone gets `contents: write`, every action pinned to a commit SHA, torch
+  2.14.1 with `weights_only=True` loads (M6).
+- XP integrity on edits, deletes and lost PRs (L8); sidecar restart limit, a 30 s IPC
+  timeout, `export:save` validation and an HMAC proof on `/health` before the token is sent
+  (L9-L12); the low findings L1-L7, L13, L16-L20 and L22 (see SECURITY.md).
+
+### Changed
+- Dependencies: React group, ESLint and type packages, build tools, electron-builder
+  26.15.3, `@types/node` 26, `@testing-library/jest-dom` 7, jsdom 30, cross-env 10,
+  concurrently 10, `@electron/fuses` 2; for ML: pytest 9.1, pillow 13, sqlalchemy 2.1.5,
+  alembic 1.20, onnxruntime 1.31, pyyaml 6.0.3; GitHub Actions updates.
+- The desktop toolchain needs **Node.js 22.22.2 or newer** (jsdom 30).
+- Dependabot version-update pull requests are switched off (`.github/dependabot.yml`
+  removed); GitHub's security alerts still apply.
+
+### Fixed
+- The XpChip count-up test no longer depends on effect timing (it failed now and then in CI).
+- The level-up announcement is deterministic.
+
+The v5 redesign, the v6 intelligence layer, the v7 diet engines and layouts and the v8
+features were all built after 0.3.0 and shipped in 0.4.0:
 
 ### Changed (v8 game feel)
 - **Moments:** level-up, rank-up and quest-clear notices now pop in with the trainer (or the rank badge in plain mode), a confetti burst and the new level; rank-up has its own title. A boss defeated while you watch plays its own moment on the raid card. All of it is transform/opacity only, and Reduce motion shows them still, without confetti.
@@ -447,3 +532,9 @@ Release notes: [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md).
 First skeleton: Electron + React desktop shell, FastAPI sidecar with SQLite, workout
 logging with PRs, Indian food log with approximate IFCT/INDB-style values, muscle
 recovery map, XP, quests and streaks, rule-based coach with optional local AI.
+
+[Unreleased]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v0.4.0...v1.0.0
+[0.4.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/Lucifer-Newstar/Ascend-/tree/v0.2.0

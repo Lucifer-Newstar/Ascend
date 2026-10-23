@@ -8,8 +8,11 @@
 > Maintainer: Navin Jairam M (Team Lead, DevOps/MLOps). Updated whenever the
 > structure changes (rule 2: the docs folder stays clean).
 >
-> Status: **planning** (docs written 2026-10-20, before the first line of code).
-> Every date in these docs is an **estimate** unless it says otherwise.
+> Status: **released, 1.0.0** (2026-10-23). The planning docs were written on 2026-10-20,
+> before the first line of code, and are kept as the design record: where the built app
+> differs from a plan, the [README](../README.md), the [CHANGELOG](../CHANGELOG.md) and the
+> per-folder READMEs describe what shipped. Every date in the planning docs is an
+> **estimate** unless it says otherwise.
 
 ---
 
@@ -53,20 +56,24 @@ docs/
 │   ├── model-manager.md           ← VRAM budget, lifecycle state machine, downloads
 │   ├── adaptive-planning-ai.md    ← rules vs AI in planning, proposals, weekly review
 │   ├── data-and-privacy-for-ai.md ← what each model sees, consent, deletion
-│   ├── evaluation-ai.md           ← AI metrics, test sets, eval harness, CI gates
+│   ├── evaluation.md              ← measured evaluation of the engines on synthetic users
+│   ├── evaluation-ai.md           ← AI metrics, test sets, eval harness, CI gates (plan)
 │   ├── mlops-lifecycle.md         ← DVC → MLflow → ONNX → registry → release walkthrough
 │   ├── ai-risks.md                ← AI risk register
 │   └── ai-roadmap.md              ← AI tasks per phase and member
 │
 ├── architecture/                  ← SYSTEM DESIGN
 │   ├── system-architecture.md     ← processes, modules, event bus, jobs, model manager
+│   ├── awakening.md               ← the five-step first run (v5)
+│   ├── hunter-stats.md            ← the five stats on Today (stats-v1)
+│   ├── skill-trees.md             ← calisthenics skill trees and their criteria
 │   ├── data-model.md              ← SQLite schema, migrations, derived data
 │   ├── ml-pipeline.md             ← DVC → training → MLflow → ONNX → eval gate
 │   ├── telemetry-model.md         ← local-only logs, events, metrics, crash reports
 │   ├── security-privacy.md        ← threat model, Electron hardening, DPDP notes
 │   ├── port-register.md           ← localhost ports + IPC channel register
 │   ├── uml/                       ← 14-diagram UML set (Mermaid, PlantUML where needed)
-│   └── adr/                       ← Architecture Decision Records 0001–0020 + template
+│   └── adr/                       ← Architecture Decision Records 0001–0022 + template
 │
 ├── contracts/                     ← API CONTRACTS (contracts-first)
 │   ├── README.md                  ← conventions, mock server, drift check
@@ -78,16 +85,27 @@ docs/
 │   ├── gamification.yaml
 │   ├── coach.yaml
 │   ├── progress.yaml
+│   ├── intelligence.yaml          ← recovery, progression, TDEE, insights, programs
+│   ├── skills.yaml
 │   └── import-export.yaml
 │
 ├── development/                   ← HOW TO BUILD
 │   ├── contributing.md            ← branching, commits, PR rules, review
+│   ├── branch-protection.md       ← main's protection rules and the PR flow
 │   ├── local-setup.md             ← Windows 11 machine setup, step by step
-│   └── tech-stack.md              ← chosen stack & rationale
+│   ├── tech-stack.md              ← the stack at 1.0.0 & rationale
+│   ├── design-system.md           ← colours, type, components (v5 "System" palette)
+│   ├── motion.md                  ← motion rules, Reduce motion
+│   └── accessibility.md           ← WCAG 2.2 AA checklist
 │
-└── operations/                    ← HOW TO SHIP & MEASURE
-    ├── evaluation.md              ← metrics, targets, how we measure
-    └── release-process.md         ← versioning, release workflow, rollback
+├── operations/                    ← HOW TO SHIP & MEASURE
+│   ├── evaluation.md              ← metrics, targets, how we measure
+│   ├── loophole-sweep.md          ← XP loophole and bug sweep (v4)
+│   └── release-process.md         ← versioning, release workflow, rollback
+│
+├── releases/                      ← user-facing release notes per version (v0.3.0, v1.0.0)
+├── research/                      ← v8 research: anatomy, muscle mapping, engagement, trainer
+└── screenshots/                   ← app screenshots used by the README
 ```
 
 ## 2. Index by Topic
@@ -124,6 +142,10 @@ docs/
 | Set up my Windows machine | [development/local-setup.md](development/local-setup.md) |
 | How we measure success | [operations/evaluation.md](operations/evaluation.md) |
 | How we ship a release | [operations/release-process.md](operations/release-process.md) |
+| What changed in each version | [CHANGELOG](../CHANGELOG.md) · release notes in [releases/](releases/v1.0.0.md) |
+| How accurate the engines are (synthetic users) | [ai/evaluation.md](ai/evaluation.md) |
+| Design system, motion, accessibility | [development/design-system.md](development/design-system.md) · [motion.md](development/motion.md) · [accessibility.md](development/accessibility.md) |
+| Research behind v8 | [research/](research/v8-gamified-engagement.md) |
 
 ### ADR list
 
@@ -149,6 +171,8 @@ docs/
 | [0018](architecture/adr/0018-adaptive-tdee-kalman.md) | Adaptive TDEE with a Kalman filter (tdee-v1) |
 | [0019](architecture/adr/0019-weekly-diet-insights.md) | Rule-based weekly diet insights (insights-v1) |
 | [0020](architecture/adr/0020-workout-programs.md) | Workout programs read from the log (programs-v1) |
+| [0021](architecture/adr/0021-detailed-muscle-taxonomy.md) | Detailed muscle taxonomy (muscles-v2) and rule-based mapping (muscle-map-v1) |
+| [0022](architecture/adr/0022-weekly-boss-raid.md) | Weekly boss raid (boss-v1) |
 
 ## 3. Reading Order for a New Member
 
@@ -169,7 +193,7 @@ docs/
 - **No orphans.** Every file is reachable from this index; when you add a file, add its row to §2.
 - **Living documents.** Planning docs change; changes go in the decision log ([planning/README.md §2](planning/README.md#2-decision-log)), never silently.
 - **ADRs for architecture.** Any change to the stack, a process boundary or a contract needs an ADR (copy [adr-template.md](architecture/adr/adr-template.md)).
-- **Links stay green.** CI runs a markdown link check on `docs/` (see [contributing.md](development/contributing.md#5-ci-checks-on-every-pr)).
+- **Links stay green.** CI checks every relative link in the repo's Markdown files (`scripts/check_md_links.py`, job "docs"; see [contributing.md](development/contributing.md#5-ci-checks-on-every-pr)). Run it locally with `python scripts/check_md_links.py`.
 
 ## 5. Honesty Rules for These Docs
 
