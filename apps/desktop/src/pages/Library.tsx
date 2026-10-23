@@ -327,7 +327,7 @@ function ExerciseDetailBody({ e, onLog, onOpenSkill }: { e: ExerciseDetail; onLo
                 <span className="h-2 flex-1 overflow-hidden rounded-full bg-panel-2" aria-hidden>
                   <span className="block h-full rounded-full bg-accent" style={{ width: `${m.weight * 100}%`, opacity: 0.35 + m.weight * 0.65 }} />
                 </span>
-                <span className="w-24 shrink-0 text-right text-xs text-muted">{m.weight >= 1 ? "primary" : m.weight >= 0.5 ? "secondary" : "minor"} ×{m.weight}</span>
+                <span className="w-24 shrink-0 text-right text-xs text-muted">{m.weight >= 1 ? "main" : m.weight >= 0.5 ? "helps" : "a little"}</span>
               </li>
             ))}
           </ul>
