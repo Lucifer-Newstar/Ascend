@@ -60,6 +60,8 @@ describe("ProgramCard", () => {
     vi.mocked(api.currentPlan).mockResolvedValueOnce(null);
     renderCard();
     expect(await screen.findByRole("region", { name: "Follow a program" })).toBeInTheDocument();
+    expect(screen.queryByText("Needs equipment you didn't list at setup.")).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: /Explore all \(1 need other kit\)/ }));
     expect(await screen.findByText("Needs equipment you didn't list at setup.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Follow Full body, 3 days" }));
     expect(api.choosePlan).toHaveBeenCalledWith("full_body_3");

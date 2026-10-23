@@ -81,6 +81,11 @@ function ProgramChooser({ current, onChosen, onCancel }: { current: string | nul
   const progs = useApi(api.programs, []);
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
+  // v1.2: programs your kit can't do are hidden until you ask to explore them.
+  const [explore, setExplore] = useState(false);
+  const all = progs.data ?? [];
+  const locked = all.filter((p) => !p.fits_equipment).length;
+  const list = explore ? all : all.filter((p) => p.fits_equipment || p.key === current);
 
   async function choose(p: ProgramSummary) {
     setBusy(p.key);
@@ -114,8 +119,8 @@ function ProgramChooser({ current, onChosen, onCancel }: { current: string | nul
       action={onCancel && <button type="button" className="text-xs text-accent hover:underline" onClick={onCancel}>Cancel</button>}
       loading={progs.loading && !progs.data} error={!progs.data ? progs.error ?? null : null} onRetry={progs.reload} skeletonLines={4}>
       <ul className="space-y-2">
-        {(progs.data ?? []).map((p) => (
-          <li key={p.key} className="rounded-lg border border-line bg-panel-2 p-3">
+        {list.map((p) => (
+          <li key={p.key} className={`rounded-lg border border-line bg-panel-2 p-3 ${p.fits_equipment ? "" : "opacity-60"}`}>
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-sm font-semibold text-ink">{p.name}</span>
               <span className="text-[11px] text-muted">{LEVEL[p.level] ?? p.level}</span>
@@ -130,6 +135,11 @@ function ProgramChooser({ current, onChosen, onCancel }: { current: string | nul
           </li>
         ))}
       </ul>
+      {locked > 0 && (
+        <button type="button" className="mt-3 block text-xs text-accent hover:underline" aria-pressed={explore} onClick={() => setExplore((x) => !x)}>
+          {explore ? "Hide programs that need other kit" : `Explore all (${locked} need other kit)`}
+        </button>
+      )}
       {current && (
         <button type="button" className="mt-3 text-xs text-muted hover:text-ink hover:underline" disabled={busy !== null} onClick={() => void leave()}>Stop following a program</button>
       )}
