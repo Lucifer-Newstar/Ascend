@@ -7,6 +7,7 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.modules.gamification import boss
@@ -74,8 +75,17 @@ def _spawn(db: Session, week: date, now: datetime) -> BossRaid:
         xp_awarded=0,
         tier=tier,
     )
-    db.add(raid)
-    db.flush()
+    # Two first requests of the week (Today's boss card and the summary at app start) can
+    # both find no raid; the second insert then hits the unique week_start index. A
+    # savepoint keeps that from failing the request: the loser reads the other's raid.
+    try:
+        with db.begin_nested():
+            db.add(raid)
+    except IntegrityError:
+        existing = db.scalar(select(BossRaid).where(BossRaid.week_start == week))
+        if existing is None:
+            raise
+        return existing
     return raid
 
 
