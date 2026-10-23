@@ -19,6 +19,14 @@ export type Command =
   | { kind: "ai"; on: boolean }
   | { kind: "ask"; question: string };
 
+/**
+ * The command bar's data-changing commands and the shared action each one is (one allowlist:
+ * packages/shared/src/command-vectors.json, also enforced by the sidecar's actions registry).
+ * Everything else the bar does is a local UI command that changes no logged data.
+ */
+export const COMMAND_ACTIONS = { set: "log_set", hold: "log_hold", weight: "log_weight", meal: "log_meal" } as const;
+export const UI_COMMANDS = ["nav", "train", "theme", "ai", "ask"] as const;
+
 export const PAGE_WORDS: { page: Page; label: string; words: string[] }[] = [
   { page: "dashboard", label: "Today", words: ["today", "home", "dashboard", "hq", "quest", "quests"] },
   { page: "workout", label: "Train", words: ["train", "workout", "log", "logger", "session", "gym"] },
