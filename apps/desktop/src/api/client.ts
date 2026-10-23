@@ -37,6 +37,7 @@ import type {
   SetIn,
   SetPatch,
   Settings,
+  WeekRecap,
   WeekSummary,
   WeeklyReview,
   WorkoutSummary,
@@ -303,6 +304,7 @@ export const api = {
   logMeasurement: (site: MeasurementSite, cm: number) => call<Measurement>("POST", "/measurements", { site, cm }),
   eta: () => call<Eta>("GET", "/progress/eta"),
   weekly: (weeks = 8) => call<WeekSummary[]>("GET", `/progress/weekly?weeks=${weeks}`),
+  recap: (week?: string) => call<WeekRecap>("GET", week ? `/progress/recap?week=${week}` : "/progress/recap"),
   muscleActivity: (days: number) => call<MuscleActivity[]>("GET", `/muscles/activity?days=${days}`),
   muscleHistory: (code: string, days: number) =>
     call<MuscleHistory>("GET", `/muscles/${encodeURIComponent(code)}/history?days=${days}`),

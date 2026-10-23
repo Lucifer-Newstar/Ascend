@@ -1478,3 +1478,30 @@ export interface FoodGuide {
   tips: string[];
 }
 
+/** GET /progress/recap (v1.2): the facts behind the weekly recap video. No body numbers. */
+export interface WeekRecap {
+  week_start: string;
+  week_end: string;
+  complete: boolean;
+  sessions: number;
+  active_days: number;
+  sets: number;
+  active_minutes: number;
+  volume_kg: number;
+  xp: number;
+  prs: { exercise: string; weight_kg: number; reps: number; image: string | null }[];
+  sections: { section: string; sets: number }[];
+  best_day: { day: string; sets: number } | null;
+  boss: { name: string; title: string; tier: string; defeated: boolean } | null;
+  streak: number;
+  excused_days: number;
+  meal_days: number;
+  checkins: number;
+  level: number;
+  rank: string;
+  rank_title: string;
+  last_week_sessions: number;
+  last_week_sets: number;
+  headline: string;
+  version: string;
+}

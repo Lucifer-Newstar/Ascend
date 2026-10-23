@@ -17,6 +17,7 @@ import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { Segmented } from "../components/Segmented";
 import { Empty } from "../components/States";
 import { useToast } from "../components/Toast";
+import { WeeklyRecapPanel } from "../components/WeeklyRecap";
 import { count } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { formatLength, formatWeight, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
@@ -61,6 +62,8 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
           value={prs.data ? String(recentPrs.length) : "–"}
           sub={recentPrs[0] ? `latest: ${recentPrs[0].exercise}` : "Weighted sets of 1–10 reps count"} />
       </KpiStrip>
+
+      <WeeklyRecapPanel refreshKey={refreshKey + tick} index={4} />
 
       <Panel id="weight" index={4} className="col-span-12 xl:col-span-8" title="Body weight · 90 days"
         action={<span className="text-[11px] text-muted">dots = weigh-ins · line = trend</span>}

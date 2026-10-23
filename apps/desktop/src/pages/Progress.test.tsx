@@ -10,6 +10,7 @@ import { ProgressPage } from "./Progress";
 
 vi.mock("../api/client", () => ({
   api: {
+    recap: vi.fn(),
     bodyMetrics: vi.fn(),
     eta: vi.fn(),
     profile: vi.fn(),
@@ -53,6 +54,12 @@ function renderPage(settings: Settings = DEFAULT_SETTINGS) {
 
 describe("ProgressPage", () => {
   beforeEach(() => {
+    vi.mocked(api.recap).mockResolvedValue({
+      week_start: "2026-10-19", week_end: "2026-10-25", complete: false, sessions: 1, active_days: 1, sets: 6,
+      active_minutes: 40, volume_kg: 900, xp: 120, prs: [], sections: [{ section: "gym", sets: 6 }], best_day: null,
+      boss: null, streak: 2, excused_days: 0, meal_days: 1, checkins: 1, level: 3, rank: "E", rank_title: "Initiate",
+      last_week_sessions: 0, last_week_sets: 0, headline: "1 session logged. Every one of them counts.", version: "recap-v1",
+    });
     vi.mocked(api.bodyMetrics).mockResolvedValue([
       { id: 1, measured_at: "2026-10-18T07:00:00", weight_kg: 74.4, trend_kg: 74.4, waist_cm: null, resting_hr: null },
       { id: 2, measured_at: "2026-10-19T07:00:00", weight_kg: 73.8, trend_kg: 74.3, waist_cm: null, resting_hr: null },
