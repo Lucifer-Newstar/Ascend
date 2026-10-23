@@ -35,11 +35,31 @@ describe("ExerciseArt", () => {
   it("loops the photo with its second frame, and drops the loop when there is none", () => {
     expect(secondFrame("exercises/push-up.webp")).toBe("exercises/push-up-2.webp");
     expect(secondFrame(null)).toBeNull();
-    render(<ExerciseArt exercise={{ ...base, image: "exercises/pullups.webp" }} loop />);
-    expect(screen.getByTestId("exercise-frame-2")).toHaveAttribute("src", "exercises/pullups-2.webp");
+    render(<ExerciseArt exercise={{ ...base, image: "exercises/archer-pull-up.webp" }} loop />);
+    expect(screen.getByTestId("exercise-frame-2")).toHaveAttribute("src", "exercises/archer-pull-up-2.webp");
     fireEvent.error(screen.getByTestId("exercise-frame-2"));
     expect(screen.queryByTestId("exercise-loop")).toBeNull();
+    expect(screen.getByTestId("exercise-photo")).toHaveAttribute("src", "exercises/archer-pull-up.webp");
+  });
+
+  it("plays the proper animation over its first frame for an animated move, and falls back to the 2-frame loop", () => {
+    const { unmount } = render(<ExerciseArt exercise={{ ...base, name: "Pullups", image: "exercises/pullups.webp" }} loop />);
+    expect(screen.getByTestId("exercise-anim")).toBeInTheDocument();
+    expect(screen.getByTestId("exercise-anim-img")).toHaveAttribute("src", "exercises/pullups-anim.webp");
     expect(screen.getByTestId("exercise-photo")).toHaveAttribute("src", "exercises/pullups.webp");
+    fireEvent.error(screen.getByTestId("exercise-anim-img"));
+    expect(screen.queryByTestId("exercise-anim")).toBeNull();
+    expect(screen.getByTestId("exercise-frame-2")).toHaveAttribute("src", "exercises/pullups-2.webp");
+    unmount();
+    // Without loop (a library card) the still photo shows, no animation.
+    render(<ExerciseArt exercise={{ ...base, name: "Pullups", image: "exercises/pullups.webp" }} />);
+    expect(screen.queryByTestId("exercise-anim")).toBeNull();
+  });
+
+  it("animates a martial-arts drill that has no photo, by its name", () => {
+    render(<ExerciseArt exercise={{ name: "Front Kick Drill", section: "martial_arts" as const, image: null, muscles: [] }} loop />);
+    expect(screen.getByTestId("exercise-anim-img")).toHaveAttribute("src", "exercises/front-kick-drill-anim.webp");
+    expect(screen.getByTestId("exercise-photo")).toHaveAttribute("src", "exercises/front-kick-drill.webp");
   });
 
   it("turns instructions into three short tips", () => {

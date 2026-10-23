@@ -5,6 +5,31 @@
  * To add one: drop the two files in public/exercises and add the slug here.
  */
 export const ANIMATED: ReadonlySet<string> = new Set<string>([
+  "pushups",
+  "pullups",
+  "chin-up",
+  "bodyweight-squat",
+  "parallel-bar-dip",
+  "ring-dips",
+  "inverted-row",
+  "hanging-leg-raise",
+  "muscle-up",
+  "handstand-push-ups",
+  "mountain-climbers",
+  "bodyweight-walking-lunge",
+  "barbell-squat",
+  "barbell-deadlift",
+  "barbell-bench-press-medium-grip",
+  "standing-military-press",
+  "bent-over-barbell-row",
+  "wide-grip-lat-pulldown",
+  "dumbbell-bench-press",
+  "romanian-deadlift",
+  "one-arm-dumbbell-row",
+  "rope-jumping",
+  "jab-cross-shadow-drill",
+  "front-kick-drill",
+  "roundhouse-kick-drill",
 ]);
 
 /** The library's slug for a name ("Jab-Cross Shadow Drill" -> "jab-cross-shadow-drill"). */
