@@ -203,6 +203,10 @@ jobs:
       - name: Smoke test
         run: uv run python packaging/smoke.py
 
+      # seed_demo and the rest of app.devtools must never ship (packaging/bundle_rules.py).
+      - name: No dev tooling in the bundle
+        run: uv run python packaging/check_bundle.py
+
   docker:
     name: Docker images
     runs-on: ubuntu-latest

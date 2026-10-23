@@ -17,6 +17,8 @@ from PyInstaller.utils.hooks import collect_submodules
 
 ROOT = Path(SPECPATH).parent  # services/sidecar
 sys.path.insert(0, str(ROOT))  # so collect_submodules("app") can import the package
+sys.path.insert(0, str(ROOT / "packaging"))
+from bundle_rules import EXCLUDES, app_modules  # noqa: E402
 
 # One source of truth for the version: app/__init__.py.
 VERSION = re.search(
@@ -50,7 +52,8 @@ def windows_version_info():
 
 
 hiddenimports = (
-    collect_submodules("app")
+    # The app minus dev-only code: seed_demo and the rest of app.devtools never ship.
+    app_modules(collect_submodules("app"))
     # uvicorn picks these at runtime by name, so PyInstaller can't see them.
     + collect_submodules("uvicorn")
     + ["alembic.runtime.migration", "alembic.ddl.sqlite", "logging.config"]
@@ -77,17 +80,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     # Dev and test tooling never runs inside the app; keeping it out shrinks the
     # install and the attack surface.
-    excludes=[
-        "tkinter",
-        "pytest",
-        "_pytest",
-        "mypy",
-        "ruff",
-        "IPython",
-        "pydoc_data",
-        "lib2to3",
-        "PyInstaller",
-    ],
+    excludes=EXCLUDES,
     noarchive=False,
     optimize=1,  # strip asserts and __debug__ blocks from the bundled bytecode
 )
