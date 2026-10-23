@@ -1121,6 +1121,11 @@ components:
             - dark
             - light
             - system
+            - shadow
+            - crimson
+            - frost
+            - emerald
+            - solar
           - type: 'null'
           title: Theme
         sessions_per_week:
@@ -1165,6 +1170,15 @@ components:
           - type: boolean
           - type: 'null'
           title: Photo Feedback
+        background_art:
+          anyOf:
+          - type: string
+            enum:
+            - 'on'
+            - dim
+            - 'off'
+          - type: 'null'
+          title: Background Art
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1187,8 +1201,13 @@ components:
           - dark
           - light
           - system
+          - shadow
+          - crimson
+          - frost
+          - emerald
+          - solar
           title: Theme
-          default: dark
+          default: shadow
         sessions_per_week:
           type: integer
           title: Sessions Per Week
@@ -1222,6 +1241,14 @@ components:
           type: boolean
           title: Photo Feedback
           default: false
+        background_art:
+          type: string
+          enum:
+          - 'on'
+          - dim
+          - 'off'
+          title: Background Art
+          default: 'on'
       type: object
       required:
       - ai_enabled

@@ -15,6 +15,7 @@ from app.modules.nutrition import tdee as tdee_engine
 from app.modules.progress import energy, muscle_load
 from app.modules.progress.models import MuscleLoadEvent, Profile, Setting
 from app.modules.progress.schemas import (
+    BackgroundArt,
     EnergyTargets,
     ProfileIn,
     SettingsIn,
@@ -127,7 +128,12 @@ def read_settings(db: Session) -> SettingsOut:
         trainer_id=cast(TrainerId, _trainer_id(get_setting(db, "trainer_id", "iskra"))),
         hide_calories=get_setting(db, "hide_calories", "false") == "true",
         photo_feedback=get_setting(db, "photo_feedback", "false") == "true" and not _minor(db),
+        background_art=cast(BackgroundArt, _art(get_setting(db, "background_art", "on"))),
     )
+
+
+def _art(value: str) -> str:
+    return value if value in ("on", "dim", "off") else "on"
 
 
 def _minor(db: Session) -> bool:

@@ -105,6 +105,7 @@ TrainerId = Literal["iskra", "vera", "kai", "dario"]
 # v1.2: "dark" / "light" / "system" are the v1.1 looks (kept as free themes); the rest are
 # the v1.2 themes (gamification/themes.py says which are unlocked).
 Theme = Literal["dark", "light", "system", "shadow", "crimson", "frost", "emerald", "solar"]
+BackgroundArt = Literal["on", "dim", "off"]
 
 
 class SettingsOut(BaseModel):
@@ -124,6 +125,8 @@ class SettingsOut(BaseModel):
     hide_calories: bool = False
     # v1.1: local AI feedback on progress photos. Off by default; always off under 18.
     photo_feedback: bool = False
+    # v1.2: the theme's background art behind the pages: on, dimmed, or off (plain colour).
+    background_art: BackgroundArt = "on"
 
 
 class SettingsIn(StrictIn):
@@ -139,6 +142,7 @@ class SettingsIn(StrictIn):
     trainer_id: TrainerId | None = None
     hide_calories: bool | None = None
     photo_feedback: bool | None = None
+    background_art: BackgroundArt | None = None
 
 
 class BodyMetricIn(StrictIn):

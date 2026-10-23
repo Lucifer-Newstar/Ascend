@@ -24,6 +24,7 @@ def test_ai_toggle_round_trip(client):
         "ai_enabled": False,
         "units": "metric",
         "theme": "shadow",  # v1.2 default for a new player
+        "background_art": "on",
         "sessions_per_week": 3,
         "reduce_motion": False,
         "online_lookup": False,
@@ -55,6 +56,7 @@ def test_settings_partial_update_keeps_other_values(client):
         "trainer_id": "iskra",
         "hide_calories": False,
         "photo_feedback": False,
+        "background_art": "on",
     }
 
 

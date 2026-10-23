@@ -172,6 +172,12 @@ def test_new_players_start_on_shadow(client: TestClient) -> None:
     assert client.get("/settings").json()["theme"] == "shadow"
 
 
+def test_background_art_can_be_dimmed_or_turned_off(client: TestClient) -> None:
+    assert client.get("/settings").json()["background_art"] == "on"
+    assert client.put("/settings", json={"background_art": "dim"}).json()["background_art"] == "dim"
+    assert client.put("/settings", json={"background_art": "loud"}).status_code == 422
+
+
 # --- plain language --------------------------------------------------------------------
 
 
