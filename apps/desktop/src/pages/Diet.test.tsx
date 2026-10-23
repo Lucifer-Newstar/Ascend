@@ -10,7 +10,7 @@ import { expectNoAxeViolations } from "../test/axe";
 import { DietPage } from "./Diet";
 
 vi.mock("../api/client", () => ({
-  api: { foods: vi.fn(), dayLog: vi.fn(), logMeal: vi.fn(), deleteMeal: vi.fn(), updateSettings: vi.fn(), tdee: vi.fn(), tdeeExplanation: vi.fn() },
+  api: { foods: vi.fn(), dayLog: vi.fn(), logMeal: vi.fn(), deleteMeal: vi.fn(), updateSettings: vi.fn(), tdee: vi.fn(), tdeeExplanation: vi.fn(), planDiet: vi.fn(), savedDiets: vi.fn(), saveDiet: vi.fn(), deleteDiet: vi.fn() },
 }));
 
 const idli: Food = { id: 1, name: "Idli", portion_label: "1 piece", portion_g: 40, kcal: 58, protein_g: 2, carbs_g: 12, fat_g: 0.2, source: "approx" };
@@ -37,6 +37,7 @@ function renderPage() {
 describe("Diet page", () => {
   beforeEach(() => {
     vi.mocked(api.foods).mockResolvedValue([idli]);
+    vi.mocked(api.savedDiets).mockResolvedValue([]);
     vi.mocked(api.dayLog).mockResolvedValue(day);
     vi.mocked(api.tdee).mockResolvedValue({
       algo_version: "tdee-v1", status: "adaptive", tdee_kcal: 2480, sd_kcal: 120, low_kcal: 2360, high_kcal: 2600,

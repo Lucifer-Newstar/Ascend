@@ -1,7 +1,7 @@
 /**
  * Fuel (12-column grid, spec §8.4): a KPI strip, then today's intake and meal list (8 columns)
  * beside the adaptive TDEE card (4 columns, tdee-v1), then the meal builder: the Indian food table and the
- * plate side by side. Every card owns its loading, error and empty state through <Panel>.
+ * plate side by side, then the meal planner (moved here from Planner in v1.2). Every card owns its loading, error and empty state through <Panel>.
  */
 import type { Food, MealType } from "@ascend/shared";
 import { useMemo, useState } from "react";
@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { api } from "../api/client";
 import { IconMinus, IconPlus, IconSearch, IconTrash } from "../components/Icons";
 import { TdeePanel } from "../components/DietCards";
+import { DietPlanner } from "../components/MealPlanner";
 import { KpiStrip, KpiTile, PageGrid, Panel } from "../components/Page";
 import { Empty } from "../components/States";
 import { useToast } from "../components/Toast";
@@ -204,6 +205,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
           </div>
         </div>
       </Panel>
+      <DietPlanner index={7} />
     </PageGrid>
   );
 }

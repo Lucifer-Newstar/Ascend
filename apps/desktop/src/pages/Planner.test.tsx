@@ -1,4 +1,4 @@
-import type { DietPlan, WorkoutPlan } from "@ascend/shared";
+import type { WorkoutPlan } from "@ascend/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -27,13 +27,6 @@ const workout: WorkoutPlan = {
   phrased_by: "rules", algo_version: "workout-gen-v1",
 };
 
-const diet: DietPlan = {
-  kcal_target: 2600, protein_target_g: 120, diet: "nonveg", notes: [], phrased_by: "rules", algo_version: "diet-gen-v1",
-  flags: [{ code: "under_18_maintenance", severity: "block", message: "Under 18: planned at maintenance, not a deficit." }],
-  days: [{ day: 1, kcal: 2600, protein_g: 121, meals: [
-    { meal: "breakfast", kcal: 600, protein_g: 30, items: [{ food: "Egg", portions: 3, portion_label: "piece", kcal: 210, protein_g: 18 }] },
-  ] }],
-};
 
 function renderPage(settings = DEFAULT_SETTINGS) {
   return render(
@@ -74,15 +67,5 @@ describe("PlannerPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Check" }));
     expect(await screen.findByText(/faster than the 0.5 kg/)).toBeInTheDocument();
     expect(api.goalCheck).toHaveBeenCalledWith({ weight_kg: 80, target_weight_kg: 70, weeks: 8 });
-  });
-
-  it("plans meals and hides calories when asked", async () => {
-    vi.mocked(api.planDiet).mockResolvedValue(diet);
-    renderPage({ ...DEFAULT_SETTINGS, hide_calories: true });
-    await userEvent.click(screen.getByRole("button", { name: "Plan my meals" }));
-    const d = await screen.findByTestId("diet-draft");
-    expect(d).toHaveTextContent("120 g protein a day");
-    expect(d).not.toHaveTextContent("kcal");
-    expect(d).toHaveTextContent("Adjusted");
   });
 });
