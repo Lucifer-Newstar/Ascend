@@ -73,7 +73,7 @@ def test_save_edit_follow_and_delete(client: TestClient, profile: dict) -> None:
 
     assert client.delete(f"/planner/programs/{pid}").status_code == 204
     assert client.get("/planner/programs").json() == []
-    assert client.get("/plans/current").status_code == 404
+    assert client.get("/plans/current").json() is None
 
 
 def test_diet_draft_meets_targets_and_respects_veg(client: TestClient, profile: dict) -> None:

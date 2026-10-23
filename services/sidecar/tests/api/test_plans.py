@@ -30,8 +30,9 @@ def test_catalog_lists_programs_with_library_ids(client):
     assert all(i["exercise_id"] is not None for d in ul["days"] for i in d["items"])
 
 
-def test_no_program_is_a_404_until_one_is_chosen(client):
-    assert client.get("/plans/current").status_code == 404
+def test_no_program_is_null_until_one_is_chosen(client):
+    r = client.get("/plans/current")
+    assert r.status_code == 200 and r.json() is None
     assert client.delete("/plans/current").status_code == 404
     assert client.put("/plans/current", json={"program_key": "nope"}).status_code == 422
 
@@ -69,7 +70,7 @@ def test_choose_follow_and_leave(client, clock):
     assert other["id"] != plan["id"] and other["next"]["key"] == "a1"
 
     assert client.delete("/plans/current").status_code == 204
-    assert client.get("/plans/current").status_code == 404
+    assert client.get("/plans/current").json() is None
 
 
 def test_sets_in_the_open_workout_show_on_the_next_session(client):

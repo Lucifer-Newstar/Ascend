@@ -440,17 +440,14 @@ def list_programs(db: Session = Depends(get_db)) -> list[ProgramOut]:
 
 @plans_router.get(
     "/current",
-    response_model=PlanOut,
+    response_model=PlanOut | None,
     summary="The active training plan",
-    responses={404: {"description": "No program chosen"}},
 )
-def current_plan(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> PlanOut:
+def current_plan(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> PlanOut | None:
     """The program the user follows: its days, the next session with prog-v1 targets, sessions
-    done and the reason the next day is next."""
-    out = programs_service.plan(db, now)
-    if out is None:
-        raise HTTPException(status_code=404, detail="No program chosen yet")
-    return out
+    done and the reason the next day is next. `null` when no program is chosen yet (an
+    ordinary answer, not an error, so the app logs nothing red for it)."""
+    return programs_service.plan(db, now)
 
 
 @plans_router.put("/current", response_model=PlanOut, summary="Follow a program")

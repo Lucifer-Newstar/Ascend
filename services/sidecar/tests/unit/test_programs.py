@@ -6,9 +6,18 @@ from datetime import date, timedelta
 import pytest
 
 from app.modules.workouts import programs as pg
+from app.modules.workouts.calisthenics_seed import CALISTHENICS
+from app.modules.workouts.library import fedb_entries
 from app.modules.workouts.seed import EXERCISES
 
-LIBRARY = {name for name, _, _ in EXERCISES}
+LIBRARY = (
+    {name for name, _, _ in EXERCISES}
+    | {c["name"] for c in CALISTHENICS}
+    | {e.name for e in fedb_entries()}
+)
+HOLDS = {c["name"] for c in CALISTHENICS if c["measure"] == "hold"} | {
+    e.name for e in fedb_entries() if e.measure == "hold"
+}
 START = date(2026, 10, 5)  # a Monday
 
 
@@ -24,7 +33,8 @@ def test_every_program_uses_library_exercises_and_sane_slots(key: str) -> None:
         assert 0 <= d.weekday <= 6
         for s in d.slots:
             assert s.exercise in LIBRARY, s.exercise
-            assert 1 <= s.sets <= 5 and 1 <= s.rep_low <= s.rep_high <= 20
+            top = 120 if s.exercise in HOLDS else 20  # v1.2: holds are dosed in seconds
+            assert 1 <= s.sets <= 5 and 1 <= s.rep_low <= s.rep_high <= top
     assert len({d.weekday for d in p.days}) == p.days_per_week
     assert len({d.key for d in p.days}) == p.days_per_week
 

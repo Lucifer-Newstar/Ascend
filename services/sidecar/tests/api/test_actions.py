@@ -59,7 +59,7 @@ def test_weigh_in_meal_and_program(client: TestClient, profile) -> None:
     client.post(f"/actions/{f['id']}/confirm", json={})
     assert client.get("/plans/current").json()["program_key"] == "ppl_6"
     client.post(f"/actions/{f['id']}/undo", json={})
-    assert client.get("/plans/current").status_code == 404
+    assert client.get("/plans/current").json() is None
 
 
 def test_unknown_names_and_non_actions(client: TestClient, profile) -> None:

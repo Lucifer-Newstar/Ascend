@@ -53,7 +53,7 @@ class Program:
     name: str
     summary: str
     level: str
-    equipment: str  # "gym" | "dumbbells" (+ a pull-up bar)
+    equipment: str  # "gym" | "dumbbells" | "bar" (pull-up bar + floor) | "bodyweight"
     days: tuple[Day, ...]
 
     @property
@@ -68,6 +68,106 @@ def _s(ex: str, sets: int, lo: int, hi: int, rpe: float = 8.0, rest: int = 120) 
 PROGRAMS: dict[str, Program] = {
     p.key: p
     for p in (
+        # v1.2: day-1 programs for people with no gear or only a pull-up bar. Holds are
+        # dosed in seconds (rep_low/rep_high), and the bar work starts with negatives.
+        Program(
+            "bodyweight_starter_3",
+            "Bodyweight Starter, 3 days",
+            "Three short floor sessions a week, no equipment. Easier push-up and squat "
+            "versions first; move to the harder version once the top of the range feels easy.",
+            "beginner",
+            "bodyweight",
+            (
+                Day(
+                    "a1",
+                    "Starter A",
+                    "Squat, push, core",
+                    0,
+                    (
+                        _s("Bodyweight Squat", 3, 8, 12, 7.0, 90),
+                        _s("Incline Push-up", 3, 6, 10, 7.0, 90),
+                        _s("Single-leg Glute Bridge", 2, 8, 12, 7.0, 60),
+                        _s("Plank", 2, 20, 30, 7.0, 60),
+                        _s("Dead Bug", 2, 8, 12, 7.0, 60),
+                    ),
+                ),  # fmt: skip
+                Day(
+                    "b1",
+                    "Starter B",
+                    "Lunge, push-up, core",
+                    2,
+                    (
+                        _s("Bodyweight Walking Lunge", 2, 8, 12, 7.0, 90),
+                        _s("Push-up", 3, 3, 8, 7.0, 90),
+                        _s("Bench Dips", 2, 6, 10, 7.0, 60),
+                        _s("Hollow Body Hold", 2, 20, 30, 7.0, 60),
+                        _s("Side Plank", 2, 20, 30, 7.0, 60),
+                    ),
+                ),  # fmt: skip
+                Day(
+                    "a2",
+                    "Starter A",
+                    "Squat, push, core",
+                    4,
+                    (
+                        _s("Bodyweight Squat", 3, 8, 12, 7.0, 90),
+                        _s("Incline Push-up", 3, 6, 10, 7.0, 90),
+                        _s("Single-leg Glute Bridge", 2, 8, 12, 7.0, 60),
+                        _s("Plank", 2, 20, 30, 7.0, 60),
+                        _s("Dead Bug", 2, 8, 12, 7.0, 60),
+                    ),
+                ),  # fmt: skip
+            ),
+        ),
+        Program(
+            "bar_floor_starter_3",
+            "Bar + Floor Starter, 3 days",
+            "A pull-up bar and the floor. Negatives and hangs build the first pull-up; "
+            "push-ups, squats and core work fill the rest.",
+            "beginner",
+            "bar",
+            (
+                Day(
+                    "a1",
+                    "Bar A",
+                    "Pull, squat, push",
+                    0,
+                    (
+                        _s("Negative Pull-up", 3, 3, 5, 7.0, 120),
+                        _s("Bodyweight Squat", 3, 8, 12, 7.0, 90),
+                        _s("Incline Push-up", 3, 6, 10, 7.0, 90),
+                        _s("Dead Hang", 2, 20, 30, 7.0, 60),
+                        _s("Plank", 2, 20, 30, 7.0, 60),
+                    ),
+                ),  # fmt: skip
+                Day(
+                    "b1",
+                    "Bar B",
+                    "Row, lunge, core",
+                    2,
+                    (
+                        _s("Scapular Pull-up", 3, 6, 10, 7.0, 90),
+                        _s("Inverted Row", 3, 6, 10, 7.0, 90),
+                        _s("Bodyweight Walking Lunge", 2, 8, 12, 7.0, 90),
+                        _s("Push-up", 3, 3, 8, 7.0, 90),
+                        _s("Hanging Leg Raise", 2, 5, 8, 7.0, 60),
+                    ),
+                ),  # fmt: skip
+                Day(
+                    "a2",
+                    "Bar A",
+                    "Pull, squat, push",
+                    4,
+                    (
+                        _s("Negative Pull-up", 3, 3, 5, 7.0, 120),
+                        _s("Bodyweight Squat", 3, 8, 12, 7.0, 90),
+                        _s("Incline Push-up", 3, 6, 10, 7.0, 90),
+                        _s("Dead Hang", 2, 20, 30, 7.0, 60),
+                        _s("Plank", 2, 20, 30, 7.0, 60),
+                    ),
+                ),  # fmt: skip
+            ),
+        ),
         Program(
             "full_body_3",
             "Full body, 3 days",

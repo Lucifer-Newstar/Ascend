@@ -25,24 +25,37 @@ def _library(db: Session) -> dict[str, Exercise]:
     return {e.name: e for e in db.scalars(select(Exercise).where(Exercise.archived.is_(False)))}
 
 
+# v1.1 stored holds as "1-1" (one hold per set); v1.2 doses holds in seconds and shows an
+# old 1-1 hold as this range instead of "2 x 1-1".
+LEGACY_HOLD_SECONDS = (20, 30)
+
+
+def _item(s: programs.Slot, lib: dict[str, Exercise]) -> PlanItemOut:
+    e = lib.get(s.exercise)
+    measure = e.measure if e is not None else "reps"
+    lo, hi = s.rep_low, s.rep_high
+    if measure == "hold" and hi <= 1:
+        lo, hi = LEGACY_HOLD_SECONDS
+    return PlanItemOut(
+        exercise_id=e.id if e is not None else None,
+        exercise=s.exercise,
+        sets=s.sets,
+        rep_low=lo,
+        rep_high=hi,
+        target_rpe=s.target_rpe,
+        rest_s=s.rest_s,
+        measure=measure,
+        section=e.section if e is not None else None,
+    )
+
+
 def _day_out(day: programs.Day, lib: dict[str, Exercise]) -> PlanDayOut:
     return PlanDayOut(
         key=day.key,
         name=day.name,
         focus=day.focus,
         weekday=day.weekday,
-        items=[
-            PlanItemOut(
-                exercise_id=lib[s.exercise].id if s.exercise in lib else None,
-                exercise=s.exercise,
-                sets=s.sets,
-                rep_low=s.rep_low,
-                rep_high=s.rep_high,
-                target_rpe=s.target_rpe,
-                rest_s=s.rest_s,
-            )
-            for s in day.slots
-        ],
+        items=[_item(s, lib) for s in day.slots],
     )
 
 
@@ -110,13 +123,14 @@ def leave(db: Session, now: datetime) -> bool:
 
 
 def _finished_gym(db: Session, since: date, today: date) -> list[tuple[date, set[str]]]:
+    """Finished workouts with the moves they trained. v1.2: every section counts (v1.1 read
+    only gym workouts, so a bodyweight program logged under Calisthenics never advanced)."""
     rows = db.execute(
         select(Workout.id, Workout.day, Exercise.name)
         .join(WorkoutSet, WorkoutSet.workout_id == Workout.id)
         .join(Exercise, Exercise.id == WorkoutSet.exercise_id)
         .where(
             Workout.finished_at.is_not(None),
-            Workout.section == "gym",
             Workout.day >= since,
             Workout.day <= today,
         )
@@ -194,7 +208,7 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
         reason=state.reason + (" (deload week: half the sets at RPE 7)" if deload else ""),
         why=Why(
             formula=(
-                "next = the day after the last program day you trained; a finished gym workout "
+                "next = the day after the last program day you trained; a finished workout "
                 f"counts as a program day when it trained at least {programs.MATCH_SHARE:.0%} "
                 "of that day's exercises. Sets come from the program (halved in a deload "
                 "week); reps, load and RPE per exercise come from prog-v1."

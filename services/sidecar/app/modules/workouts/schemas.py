@@ -370,6 +370,10 @@ class PlanItemOut(BaseModel):
     target: str | None = None
     target_reason: str | None = None
     done_sets: int = 0
+    # v1.2: "reps" | "hold" | "time"; for a hold, rep_low/rep_high are seconds.
+    measure: str = "reps"
+    # v1.2: the library section the move lives in, so Train opens the right list for it.
+    section: str | None = None
 
 
 class PlanDayOut(BaseModel):
