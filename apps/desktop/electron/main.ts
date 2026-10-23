@@ -15,10 +15,13 @@ import { IPC } from "./channels";
 import { validateExportSave } from "./ipc-validate";
 import { SidecarManager } from "./sidecar";
 
-// Same user-data folder (%APPDATA%\ASCEND) in dev and when installed.
 app.setName("ASCEND");
 
 const isDev = !app.isPackaged;
+// The installed app keeps its data in %APPDATA%\ASCEND; an unpackaged dev run uses
+// %APPDATA%\ASCEND-dev, so demo data seeded while developing never reaches the installed
+// app (the 1.0.0 "pre-loaded data" bug). Set before anything reads userData.
+if (isDev) app.setPath("userData", path.join(app.getPath("appData"), "ASCEND-dev"));
 const logFile = path.join(app.getPath("userData"), "logs", "main.log");
 
 function log(line: string): void {
