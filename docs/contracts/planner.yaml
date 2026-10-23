@@ -1,0 +1,941 @@
+# ASCEND contract — planner
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — planner
+  version: 0.1.0
+  description: 'Custom workout programs and meal plans drafted by rules (plangen-v1, dietgen-v1), checked by goalcheck-v1,
+    optionally reworded by the local model under the number guard. Owner: Jegatheesan (backend).'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: planner
+  description: Goal checks, custom programs and meal plans
+paths:
+  /planner/check:
+    post:
+      summary: Check
+      description: 'goalcheck-v1: flag unrealistic or unsafe goals (each flag with its numbers).'
+      operationId: check_planner_check_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalCheckIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalCheckOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+  /planner/workout:
+    post:
+      summary: Draft Workout
+      description: Draft a custom program (plangen-v1). Nothing is saved.
+      operationId: draft_workout_planner_workout_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutPlanIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutPlanOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+  /planner/programs:
+    get:
+      summary: List Programs
+      operationId: list_programs_planner_programs_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CustomProgramOut'
+                type: array
+                title: Response List Programs Planner Programs Get
+      x-status: implemented
+      tags:
+      - planner
+    post:
+      summary: Save Program
+      description: Save a (possibly edited) draft. Every exercise must be in the library.
+      operationId: save_program_planner_programs_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramDraft'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomProgramOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+  /planner/programs/{program_id}:
+    put:
+      summary: Update Program
+      operationId: update_program_planner_programs__program_id__put
+      parameters:
+      - name: program_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Program Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramDraft'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomProgramOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+    delete:
+      summary: Delete Program
+      operationId: delete_program_planner_programs__program_id__delete
+      parameters:
+      - name: program_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Program Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+  /planner/programs/{program_id}/follow:
+    post:
+      summary: Follow Program
+      description: Follow a saved program (it becomes the plan on Today and Train).
+      operationId: follow_program_planner_programs__program_id__follow_post
+      parameters:
+      - name: program_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Program Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomProgramOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+  /planner/diet:
+    post:
+      summary: Draft Diet
+      description: Draft a 7-day meal plan (dietgen-v1) from the energy targets. Nothing is saved.
+      operationId: draft_diet_planner_diet_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DietPlanIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DietPlanOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+  /planner/diets:
+    get:
+      summary: List Diets
+      operationId: list_diets_planner_diets_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SavedDietOut'
+                type: array
+                title: Response List Diets Planner Diets Get
+      x-status: implemented
+      tags:
+      - planner
+    post:
+      summary: Save Diet
+      description: Save a meal plan; it becomes the active one.
+      operationId: save_diet_planner_diets_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DietSaveIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedDietOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+  /planner/diets/{diet_id}:
+    delete:
+      summary: Delete Diet
+      operationId: delete_diet_planner_diets__diet_id__delete
+      parameters:
+      - name: diet_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Diet Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - planner
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: Per-launch token from Electron main.
+  schemas:
+    CustomProgramOut:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          minLength: 1
+          title: Name
+        summary:
+          type: string
+          maxLength: 400
+          title: Summary
+          default: ''
+        level:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          title: Level
+          default: beginner
+        equipment:
+          type: string
+          enum:
+          - gym
+          - dumbbells
+          - bodyweight
+          title: Equipment
+          default: gym
+        days:
+          items:
+            $ref: '#/components/schemas/DayIO'
+          type: array
+          maxItems: 7
+          minItems: 1
+          title: Days
+        notes:
+          items:
+            type: string
+          type: array
+          maxItems: 10
+          title: Notes
+        id:
+          type: integer
+          title: Id
+        key:
+          type: string
+          title: Key
+        algo_version:
+          type: string
+          title: Algo Version
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        following:
+          type: boolean
+          title: Following
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - days
+      - id
+      - key
+      - algo_version
+      - created_at
+      - updated_at
+      title: CustomProgramOut
+    DayIO:
+      properties:
+        key:
+          type: string
+          maxLength: 16
+          minLength: 1
+          title: Key
+        name:
+          type: string
+          maxLength: 60
+          minLength: 1
+          title: Name
+        focus:
+          type: string
+          maxLength: 80
+          title: Focus
+          default: ''
+        weekday:
+          type: integer
+          maximum: 6.0
+          minimum: 0.0
+          title: Weekday
+        slots:
+          items:
+            $ref: '#/components/schemas/SlotIO'
+          type: array
+          maxItems: 12
+          minItems: 1
+          title: Slots
+      type: object
+      required:
+      - key
+      - name
+      - weekday
+      - slots
+      title: DayIO
+    DayPlanOut:
+      properties:
+        day:
+          type: integer
+          title: Day
+        meals:
+          items:
+            $ref: '#/components/schemas/PlanMealOut'
+          type: array
+          title: Meals
+        kcal:
+          type: integer
+          title: Kcal
+        protein_g:
+          type: number
+          title: Protein G
+      type: object
+      required:
+      - day
+      - meals
+      - kcal
+      - protein_g
+      title: DayPlanOut
+    DietPlanIn:
+      properties:
+        diet:
+          type: string
+          enum:
+          - veg
+          - egg
+          - nonveg
+          title: Diet
+          default: nonveg
+        kcal_target:
+          anyOf:
+          - type: integer
+            maximum: 6000.0
+            minimum: 800.0
+          - type: 'null'
+          title: Kcal Target
+        use_ai:
+          type: boolean
+          title: Use Ai
+          default: true
+      additionalProperties: false
+      type: object
+      title: DietPlanIn
+    DietPlanOut:
+      properties:
+        kcal_target:
+          type: integer
+          title: Kcal Target
+        protein_target_g:
+          type: integer
+          title: Protein Target G
+        diet:
+          type: string
+          enum:
+          - veg
+          - egg
+          - nonveg
+          title: Diet
+        days:
+          items:
+            $ref: '#/components/schemas/DayPlanOut'
+          type: array
+          title: Days
+        notes:
+          items:
+            type: string
+          type: array
+          title: Notes
+        flags:
+          items:
+            $ref: '#/components/schemas/FlagOut'
+          type: array
+          title: Flags
+        phrased_by:
+          type: string
+          enum:
+          - rules
+          - ollama
+          title: Phrased By
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - kcal_target
+      - protein_target_g
+      - diet
+      - days
+      - notes
+      - flags
+      - phrased_by
+      - algo_version
+      title: DietPlanOut
+    DietSaveIn:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          minLength: 1
+          title: Name
+          default: My meal plan
+        plan:
+          $ref: '#/components/schemas/DietPlanOut'
+      additionalProperties: false
+      type: object
+      required:
+      - plan
+      title: DietSaveIn
+    FlagOut:
+      properties:
+        code:
+          type: string
+          title: Code
+        severity:
+          type: string
+          enum:
+          - info
+          - warn
+          - block
+          title: Severity
+        message:
+          type: string
+          title: Message
+        numbers:
+          additionalProperties:
+            type: number
+          type: object
+          title: Numbers
+          default: {}
+      type: object
+      required:
+      - code
+      - severity
+      - message
+      title: FlagOut
+    GoalCheckIn:
+      properties:
+        weight_kg:
+          anyOf:
+          - type: number
+            maximum: 300.0
+            minimum: 30.0
+          - type: 'null'
+          title: Weight Kg
+        target_weight_kg:
+          anyOf:
+          - type: number
+            maximum: 300.0
+            minimum: 30.0
+          - type: 'null'
+          title: Target Weight Kg
+        weeks:
+          anyOf:
+          - type: number
+            maximum: 520.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Weeks
+        kcal:
+          anyOf:
+          - type: number
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Kcal
+        protein_g:
+          anyOf:
+          - type: number
+            maximum: 600.0
+            minimum: 0.0
+          - type: 'null'
+          title: Protein G
+        days_per_week:
+          anyOf:
+          - type: integer
+            maximum: 7.0
+            minimum: 1.0
+          - type: 'null'
+          title: Days Per Week
+        minutes:
+          anyOf:
+          - type: integer
+            maximum: 300.0
+            minimum: 5.0
+          - type: 'null'
+          title: Minutes
+        experience:
+          anyOf:
+          - type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+          - type: 'null'
+          title: Experience
+        lift_current_kg:
+          anyOf:
+          - type: number
+            maximum: 600.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Lift Current Kg
+        lift_target_kg:
+          anyOf:
+          - type: number
+            maximum: 600.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Lift Target Kg
+        lift_weeks:
+          anyOf:
+          - type: number
+            maximum: 520.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Lift Weeks
+      additionalProperties: false
+      type: object
+      title: GoalCheckIn
+      description: Any subset of a goal; each part present is checked (goalcheck-v1).
+    GoalCheckOut:
+      properties:
+        flags:
+          items:
+            $ref: '#/components/schemas/FlagOut'
+          type: array
+          title: Flags
+        worst:
+          anyOf:
+          - type: string
+            enum:
+            - info
+            - warn
+            - block
+          - type: 'null'
+          title: Worst
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - flags
+      - worst
+      - algo_version
+      title: GoalCheckOut
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PlanFoodItemOut:
+      properties:
+        food:
+          type: string
+          title: Food
+        portions:
+          type: number
+          title: Portions
+        portion_label:
+          type: string
+          title: Portion Label
+        kcal:
+          type: integer
+          title: Kcal
+        protein_g:
+          type: number
+          title: Protein G
+      type: object
+      required:
+      - food
+      - portions
+      - portion_label
+      - kcal
+      - protein_g
+      title: PlanFoodItemOut
+    PlanMealOut:
+      properties:
+        meal:
+          type: string
+          title: Meal
+        items:
+          items:
+            $ref: '#/components/schemas/PlanFoodItemOut'
+          type: array
+          title: Items
+        kcal:
+          type: integer
+          title: Kcal
+        protein_g:
+          type: number
+          title: Protein G
+      type: object
+      required:
+      - meal
+      - items
+      - kcal
+      - protein_g
+      title: PlanMealOut
+    ProgramDraft:
+      properties:
+        name:
+          type: string
+          maxLength: 80
+          minLength: 1
+          title: Name
+        summary:
+          type: string
+          maxLength: 400
+          title: Summary
+          default: ''
+        level:
+          type: string
+          enum:
+          - beginner
+          - intermediate
+          - advanced
+          title: Level
+          default: beginner
+        equipment:
+          type: string
+          enum:
+          - gym
+          - dumbbells
+          - bodyweight
+          title: Equipment
+          default: gym
+        days:
+          items:
+            $ref: '#/components/schemas/DayIO'
+          type: array
+          maxItems: 7
+          minItems: 1
+          title: Days
+        notes:
+          items:
+            type: string
+          type: array
+          maxItems: 10
+          title: Notes
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - days
+      title: ProgramDraft
+    SavedDietOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        active:
+          type: boolean
+          title: Active
+        plan:
+          $ref: '#/components/schemas/DietPlanOut'
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      - active
+      - plan
+      title: SavedDietOut
+    SlotIO:
+      properties:
+        exercise:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Exercise
+        sets:
+          type: integer
+          maximum: 10.0
+          minimum: 1.0
+          title: Sets
+        rep_low:
+          type: integer
+          maximum: 100.0
+          minimum: 1.0
+          title: Rep Low
+        rep_high:
+          type: integer
+          maximum: 100.0
+          minimum: 1.0
+          title: Rep High
+        target_rpe:
+          type: number
+          maximum: 10.0
+          minimum: 5.0
+          title: Target Rpe
+          default: 8.0
+        rest_s:
+          type: integer
+          maximum: 900.0
+          minimum: 0.0
+          title: Rest S
+          default: 120
+        exercise_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Id
+      type: object
+      required:
+      - exercise
+      - sets
+      - rep_low
+      - rep_high
+      title: SlotIO
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    WorkoutPlanIn:
+      properties:
+        focus:
+          type: string
+          enum:
+          - strength
+          - muscle
+          - fat_loss
+          - skills
+          - general
+          title: Focus
+          default: general
+        experience:
+          anyOf:
+          - type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+          - type: 'null'
+          title: Experience
+        days_per_week:
+          type: integer
+          maximum: 7.0
+          minimum: 1.0
+          title: Days Per Week
+          default: 3
+        minutes:
+          type: integer
+          maximum: 180.0
+          minimum: 10.0
+          title: Minutes
+          default: 60
+        equipment:
+          anyOf:
+          - items:
+              type: string
+              enum:
+              - none
+              - pullup_bar
+              - rings
+              - dumbbells
+              - gym
+            type: array
+          - type: 'null'
+          title: Equipment
+        use_ai:
+          type: boolean
+          title: Use Ai
+          default: true
+      additionalProperties: false
+      type: object
+      title: WorkoutPlanIn
+    WorkoutPlanOut:
+      properties:
+        draft:
+          $ref: '#/components/schemas/ProgramDraft'
+        flags:
+          items:
+            $ref: '#/components/schemas/FlagOut'
+          type: array
+          title: Flags
+        phrased_by:
+          type: string
+          enum:
+          - rules
+          - ollama
+          title: Phrased By
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - draft
+      - flags
+      - phrased_by
+      - algo_version
+      title: WorkoutPlanOut

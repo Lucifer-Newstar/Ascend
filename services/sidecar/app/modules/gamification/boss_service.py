@@ -32,11 +32,11 @@ def _set_times(db: Session, start: date, end: date) -> list[datetime]:
 
 
 def _hp(db: Session, week: date) -> boss.Hp:
-    from app.modules.workouts import programs, programs_service
+    from app.modules.workouts import programs_service
     from app.modules.workouts.deload_service import _last_deload_week
 
     enrollment = programs_service.active(db)
-    program = programs.PROGRAMS.get(enrollment.program_key) if enrollment else None
+    program = programs_service.get_program(db, enrollment.program_key) if enrollment else None
     program_sets = sum(s.sets for d in program.days for s in d.slots) if program else None
     weekly = [
         len(_set_times(db, week - timedelta(weeks=n), week - timedelta(weeks=n - 1)))

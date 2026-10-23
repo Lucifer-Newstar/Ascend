@@ -26,6 +26,8 @@ class ProfileIn(BaseModel):
     equipment: list[Literal["none", "pullup_bar", "rings", "dumbbells", "gym"]] = Field(
         default_factory=list, max_length=5
     )
+    # v1.1: training age (the planner sizes volume and the goal check its limits by it).
+    experience: Literal["beginner", "intermediate", "advanced"] | None = None
 
 
 class BaselineIn(StrictIn):

@@ -79,8 +79,15 @@ def active(db: Session) -> PlanEnrollment | None:
     ).first()
 
 
+def get_program(db: Session, key: str) -> programs.Program | None:
+    """A built-in program, or a custom one saved with the planner ("custom-<id>")."""
+    from app.modules.planner.service import get_program as planner_get
+
+    return planner_get(db, key)
+
+
 def enroll(db: Session, key: str, now: datetime) -> PlanEnrollment:
-    if key not in programs.PROGRAMS:
+    if get_program(db, key) is None:
         raise UnknownProgram(key)
     current = active(db)
     if current is not None:
@@ -148,8 +155,8 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
     e = active(db)
     if e is None:
         return None
-    p = programs.PROGRAMS.get(e.program_key)
-    if p is None:  # a program removed from the catalog in a later version
+    p = get_program(db, e.program_key)
+    if p is None:  # a program removed from the catalog in a later version, or deleted
         return None
     today = now.date()
     state = programs.plan_state(p, e.started_on, _finished_gym(db, e.started_on, today), today)
@@ -168,7 +175,7 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
         item.done_sets = open_sets.get(item.exercise_id, 0)
     return PlanOut(
         id=e.id,
-        source="program",
+        source="custom" if p.key.startswith("custom-") else "program",
         algo_version=programs.ALGO_VERSION,
         program_key=p.key,
         name=p.name,

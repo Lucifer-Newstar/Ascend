@@ -1,0 +1,273 @@
+"""goalcheck-v1: deterministic checks that flag unrealistic or unsafe goals and plans.
+
+The planner (and the trainer, when you ask "can I lose 10 kg in a month?") runs these
+before anything is generated. Each flag carries its numbers, so the trainer can explain
+it word for word and the local model, if it rephrases it, is held to the same numbers by
+the coach's number guard.
+
+Sources (docs/architecture/trainer-and-planner.md has the links):
+  - weight loss ~0.5-1 % of body weight a week keeps muscle (Helms, Aragon & Fitschen 2014)
+  - weight gain ~0.25-0.5 %/week for novice/intermediate lifters (Iraki et al. 2019)
+  - protein 1.4-2.0 g/kg/day for people who train (ISSN position stand, Jaeger et al. 2017)
+  - calorie floor: low-calorie diets of ~1,200 (women) / ~1,500 (men) kcal are the usual
+    unsupervised lower bound; we also never go below the estimated BMR
+These are ASCEND's thresholds, informed by those sources; they are not medical advice.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Literal
+
+ALGO_VERSION = "goalcheck-v1"
+
+Severity = Literal["info", "warn", "block"]
+Experience = Literal["beginner", "intermediate", "advanced"]
+
+LOSS_WARN_PCT = 0.75  # % body weight per week
+LOSS_MAX_PCT = 1.0
+GAIN_MAX_PCT = 0.5
+GAIN_BLOCK_PCT = 1.0
+SAFE_LOSS_PCT = 0.75  # the pace used to suggest a realistic timeline
+SAFE_GAIN_PCT = 0.35
+PROTEIN_LOW_G_PER_KG = 1.4
+PROTEIN_HIGH_G_PER_KG = 3.0
+KCAL_FLOOR = {"female": 1200, "male": 1500}
+MIN_BMI = 18.5
+# Best realistic weekly e1RM gain (% per week) by training age; twice this is impossible.
+STRENGTH_PCT_PER_WEEK: dict[str, float] = {"beginner": 2.5, "intermediate": 1.0, "advanced": 0.5}
+
+
+@dataclass(frozen=True)
+class Flag:
+    code: str
+    severity: Severity
+    message: str
+    numbers: dict[str, float] = field(default_factory=dict)
+
+
+def _r(x: float, n: int = 1) -> float:
+    return round(x, n)
+
+
+def safe_weeks(weight_kg: float, target_kg: float) -> int:
+    """Weeks to reach the target at a sustainable pace (0.75 %/wk down, 0.35 %/wk up)."""
+    diff = target_kg - weight_kg
+    if abs(diff) < 0.05:
+        return 0
+    pct = SAFE_LOSS_PCT if diff < 0 else SAFE_GAIN_PCT
+    per_week = weight_kg * pct / 100
+    return max(1, round(abs(diff) / per_week))
+
+
+def check_weight_goal(
+    weight_kg: float, target_kg: float, weeks: float, height_cm: float | None = None
+) -> list[Flag]:
+    """Is going from weight_kg to target_kg in `weeks` weeks realistic?"""
+    flags: list[Flag] = []
+    if height_cm:
+        bmi = target_kg / (height_cm / 100) ** 2
+        if bmi < MIN_BMI:
+            flags.append(
+                Flag(
+                    "underweight_target",
+                    "block",
+                    f"A target of {_r(target_kg)} kg at {_r(height_cm, 0):g} cm is a BMI of "
+                    f"{_r(bmi)}, below {MIN_BMI}. I won't plan for an underweight target.",
+                    {"target_kg": _r(target_kg), "bmi": _r(bmi)},
+                )
+            )
+    if weeks <= 0:
+        return flags
+    diff = target_kg - weight_kg
+    if abs(diff) < 0.05:
+        return flags
+    rate = diff / weeks
+    pct = rate / weight_kg * 100
+    nums = {
+        "kg_per_week": _r(abs(rate), 2),
+        "pct_per_week": _r(abs(pct), 2),
+        "weeks": _r(weeks),
+        "safe_weeks": float(safe_weeks(weight_kg, target_kg)),
+    }
+    realistic = int(nums["safe_weeks"])
+    if diff < 0 and abs(pct) > LOSS_MAX_PCT:
+        flags.append(
+            Flag(
+                "loss_too_fast",
+                "block",
+                f"Losing {_r(abs(diff))} kg in {_r(weeks):g} weeks is {nums['kg_per_week']} kg "
+                f"a week ({nums['pct_per_week']}% of your body weight). Above about 1% a week "
+                f"you lose muscle with the fat. A pace you can hold gets you there in about "
+                f"{realistic} weeks.",
+                nums,
+            )
+        )
+    elif diff < 0 and abs(pct) > LOSS_WARN_PCT:
+        flags.append(
+            Flag(
+                "loss_aggressive",
+                "warn",
+                f"{nums['kg_per_week']} kg a week ({nums['pct_per_week']}% of body weight) is "
+                f"doable but hard. Keep protein high and expect hungry weeks; about "
+                f"{realistic} weeks is the comfortable version.",
+                nums,
+            )
+        )
+    elif diff > 0 and pct > GAIN_BLOCK_PCT:
+        flags.append(
+            Flag(
+                "gain_too_fast",
+                "block",
+                f"Gaining {_r(diff)} kg in {_r(weeks):g} weeks is {nums['kg_per_week']} kg a "
+                f"week. Muscle doesn't grow that fast; most of it would be fat. Plan on about "
+                f"{realistic} weeks.",
+                nums,
+            )
+        )
+    elif diff > 0 and pct > GAIN_MAX_PCT:
+        flags.append(
+            Flag(
+                "gain_fast",
+                "warn",
+                f"{nums['kg_per_week']} kg a week ({nums['pct_per_week']}% of body weight) is "
+                f"faster than lean gains usually go (0.25-0.5% a week). About {realistic} "
+                f"weeks keeps fat gain down.",
+                nums,
+            )
+        )
+    return flags
+
+
+def kcal_floor(sex: str, bmr: float) -> int:
+    return int(max(KCAL_FLOOR.get(sex, 1500), round(bmr)))
+
+
+def check_calories(kcal: float, sex: str, bmr: float) -> list[Flag]:
+    floor = kcal_floor(sex, bmr)
+    if kcal < floor:
+        return [
+            Flag(
+                "kcal_below_floor",
+                "block",
+                f"{round(kcal)} kcal a day is below your floor of {floor} kcal (the higher of "
+                f"your estimated BMR and {KCAL_FLOOR.get(sex, 1500)} kcal). Going lower needs "
+                f"a doctor, not an app.",
+                {"kcal": float(round(kcal)), "floor": float(floor)},
+            )
+        ]
+    return []
+
+
+def check_protein(protein_g: float, weight_kg: float) -> list[Flag]:
+    per_kg = protein_g / weight_kg
+    nums = {"protein_g": float(round(protein_g)), "g_per_kg": _r(per_kg)}
+    if per_kg < PROTEIN_LOW_G_PER_KG:
+        return [
+            Flag(
+                "protein_low",
+                "warn",
+                f"{round(protein_g)} g of protein is {_r(per_kg)} g per kg; people who train "
+                f"do best at 1.4-2.0 g per kg.",
+                nums,
+            )
+        ]
+    if per_kg > PROTEIN_HIGH_G_PER_KG:
+        return [
+            Flag(
+                "protein_very_high",
+                "info",
+                f"{round(protein_g)} g ({_r(per_kg)} g per kg) is more protein than you need; "
+                f"above about 2 g per kg the extra does little.",
+                nums,
+            )
+        ]
+    return []
+
+
+def check_schedule(days_per_week: int, minutes: int, experience: Experience) -> list[Flag]:
+    flags: list[Flag] = []
+    if days_per_week >= 7:
+        flags.append(
+            Flag(
+                "no_rest_day",
+                "warn",
+                "Seven training days leaves no rest day. Muscles grow between sessions; "
+                "I'll plan 6 and keep one day for rest.",
+                {"days": float(days_per_week)},
+            )
+        )
+    elif experience == "beginner" and days_per_week > 5:
+        flags.append(
+            Flag(
+                "beginner_too_many_days",
+                "warn",
+                f"{days_per_week} days a week is a lot for a beginner; 3-4 full-body days build "
+                f"the habit and recover better.",
+                {"days": float(days_per_week)},
+            )
+        )
+    if minutes < 20:
+        flags.append(
+            Flag(
+                "short_sessions",
+                "info",
+                f"{minutes} minutes fits 2-3 exercises. That still counts; I'll keep it tight.",
+                {"minutes": float(minutes)},
+            )
+        )
+    elif minutes > 120:
+        flags.append(
+            Flag(
+                "long_sessions",
+                "warn",
+                f"{minutes} minutes is long; past about 90 minutes quality drops. I'll cap the "
+                f"plan at 90.",
+                {"minutes": float(minutes)},
+            )
+        )
+    return flags
+
+
+def check_strength_goal(
+    current_kg: float, target_kg: float, weeks: float, experience: Experience
+) -> list[Flag]:
+    """Is lifting target_kg (estimated 1RM) in `weeks` weeks plausible from current_kg?"""
+    if weeks <= 0 or current_kg <= 0 or target_kg <= current_kg:
+        return []
+    pct = ((target_kg / current_kg) - 1) * 100 / weeks
+    limit = STRENGTH_PCT_PER_WEEK[experience]
+    realistic = math_ceil((target_kg / current_kg - 1) * 100 / limit)
+    nums = {"pct_per_week": _r(pct, 2), "limit_pct": limit, "realistic_weeks": float(realistic)}
+    if pct > 2 * limit:
+        return [
+            Flag(
+                "strength_unrealistic",
+                "block",
+                f"Going from {_r(current_kg)} to {_r(target_kg)} kg in {_r(weeks):g} weeks "
+                f"needs {nums['pct_per_week']}% a week; a {experience} lifter gains about "
+                f"{limit}% at best. Give it about {realistic} weeks.",
+                nums,
+            )
+        ]
+    if pct > limit:
+        return [
+            Flag(
+                "strength_ambitious",
+                "warn",
+                f"{nums['pct_per_week']}% a week is ambitious for a {experience} lifter "
+                f"(about {limit}% is typical). Possible, but about {realistic} weeks is safer.",
+                nums,
+            )
+        ]
+    return []
+
+
+def math_ceil(x: float) -> int:
+    i = int(x)
+    return i if i == x else i + 1
+
+
+def worst(flags: list[Flag]) -> Severity | None:
+    order = {"info": 0, "warn": 1, "block": 2}
+    return max((f.severity for f in flags), key=lambda s: order[s], default=None)

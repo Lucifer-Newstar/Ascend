@@ -141,6 +141,19 @@
         "implemented": 11,
         "planned": 0
       }
+    },
+    {
+      "id": "planner",
+      "package": "app.modules.planner",
+      "contract": "planner.yaml",
+      "path_prefixes": [
+        "/planner"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 11,
+        "planned": 0
+      }
     }
   ]
 }

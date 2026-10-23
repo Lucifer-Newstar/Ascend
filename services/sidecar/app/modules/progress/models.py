@@ -31,6 +31,8 @@ class Profile(Base):
         "equipment", Text, default="[]", server_default="[]"
     )
     baseline_json: Mapped[str] = mapped_column("baseline", Text, default="{}", server_default="{}")
+    # v1.1 (planner): training age, asked by the trainer at onboarding.
+    experience: Mapped[str | None] = mapped_column(String(12), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()

@@ -21,7 +21,9 @@ def test_erase_keeps_libraries_and_preferences(client: TestClient, profile: dict
     client.put("/settings", json={"theme": "light", "sessions_per_week": 5})
     w = client.post("/workouts", json={}).json()
     ex = client.get("/exercises").json()[0]
-    client.post(f"/workouts/{w['id']}/sets", json={"exercise_id": ex["id"], "reps": 5, "weight_kg": 40})
+    client.post(
+        f"/workouts/{w['id']}/sets", json={"exercise_id": ex["id"], "reps": 5, "weight_kg": 40}
+    )
     photos = settings.data_dir / "photos"
     photos.mkdir()
     (photos / "a.jpg").write_bytes(b"x")

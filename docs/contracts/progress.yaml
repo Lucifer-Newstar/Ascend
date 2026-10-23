@@ -28,8 +28,6 @@ tags:
 paths:
   /profile:
     get:
-      tags:
-      - progress
       summary: Get Profile
       operationId: get_profile_profile_get
       responses:
@@ -40,9 +38,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProfileOut'
       x-status: implemented
-    put:
       tags:
       - progress
+    put:
       summary: Put Profile
       operationId: put_profile_profile_put
       requestBody:
@@ -65,6 +63,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+      tags:
+      - progress
   /settings:
     get:
       tags:
@@ -820,6 +820,15 @@ components:
           type: array
           maxItems: 5
           title: Equipment
+        experience:
+          anyOf:
+          - type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+          - type: 'null'
+          title: Experience
       type: object
       required:
       - age
@@ -902,6 +911,15 @@ components:
           type: array
           maxItems: 5
           title: Equipment
+        experience:
+          anyOf:
+          - type: string
+            enum:
+            - beginner
+            - intermediate
+            - advanced
+          - type: 'null'
+          title: Experience
         energy:
           $ref: '#/components/schemas/EnergyTargets'
         baseline:
