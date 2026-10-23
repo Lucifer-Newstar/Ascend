@@ -57,7 +57,8 @@ The Windows installer is electron-builder's NSIS target (`electron-builder.yml`)
   copied to `resources/sidecar/` as an extra resource.
 - **Fuses** (`build/fuses.cjs`, run as `afterPack`): RunAsNode, `NODE_OPTIONS` and `--inspect`
   are switched off in the binary, ASAR integrity validation is on, and the app only loads
-  from `app.asar`. Check a binary with `npx electron-fuses read --app <exe>`.
+  from `app.asar`. Check a binary with `node build/fuses.cjs --check release/win-unpacked/ASCEND.exe`
+  (CI runs the same check) or `npx electron-fuses read --app <exe>`.
 - **Icons** come from `build/icon.png` / `build/icon.ico`, rendered by `scripts/make_icons.py`.
 
 Build it on Windows:
@@ -69,8 +70,10 @@ make dist-win                                   # apps/desktop/release/ASCEND-Se
 ```
 
 CI builds the same installer on every push to `main` that touches the app and on `v*`
-tags (`.github/workflows/release.yml`); download it from the run's artefacts. The build
-is unsigned for now, so SmartScreen shows "unknown publisher" on first run.
+tags (`.github/workflows/release.yml`); download it from the run's artefacts. A `v*` tag
+also publishes it to GitHub Releases with `SHA256SUMS.txt` and the notes from
+`docs/releases/<tag>.md`. The build is unsigned for now, so SmartScreen shows "Windows
+protected your PC" on first run: **More info → Run anyway**.
 
 ## Theme
 

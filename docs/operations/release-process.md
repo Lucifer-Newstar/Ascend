@@ -6,6 +6,34 @@
 
 ---
 
+## 0. As built (1.0.0)
+
+Sections 1–7 below are the plan from the design phase. This is how a release is actually cut
+at 1.0.0:
+
+1. **Bump the version** in one commit (`chore(release): bump version to x.y.z`): the root,
+   `apps/desktop` and `packages/shared` `package.json` files (and the `@ascend/shared`
+   dependency), `package-lock.json`, `services/sidecar/pyproject.toml`, `app/__init__.py`,
+   `uv.lock`, and the version placeholder in `.github/ISSUE_TEMPLATE/bug_report.yml`.
+   `git grep` the old version to be sure. The installer name comes from the desktop
+   `package.json`: `ASCEND-Setup-x.y.z.exe`.
+2. **Write the notes:** a `## [x.y.z] - date` section in `CHANGELOG.md` and the user-facing
+   notes in `docs/releases/vx.y.z.md` (highlights, install, requirements, known limitations).
+3. **Push to `main`** and wait until CI, ML and the Windows installer workflow are green.
+4. **Tag it:** `git tag vx.y.z` on that commit, then `git push origin vx.y.z`.
+5. **`release.yml` runs:** job `windows-installer` builds the PyInstaller sidecar and smoke-tests
+   it, builds the NSIS installer and checks the Electron fuses; job `publish` creates the GitHub
+   Release `ASCEND vx.y.z` with the installer, `SHA256SUMS.txt` and the notes from
+   `docs/releases/vx.y.z.md` (generated notes if that file is missing). A release drafted by hand
+   first is updated, not duplicated.
+6. **Check the release page:** the `.exe` name carries the new version and `SHA256SUMS.txt` is
+   attached.
+
+Not built from the plan (yet): the beta channel and electron-updater (`latest.yml`,
+blockmaps), the release script and its version-consistency check, the silent-install smoke test,
+the SBOM, the protected `release` environment and model-only releases. Users update by
+downloading the new installer; their data in `%APPDATA%\ASCEND` is kept.
+
 ## 1. Versioning
 
 - **App:** SemVer `MAJOR.MINOR.PATCH`. Pre-1.0 milestones: `0.1` (hello installer),
@@ -27,7 +55,7 @@
 
 Every stable release spends **≥ 3 days in beta** with no new crash (R1) before promotion.
 
-## 3. Release workflow (`.github/workflows/release.yml`)
+## 3. Release workflow (plan; see §0 for what `release.yml` does today)
 
 ```mermaid
 flowchart LR

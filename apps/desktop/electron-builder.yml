@@ -1,6 +1,7 @@
 # electron-builder config: produces the Windows NSIS installer.
 #   npm run dist:win            (from apps/desktop, after building the sidecar)
-# Not verified on real Windows yet; see apps/desktop/README.md "Packaging".
+# Built and fuse-checked on windows-latest by .github/workflows/release.yml; see
+# apps/desktop/README.md "Packaging".
 appId: app.ascend.desktop
 productName: ASCEND
 copyright: Copyright © 2026 The ASCEND team
