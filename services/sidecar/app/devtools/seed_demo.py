@@ -16,7 +16,9 @@ exactly what the app would have produced live.
     uv run python -m app.devtools.seed_demo --days 14 --wipe
     uv run python -m app.devtools.seed_demo --history-weeks 0 --wipe   # fortnight only
 
-Never run this against your real data: --wipe deletes everything first.
+Never run this against your real data: --wipe deletes everything first. It refuses the
+installed app's folder (%APPDATA%\\ASCEND\\data) unless --allow-app-data is given; dev runs
+use %APPDATA%\\ASCEND-dev\\data by default (see app/core/config.py).
 """
 
 from __future__ import annotations
@@ -25,15 +27,17 @@ import argparse
 import math
 import random
 from datetime import datetime, time, timedelta
+from pathlib import Path
 from typing import Literal
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.config import load_settings
-from app.core.db import Base, make_engine, make_session_factory
+from app.core.config import installed_data_dir, load_settings
+from app.core.db import make_engine, make_session_factory
 from app.core.events import EventBus
 from app.core.migrate import run_migrations
+from app.core.reset import erase_user_data
 from app.main import build_bus
 from app.modules.gamification import service as game
 from app.modules.gamification.models import QuestItem
@@ -51,7 +55,7 @@ from app.modules.progress.schemas import (
     SettingsIn,
 )
 from app.modules.workouts import service as workouts
-from app.modules.workouts.models import Exercise, ExerciseMuscle, PlanEnrollment
+from app.modules.workouts.models import Exercise, PlanEnrollment
 from app.modules.workouts.schemas import SetIn
 
 # Push / pull / legs split: (exercise, start kg, reps)
@@ -321,8 +325,26 @@ def seed_diet_history(
     return logged
 
 
-def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
+class RefusedTarget(SystemExit):
+    """The seeder will not write demo data into the installed app's folder."""
+
+
+def check_target(data_dir: Path, db_url: str, allow_app_data: bool = False) -> None:
+    """Refuse the installed app's data folder (v1.1: demo data written there by a dev
+    machine showed up in the installed app). Development runs use the -dev folder."""
+    if allow_app_data or db_url:
+        return
+    if data_dir.resolve() == installed_data_dir().resolve():
+        raise RefusedTarget(
+            f"refusing to seed demo data into the installed app's folder ({data_dir}).\n"
+            "Point ASCEND_DATA_DIR at a scratch folder, or pass --allow-app-data if you "
+            "really mean it."
+        )
+
+
+def seed(days: int, wipe: bool, history_weeks: int = 10, allow_app_data: bool = False) -> None:
     settings = load_settings()
+    check_target(settings.data_dir, settings.db_url, allow_app_data)
     url = settings.resolved_db_url
     run_migrations(url)
     engine = make_engine(url)
@@ -333,14 +355,10 @@ def seed(days: int, wipe: bool, history_weeks: int = 10) -> None:
 
     with factory() as db:
         if wipe:
-            for table in reversed(Base.metadata.sorted_tables):
-                if table.name not in ("exercises", "exercise_muscles", "foods", "alembic_version"):
-                    db.execute(table.delete())
-            # The library stays; exercises the user added are user data and go too.
-            custom_ids = select(Exercise.id).where(Exercise.is_custom.is_(True))
-            db.execute(delete(ExerciseMuscle).where(ExerciseMuscle.exercise_id.in_(custom_ids)))
-            db.execute(delete(Exercise).where(Exercise.is_custom.is_(True)))
-            db.commit()
+            erase_user_data(db, keep_preferences=False, data_dir=settings.data_dir)
+        # Marks the database as demo data (the trainer offers to wipe it on first open).
+        progress.set_setting(db, "demo_seed", today.isoformat(timespec="minutes"))
+        progress.set_setting(db, "onboarded", "true")
         progress.upsert_profile(
             db,
             ProfileIn(
@@ -512,8 +530,13 @@ def main() -> None:
         "--history-weeks", type=int, default=10, help="earlier PPL weeks before the fortnight"
     )
     parser.add_argument("--wipe", action="store_true", help="delete existing user data first")
+    parser.add_argument(
+        "--allow-app-data",
+        action="store_true",
+        help="allow writing into the installed app's data folder (normally refused)",
+    )
     args = parser.parse_args()
-    seed(args.days, args.wipe, args.history_weeks)
+    seed(args.days, args.wipe, args.history_weeks, args.allow_app_data)
 
 
 if __name__ == "__main__":

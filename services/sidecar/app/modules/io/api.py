@@ -11,10 +11,13 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
+from app.core.reset import erase_user_data
 from app.modules.io import backup, formats, importer
 from app.modules.io.schemas import (
     BackupIn,
     BackupOut,
+    EraseIn,
+    EraseOut,
     ImportIn,
     ImportReport,
     RestoreIn,
@@ -174,3 +177,28 @@ def restore_backup(
         schema_revision=info.schema,
         safety_backup=str(safety[0].path),
     )
+
+
+# --- start fresh ------------------------------------------------------------------
+
+
+@router.post("/data/erase", response_model=EraseOut)
+def erase(
+    body: EraseIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> EraseOut:
+    """Delete the user's data and keep the exercise library and food table ("start
+    fresh"). A safety backup (reason "pre-erase") is written first, so it can be undone
+    from Settings > Backups; an in-memory test database has none."""
+    safety: str | None = None
+    try:
+        db_file, folder = _dirs(request)
+        safety = backup.create_backup(db_file, folder, now, reason="pre-erase").path.name
+    except (HTTPException, backup.BackupError):
+        safety = None
+    erased = erase_user_data(
+        db, keep_preferences=body.keep_preferences, data_dir=request.app.state.settings.data_dir
+    )
+    return EraseOut(erased=erased, safety_backup=safety)

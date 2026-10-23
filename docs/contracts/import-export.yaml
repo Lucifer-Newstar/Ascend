@@ -238,6 +238,37 @@ paths:
       x-status: implemented
       tags:
       - import-export
+  /data/erase:
+    post:
+      summary: Erase
+      description: 'Delete the user''s data and keep the exercise library and food table ("start
+
+        fresh"). A safety backup (reason "pre-erase") is written first, so it can be undone
+
+        from Settings > Backups; an in-memory test database has none.'
+      operationId: erase_data_erase_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EraseIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EraseOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - import-export
 components:
   securitySchemes:
     launchToken:
@@ -458,3 +489,36 @@ components:
       - schema_revision
       - safety_backup
       title: RestoreOut
+    EraseIn:
+      properties:
+        confirm:
+          type: string
+          const: erase
+          title: Confirm
+        keep_preferences:
+          type: boolean
+          title: Keep Preferences
+          default: true
+      additionalProperties: false
+      type: object
+      required:
+      - confirm
+      title: EraseIn
+      description: Erase the user's data. `confirm` must be the word "erase" (a typo guard).
+    EraseOut:
+      properties:
+        erased:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Erased
+        safety_backup:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Safety Backup
+      type: object
+      required:
+      - erased
+      - safety_backup
+      title: EraseOut

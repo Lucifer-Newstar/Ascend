@@ -69,13 +69,29 @@ def normalize_ollama_host(raw: str | None, allow_remote: bool = False) -> str:
     return f"{parts.scheme}://{shown}:{port}"
 
 
-def _default_data_dir() -> Path:
-    # Windows: %APPDATA%\ASCEND\data (the same folder the installed app uses).
-    # Elsewhere: ~/.ascend/data
+# The installed app's folder: Electron always passes it as ASCEND_DATA_DIR
+# (%APPDATA%\ASCEND\data on Windows). Development runs that do not pass a folder
+# (`make dev-sidecar`, `make seed`, `make migrate`) use a separate "-dev" folder, so demo
+# data from a developer machine can never end up in the installed app (v1.1 fix: the
+# 1.0.0 installer opened whatever `make seed` had written to %APPDATA%\ASCEND).
+APP_FOLDER = "ASCEND"
+DEV_FOLDER = "ASCEND-dev"
+
+
+def installed_data_dir() -> Path:
+    """Where the installed app keeps its data (Windows) or would (elsewhere)."""
     appdata = os.environ.get("APPDATA")
     if appdata:
-        return Path(appdata) / "ASCEND" / "data"
+        return Path(appdata) / APP_FOLDER / "data"
     return Path.home() / ".ascend" / "data"
+
+
+def _default_data_dir() -> Path:
+    # Windows: %APPDATA%\ASCEND-dev\data. Elsewhere: ~/.ascend-dev/data
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        return Path(appdata) / DEV_FOLDER / "data"
+    return Path.home() / ".ascend-dev" / "data"
 
 
 @dataclass(frozen=True)

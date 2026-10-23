@@ -105,13 +105,14 @@
       "contract": "import-export.yaml",
       "path_prefixes": [
         "/backup",
+        "/data",
         "/export",
         "/import",
         "/restore"
       ],
       "owner": "jegatheesan-backend",
       "operations": {
-        "implemented": 7,
+        "implemented": 8,
         "planned": 1
       }
     },

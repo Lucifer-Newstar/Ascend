@@ -61,3 +61,15 @@ class RestoreOut(BaseModel):
     backup_created_at: datetime
     schema_revision: str
     safety_backup: str
+
+
+class EraseIn(StrictIn):
+    """Erase the user's data. `confirm` must be the word "erase" (a typo guard)."""
+
+    confirm: Literal["erase"]
+    keep_preferences: bool = True
+
+
+class EraseOut(BaseModel):
+    erased: dict[str, int]
+    safety_backup: str | None
