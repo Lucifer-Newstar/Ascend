@@ -14,6 +14,9 @@ vi.mock("../api/client", () => ({
     trainerFeed: vi.fn(),
     trainerFeedRead: vi.fn().mockResolvedValue(null),
     coachWarm: vi.fn().mockResolvedValue({ loaded: false, model: "qwen3:4b", seconds: 0 }),
+    confirmAction: vi.fn(),
+    cancelAction: vi.fn(),
+    undoAction: vi.fn(),
   },
 }));
 
@@ -92,5 +95,59 @@ describe("TrainerChat", () => {
     await userEvent.type(screen.getByLabelText("Message the trainer"), "hello{Enter}");
     await userEvent.click(await screen.findByRole("button", { name: "Retry" }));
     expect(await screen.findByText("Back.")).toBeInTheDocument();
+  });
+
+  it("asks a question handed over by the command bar", async () => {
+    vi.mocked(api.trainerChat).mockResolvedValue(reply({ reply: "About 1.6 g per kg." }));
+    const onAsked = vi.fn();
+    render(
+      <PrefsProvider initial={DEFAULT_SETTINGS} save={async (p) => ({ ...DEFAULT_SETTINGS, ...p })}>
+        <TrainerChat open onClose={() => {}} onAction={vi.fn()} question="how much protein" onAsked={onAsked} />
+      </PrefsProvider>,
+    );
+    expect(await screen.findByText("About 1.6 g per kg.")).toBeInTheDocument();
+    expect(api.trainerChat).toHaveBeenCalledWith("how much protein");
+    expect(onAsked).toHaveBeenCalled();
+  });
+
+  it("shows a proposed action as a card that runs only on Confirm, then offers Undo", async () => {
+    const proposal = {
+      id: 7, kind: "log_weight", label: "Log a weigh-in", risk: "low", params: { weight_kg: 81.4 },
+      summary: ["Log 81.4 kg for today"], status: "proposed", source: "chat", origin_text: "weight 81.4",
+      confirm_word: null, undoable: true, auto_ok: false, result: null, error: null,
+      created_at: "2026-10-23T09:00:00", executed_at: null, undone_at: null,
+    };
+    vi.mocked(api.trainerChat).mockResolvedValue(reply({ reply: "Here's what I'd log.", proposal,
+      actions: [{ kind: "proposal", target: "7", label: "Review" }] }));
+    vi.mocked(api.confirmAction).mockResolvedValue({ ...proposal, status: "executed", executed_at: "2026-10-23T09:00:05" });
+    vi.mocked(api.undoAction).mockResolvedValue({ ...proposal, status: "undone", undone_at: "2026-10-23T09:00:09" });
+    setup();
+    await userEvent.type(screen.getByLabelText("Message the trainer"), "weight 81.4{Enter}");
+    const card = await screen.findByTestId("action-card");
+    expect(card).toHaveTextContent("Log 81.4 kg for today");
+    expect(api.confirmAction).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(api.confirmAction).toHaveBeenCalledWith(7, null));
+    await userEvent.click(await screen.findByRole("button", { name: "Undo" }));
+    expect(await screen.findByText("Undone.")).toBeInTheDocument();
+  });
+
+  it("needs the confirm word typed for a destructive action", async () => {
+    const proposal = {
+      id: 9, kind: "erase_data", label: "Erase my data", risk: "destructive", params: {},
+      summary: ["Back up, then erase your logs"], status: "proposed", source: "chat", origin_text: "start fresh",
+      confirm_word: "erase", undoable: false, auto_ok: false, result: null, error: null,
+      created_at: "2026-10-23T09:00:00", executed_at: null, undone_at: null,
+    };
+    vi.mocked(api.trainerChat).mockResolvedValue(reply({ reply: "Sure.", proposal }));
+    vi.mocked(api.confirmAction).mockResolvedValue({ ...proposal, status: "executed" });
+    setup();
+    await userEvent.type(screen.getByLabelText("Message the trainer"), "start fresh{Enter}");
+    const confirm = await screen.findByRole("button", { name: "Confirm" });
+    expect(confirm).toBeDisabled();
+    await userEvent.type(screen.getByLabelText("Type erase to confirm"), "erase");
+    expect(confirm).toBeEnabled();
+    await userEvent.click(confirm);
+    await waitFor(() => expect(api.confirmAction).toHaveBeenCalledWith(9, "erase"));
   });
 });

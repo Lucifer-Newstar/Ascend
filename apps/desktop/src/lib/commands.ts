@@ -2,7 +2,7 @@
  * The command bar's rule-based parser (no model involved). It turns a line like
  * "bench 80x5 @8", "plank 45s", "weight 81.4", "lunch chicken rice", "train front lever",
  * "dark" or "fuel" into a command; anything it does not recognise becomes a question
- * for the Coach. Exercise names are resolved by `rankExercises` against the library.
+ * for the trainer (the chat). Exercise names are resolved by `rankExercises` against the library.
  */
 import type { Exercise, MealType, Units } from "@ascend/shared";
 
@@ -17,7 +17,7 @@ export type Command =
   | { kind: "train"; query: string }
   | { kind: "theme"; theme: "dark" | "light" }
   | { kind: "ai"; on: boolean }
-  | { kind: "coach"; question: string };
+  | { kind: "ask"; question: string };
 
 export const PAGE_WORDS: { page: Page; label: string; words: string[] }[] = [
   { page: "dashboard", label: "Today", words: ["today", "home", "dashboard", "hq", "quest", "quests"] },
@@ -26,7 +26,6 @@ export const PAGE_WORDS: { page: Page; label: string; words: string[] }[] = [
   { page: "skills", label: "Skills", words: ["skills", "skill", "tree", "trees", "calisthenics"] },
   { page: "progress", label: "Progress", words: ["progress", "charts", "weight", "prs", "records"] },
   { page: "diet", label: "Fuel", words: ["fuel", "diet", "food", "meals", "nutrition", "macros"] },
-  { page: "coach", label: "Coach", words: ["coach", "ai", "chat", "ask"] },
   { page: "history", label: "History", words: ["history", "calendar", "past"] },
   { page: "data", label: "Import & export", words: ["import", "export", "data", "backup", "csv"] },
   { page: "settings", label: "Settings", words: ["settings", "preferences", "prefs", "options", "units"] },
@@ -46,8 +45,8 @@ export function mealTypeFor(word: string | undefined, hour: number): MealType {
 }
 
 /**
- * Every reading of `text`, best first. The Coach question is always last, so Enter on
- * an unrecognised line asks the Coach.
+ * Every reading of `text`, best first. The question for the trainer is always last, so
+ * Enter on an unrecognised line asks the trainer.
  */
 export function parseCommand(text: string, units: Units, now = new Date()): Command[] {
   const t = text.trim().replace(/\s+/g, " ");
@@ -96,7 +95,7 @@ export function parseCommand(text: string, units: Units, now = new Date()): Comm
     }
   }
 
-  out.push({ kind: "coach", question: t });
+  out.push({ kind: "ask", question: t });
   return out;
 }
 

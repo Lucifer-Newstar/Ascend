@@ -21,7 +21,6 @@ import { DashboardPage } from "./pages/Dashboard";
 
 // The Dashboard is the first screen, so it ships in the main chunk; every other page
 // (and first-run onboarding) is its own chunk, loaded from disk the first time it opens.
-const CoachPage = lazy(() => import("./pages/Coach").then((m) => ({ default: m.CoachPage })));
 const DataPage = lazy(() => import("./pages/Data").then((m) => ({ default: m.DataPage })));
 const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.DietPage })));
 const SkillsPage = lazy(() => import("./pages/Skills").then((m) => ({ default: m.SkillsPage })));
@@ -39,7 +38,6 @@ const TITLES: Record<Page, string> = {
   skills: "Skills",
   progress: "Progress",
   diet: "Fuel",
-  coach: "Coach",
   history: "History",
   data: "Import & export",
   settings: "Settings",
@@ -126,6 +124,12 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
   const toast = useToast();
   // Trainer: chat drawer, guided tours, the one-time 1.1 welcome and the watcher's unread count.
   const [chatOpen, setChatOpen] = useState(false);
+  // A question typed into the command bar goes to the chat (the Coach page is retired in 1.1).
+  const [chatQuestion, setChatQuestion] = useState<string | null>(null);
+  const askTrainer = useCallback((q?: string) => {
+    setChatQuestion(q?.trim() ? q.trim() : null);
+    setChatOpen(true);
+  }, []);
   const [tour, setTour] = useState<Tour | null>(null);
   const trainerState = useApi(api.trainerState, [refreshKey]);
   const feed = useApi(api.trainerFeed, [refreshKey, chatOpen]);
@@ -147,6 +151,10 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
       navigate(a.target as Page);
     } else if (a.kind === "tour") {
       startTour(a.target);
+    } else if (a.kind === "trainer_picker") {
+      setChatOpen(false);
+      navigate("settings");
+      window.setTimeout(() => document.getElementById("trainer")?.scrollIntoView?.({ block: "start" }), 80);
     }
   };
   const erased = (r: EraseResult) => {
@@ -180,13 +188,14 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
       aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}
       trainer={<TrainerChatButton icon={trainerById(settings.trainer_id).icon} name={trainerById(settings.trainer_id).name} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
-      <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction} />
+      <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction}
+        supports={["navigate", "tour", "trainer_picker"]} question={chatQuestion} onAsked={() => setChatQuestion(null)} onActionDone={bump} />
       {tour && <TourOverlay tour={tour} onDone={() => { void api.updateTrainerState({ tour_done: tour.id }).catch(() => undefined); setTour(null); }} />}
       {trainerState.data && !trainerState.data.onboarded && !welcomeDone && !tour && (
         <FirstRunCard state={trainerState.data} onDone={markOnboarded} onTour={() => { markOnboarded(); startTour("app"); }} onErased={erased} />
       )}
       <SystemEvents game={game.data ?? undefined} notices={api.notices} />
-      <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} onChanged={bump} />
+      <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} onChanged={bump} onAsk={askTrainer} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
@@ -196,7 +205,6 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
       {page === "skills" && <SkillsPage onNavigate={navigate} onChanged={bump} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
-      {page === "coach" && <CoachPage aiEnabled={aiEnabled} refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} onErased={erased} />}

@@ -51,10 +51,10 @@ describe("parseCommand", () => {
     expect(parseCommand("hist", "metric")[0]).toMatchObject({ kind: "nav", page: "history" });
   });
 
-  it("sends anything else to the Coach, and always offers the Coach last", () => {
-    expect(parseCommand("why are my shoulders sore?", "metric")).toEqual([{ kind: "coach", question: "why are my shoulders sore?" }]);
+  it("sends anything else to the trainer, and always offers the trainer last", () => {
+    expect(parseCommand("why are my shoulders sore?", "metric")).toEqual([{ kind: "ask", question: "why are my shoulders sore?" }]);
     const c = parseCommand("bench 80x5", "metric");
-    expect(c[c.length - 1]).toEqual({ kind: "coach", question: "bench 80x5" });
+    expect(c[c.length - 1]).toEqual({ kind: "ask", question: "bench 80x5" });
     expect(parseCommand("   ", "metric")).toEqual([]);
   });
 

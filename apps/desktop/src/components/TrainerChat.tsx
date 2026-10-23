@@ -12,6 +12,7 @@ import { api } from "../api/client";
 import { fallbackLabel } from "../lib/fallback";
 import { useOptionalPrefs } from "../lib/prefs";
 import { type TrainerMood } from "../lib/trainer";
+import { ActionCard } from "./ActionCard";
 import { TrainerPortrait, useTrainer } from "./Trainer";
 
 export const START_SUGGESTIONS = ["Give me a tour", "What can you do?", "What should I train today?", "How does XP work?"];
@@ -35,6 +36,9 @@ export function TrainerChat({
   onAction,
   supports = ["navigate", "tour"],
   greeting,
+  question,
+  onAsked,
+  onActionDone,
 }: {
   open: boolean;
   onClose: () => void;
@@ -44,6 +48,12 @@ export function TrainerChat({
   supports?: ChatAction["kind"][];
   /** A first message shown when the chat is empty (e.g. the first-run welcome). */
   greeting?: string;
+  /** A question to ask as soon as the chat is open (from the command bar). */
+  question?: string | null;
+  /** Called once `question` has been sent, so the caller can clear it. */
+  onAsked?: () => void;
+  /** An action card was confirmed, cancelled or undone (refresh the page behind). */
+  onActionDone?: () => void;
 }) {
   const prefs = useOptionalPrefs();
   const trainer = useTrainer();
@@ -78,6 +88,13 @@ export function TrainerChat({
   useEffect(() => {
     end.current?.scrollIntoView?.({ block: "end" });
   }, [msgs, busy]);
+
+  useEffect(() => {
+    if (!open || !question) return;
+    onAsked?.();
+    void ask(question);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, question]);
 
   useEffect(() => {
     if (!open) return;
@@ -145,9 +162,10 @@ export function TrainerChat({
               <p className="whitespace-pre-wrap">{m.text}</p>
               {m.reply?.fallback_reason && <p className="mt-1 text-[11px] text-muted">{fallbackLabel(m.reply.fallback_reason)}</p>}
               {m.reply?.source === "ollama" && <p className="mt-1 text-[11px] text-muted">Worded by the local AI · numbers checked</p>}
+              {m.reply?.proposal && <ActionCard initial={m.reply.proposal} onDone={() => onActionDone?.()} />}
               {(m.reply?.actions ?? []).filter((a) => supports.includes(a.kind)).length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {m.reply!.actions.filter((a) => supports.includes(a.kind)).map((a) => (
+                  {m.reply!.actions.filter((a) => supports.includes(a.kind) && a.kind !== "proposal").map((a) => (
                     <button key={`${a.kind}-${a.target}`} type="button" className="btn-ghost px-2 py-1 text-xs" onClick={() => onAction(a)}>
                       {a.label}
                     </button>

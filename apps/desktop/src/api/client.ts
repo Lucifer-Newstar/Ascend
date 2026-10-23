@@ -44,6 +44,7 @@ import type {
   CoachStatus,
   CoachWarm,
   ChatReply,
+  ActionProposal,
   TrainerFeed,
   TrainerState,
   KbEntry,
@@ -226,6 +227,10 @@ export const api = {
   coachWarm: () => call<CoachWarm>("POST", "/coach/warm"),
 
   trainerChat: (text: string) => call<ChatReply>("POST", "/trainer/chat", { text }),
+  confirmAction: (id: number, typed: string | null = null) => call<ActionProposal>("POST", `/actions/${id}/confirm`, { typed }),
+  cancelAction: (id: number) => call<ActionProposal>("POST", `/actions/${id}/cancel`),
+  undoAction: (id: number) => call<ActionProposal>("POST", `/actions/${id}/undo`),
+  actionLog: () => call<ActionProposal[]>("GET", "/actions/log"),
   trainerFeed: () => call<TrainerFeed>("GET", "/trainer/feed"),
   trainerFeedRead: (ids: number[] | null = null) => call<null>("POST", "/trainer/feed/read", { ids }),
   trainerState: () => call<TrainerState>("GET", "/trainer/state"),

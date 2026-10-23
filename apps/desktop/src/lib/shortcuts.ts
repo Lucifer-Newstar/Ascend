@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import type { Page } from "../components/Layout";
 
 /** Ctrl+1 … Ctrl+9, then Ctrl+0, open the pages in sidebar order (like browser tabs). */
-export const PAGE_KEYS: Page[] = ["dashboard", "workout", "library", "skills", "progress", "diet", "coach", "history", "data", "settings"];
+export const PAGE_KEYS: Page[] = ["dashboard", "workout", "library", "skills", "progress", "diet", "history", "data", "settings"];
 
 export function pageForKey(e: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey">): Page | null {
   if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return null;

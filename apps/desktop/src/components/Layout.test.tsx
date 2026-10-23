@@ -107,9 +107,9 @@ describe("Layout", () => {
     renderAt("dashboard", "Today");
     const nav = screen.getByRole("navigation", { name: "Main" });
     const names = [...nav.querySelectorAll("button")].map((b) => b.textContent?.replace(/Ctrl \d/, "").trim());
-    expect(names).toEqual(["Today", "Train", "Exercises", "Skills", "Progress", "Fuel", "Coach", "History", "Import & export", "Settings"]);
+    expect(names).toEqual(["Today", "Train", "Exercises", "Skills", "Progress", "Fuel", "History", "Import & export", "Settings"]);
     expect(screen.getByRole("button", { name: "Skills" })).toHaveAttribute("aria-keyshortcuts", "Control+4");
-    expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-keyshortcuts", "Control+0");
+    expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-keyshortcuts", "Control+9");
   });
 
   it("shows the AI status: on, rules only (model not running) or off", () => {

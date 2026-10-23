@@ -12,6 +12,7 @@ import { BarChart, LineChart } from "../components/charts";
 import { InsightsPanel } from "../components/DietCards";
 import { IconTrophy } from "../components/Icons";
 import { KpiStrip, KpiTile, Panel, PageGrid } from "../components/Page";
+import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { Segmented } from "../components/Segmented";
 import { Empty } from "../components/States";
 import { useToast } from "../components/Toast";
@@ -81,6 +82,12 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
       <PrTimeline prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} />
 
       <MeasurementsCard refreshKey={refreshKey} units={units} />
+
+      {/* v1.1: moved here from the retired Coach page. */}
+      <div className="col-span-12 grid gap-5 xl:grid-cols-2" data-testid="review-cards">
+        <WeeklyReviewCard refreshKey={refreshKey} />
+        <DeloadCard refreshKey={refreshKey} />
+      </div>
     </PageGrid>
   );
 }

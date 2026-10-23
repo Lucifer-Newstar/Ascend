@@ -4,7 +4,7 @@
  * "bench 80x5 @8" logs a set (starting today's session if needed), "plank 45s" a hold,
  * "weight 81.4" a weigh-in, "lunch chicken rice" a meal, "train front lever" adds the
  * skill to today's quest, "dark"/"light" switch the theme, a page name opens it, and
- * anything else is asked to the Coach. Arrow keys pick a row, Enter runs it, Esc closes.
+ * anything else is asked to your trainer in the chat. Arrow keys pick a row, Enter runs it, Esc closes.
  * The parser is rule-based (lib/commands.ts); nothing here calls a model.
  */
 import type { Exercise, Food, SkillSummary } from "@ascend/shared";
@@ -19,8 +19,6 @@ import type { Page } from "./Layout";
 import { IconSearch } from "./Icons";
 import { useToast } from "./Toast";
 
-export const PENDING_COACH_KEY = "ascend.pendingCoachQuestion";
-
 interface Row {
   id: string;
   group: string;
@@ -31,11 +29,13 @@ interface Row {
 
 const EXAMPLES = ["bench 80x5 @8", "plank 45s", "weight 81.4", "lunch chicken rice", "train front lever"];
 
-export function CommandBar({ open, onClose, onNavigate, onChanged }: {
+export function CommandBar({ open, onClose, onNavigate, onChanged, onAsk = () => undefined }: {
   open: boolean;
   onClose: () => void;
   onNavigate: (p: Page) => void;
   onChanged: () => void;
+  /** Open the trainer chat, with a question to ask when one is given. */
+  onAsk?: (question?: string) => void;
 }) {
   const { settings, update } = usePrefs();
   const toast = useToast();
@@ -101,7 +101,7 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
         { id: "q-food", group: "Quick actions", title: "Log food…", hint: "add 2 eggs", run: () => fill("add 1 ") },
         { id: "q-checkin", group: "Quick actions", title: "Morning check-in", run: () => onNavigate("dashboard") },
         { id: "q-skill", group: "Quick actions", title: "Train a skill…", hint: "train front lever", run: () => fill("train ") },
-        { id: "q-coach", group: "Quick actions", title: "Ask the Coach", run: () => onNavigate("coach") },
+        { id: "q-ask", group: "Quick actions", title: "Ask your trainer", run: () => onAsk() },
         { id: "q-theme", group: "Quick actions", title: `Switch to the ${settings.theme === "light" ? "dark" : "light"} theme`, run: async () => { await update({ theme: settings.theme === "light" ? "dark" : "light" }); } },
       ];
       return [...quick, ...PAGE_WORDS.map((p) => ({ id: `nav-${p.page}`, group: "Go to", title: p.label, run: () => onNavigate(p.page) }))];
@@ -153,11 +153,8 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
         out.push({ id: `ai-${c.on}`, group: "Settings", title: `Turn the local AI ${c.on ? "on" : "off"}`, run: async () => { await update({ ai_enabled: c.on }); onChanged(); } });
       } else if (c.kind === "nav") {
         out.push({ id: `nav-${c.page}`, group: "Go to", title: c.label, run: () => onNavigate(c.page) });
-      } else if (c.kind === "coach") {
-        out.push({ id: "coach", group: "Coach", title: `Ask the Coach: “${c.question}”`, hint: "Not a command, so it goes to the Coach", run: () => {
-          sessionStorage.setItem(PENDING_COACH_KEY, c.question);
-          onNavigate("coach");
-        } });
+      } else if (c.kind === "ask") {
+        out.push({ id: "ask", group: "Trainer", title: `Ask your trainer: “${c.question}”`, hint: "Not a command, so it goes to the trainer chat", run: () => onAsk(c.question) });
       }
     }
     return out;
@@ -229,7 +226,7 @@ export function CommandBar({ open, onClose, onNavigate, onChanged }: {
             aria-autocomplete="list"
             aria-label="Command"
             className="cmd-input h-14 min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-faint outline-none"
-            placeholder="Log a set, a meal, your weight… or ask the Coach"
+            placeholder="Log a set, a meal, your weight… or ask your trainer"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={onKey}

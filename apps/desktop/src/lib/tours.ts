@@ -65,10 +65,6 @@ export const SECTION_TOURS: Record<string, Tour> = {
     main("Fuel", "Search a food, pick pieces, katori or tbsp, and log it to a meal."),
     main("Targets", "Calories and protein targets adapt to your real weigh-ins over a few weeks."),
   ] },
-  coach: { id: "coach", page: "coach", steps: [
-    main("Coach", "The weekly review: what went well and one change for next week."),
-    main("Deload check", "When fatigue builds up, the coach proposes a lighter week."),
-  ] },
   history: { id: "history", page: "history", steps: [main("History", "Every past day: sessions, sets, meals and weigh-ins. Click a day to edit.")] },
   data: { id: "data", page: "data", steps: [main("Import & export", "Bring in Strong or Hevy CSVs (with a dry run first) or export everything.")] },
   settings: { id: "settings", page: "settings", steps: [

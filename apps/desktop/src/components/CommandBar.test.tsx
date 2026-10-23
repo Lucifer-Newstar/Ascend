@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api/client";
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { axeViolations } from "../test/axe";
-import { CommandBar, isCommandKey, PENDING_COACH_KEY } from "./CommandBar";
+import { CommandBar, isCommandKey } from "./CommandBar";
 import { ToastProvider } from "./Toast";
 
 vi.mock("../api/client", () => ({
@@ -73,16 +73,16 @@ describe("CommandBar", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("moves with the arrow keys and sends unrecognised text to the Coach", async () => {
-    const { onNavigate } = renderBar();
+  it("moves with the arrow keys and sends unrecognised text to the trainer", async () => {
+    const onAsk = vi.fn();
+    renderBar({ onAsk });
     const input = screen.getByRole("combobox", { name: "Command" });
     await userEvent.type(input, "how much protein do I need");
     const options = screen.getAllByRole("option");
     expect(options).toHaveLength(1);
-    expect(options[0]).toHaveTextContent("Ask the Coach: “how much protein do I need”");
+    expect(options[0]).toHaveTextContent("Ask your trainer: “how much protein do I need”");
     await userEvent.keyboard("{Enter}");
-    expect(sessionStorage.getItem(PENDING_COACH_KEY)).toBe("how much protein do I need");
-    expect(onNavigate).toHaveBeenCalledWith("coach");
+    expect(onAsk).toHaveBeenCalledWith("how much protein do I need");
   });
 
   it("logs a weigh-in", async () => {

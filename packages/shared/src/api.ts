@@ -1094,7 +1094,8 @@ export interface ChatReply {
   actions: ChatAction[];
   suggestions: string[];
   faq_id: string | null;
-  proposal: Record<string, unknown> | null;
+  /** An action the chat proposes (actions-v1); it runs only after Confirm on its card. */
+  proposal: ActionProposal | null;
 }
 
 export interface FeedMessage {
@@ -1134,6 +1135,32 @@ export interface EraseResult {
   erased: Record<string, number>;
   /** The "pre-erase" safety backup's file name (null for an in-memory database). */
   safety_backup: string | null;
+}
+
+// --- in-app actions (actions-v1, docs/contracts/actions.yaml) --------------------------
+
+export type ActionStatus = "proposed" | "executed" | "cancelled" | "undone" | "failed";
+
+export interface ActionProposal {
+  id: number;
+  kind: string;
+  label: string;
+  risk: string;
+  params: Record<string, unknown>;
+  /** Plain lines: what will happen, shown on the confirm card. */
+  summary: string[];
+  status: ActionStatus | string;
+  source: string;
+  origin_text: string | null;
+  /** A word to type before a risky action runs (erase: "erase"). */
+  confirm_word: string | null;
+  undoable: boolean;
+  auto_ok: boolean;
+  result: Record<string, unknown> | null;
+  error: string | null;
+  created_at: string;
+  executed_at: string | null;
+  undone_at: string | null;
 }
 
 // --- AI setup (ai-tiers-v1) ------------------------------------------------------------

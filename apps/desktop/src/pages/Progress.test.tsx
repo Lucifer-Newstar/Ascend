@@ -24,6 +24,9 @@ vi.mock("../api/client", () => ({
     progression: vi.fn(),
     dietInsights: vi.fn(),
     insightExplanation: vi.fn(),
+    weeklyReview: vi.fn().mockRejectedValue(new Error("no review yet")),
+    deload: vi.fn().mockRejectedValue(new Error("no deload advice")),
+    startDeload: vi.fn(),
   },
 }));
 
