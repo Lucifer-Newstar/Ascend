@@ -30,8 +30,9 @@ winget install --id Git.Git -e
 winget install --id GitHub.cli -e
 winget install --id Microsoft.VisualStudioCode -e
 
-# Node.js — any version >= 20 works (root package.json "engines"); CI uses the current LTS.
-# If you already have Node (e.g. 26), keep it:
+# Node.js 22.22.2 or newer (root package.json "engines"; jsdom 30 needs it). CI uses Node 22.
+# If you already have a newer Node (e.g. 26), keep it:
+winget install --id OpenJS.NodeJS.LTS -e
 node --version
 
 # uv (Python manager) — then Python 3.12 *beside* any existing Python (3.14 is fine to keep)
@@ -163,10 +164,10 @@ swap=4GB
 then `wsl --shutdown` and restart Docker Desktop. Stop the ML stack when not training —
 Ollama, Docker and Electron together are tight on 12 GB.
 
-## 8. Quality tools (Phase 0)
+## 8. Quality tools
 
 ```powershell
-uvx pre-commit install           # runs ruff, mypy, eslint, prettier, gitleaks on commit
+uvx pre-commit install --hook-type pre-commit --hook-type commit-msg   # ruff, mypy, eslint, hadolint, contract drift, gitleaks, commit message
 cd services/sidecar
 uv run ruff check . ; uv run ruff format --check . ; uv run mypy app
 cd ../..
@@ -183,8 +184,11 @@ cd ../..
 npm run dist:win -w apps/desktop                 # electron-builder NSIS, no publish
 ```
 
-The installer lands in the output folder set in the electron-builder config (Gokul
-records the final path here once the Phase 0 config is merged).
+The installer lands in `apps/desktop/release/ASCEND-Setup-<version>.exe` (with the unpacked
+app in `release/win-unpacked/`). Check the fuses with
+`node apps/desktop/build/fuses.cjs --check apps/desktop/release/win-unpacked/ASCEND.exe`.
+CI builds the same installer in `.github/workflows/release.yml`, and a `v*` tag publishes it
+to GitHub Releases.
 
 ## 10. Where things live on your PC
 

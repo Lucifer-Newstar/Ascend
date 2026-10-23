@@ -1,27 +1,28 @@
 # Tech Stack
 
-> The chosen technologies, the version line we target, and why. Decisions with real
-> trade-offs have ADRs. Versions marked "v0.1" are what the code skeleton pins today;
-> upgrade by PR. Owner: Navin.
+> The chosen technologies, the versions the repo uses at **1.0.0**, and why. Decisions with
+> real trade-offs have ADRs. Rows marked **planned** were chosen in the design phase and are
+> not part of the 1.0.0 app. Owner: Navin.
 
 ---
 
 ## 1. Desktop app (`apps/desktop`, `packages/shared`)
 
-| Layer | Choice | Version line | Why |
+| Layer | Choice | Version (1.0.0) | Why |
 |---|---|---|---|
-| Shell | Electron | `^33` (v0.1); move to a currently supported major before v1.0 | Web UI + native Windows features ([ADR-0001](../architecture/adr/0001-electron-react-desktop.md)) |
-| UI | React + TypeScript (strict) | React 18, TS 5.6 (v0.1) | Team skills; mockups are HTML/CSS |
-| Build | Vite | 5 (v0.1) | Fast dev server, simple config |
-| Styling | Tailwind CSS + shadcn/ui (Radix) | Tailwind 4 (v0.1) | Design tokens, accessible primitives |
-| Icons / fonts | lucide · Inter, Rajdhani (`@fontsource`) | — | Offline fonts bundled |
-| Charts | Recharts | — | Simple, SVG |
+| Runtime for the toolchain | Node.js + npm workspaces | Node ≥ 22.22.2 (`engines`), npm ≥ 10 | jsdom 30 needs 22.22+; workspaces share types |
+| Shell | Electron | **45.0.0** (pinned) | Web UI + native Windows features, a supported major ([ADR-0001](../architecture/adr/0001-electron-react-desktop.md)) |
+| UI | React + TypeScript (strict) | React 19.3, TypeScript ~6.0.3 | Team skills; mockups are HTML/CSS |
+| Build | Vite + @vitejs/plugin-react | Vite 8 | Fast dev server, simple config |
+| Styling | Tailwind CSS (`@tailwindcss/vite`), own design tokens | Tailwind 4 | Tokens in `src/index.css`; components are our own |
+| Icons / fonts | Own SVG icons (`components/Icons.tsx`) · Inter, Rajdhani (`@fontsource`) | — | Offline, no icon font |
+| Charts | Own SVG charts (`components/charts.tsx`) | — | Small, no chart library |
 | Muscle map | Original SVG artwork, 54 muscles and heads with a deep layer (`lib/bodyMapPaths.ts`, v8); `react-muscle-highlighter` 1.2.0 up to v7 | v8 | MIT, see ADR-0021 |
-| Data fetching | TanStack Query | — | Caching, retries, invalidation on SSE events |
-| Validation | zod | — | IPC payload validation in main |
-| Tests | Vitest + Testing Library · Playwright for Electron | Vitest 2 (v0.1) | Unit + E2E |
-| Packaging | electron-builder (NSIS) + electron-updater | 25 (v0.1) | [ADR-0008](../architecture/adr/0008-electron-builder-pyinstaller-packaging.md) |
-| Workspaces | npm workspaces | npm ≥ 10 | Already used by the skeleton |
+| Data fetching | Typed client (`src/api/client.ts`): IPC in Electron, `fetch` in browser dev mode | — | One code path, no extra library |
+| IPC validation | Hand-written checks in the main process (`electron/main.ts`, `electron/ipc-validate.ts`) | — | The renderer is treated as untrusted input |
+| Tests | Vitest + Testing Library + jsdom, axe-core for accessibility | Vitest 5, jsdom 30 | Unit and component tests; Electron checked by hand |
+| Lint | ESLint + typescript-eslint + react-hooks | ESLint 10 | |
+| Packaging | electron-builder (NSIS) + `@electron/fuses` | electron-builder 26, fuses 2 | [ADR-0008](../architecture/adr/0008-electron-builder-pyinstaller-packaging.md); no auto-updater in 1.0.0 |
 
 ## 2. Sidecar (`services/sidecar`)
 
@@ -29,14 +30,16 @@
 |---|---|---|---|
 | Language | Python | **3.12** (`.python-version`) | ML/packaging libraries support it; 3.14 too new for parts of the stack ([ADR-0002](../architecture/adr/0002-fastapi-python-sidecar.md)) |
 | Env / deps | uv | latest | Fast, installs 3.12 side by side, lockfile (`uv.lock`) |
-| API | FastAPI + Uvicorn | FastAPI ≥ 0.115 | OpenAPI for free, Pydantic |
-| Schemas | Pydantic v2 | ≥ 2.7 | Contracts source of truth |
-| DB | SQLite + SQLAlchemy 2 + Alembic | SQLAlchemy ≥ 2.0.30, Alembic ≥ 1.13 | [ADR-0003](../architecture/adr/0003-sqlite-local-only.md) |
-| HTTP client | httpx | ≥ 0.27 | Ollama calls with timeouts |
-| Inference | ONNX Runtime (CPU) | — (Phase 2) | Classifier without PyTorch in the app |
-| Logging | structlog | — (Phase 1) | JSON lines, correlation ids |
-| Tests / quality | pytest, pytest-cov, Hypothesis, ruff, mypy, import-linter | pytest ≥ 8.2 | Rules are tested like maths |
+| API | FastAPI + Uvicorn | FastAPI 0.150, Uvicorn 0.54 (locked) | OpenAPI for free, Pydantic |
+| Schemas | Pydantic v2 | 2.14 | Contracts source of truth |
+| DB | SQLite (WAL) + SQLAlchemy 2 + Alembic | SQLAlchemy 2.1, Alembic 1.20 | [ADR-0003](../architecture/adr/0003-sqlite-local-only.md) |
+| HTTP client | httpx | 0.28 | Ollama and opt-in online lookups, with timeouts |
+| Inference | ONNX Runtime (CPU) | planned | Classifier without PyTorch in the app; not in 1.0.0 (no classifier ships) |
+| Logging | Standard `logging` | — | structlog was planned and not adopted |
+| Tests / quality | pytest, pytest-cov, Hypothesis, ruff, mypy | pytest ≥ 8.2 | Rules are tested like maths |
 | Packaging | PyInstaller one-folder | ≥ 6.10 | [ADR-0008](../architecture/adr/0008-electron-builder-pyinstaller-packaging.md) |
+
+The "Version" column is what `uv.lock` resolves at 1.0.0; `pyproject.toml` keeps lower bounds.
 
 ## 3. AI runtime
 
@@ -56,23 +59,23 @@ Sizes are from the Ollama tag pages (Oct 2026); speeds on the reference laptop a
 
 | Tool | Use |
 |---|---|
-| PyTorch + timm | Training (CUDA in Docker on WSL2) |
+| PyTorch + torchvision (MobileNetV3-Small) | Training; CPU wheels for the smoke run, CUDA build on the training PC |
 | DVC | Dataset + pipeline versioning; local/external-drive remote |
 | MLflow | Tracking + model registry (Docker Compose) |
 | ONNX | Export + parity test |
 | Docker Desktop (WSL2 backend) | Training image, MLflow, Prometheus/Grafana |
-| GitHub Actions | `ml-eval.yml` evaluation gate |
+| GitHub Actions | `ml.yml`: lint, tests and a smoke `dvc repro` on synthetic data |
 
 ## 5. DevOps
 
 | Area | Choice |
 |---|---|
 | CI/CD | GitHub Actions (`windows-latest` for builds and E2E, `ubuntu-latest` for fast jobs) — free for public repos on standard runners |
-| Releases + updates | GitHub Releases + electron-updater (`latest.yml`, blockmaps) |
-| Supply chain | gitleaks, npm audit, pip-audit, CycloneDX SBOM, SHA-256 checksums, Dependabot security alerts, actions pinned by SHA |
-| Dev observability | Prometheus + Grafana (Compose), dev builds only |
-| Docs | Markdown + Mermaid/PlantUML, link check + `mmdc` render in CI |
-| Code signing | Undecided (unsigned at first; see [ADR-0008](../architecture/adr/0008-electron-builder-pyinstaller-packaging.md)) |
+| Releases | GitHub Releases from `release.yml` on `v*` tags: the NSIS installer, `SHA256SUMS.txt` and notes from `docs/releases/`. No auto-updater in 1.0.0 (users download the new installer) |
+| Supply chain | Actions pinned by commit SHA, read-only workflow token (write only in the publish job), SHA-256 checksums on releases, GitHub security alerts, `npm audit` by hand. gitleaks, pip-audit and an SBOM were planned and are not in CI |
+| Dev observability | Planned (Prometheus + Grafana); not built |
+| Docs | Markdown + Mermaid; relative-link check in CI (`scripts/check_md_links.py`) |
+| Code signing | Unsigned in 1.0.0 (SmartScreen "More info → Run anyway"); see [ADR-0008](../architecture/adr/0008-electron-builder-pyinstaller-packaging.md) |
 
 ## 6. What we deliberately do not use
 

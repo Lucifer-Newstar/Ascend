@@ -76,26 +76,32 @@ main ──●────────●──────────●──
 
 ## 5. CI checks on every PR
 
+What `.github/workflows/ci.yml` runs at 1.0.0 (Python and desktop jobs on Ubuntu and Windows):
+
 | Check | Tool | Owner |
 |---|---|---|
+| Commit messages | commitlint (`commitlint.config.mjs`) | Navin |
 | Python lint + format | `ruff check`, `ruff format --check` | Gokul |
 | Python types | `mypy app` | Gokul |
-| Python tests + coverage | `pytest --cov` (rules modules ≥ 80%) | Jegatheesan |
-| Migrations | upgrade from every released fixture DB + one downgrade | Jegatheesan / Gokul |
+| Python tests + coverage | `pytest --cov` | Jegatheesan |
+| Migrations | `alembic upgrade head` on a fresh database; migration tests in pytest | Jegatheesan / Gokul |
 | TypeScript lint + types | `eslint`, `tsc --noEmit` (both tsconfigs) | Dhanush |
 | UI tests | `vitest run` | Dhanush |
-| Contract drift | `scripts/check_contract_drift.py` + generated TS types up to date | Gokul |
-| Secrets | `gitleaks` | Gokul |
-| Dependencies | `npm audit --omit=dev`, `pip-audit` | Gokul |
-| Docs | markdown link check + Mermaid render (`mmdc`) | Navin |
-| Build (on `main` and PRs touching build files) | PyInstaller sidecar + electron-builder NSIS on `windows-latest` | Gokul |
+| Build | `vite build` + Electron main/preload; PyInstaller sidecar + smoke test (Linux) | Gokul |
+| Contract drift | `scripts/check_contract_drift.py` | Gokul |
+| Docker | hadolint, compose profiles, tests in the image, read-only non-root runtime | Gokul |
+| Docs | relative Markdown links (`scripts/check_md_links.py`) | Navin |
+| Installer (`release.yml`, pushes to `main` touching the app and `v*` tags) | PyInstaller sidecar + electron-builder NSIS on `windows-latest`, fuse check | Gokul |
+
+Planned and not in CI yet: `gitleaks`, `pip-audit` / `npm audit` gates and a Mermaid render
+check. Run `npm audit` by hand before a release.
 
 ## 6. Conventions
 
 - **Python (`services/sidecar`, `ml`):** 3.12, `ruff` (line length 100) + `mypy`, type hints
   everywhere, Pydantic for every schema, docstrings per working-rules rule 3, formulas cite
   their spec section and carry an `ALGO_VERSION`.
-- **TypeScript (`apps/desktop`, `packages/shared`):** strict mode, ESLint + Prettier, no
+- **TypeScript (`apps/desktop`, `packages/shared`):** strict mode, ESLint, no
   `any` without a comment, React function components + hooks, Tailwind tokens only (no
   ad-hoc hex colours).
 - **SQL:** through SQLAlchemy; raw SQL only in migrations; every migration reversible
