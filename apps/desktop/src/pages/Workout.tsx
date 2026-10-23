@@ -2,7 +2,10 @@ import type { Exercise, ProgressionTarget, Section, SetIn, SetPatch, SkillUnlock
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
+import { ExerciseArt } from "../components/ExerciseArt";
 import { ProgramCard } from "../components/ProgramCard";
+import { RunThrough } from "../components/RunThrough";
+import { WorkoutFinish, type FinishSummary } from "../components/WorkoutFinish";
 import { play } from "../lib/sound";
 import { Transient } from "../components/Celebrate";
 import { IconCheck, IconSearch, IconTrophy } from "../components/Icons";
@@ -52,6 +55,10 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const toast = useToast();
   // Skill-tree steps the last set unlocked: shown as the "Skill acquired" moment.
   const [acquired, setAcquired] = useState<SkillUnlock[]>([]);
+  // v1.2: the finish moment (a full screen, not a toast) and the full-screen timer.
+  const [finished, setFinished] = useState<FinishSummary | null>(null);
+  const [fullTimer, setFullTimer] = useState(false);
+  const plan = useApi(api.currentPlan, [], { cacheKey: "plan" });
 
   useEffect(() => {
     if (active.data !== undefined) setWorkout(active.data);
@@ -234,8 +241,11 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
     if (!workout) return;
     setBusy(true);
     try {
+      const before = await api.game().catch(() => null);
       const res = await api.finishWorkout(workout.id);
-      toast(`Workout complete · ${count(res.hard_sets, "hard set")} · +${res.xp_awarded} XP`, "xp");
+      const [game, boss] = await Promise.all([api.game().catch(() => null), api.boss().catch(() => null)]);
+      setFinished({ result: res, game, boss, levelBefore: before?.xp.level ?? null });
+      setFullTimer(false);
       setWorkout(null);
       setRestLeft(0);
       onChanged();
@@ -253,9 +263,29 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
 
   const sessionExercises = groupSessionExercises(workout);
   const lastDay = previous.data ? shortDay(previous.data.day) : null;
+  const nextUp = nextInPlan(plan.data?.next.items.map((i) => i.exercise) ?? [], selected?.name);
 
   return (
     <div className="space-y-5">
+    {finished && (
+      <WorkoutFinish summary={finished} onClose={() => setFinished(null)} onToday={() => { setFinished(null); window.location.hash = "dashboard"; }} />
+    )}
+    {fullTimer && selected && !selected.time_based && (
+      <RunThrough
+        exercise={selected}
+        target={target ? describeSet(target, units) : null}
+        setsDone={doneSets.length}
+        restLeft={restLeft}
+        restTotal={REST_SECONDS}
+        paused={restPaused}
+        busy={busy}
+        nextUp={nextUp}
+        onTogglePause={() => setRestPaused((p) => !p)}
+        onSkipRest={() => setRestLeft(0)}
+        onSetDone={() => void logSet()}
+        onExit={() => setFullTimer(false)}
+      />
+    )}
     {acquired.length > 0 && (
       <SkillAcquired
         unlocks={acquired}
@@ -328,13 +358,19 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
           {selected ? (
             <>
               <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
+                <div className="w-24 shrink-0 overflow-hidden rounded-lg" data-testid="train-exercise-art"><ExerciseArt exercise={selected} className="h-24" /></div>
+                <div className="min-w-0 flex-1">
                   <h2 className="text-h2 truncate text-ink">{selected.name}</h2>
                   <p className="mt-0.5 text-small text-muted">
                     {target ? <>Target: <span className="text-ink">{describeSet(target, units)}</span> ({engine ? "suggested" : `last time${lastDay ? `, ${lastDay}` : ""}`})</> : previous.loading ? "Loading last time…" : "First time logging this: set your own target."}
                   </p>
                 </div>
-                {!selected.time_based && <RestTimer seconds={restLeft} onSkip={() => setRestLeft(0)} />}
+                {!selected.time_based && (
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <RestTimer seconds={restLeft} onSkip={() => setRestLeft(0)} />
+                    <button type="button" className="btn-ghost h-8 px-3 text-xs" onClick={() => setFullTimer(true)}>Full-screen timer</button>
+                  </div>
+                )}
               </div>
               {!selected.time_based && <GhostGrid prev={prevSets} done={doneSets} units={units} justLogged={logged?.id} />}
               {suggestion.data && (
@@ -695,6 +731,13 @@ export function fromSuggestion(last: WorkoutSet, t: ProgressionTarget): WorkoutS
 export function targetFor(prev: WorkoutSet[], n: number): WorkoutSet | null {
   if (prev.length === 0) return null;
   return prev[Math.min(n, prev.length - 1)];
+}
+
+/** The exercise after `current` in the program's next session (for "Next up"). */
+export function nextInPlan(items: string[], current: string | undefined): string | null {
+  if (!current) return items[0] ?? null;
+  const i = items.findIndex((n) => n.toLowerCase() === current.toLowerCase());
+  return i >= 0 ? items[i + 1] ?? null : null;
 }
 
 /** "60 kg × 8 @8", "+5 kg · 45 s", "30:00". */
