@@ -66,7 +66,7 @@ class CriterionResult:
 @dataclass
 class StepResult:
     step: Step
-    status: str  # unlocked | next | locked
+    status: str  # unlocked | start (entry step, nothing to test) | next | locked
     pct: float
     criteria: list[CriterionResult]
     eligible: bool
@@ -200,7 +200,11 @@ def evaluate_skill(
         reqs = skill.requires_of(step)
         open_ = all(r in have for r in reqs)
         is_unlocked = step.key in have or not step.unlock
-        if is_unlocked:
+        if step.key not in unlocked and not step.unlock:
+            # v1.2: an entry step with no test is where the tree starts, not something the
+            # user has mastered ("Start here" on screen); it never counts as an unlock.
+            status = "start"
+        elif is_unlocked:
             status = "unlocked"
         elif open_:
             status = "next"

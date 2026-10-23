@@ -30,7 +30,8 @@ class StepOut(BaseModel):
     exercise: str
     exercise_id: int | None
     measure: str
-    # unlocked | next (all prerequisites done) | locked
+    # unlocked | start (an entry step: where the tree begins, not earned) | next (all
+    # prerequisites done) | locked
     status: str
     pct: float
     unlocked_at: datetime | None
@@ -83,6 +84,8 @@ class SkillSummary(BaseModel):
     rusty: bool
     # True for a tree the user wrote (no XP; editable).
     custom: bool = False
+    # v1.2 loadout: the tree's first steps fit the profile's equipment.
+    fits_equipment: bool = True
 
 
 class SkillDetail(SkillSummary):

@@ -248,7 +248,19 @@ def _evaluate_one(
     return engine.evaluate_skill(skill, records, {k: r.unlocked_at for k, r in have.items()}, now)
 
 
-def _summary(res: engine.SkillResult) -> SkillSummary:
+def tree_fits(skill: Skill, ex: dict[str, Exercise], allowed: frozenset[str] | None) -> bool:
+    """v1.2 loadout: a tree fits when its first two steps can be trained with the profile's
+    equipment (nothing stated = everything fits)."""
+    if allowed is None:
+        return True
+    for step in skill.steps[:2]:
+        e = ex.get(step.exercise)
+        if e is not None and not fits(e.equipment, allowed):
+            return False
+    return True
+
+
+def _summary(res: engine.SkillResult, fits_kit: bool = True) -> SkillSummary:
     skill = res.skill
     return SkillSummary(
         key=skill.key,
@@ -268,12 +280,16 @@ def _summary(res: engine.SkillResult) -> SkillSummary:
         sessions_28d=res.sessions_28d,
         rusty=res.rusty,
         custom="custom" in skill.tags,
+        fits_equipment=fits_kit,
     )
 
 
 def summaries(db: Session, now: datetime) -> list[SkillSummary]:
     ex = exercises_by_name(db)
-    return [_summary(_evaluate_one(db, s, now, ex)) for s in all_skills(db)]
+    allowed = allowed_for_profile(db)
+    return [
+        _summary(_evaluate_one(db, s, now, ex), tree_fits(s, ex, allowed)) for s in all_skills(db)
+    ]
 
 
 def detail(db: Session, key: str, now: datetime) -> SkillDetail:
@@ -281,6 +297,23 @@ def detail(db: Session, key: str, now: datetime) -> SkillDetail:
     if skill is None:
         raise SkillNotFound(f"unknown skill '{key}'")
     ex = exercises_by_name(db)
+    return _detail(db, skill, now, ex, allowed_for_profile(db))
+
+
+def details(db: Session, now: datetime) -> list[SkillDetail]:
+    """Every tree in full, in one call (the Skills page used to ask once per tree)."""
+    ex = exercises_by_name(db)
+    allowed = allowed_for_profile(db)
+    return [_detail(db, s, now, ex, allowed) for s in all_skills(db)]
+
+
+def _detail(
+    db: Session,
+    skill: Skill,
+    now: datetime,
+    ex: dict[str, Exercise],
+    allowed: frozenset[str] | None,
+) -> SkillDetail:
     res = _evaluate_one(db, skill, now, ex)
     month_ago = now - timedelta(days=28)
     feeder_records = load_records(db, set(skill.feeders), now, days=28)
@@ -297,7 +330,7 @@ def detail(db: Session, key: str, now: datetime) -> SkillDetail:
     ]
     eta = res.eta
     return SkillDetail(
-        **_summary(res).model_dump(),
+        **_summary(res, tree_fits(skill, ex, allowed)).model_dump(),
         steps=[
             StepOut(
                 key=s.step.key,

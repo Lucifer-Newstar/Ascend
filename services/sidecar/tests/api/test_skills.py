@@ -30,8 +30,10 @@ def test_list_and_detail(client):
     skills = client.get("/skills").json()
     assert len(skills) == 17
     mu = next(s for s in skills if s["key"] == "muscle_up")
-    assert mu["current_step"] == "dead_hang" and mu["next_step"] == "scap_pull"
+    # v1.2: the entry step is where the tree starts, not an earned step.
+    assert mu["current_step"] is None and mu["next_step"] == "scap_pull"
     assert mu["pct_to_next"] == 0 and not mu["acquired"]
+    assert mu["steps_unlocked"] == 0 and mu["fits_equipment"] is True
     d = client.get("/skills/front_lever").json()
     assert d["current_step"] is None and d["next_step"] == "tuck"
     assert d["steps"][0]["criteria"][0]["text"] == "3\u00d75 Pull-up"
@@ -82,7 +84,25 @@ def test_deleting_the_proof_revokes_the_step_and_its_xp(client, profile, clock):
     assert client.get("/skills/unlocks").json() == []
     after = client.get("/game/summary").json()["xp"]["total"]
     assert before - after >= 30  # the skill XP (plus the set's own XP, handled separately)
-    assert client.get("/skills/muscle_up").json()["current_step"] == "dead_hang"
+    assert client.get("/skills/muscle_up").json()["current_step"] is None
+
+
+def test_entry_steps_say_start_and_the_batch_call_returns_every_tree(client):
+    trees = client.get("/skills/details").json()
+    assert len(trees) == len(client.get("/skills").json())
+    mu = next(s for s in trees if s["key"] == "muscle_up")
+    assert mu["steps"][0]["status"] == "start" and mu["steps"][0]["unlocked_at"] is None
+
+
+def test_trees_are_tagged_by_the_kit(client):
+    client.put(
+        "/profile",
+        json={"age": 20, "sex": "male", "height_cm": 170, "weight_kg": 45, "goal": "bulk",
+              "equipment": ["none"]},
+    )  # fmt: skip
+    fits = {s["key"]: s["fits_equipment"] for s in client.get("/skills").json()}
+    assert fits["front_lever"] is False  # needs a bar
+    assert fits["pistol"] is True  # floor only
 
 
 def test_train_adds_capped_idempotent_quest_items_that_complete(client, profile):

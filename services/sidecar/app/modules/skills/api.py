@@ -30,6 +30,14 @@ def list_skills(
     return service.summaries(db, now)
 
 
+@router.get("/details", response_model=list[SkillDetail])
+def list_skill_details(
+    db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> list[SkillDetail]:
+    """Every tree in full (steps, criteria, feeders, ETA) in one call, for the Skills page."""
+    return service.details(db, now)
+
+
 @router.get("/unlocks", response_model=list[SkillUnlockOut])
 def recent_unlocks(
     limit: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db)

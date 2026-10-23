@@ -49,10 +49,11 @@ def test_tree_state_entry_steps_next_step_and_unlock_flags():
     skill = SKILL_BY_KEY["muscle_up"]
     rs = [rec("Dead Hang", d, hold=30) for d in (3, 1) for _ in range(3)]
     res = engine.evaluate_skill(skill, rs, {}, NOW)
-    assert res.steps[0].status == "unlocked"  # entry step
+    # v1.2: an entry step is where the tree starts ("start"), not a mastered step.
+    assert res.steps[0].status == "start"
     assert res.next is not None and res.next.step.key == "scap_pull"
     assert res.next.eligible and res.next.pct == 100.0
-    assert res.current is not None and res.current.key == "dead_hang"
+    assert res.current is None  # nothing earned yet
     later = res.steps[3]
     assert later.status == "locked" and not later.eligible
 
