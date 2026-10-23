@@ -37,6 +37,7 @@ from app.modules.planner.api import router as planner_router
 from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
 from app.modules.selector.api import router as selector_router
+from app.modules.share.api import router as share_router
 from app.modules.skills import service as skills_service
 from app.modules.skills.api import router as skills_router
 from app.modules.trainer.api import router as trainer_router
@@ -280,6 +281,7 @@ def create_app(
         selector_router,
         actions_router,
         photos_router,
+        share_router,
     ):
         app.include_router(router)
     return app

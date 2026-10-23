@@ -219,6 +219,19 @@
         "implemented": 6,
         "planned": 0
       }
+    },
+    {
+      "id": "share",
+      "package": "app.modules.share",
+      "contract": "share.yaml",
+      "path_prefixes": [
+        "/share"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 1,
+        "planned": 0
+      }
     }
   ]
 }

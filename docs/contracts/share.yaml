@@ -1,0 +1,139 @@
+# ASCEND contract — share
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — share
+  version: 0.1.0
+  description: 'Share cards (v1.1): deterministic captions and the X web-intent link for an achievement. The card
+    image is drawn by the renderer; the app never uploads anything. Owner: Jegatheesan (backend).'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: share
+  description: Share cards
+paths:
+  /share/card:
+    post:
+      tags:
+      - share
+      summary: Share Card
+      description: 'Text for a share card: title, headline, detail, caption and the X web-intent link.
+
+        Only the achievement goes in; never body weight, photos or profile data.'
+      operationId: share_card_share_card_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareCardOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: Per-launch token from Electron main.
+  schemas:
+    ShareIn:
+      properties:
+        payload:
+          additionalProperties: true
+          type: object
+          title: Payload
+      additionalProperties: false
+      type: object
+      required:
+      - payload
+      title: ShareIn
+    ShareCardOut:
+      properties:
+        kind:
+          type: string
+          title: Kind
+        title:
+          type: string
+          title: Title
+        headline:
+          type: string
+          title: Headline
+        detail:
+          type: string
+          title: Detail
+        caption:
+          type: string
+          title: Caption
+        x_url:
+          type: string
+          title: X Url
+        version:
+          type: string
+          title: Version
+          default: share-v1
+      type: object
+      required:
+      - kind
+      - title
+      - headline
+      - detail
+      - caption
+      - x_url
+      title: ShareCardOut
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
