@@ -35,6 +35,9 @@ export const IPC = {
   sidecarStatus: "sidecar:status",
   exportSave: "export:save",
   appInfo: "app:info",
+  imageSave: "image:save",
+  clipboardWrite: "clipboard:write",
+  shareOpen: "share:open",
 } as const;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -64,6 +67,9 @@ export interface AscendBridge {
 | `sidecarStatus` | `sidecar:status` | invoke | none | `SidecarStatus` | implemented |
 | `saveExport` | `export:save` | invoke | `ExportSaveRequest` (native save dialog, then main writes `content`) | `ExportSaveResult` | implemented |
 | `appInfo` | `app:info` | invoke | none | `AppInfo` | implemented |
+| `saveImage` | `image:save` | invoke | `ImageSaveRequest`: a plain file name with the image's own extension and a PNG/JPEG data URL (≤ 16 MB, magic bytes checked); native save dialog | `ExportSaveResult` | implemented (v1.1) |
+| `copyToClipboard` | `clipboard:write` | invoke | `ClipboardWriteRequest`: text ≤ 4000 chars and/or one PNG/JPEG data URL | `true` | implemented (v1.1) |
+| `openShareLink` | `share:open` | invoke | a URL; only `https://x.com` or `https://twitter.com` `/intent/tweet` or `/intent/post` with a single `text` query passes (`validateShareUrl`) | `true` | implemented (v1.1) |
 
 ## 3. Planned for v1.0 (additive)
 

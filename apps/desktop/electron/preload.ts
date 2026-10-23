@@ -16,6 +16,9 @@ const IPC: typeof SharedIPC = {
   sidecarStatus: "sidecar:status",
   exportSave: "export:save",
   appInfo: "app:info",
+  imageSave: "image:save",
+  clipboardWrite: "clipboard:write",
+  shareOpen: "share:open",
 };
 
 const bridge: AscendBridge = {
@@ -23,6 +26,9 @@ const bridge: AscendBridge = {
   sidecarStatus: () => ipcRenderer.invoke(IPC.sidecarStatus),
   saveExport: (req) => ipcRenderer.invoke(IPC.exportSave, req),
   appInfo: () => ipcRenderer.invoke(IPC.appInfo),
+  saveImage: (req) => ipcRenderer.invoke(IPC.imageSave, req),
+  copyToClipboard: (req) => ipcRenderer.invoke(IPC.clipboardWrite, req),
+  openShareLink: (url) => ipcRenderer.invoke(IPC.shareOpen, url),
 };
 
 contextBridge.exposeInMainWorld("ascend", bridge);

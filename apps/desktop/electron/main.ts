@@ -5,14 +5,14 @@
  * navigation and new windows blocked, and the renderer can only reach the
  * sidecar through the typed IPC channels in @ascend/shared (IPC).
  */
-import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+import { app, BrowserWindow, clipboard, ClipboardItem, dialog, ipcMain, nativeImage, shell } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 
 import type { SidecarRequest } from "@ascend/shared";
 
 import { IPC } from "./channels";
-import { validateExportSave } from "./ipc-validate";
+import { validateClipboard, validateExportSave, validateImageSave, validateShareUrl } from "./ipc-validate";
 import { SidecarManager } from "./sidecar";
 
 app.setName("ASCEND");
@@ -94,6 +94,33 @@ function registerIpc(): void {
     if (result.canceled || !result.filePath) return { saved: false, path: null };
     fs.writeFileSync(result.filePath, req.content, "utf8");
     return { saved: true, path: result.filePath };
+  });
+
+  ipcMain.handle(IPC.imageSave, async (_e, raw: unknown) => {
+    const req = validateImageSave(raw);
+    const ext = path.extname(req.defaultName).slice(1).toLowerCase();
+    const result = await dialog.showSaveDialog({ defaultPath: req.defaultName, filters: [{ name: "Image", extensions: [ext] }] });
+    if (result.canceled || !result.filePath) return { saved: false, path: null };
+    fs.writeFileSync(result.filePath, req.bytes);
+    return { saved: true, path: result.filePath };
+  });
+
+  ipcMain.handle(IPC.clipboardWrite, async (_e, raw: unknown) => {
+    const req = validateClipboard(raw);
+    const items: Record<string, string | Blob> = {};
+    if (req.text !== undefined) items["text/plain"] = req.text;
+    if (req.imageDataUrl) {
+      const png = nativeImage.createFromDataURL(req.imageDataUrl).toPNG();
+      items["image/png"] = new Blob([new Uint8Array(png)], { type: "image/png" });
+    }
+    await clipboard.write([new ClipboardItem(items)]);
+    return true;
+  });
+
+  // Share cards: only X's post composer, nothing else (validateShareUrl is the allowlist).
+  ipcMain.handle(IPC.shareOpen, async (_e, raw: unknown) => {
+    await shell.openExternal(validateShareUrl(raw));
+    return true;
   });
 
   ipcMain.handle(IPC.appInfo, () => ({

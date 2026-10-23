@@ -10,4 +10,7 @@ export const IPC = {
   sidecarStatus: "sidecar:status",
   exportSave: "export:save",
   appInfo: "app:info",
+  imageSave: "image:save",
+  clipboardWrite: "clipboard:write",
+  shareOpen: "share:open",
 } as const satisfies typeof SharedIPC;
