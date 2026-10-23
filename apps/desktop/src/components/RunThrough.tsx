@@ -6,6 +6,7 @@
  */
 import type { Exercise } from "@ascend/shared";
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 import { count } from "../lib/format";
 import { useKeepAwake } from "../lib/keepAwake";
@@ -69,7 +70,7 @@ export function RunThrough({
   }, [onExit]);
 
   const pct = resting && restTotal > 0 ? Math.round((restLeft / restTotal) * 100) : 0;
-  return (
+  return createPortal(
     <div ref={root} role="dialog" aria-modal="true" aria-label="Full-screen timer" data-testid="run-through"
       className="fixed inset-0 z-50 flex flex-col bg-bg p-8">
       <div className="event-art" style={art ? { ["--event-bg" as string]: `url(${art})` } : { background: "var(--color-bg)" }} aria-hidden="true" />
@@ -117,6 +118,7 @@ export function RunThrough({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

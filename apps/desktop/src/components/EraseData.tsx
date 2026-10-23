@@ -4,6 +4,7 @@
  */
 import type { EraseResult } from "@ascend/shared";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { api } from "../api/client";
 
@@ -34,8 +35,10 @@ export function EraseDialog({ onClose, onErased }: { onClose: () => void; onEras
   }
 
   const ok = typed.trim().toUpperCase() === "ERASE";
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(3,7,18,0.7)] p-4">
+  // Rendered on <body>: inside an animated card the fixed overlay was clipped and the next
+  // card painted over its confirm field (v1.1 audit).
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(3,7,18,0.7)] p-4" data-testid="erase-overlay">
       <div role="alertdialog" aria-modal="true" aria-labelledby="erase-title" aria-describedby="erase-body"
         className="w-full max-w-md rounded-xl border border-bad/60 bg-panel p-5 shadow-2xl">
         <h2 id="erase-title" className="text-lg font-semibold text-ink">Erase my data</h2>
@@ -59,7 +62,8 @@ export function EraseDialog({ onClose, onErased }: { onClose: () => void; onEras
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

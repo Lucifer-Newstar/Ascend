@@ -7,6 +7,7 @@
  */
 import type { BossRaid, FinishedWorkout, GameSummary } from "@ascend/shared";
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 
 import { count } from "../lib/format";
 import { useAppTheme } from "../lib/prefs";
@@ -65,7 +66,7 @@ export function WorkoutFinish({ summary, onClose, onToday }: { summary: FinishSu
   const xp = game?.xp;
   const pct = xp && xp.xp_for_next > 0 ? Math.min(100, Math.round((xp.xp_into_level / xp.xp_for_next) * 100)) : 0;
   const exercises = exerciseList(r);
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" data-testid="workout-finish">
       <div className="event-art" style={art ? { ["--event-bg" as string]: `url(${art})` } : { background: "rgba(0,0,0,0.7)" }} aria-hidden="true" />
       {counted && <Confetti pieces={18} />}
@@ -136,6 +137,7 @@ export function WorkoutFinish({ summary, onClose, onToday }: { summary: FinishSu
           </details>
         </SystemWindow>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
