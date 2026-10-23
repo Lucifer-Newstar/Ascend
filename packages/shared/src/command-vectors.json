@@ -1,5 +1,5 @@
 {
-  "_comment": "One grammar, two parsers: the sidecar's actions parser and the command bar must agree on these lines (units metric unless stated). kind null = not an action. `actions` is the one allowlist: the only data-changing actions the command bar, the trainer chat and the local AI may propose (the sidecar's actions registry runs exactly these, each after a confirm). `ui` lists the command bar's local commands that change no logged data. `chat_ui` lists what a trainer reply may ask the UI to do (open a page, a tour, the planner, the picker, an action card, a share card); none of them changes data.",
+  "_comment": "One grammar: the sidecar's actions parser reads these lines the same way (units metric unless stated); since v1.2 the trainer chat is the one box (Ctrl+K opens it), so there is no second parser in the app. kind null = not an action. log_count and log_food_grams are natural lines (\"10 pushups\", \"chicken breast 200g\") that the sidecar resolves by looking the name up, into log_set or log_meal. `actions` is the one allowlist: the only data-changing actions the trainer chat and the local AI may propose (the sidecar's actions registry runs exactly these, each after a confirm). `chat_ui` lists what a trainer reply may ask the UI to do (open a page, a tour, the planner, the picker, an action card, a share card); none of them changes data.",
   "version": "actions-v1",
   "actions": [
     {
@@ -38,13 +38,6 @@
       "command": null,
       "chat": true
     }
-  ],
-  "ui": [
-    "nav",
-    "train",
-    "theme",
-    "ai",
-    "ask"
   ],
   "chat_ui": [
     "navigate",
@@ -143,6 +136,39 @@
       "params": {
         "food": "eggs",
         "portions": 2
+      }
+    },
+    {
+      "text": "10 pushups",
+      "kind": "log_count",
+      "params": {
+        "name": "pushups",
+        "count": 10
+      }
+    },
+    {
+      "text": "log 3 pull-ups",
+      "kind": "log_count",
+      "params": {
+        "name": "pull-ups",
+        "count": 3
+      }
+    },
+    {
+      "text": "2 idli for breakfast",
+      "kind": "log_meal",
+      "params": {
+        "food": "idli",
+        "portions": 2,
+        "meal_type": "breakfast"
+      }
+    },
+    {
+      "text": "chicken breast 200g",
+      "kind": "log_food_grams",
+      "params": {
+        "food": "chicken breast",
+        "grams": 200
       }
     },
     {

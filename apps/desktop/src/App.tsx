@@ -4,7 +4,6 @@ import type { ChatAction, EraseResult, Settings } from "@ascend/shared";
 
 import { api } from "./api/client";
 import { Layout, type Page } from "./components/Layout";
-import { CommandBar, CommandButton, isCommandKey } from "./components/CommandBar";
 import { ErrorState, Loading } from "./components/States";
 import { SystemEvents } from "./components/SystemEvents";
 import { FirstRunCard } from "./components/FirstRun";
@@ -13,7 +12,7 @@ import { TourOverlay } from "./components/Tour";
 import { TrainerChat, TrainerChatButton } from "./components/TrainerChat";
 import { XpStatus } from "./components/XpChip";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
-import { usePageShortcuts } from "./lib/shortcuts";
+import { isChatKey, usePageShortcuts } from "./lib/shortcuts";
 import { tourFor, type Tour } from "./lib/tours";
 import { trainerById } from "./lib/trainer";
 import { useApi } from "./lib/useApi";
@@ -134,12 +133,6 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   const toast = useToast();
   // Trainer: chat drawer, guided tours, the one-time 1.1 welcome and the watcher's unread count.
   const [chatOpen, setChatOpen] = useState(false);
-  // A question typed into the command bar goes to the chat (the Coach page is retired in 1.1).
-  const [chatQuestion, setChatQuestion] = useState<string | null>(null);
-  const askTrainer = useCallback((q?: string) => {
-    setChatQuestion(q?.trim() ? q.trim() : null);
-    setChatOpen(true);
-  }, []);
   const [tour, setTour] = useState<Tour | null>(null);
   const trainerState = useApi(api.trainerState, [refreshKey]);
   const feed = useApi(api.trainerFeed, [refreshKey, chatOpen]);
@@ -184,13 +177,13 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
     onErased();
   };
   usePageShortcuts(navigate);
-  // Ctrl+K (Cmd+K on a Mac) opens the command bar from anywhere.
-  const [commandOpen, setCommandOpen] = useState(false);
+  // v1.2: one box. Ctrl+K (Cmd+K on a Mac) opens the trainer chat from anywhere; it answers
+  // questions, opens pages and logs plain lines ("10 pushups", "2 idli for breakfast").
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!isCommandKey(e)) return;
+      if (!isChatKey(e)) return;
       e.preventDefault();
-      setCommandOpen((o) => !o);
+      setChatOpen((o) => !o);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -204,16 +197,15 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   return (
     <Layout page={page} onNavigate={navigate} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
-      command={<CommandButton onOpen={() => setCommandOpen(true)} />}
+
       trainer={<TrainerChatButton icon={trainerById(settings.trainer_id).icon} name={trainerById(settings.trainer_id).name} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
       <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction}
-        supports={["navigate", "tour", "trainer_picker", "planner"]} question={chatQuestion} onAsked={() => setChatQuestion(null)} onActionDone={bump} />
+        supports={["navigate", "tour", "trainer_picker", "planner"]} onActionDone={bump} />
       {tour && <TourOverlay tour={tour} onDone={() => { void api.updateTrainerState({ tour_done: tour.id }).catch(() => undefined); setTour(null); }} />}
       {trainerState.data && !trainerState.data.onboarded && !welcomeDone && !tour && (
         <FirstRunCard state={trainerState.data} onDone={markOnboarded} onTour={() => { markOnboarded(); startTour("app"); }} onErased={erased} />
       )}
       <SystemEvents game={game.data ?? undefined} notices={api.notices} />
-      <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} onChanged={bump} onAsk={askTrainer} />
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>

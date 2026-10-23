@@ -91,13 +91,13 @@ describe("TrainerChat", () => {
   it("offers retry when the engine is unreachable", async () => {
     vi.mocked(api.trainerChat).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(reply({ reply: "Back." }));
     setup(vi.fn(), false);
-    expect(screen.getByText(/AI off/)).toBeInTheDocument();
+    expect(screen.getByText(/Works offline · Ctrl\+K/)).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Message the trainer"), "hello{Enter}");
     await userEvent.click(await screen.findByRole("button", { name: "Retry" }));
     expect(await screen.findByText("Back.")).toBeInTheDocument();
   });
 
-  it("asks a question handed over by the command bar", async () => {
+  it("asks a question handed over by another part of the app", async () => {
     vi.mocked(api.trainerChat).mockResolvedValue(reply({ reply: "About 1.6 g per kg." }));
     const onAsked = vi.fn();
     render(

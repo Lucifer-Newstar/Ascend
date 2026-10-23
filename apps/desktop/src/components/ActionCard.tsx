@@ -1,6 +1,6 @@
 /**
- * The confirm card for an in-app action (actions-v1). The chat, the command bar and the
- * local AI can only PROPOSE an action from the shared allowlist; nothing runs until you
+ * The confirm card for an in-app action (actions-v1). The trainer chat and the local AI
+ * can only PROPOSE an action from the shared allowlist; nothing runs until you
  * press Confirm here (a destructive one also needs its word typed). A done action offers
  * Undo where the action can be undone. Every step is in the audit log (Settings).
  */

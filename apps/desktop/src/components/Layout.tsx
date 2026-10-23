@@ -23,7 +23,7 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
 /** Nav groups: a thin divider after these items (order and Ctrl+1…0 stay as before). */
 const GROUP_ENDS = new Set<Page>(["skills", "planner", "history"]);
 
-export function Layout({ page, onNavigate, children, title, subtitle, status, onlineResearch = false, command, trainer }: {
+export function Layout({ page, onNavigate, children, title, subtitle, status, onlineResearch = false, trainer }: {
   page: Page;
   onNavigate: (p: Page) => void;
   title: string;
@@ -32,8 +32,6 @@ export function Layout({ page, onNavigate, children, title, subtitle, status, on
   status?: ReactNode;
   /** Settings -> Online research is on: the app may contact wger.de and Wikipedia. */
   onlineResearch?: boolean;
-  /** The command bar opener (Ctrl+K). */
-  command?: ReactNode;
   /** The trainer chat opener (defaults to the trainer voice switch). */
   trainer?: ReactNode;
   children: ReactNode;
@@ -117,7 +115,6 @@ export function Layout({ page, onNavigate, children, title, subtitle, status, on
           )}
           {status && <span data-tour="xp">{status}</span>}
           {trainer ?? <TrainerToggle />}
-          {command && <span data-tour="command">{command}</span>}
           </div>
         </header>
         {/* tabIndex 0: a page with no controls (e.g. a long History) must still scroll from the keyboard. */}

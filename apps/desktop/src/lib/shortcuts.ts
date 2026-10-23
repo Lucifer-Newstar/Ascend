@@ -24,3 +24,8 @@ export function usePageShortcuts(navigate: (p: Page) => void) {
     return () => window.removeEventListener("keydown", onKey);
   }, [navigate]);
 }
+
+/** Ctrl+K / Cmd+K anywhere toggles the trainer chat (v1.2: the one box for asking and logging). */
+export function isChatKey(e: Pick<globalThis.KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey">): boolean {
+  return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "k";
+}

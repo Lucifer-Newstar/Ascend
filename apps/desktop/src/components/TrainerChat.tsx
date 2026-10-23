@@ -15,7 +15,7 @@ import { type TrainerMood } from "../lib/trainer";
 import { ActionCard } from "./ActionCard";
 import { TrainerPortrait, useTrainer } from "./Trainer";
 
-export const START_SUGGESTIONS = ["Give me a tour", "What can you do?", "What should I train today?", "How does XP work?"];
+export const START_SUGGESTIONS = ["What should I train today?", "10 pushups", "I missed a day", "Give me a tour"];
 
 interface Msg {
   id: number;
@@ -48,7 +48,7 @@ export function TrainerChat({
   supports?: ChatAction["kind"][];
   /** A first message shown when the chat is empty (e.g. the first-run welcome). */
   greeting?: string;
-  /** A question to ask as soon as the chat is open (from the command bar). */
+  /** A question to ask as soon as the chat is open (e.g. from a page button). */
   question?: string | null;
   /** Called once `question` has been sent, so the caller can clear it. */
   onAsked?: () => void;
@@ -75,7 +75,7 @@ export function TrainerChat({
     if (aiOn) void api.coachWarm().catch(() => undefined);
     if (opened.current) return;
     opened.current = true;
-    push({ role: "trainer", mood: "neutral", text: greeting ?? "I'm here. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask what to train." });
+    push({ role: "trainer", mood: "neutral", text: greeting ?? "I'm here. Ask me anything, ask what to train today, or just tell me what you did (\"10 pushups\", \"2 idli for breakfast\") and I'll log it." });
     api.trainerFeed().then((feed) => {
       const unread = feed.messages.filter((m) => !m.read).reverse();
       if (!unread.length) return;
@@ -146,7 +146,7 @@ export function TrainerChat({
         <TrainerPortrait mood={(last?.role === "trainer" && last.mood) || "neutral"} size={40} />
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold text-ink">{trainer.name}</h2>
-          <p className="text-[11px] text-muted">{aiOn ? "Rules first, local AI for the rest" : "AI off · answering from my notes"}</p>
+          <p className="text-[11px] text-muted">{aiOn ? "Local AI on · works offline" : "Works offline · Ctrl+K opens me anywhere"}</p>
         </div>
         <button type="button" onClick={onClose} className="rounded-md px-2 py-1 text-muted hover:bg-panel-2 hover:text-ink" aria-label="Close chat">
           ✕
@@ -208,7 +208,7 @@ export function TrainerChat({
       <form onSubmit={submit} className="flex gap-2 border-t border-line p-3">
         <label className="sr-only" htmlFor="trainer-chat-input">Message the trainer</label>
         <input id="trainer-chat-input" ref={input} className="input min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)}
-          placeholder="Ask anything, or try “give me a tour”" maxLength={1000} autoComplete="off" />
+          placeholder="Ask anything, or log it: “10 pushups”" maxLength={1000} autoComplete="off" />
         <button type="submit" className="btn-primary px-3" disabled={busy || !text.trim()}>Send</button>
       </form>
     </div>
@@ -219,11 +219,12 @@ export function TrainerChat({
 export function TrainerChatButton({ onOpen, unread = 0, icon, name = "your trainer" }: { onOpen: () => void; unread?: number; icon: string; name?: string }) {
   return (
     <button type="button" onClick={onOpen} data-tour="trainer"
-      title={`Chat with ${name}`}
+      title={`Chat with ${name} (Ctrl+K)`} aria-keyshortcuts="Control+K"
       aria-label={unread ? `Trainer chat, ${unread} new` : "Trainer chat"}
       className="relative flex items-center gap-2 rounded-full border border-accent/50 px-2 py-1 text-xs text-ink transition-colors hover:bg-accent/10">
       <img src={icon} alt="" width={22} height={22} className="rounded-full" />
       Trainer
+      <kbd aria-hidden="true" className="rounded border border-line px-1 font-sans text-[10px] text-faint">Ctrl K</kbd>
       {unread > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-on-accent">{unread}</span>}
     </button>
   );
