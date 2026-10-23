@@ -25,6 +25,8 @@
     "build": "npm run build -w apps/desktop",
     "lint": "npm run lint -w apps/desktop",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "build:sidecar": "cd services/sidecar && uv sync --frozen --group build && uv run --group build pyinstaller packaging/ascend-sidecar.spec --noconfirm",
+    "dist:win": "npm run build:sidecar && npm run dist:win -w apps/desktop"
   }
 }
