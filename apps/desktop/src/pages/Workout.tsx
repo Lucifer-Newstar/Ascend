@@ -632,7 +632,7 @@ function SetTable({ label, sets, units, onEdit, onDelete, busy, justLogged }: {
               </>
             ) : (
               <>
-                <td className="text-ink">{toDisplayWeight(s.weight_kg, units)}</td>
+                <td className="text-ink">{s.weight_kg ? toDisplayWeight(s.weight_kg, units) : "BW"}</td>
                 <td className="text-ink">{s.reps}</td>
                 <td className="text-muted">{s.rpe ?? "–"}</td>
                 <td className="text-muted">{s.e1rm ? `${toDisplayWeight(s.e1rm, units)} ${weightUnit(units)}` : "–"}</td>
