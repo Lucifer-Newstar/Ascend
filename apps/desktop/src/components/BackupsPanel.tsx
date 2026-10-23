@@ -26,6 +26,13 @@ function when(iso: string): string {
   return new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+/** A file the user copied in (not one the app named "ascend-…") shows its name, so a
+ * shared save such as ASCEND_tester_save.ascendbak is easy to pick. */
+export function fileLabel(path: string): string | null {
+  const name = path.split(/[\\/]/).pop() ?? "";
+  return name && !name.startsWith("ascend-") ? name.replace(/\.ascendbak$/, "") : null;
+}
+
 export function BackupsPanel({ style }: { style?: CSSProperties }) {
   const { data, error, reload } = useApi(() => api.backups(), []);
   const toast = useToast();
@@ -80,6 +87,7 @@ export function BackupsPanel({ style }: { style?: CSSProperties }) {
               <li key={b.path} className="flex items-center gap-3 px-3 py-2 text-sm">
                 <span className="w-32 shrink-0 text-ink">{when(b.created_at)}</span>
                 <span className="chip">{REASON[b.reason] ?? b.reason}</span>
+                {fileLabel(b.path) && <span className="truncate text-xs text-muted" data-testid="backup-file">{fileLabel(b.path)}</span>}
                 <span className="flex-1 text-right tabular-nums text-muted">{size(b.size_bytes)}</span>
                 <button type="button" className="btn-ghost px-2 py-1 text-xs" disabled={busy} onClick={() => setConfirm(b)}
                   aria-label={`Restore the backup from ${when(b.created_at)}`}>

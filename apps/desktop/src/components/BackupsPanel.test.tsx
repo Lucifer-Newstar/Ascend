@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "../api/client";
-import { BackupsPanel } from "./BackupsPanel";
+import { BackupsPanel, fileLabel } from "./BackupsPanel";
 
 const B = (reason: string, created_at: string) => ({
   path: `C:/data/backups/ascend-${created_at}-${reason}.ascendbak`,
@@ -48,5 +48,10 @@ describe("BackupsPanel", () => {
     expect(await screen.findByText("No backups yet.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Back up now" }));
     await waitFor(() => expect(now).toHaveBeenCalled());
+  });
+
+  it("names a save file you copied into the backups folder", () => {
+    expect(fileLabel("C:\\Users\\n\\AppData\\Roaming\\ASCEND\\data\\backups\\ASCEND_tester_save.ascendbak")).toBe("ASCEND_tester_save");
+    expect(fileLabel("/data/backups/ascend-20261023-091500-daily.ascendbak")).toBeNull();
   });
 });
