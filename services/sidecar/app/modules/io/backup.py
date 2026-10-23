@@ -6,6 +6,11 @@
     ├── ascend.db       SQLite online-backup copy (safe while the app is running)
     └── photos/…        progress photos (v1.1), each listed in "files" with its checksum
 
+v1.2 photo safety: a backup can leave the photos out ("photos_included": false). Then the
+snapshot carries no photo rows either (they are deleted from the copy and the copy is
+vacuumed, so no trace of them stays in its free pages), and restoring it keeps the photos
+already on this PC untouched.
+
 Backups live in `<data dir>/backups/`. Restore checks the manifest, every checksum and the
 schema revision (a backup from a newer app is refused), then copies the snapshot over the
 live database with SQLite's backup API and migrates it to this build's head.
@@ -57,6 +62,8 @@ class BackupInfo:
     schema: str
     app_version: str
     reason: str
+    photos: int = 0
+    photos_included: bool = True
 
 
 def backups_dir(data_dir: Path) -> Path:
@@ -98,11 +105,30 @@ def _photo_files(db_file: Path) -> list[Path]:
     return sorted(p for p in folder.iterdir() if PHOTO_NAME.match(f"photos/{p.name}"))
 
 
+def _drop_photo_rows(snap: Path) -> None:
+    """Remove every progress-photo row from a snapshot and vacuum it, so a backup made
+    without photos carries no trace of them."""
+    con = sqlite3.connect(snap)
+    try:
+        try:
+            con.execute("DELETE FROM progress_photos")
+            con.commit()
+        except sqlite3.OperationalError:  # a database from before photos (v1.0)
+            pass
+        con.execute("VACUUM")
+    finally:
+        con.close()
+
+
 def create_backup(
-    db_file: Path, out_dir: Path, now: datetime, reason: str = "manual"
+    db_file: Path,
+    out_dir: Path,
+    now: datetime,
+    reason: str = "manual",
+    include_photos: bool = True,
 ) -> BackupInfo:
-    """Snapshot `db_file` (and the progress photos beside it) into a new .ascendbak in
-    `out_dir` and return its details."""
+    """Snapshot `db_file` (and the progress photos beside it, unless `include_photos` is
+    off) into a new .ascendbak in `out_dir` and return its details."""
     if not db_file.exists():
         raise BackupError("there is no database to back up yet")
     stamp = now.strftime("%Y%m%d-%H%M%S")
@@ -120,6 +146,8 @@ def create_backup(
         finally:
             dst.close()
             src.close()
+        if not include_photos:
+            _drop_photo_rows(snap)
         manifest = {
             "format": FORMAT,
             "format_version": FORMAT_VERSION,
@@ -127,9 +155,10 @@ def create_backup(
             "schema": _schema_of(snap),
             "created_at": now.isoformat(),
             "reason": reason,
+            "photos_included": include_photos,
             "files": {DB_NAME: {"sha256": _sha256(snap), "size": snap.stat().st_size}},
         }
-        photos = _photo_files(db_file)
+        photos = _photo_files(db_file) if include_photos else []
         files = manifest["files"]
         assert isinstance(files, dict)
         for p in photos:
@@ -179,6 +208,8 @@ def read_info(path: Path) -> BackupInfo:
             m = _manifest(z)
     except zipfile.BadZipFile as err:
         raise BackupError("the backup file is damaged (not a valid zip)") from err
+    files = m.get("files")
+    photos = sum(1 for n in files if PHOTO_NAME.match(str(n))) if isinstance(files, dict) else 0
     return BackupInfo(
         path=path,
         size_bytes=path.stat().st_size,
@@ -187,6 +218,8 @@ def read_info(path: Path) -> BackupInfo:
         schema=str(m.get("schema", "none")),
         app_version=str(m.get("app_version", "")),
         reason=str(m.get("reason", "manual")),
+        photos=photos,
+        photos_included=m.get("photos_included") is not False,
     )
 
 

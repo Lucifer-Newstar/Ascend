@@ -20,6 +20,7 @@ from app.modules.photos.schemas import (
     PhotoData,
     PhotoIn,
     PhotoOut,
+    PhotosDeleted,
 )
 from app.modules.progress import service as progress
 
@@ -62,6 +63,13 @@ def add_photo(
     except service.PhotoError as e:
         raise HTTPException(422, str(e)) from e
     return _out(row)
+
+
+@router.delete("", response_model=PhotosDeleted)
+def delete_all_photos(request: Request, db: Session = Depends(get_db)) -> PhotosDeleted:
+    """Delete every progress photo and its file from this PC (Settings > Privacy). Backups
+    you made earlier keep their copies until you delete those backups."""
+    return PhotosDeleted(deleted=service.delete_all(db, _data_dir(request)))
 
 
 @router.get(

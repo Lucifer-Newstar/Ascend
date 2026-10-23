@@ -393,6 +393,14 @@ components:
           - type: string
           title: Reason
           default: manual
+        photos:
+          type: integer
+          title: Photos
+          default: 0
+        photos_included:
+          type: boolean
+          title: Photos Included
+          default: true
       type: object
       required:
       - path
@@ -410,6 +418,12 @@ components:
           - type: 'null'
           title: Password
           description: Optional AES-256 password; not supported yet (422)
+        include_photos:
+          type: boolean
+          title: Include Photos
+          description: 'v1.2: false leaves the progress photos (files and rows) out of the backup'
+          default: true
+      additionalProperties: false
       type: object
       title: BackupIn
     RestoreIn:

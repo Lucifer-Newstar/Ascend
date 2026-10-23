@@ -56,3 +56,7 @@ class FeedbackOut(BaseModel):
     model: str
     version: str
     is_ai: bool = True
+
+
+class PhotosDeleted(BaseModel):
+    deleted: int

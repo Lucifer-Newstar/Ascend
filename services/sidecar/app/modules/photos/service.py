@@ -112,5 +112,17 @@ def delete(db: Session, data_dir: Path, photo_id: int) -> None:
     path.unlink(missing_ok=True)
 
 
+def delete_all(db: Session, data_dir: Path) -> int:
+    """Delete every progress photo and its file (Settings > Privacy). Returns how many."""
+    rows = listing(db)
+    for row in rows:
+        db.delete(row)
+    db.flush()
+    folder = data_dir / PHOTOS_DIR
+    for row in rows:
+        (folder / row.filename).unlink(missing_ok=True)
+    return len(rows)
+
+
 def last_photo(db: Session) -> date | None:
     return db.scalar(select(func.max(ProgressPhoto.taken_on)))

@@ -39,6 +39,10 @@ class BackupIn(StrictIn):
     password: str | None = Field(
         default=None, description="Optional AES-256 password; not supported yet (422)"
     )
+    include_photos: bool = Field(
+        default=True,
+        description="v1.2: false leaves the progress photos (files and rows) out of the backup",
+    )
 
 
 class BackupOut(BaseModel):
@@ -49,6 +53,8 @@ class BackupOut(BaseModel):
     schema_revision: str
     app_version: str
     reason: Literal["manual", "pre-migration"] | str = "manual"
+    photos: int = 0
+    photos_included: bool = True
 
 
 class RestoreIn(StrictIn):

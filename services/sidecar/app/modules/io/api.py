@@ -108,6 +108,8 @@ def _backup_out(info: backup.BackupInfo) -> BackupOut:
         schema_revision=info.schema,
         app_version=info.app_version,
         reason=info.reason,
+        photos=info.photos,
+        photos_included=info.photos_included,
     )
 
 
@@ -124,12 +126,14 @@ def _dirs(request: Request) -> tuple[Path, Path]:
 def create_backup(
     request: Request, body: BackupIn | None = None, now: datetime = Depends(get_now)
 ) -> BackupOut:
-    """Write a .ascendbak (SQLite snapshot + manifest with SHA-256) to the backups folder."""
+    """Write a .ascendbak (SQLite snapshot + manifest with SHA-256) to the backups folder.
+    With include_photos false the progress photos stay out of it (files and rows)."""
     if body is not None and body.password:
         raise HTTPException(422, "password-protected backups are not supported yet")
     db_file, folder = _dirs(request)
+    with_photos = body.include_photos if body is not None else True
     try:
-        return _backup_out(backup.create_backup(db_file, folder, now))
+        return _backup_out(backup.create_backup(db_file, folder, now, include_photos=with_photos))
     except backup.BackupError as err:
         raise HTTPException(409, str(err)) from err
 

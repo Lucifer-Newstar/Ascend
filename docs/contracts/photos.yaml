@@ -25,8 +25,6 @@ tags:
 paths:
   /photos:
     get:
-      tags:
-      - photos
       summary: List Photos
       description: Every progress photo, newest first (metadata only; the image is /photos/{id}/file).
       operationId: list_photos_photos_get
@@ -41,9 +39,9 @@ paths:
                 type: array
                 title: Response List Photos Photos Get
       x-status: implemented
-    post:
       tags:
       - photos
+    post:
       summary: Add Photo
       description: Store a progress photo in the data folder with its metadata (EXIF, GPS) removed.
       operationId: add_photo_photos_post
@@ -67,6 +65,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
+      tags:
+      - photos
+    delete:
+      summary: Delete All Photos
+      description: 'Delete every progress photo and its file from this PC (Settings > Privacy). Backups
+
+        you made earlier keep their copies until you delete those backups.'
+      operationId: delete_all_photos_photos_delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotosDeleted'
+      x-status: implemented
+      tags:
+      - photos
   /photos/{photo_id}/file:
     get:
       tags:
@@ -378,3 +394,12 @@ components:
       - mime
       - data_url
       title: PhotoData
+    PhotosDeleted:
+      properties:
+        deleted:
+          type: integer
+          title: Deleted
+      type: object
+      required:
+      - deleted
+      title: PhotosDeleted

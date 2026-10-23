@@ -115,6 +115,38 @@ def test_photos_travel_with_backups(client, settings, profile):
     assert client.get(f"/photos/{p['id']}/file").status_code == 200
 
 
+def test_a_backup_can_leave_the_photos_out(client, settings, profile):
+    p = add(client, note="private note").json()
+    made = client.post("/backup", json={"include_photos": False}).json()
+    assert made["photos_included"] is False and made["photos"] == 0
+    with zipfile.ZipFile(made["path"]) as z:
+        names = z.namelist()
+        db = z.read("ascend.db")
+    assert not any(n.startswith("photos/") for n in names)
+    assert b"private note" not in db  # rows deleted and the copy vacuumed
+    listed = {b["path"]: b for b in client.get("/backups").json()}
+    assert listed[made["path"]]["photos_included"] is False
+    # restoring it keeps the photo files already on this PC
+    assert client.post("/restore", json={"path": made["path"]}).status_code == 200
+    folder = Path(settings.data_dir) / "photos"
+    assert any(folder.iterdir())
+    assert client.get("/photos").json() == []
+    with_photos = client.post("/backup").json()
+    assert with_photos["photos_included"] is True
+    assert p["id"]
+
+
+def test_delete_all_photos(client, settings, profile):
+    add(client)
+    add(client, pose="side")
+    r = client.delete("/photos")
+    assert r.status_code == 200 and r.json() == {"deleted": 2}
+    assert client.get("/photos").json() == []
+    folder = Path(settings.data_dir) / "photos"
+    assert not folder.exists() or not any(folder.iterdir())
+    assert client.delete("/photos").json() == {"deleted": 0}
+
+
 def test_erase_removes_photo_files(client, settings, profile):
     add(client)
     r = client.post("/data/erase", json={"confirm": "erase", "keep_preferences": True})
