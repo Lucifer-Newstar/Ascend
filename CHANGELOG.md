@@ -9,27 +9,80 @@ where a number you see could change. User-facing release notes live in
 
 ## [Unreleased]
 
-### Fixed
+## [1.1.0] - 2026-10-23
 
-- **Clean install.** Development runs and demo data now use `%APPDATA%\ASCEND-dev`, so they can
-  no longer pre-fill the installed app (the demo seeder refuses the installed app's folder).
-  **Settings > Start fresh** (and "start fresh" in the trainer chat) erases your data after a
-  backup and keeps the exercise library and food table.
-- **Coach answers.** "Hello", "what can you do" or "erase my data" no longer get the day's
-  muscle tip: questions are routed by rules before any AI call. Each fallback has its own
-  reason and label (switched off, not running, timed out, model error, failed the safety
-  check); a cold model gets 60 s on its first answer and is kept loaded for 30 minutes.
-- **Windows CI.** The Dashboard and AddExercise page tests no longer time out on Windows runners.
+One trainer, one chat: the trainer you pick watches your log, answers questions, shows you
+around and can propose changes that run only when you confirm them. New Planner and Profile
+pages, five more skill trees plus your own, private progress photos and share cards. Release
+notes: [docs/releases/v1.1.0.md](docs/releases/v1.1.0.md).
 
 ### Added
 
-- **Trainer chat** from the top bar: help notes (`trainer-kb-v1`), intent routing
-  (`trainer-intents-v1`), goal checks, and the watcher feed (`watch-v1`).
-- **Guided tours**: a first-run app tour and a tour of any page on request.
+- **Trainer and chat** from the top bar: help notes (`trainer-kb-v1`), rule-based intent
+  routing before any AI call (`trainer-intents-v1`), goal checks and a watcher feed
+  (`watch-v1`). Four trainers to pick from (onboarding or Settings), each with portraits per
+  mood; weekly bosses have their own art.
+- **Content selector** (`player-state-v1`, `content-catalog-v1`, `select-v1`): what the
+  trainer says on its own is chosen from your level, readiness, consistency, diet adherence and
+  weigh-in trend, with cooldowns and a cap of 3 posts a day; "why?" in the chat repeats the
+  reason. Hard items are never picked on a low-readiness day, eat-less items never under 18.
+- **Personalization** (`personalize-v1`, `quest-v3`): the daily quest's set range follows your
+  experience level and readiness, and the nutrition item targets your own gap (meal logging or
+  protein). Without a profile the quest is unchanged.
+- **In-app actions** (`actions-v1`): logging sets, holds, weigh-ins and food, switching program
+  and erasing data can be proposed by the chat, the command bar or the local AI, and run only
+  after Confirm on a card (erase also needs the word typed), with an audit log and Undo.
+  `packages/shared/src/command-vectors.json` is the one allowlist; tests on both sides read it.
+- **Planner page**: build a week of training for your days, time and equipment
+  (`plangen-v1`), a day of Indian meals for your diet (`dietgen-v1`), and check a goal against
+  safe published rates (`goalcheck-v2`, ICMR-NIN 2024). Save, follow or delete what you build.
+  Under 18 the planner never plans a deficit; **Hide calories** hides kcal numbers.
+- **Profile page**: Hunter card (level, rank, streak, stats, titles), achievements to share,
+  and the progress photo gallery.
+- **Progress photos** (AI feedback `photo-feedback-v1`): stored only in your data folder, re-encoded and stripped of
+  EXIF/GPS, blurred until you choose "Show photos", compared side by side, included in backups
+  with checksums. Optional AI feedback on a local vision model: off by default, never under 18,
+  and it never comments on body fat or weight.
+- **Share cards** (`share-v1`): drawn on your PC with no weight, photos or profile details. Save
+  the image, copy it, open X's own post composer (an allowlisted link; you post it) or save and
+  copy the caption for Instagram.
+- **Skill trees**: five new foundation trees (hanging leg raise, weighted pull-up, one-arm hang,
+  split squat, plyo push-up), 17 built in. **Custom skills**: make a tree of up to 8 steps from
+  library exercises; it unlocks from logged sets and pays no XP.
+- **Guided tours**: one first-run flow (onboarding, trainer pick, then a five-step app tour)
+  and a tour of any page on request.
 - **AI setup** in Settings (`ai-tiers-v1`): Ollama and model detection, RAM/VRAM, a model
-  recommendation, model picker and test. The app works fully without a model.
-- Rule-based workout and diet planners with goal checks (`plangen-v1`, `dietgen-v1`,
-  `goalcheck-v1`) on the sidecar (the Planner page follows).
+  recommendation, picker and test. The app works fully without a model.
+
+### Changed
+
+- **The Coach page is retired.** Its weekly review and deload cards moved to Progress, and
+  questions go to the trainer chat (Ctrl+K sends any unrecognised line there). Planner takes
+  its Ctrl+7 slot.
+- Version 1.1.0 everywhere (packages, lockfiles, sidecar, bug-report template).
+- Database migrations 0020–0025 (planner, trainer messages, selector picks, action log, custom
+  skills, progress photos) run on first start; a backup is taken before they do.
+- The planning documents are marked as design records; the outbox and `/events` stream are
+  marked as unused in 1.1.
+
+### Fixed
+
+- **Clean install.** Development runs and demo data use `%APPDATA%\ASCEND-dev`, so they can no
+  longer pre-fill the installed app; the demo seeder refuses the installed app's folder and is
+  no longer packaged into the sidecar (a CI check fails the build if it is). **Settings > Start
+  fresh** (and "start fresh" in the chat) erases your data after a backup and keeps the
+  exercise library and food table.
+- **Coach answers.** "Hello", "what can you do" or "erase my data" no longer get the day's
+  muscle tip. Each AI fallback has its own reason and label (switched off, not running, timed
+  out, model error, failed the safety check); a cold model gets 60 s on its first answer.
+- **Windows CI.** The Dashboard and AddExercise page tests no longer time out on Windows runners.
+
+### Security
+
+- Three new Electron IPC channels, each validated in main: `image:save` (PNG/JPEG only, magic
+  bytes checked, 16 MB cap), `clipboard:write`, and `share:open`, which opens only
+  `https://x.com/intent/tweet` (or `twitter.com`, `/intent/post`) with a single `text` query.
+- Still open: the installer is unsigned and backups (now including photos) are unencrypted.
 
 ## [1.0.0] - 2026-10-23
 

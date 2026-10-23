@@ -8,7 +8,7 @@
 > Maintainer: Navin Jairam M (Team Lead, DevOps/MLOps). Updated whenever the
 > structure changes (rule 2: the docs folder stays clean).
 >
-> Status: **released, 1.0.0** (2026-10-23). The planning docs were written on 2026-10-20,
+> Status: **released, 1.1.0** (2026-10-23). The planning docs were written on 2026-10-20,
 > before the first line of code, and are kept as the design record: where the built app
 > differs from a plan, the [README](../README.md), the [CHANGELOG](../CHANGELOG.md) and the
 > per-folder READMEs describe what shipped. Every date in the planning docs is an
@@ -150,7 +150,7 @@ These describe plans, not the shipped app, and each one opens with a "Design rec
 | Set up my Windows machine | [development/local-setup.md](development/local-setup.md) |
 | How we measure success | [operations/evaluation.md](operations/evaluation.md) |
 | How we ship a release | [operations/release-process.md](operations/release-process.md) |
-| What changed in each version | [CHANGELOG](../CHANGELOG.md) · release notes in [releases/](releases/v1.0.0.md) |
+| What changed in each version | [CHANGELOG](../CHANGELOG.md) · release notes in [releases/](releases/v1.1.0.md) |
 | How accurate the engines are (synthetic users) | [ai/evaluation.md](ai/evaluation.md) |
 | Design system, motion, accessibility | [development/design-system.md](development/design-system.md) · [motion.md](development/motion.md) · [accessibility.md](development/accessibility.md) |
 | Research behind v8 | [research/](research/v8-gamified-engagement.md) |
