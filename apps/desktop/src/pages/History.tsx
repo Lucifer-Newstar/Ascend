@@ -131,7 +131,8 @@ export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; on
 
       <div className="col-span-12 space-y-5 xl:col-span-4">
         <ActivityCalendar days={data} range={Number(range)} />
-        <SourcesPanel days={data} />
+        {/* v1.2: only for players who imported sessions from another app. */}
+        {data.some((d) => d.workouts.some((w) => w.source !== "app")) && <SourcesPanel days={data} />}
       </div>
     </PageGrid>
   );
