@@ -13,6 +13,7 @@ import type { BaselineIn, BaselineOut, EquipmentChoice, Focus, Profile, ProfileI
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { api } from "../api/client";
+import { TrainerPicker } from "../components/Trainer";
 import { SystemWindow } from "../components/SystemWindow";
 import { RankBadge } from "../components/XpBar";
 import { kcal } from "../lib/format";
@@ -443,6 +444,11 @@ function Awakened({ profile, result, onDone }: { profile: Profile; result: Basel
         <Stat label="Protein" value={profile.energy.protein_target_g} unit="g" />
       </div>
       <p className="mt-2 text-xs text-muted">Estimates from the Mifflin-St Jeor equation × an activity factor. Real needs vary by a few hundred kcal.</p>
+      <div className="mt-5">
+        <p className="text-sm font-semibold text-ink">Pick your trainer</p>
+        <p className="mb-2 text-xs text-muted">Same advice from each, different voice. Change it any time in Settings.</p>
+        <TrainerPicker />
+      </div>
       <h2 className="mt-5 text-xs font-semibold uppercase tracking-wider text-faint">Your first daily quest</h2>
       {quest === null ? <p className="mt-2 text-sm text-muted">Generating…</p> : quest.length === 0 ? <p className="mt-2 text-sm text-muted">It appears on Today.</p> : (
         <ul className="mt-2 space-y-1.5">

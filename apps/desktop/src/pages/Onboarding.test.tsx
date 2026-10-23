@@ -1,5 +1,5 @@
 import type { BaselineOut, GameSummary, Profile } from "@ascend/shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -80,6 +80,10 @@ describe("Onboarding (Awakening)", () => {
     expect(await screen.findByText("3 hard sets for lats")).toBeInTheDocument();
     expect(win).toHaveTextContent("+54 XP");
     expect(screen.getAllByTestId("count-up").map((n) => n.textContent)).toEqual(["1,650", "2,560", "2,560", "109"]);
+    // The trainer is picked here, in the one first-run flow (Settings can change it later).
+    const picker = within(win).getByTestId("trainer-picker");
+    await userEvent.click(within(picker).getAllByRole("radio")[1]);
+    await waitFor(() => expect(save).toHaveBeenCalledWith(expect.objectContaining({ trainer_id: expect.any(String) })));
     await userEvent.click(screen.getByRole("button", { name: "Enter ASCEND" }));
     expect(done).toHaveBeenCalled();
   });

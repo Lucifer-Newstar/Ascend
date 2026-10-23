@@ -1,6 +1,7 @@
 /**
- * The 1.1 welcome, shown once (until /trainer/state says onboarded). For a fresh profile it
- * offers the tour. When data is already here (an upgrade, or demo data from a development
+ * The 1.1 welcome for an existing install, shown once (until /trainer/state says onboarded).
+ * A brand-new user never sees it: onboarding (profile, baseline, trainer) runs straight into
+ * the app tour, one first-run flow. Here an upgrader is offered the tour. When data is already here (an upgrade, or demo data from a development
  * build) it also offers "start fresh", which backs up and erases it.
  */
 import type { EraseResult, TrainerState } from "@ascend/shared";

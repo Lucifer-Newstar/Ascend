@@ -75,6 +75,7 @@ const initialPage = (): Page => pageFromHash(window.location.hash);
 export default function App() {
   const [page, setPage] = useState<Page>(initialPage);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+  const [freshStart, setFreshStart] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -113,17 +114,22 @@ export default function App() {
       <ToastProvider>
         {!hasProfile ? (
           <Suspense fallback={<Loading label="Loading…" />}>
-            <Onboarding onDone={() => { setHasProfile(true); bump(); }} />
+            <Onboarding onDone={() => { setFreshStart(true); setHasProfile(true); bump(); }} />
           </Suspense>
         ) : (
-          <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} onErased={() => { setHasProfile(false); bump(); }} />
+          <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} freshStart={freshStart}
+            onErased={() => { setFreshStart(false); setHasProfile(false); bump(); }} />
         )}
       </ToastProvider>
     </PrefsProvider>
   );
 }
 
-function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void; onErased: () => void }) {
+function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false }: {
+  page: Page; navigate: (p: Page) => void; refreshKey: number; bump: () => void; onErased: () => void;
+  /** Onboarding just finished: go straight into the app tour (one first-run flow, no second welcome). */
+  freshStart?: boolean;
+}) {
   const { settings, update } = usePrefs();
   const toast = useToast();
   // Trainer: chat drawer, guided tours, the one-time 1.1 welcome and the watcher's unread count.
@@ -137,7 +143,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
   const [tour, setTour] = useState<Tour | null>(null);
   const trainerState = useApi(api.trainerState, [refreshKey]);
   const feed = useApi(api.trainerFeed, [refreshKey, chatOpen]);
-  const [welcomeDone, setWelcomeDone] = useState(false);
+  const [welcomeDone, setWelcomeDone] = useState(freshStart);
   const markOnboarded = () => {
     setWelcomeDone(true);
     void api.updateTrainerState({ onboarded: true }).catch(() => undefined);
@@ -150,6 +156,13 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
     // Let the page render its elements before the spotlight measures them.
     window.setTimeout(() => setTour(t), 60);
   }, [navigate]);
+  // One first-run flow: onboarding (profile, baseline, trainer) then the 5-step app tour.
+  useEffect(() => {
+    if (!freshStart) return;
+    void api.updateTrainerState({ onboarded: true }).catch(() => undefined);
+    startTour("app");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const onChatAction = (a: ChatAction) => {
     if (a.kind === "navigate" && a.target && a.target in TITLES) {
       navigate(a.target as Page);
