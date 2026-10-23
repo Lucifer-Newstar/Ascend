@@ -1,5 +1,59 @@
 {
-  "_comment": "One grammar, two parsers: the sidecar's actions parser and the command bar must agree on these lines (units metric unless stated). kind null = not an action.",
+  "_comment": "One grammar, two parsers: the sidecar's actions parser and the command bar must agree on these lines (units metric unless stated). kind null = not an action. `actions` is the one allowlist: the only data-changing actions the command bar, the trainer chat and the local AI may propose (the sidecar's actions registry runs exactly these, each after a confirm). `ui` lists the command bar's local commands that change no logged data. `chat_ui` lists what a trainer reply may ask the UI to do (open a page, a tour, the planner, the picker, an action card, a share card); none of them changes data.",
+  "version": "actions-v1",
+  "actions": [
+    {
+      "kind": "log_set",
+      "risk": "low",
+      "command": "set",
+      "chat": true
+    },
+    {
+      "kind": "log_hold",
+      "risk": "low",
+      "command": "hold",
+      "chat": true
+    },
+    {
+      "kind": "log_weight",
+      "risk": "low",
+      "command": "weight",
+      "chat": true
+    },
+    {
+      "kind": "log_meal",
+      "risk": "low",
+      "command": "meal",
+      "chat": true
+    },
+    {
+      "kind": "follow_program",
+      "risk": "normal",
+      "command": null,
+      "chat": true
+    },
+    {
+      "kind": "erase_data",
+      "risk": "destructive",
+      "command": null,
+      "chat": true
+    }
+  ],
+  "ui": [
+    "nav",
+    "train",
+    "theme",
+    "ai",
+    "ask"
+  ],
+  "chat_ui": [
+    "navigate",
+    "tour",
+    "planner",
+    "trainer_picker",
+    "proposal",
+    "share"
+  ],
   "vectors": [
     {
       "text": "log 3x10 bench at 60 kg",

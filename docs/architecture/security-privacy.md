@@ -55,6 +55,19 @@ Checked against the code in October 2026 (external review, see [SECURITY.md](../
 - [x] The sidecar gets a cleaned environment and its token on stdin; requests from the
   renderer time out after 30 s
 
+### 3a. One action allowlist (v1.1)
+
+Nothing typed into the app, and nothing a local model writes, can run an arbitrary operation.
+[`packages/shared/src/command-vectors.json`](../../packages/shared/src/command-vectors.json)
+lists the only data-changing actions (`actions`: log a set, a hold, a weigh-in or food,
+switch program, erase data) with their risk, the command bar's local UI commands (`ui`)
+and what a trainer reply may ask the UI to do (`chat_ui`). The sidecar's actions registry
+runs exactly that list, each one only after Confirm (erase also needs the word typed), with
+an audit log and Undo where possible. Tests on both sides read the same file:
+`tests/unit/test_action_allowlist.py` (registry, parser, chat reply kinds) and
+`apps/desktop/src/lib/allowlist.test.ts` (command bar). `share:open` in the Electron main
+process has its own allowlist: X's post composer only (§3).
+
 ## 4. Privacy commitments
 
 1. **No account, no cloud, no telemetry.** Data lives in `%APPDATA%\ASCEND`.
