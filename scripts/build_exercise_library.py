@@ -1,9 +1,10 @@
 """Rebuild the bundled exercise library from free-exercise-db (needs network once).
 
-    python scripts/build_exercise_library.py [--images]
+    python scripts/build_exercise_library.py [--images | --frames]
 
 Writes services/sidecar/app/modules/workouts/library_data/free_exercise_db.json and, with
---images, one webp per exercise, 320 px wide, into apps/desktop/public/exercises/.
+--images, one webp per exercise, 320 px wide, into apps/desktop/public/exercises/, plus the
+second photo as <id>-2.webp for the 2-frame loop (--frames adds only those).
 free-exercise-db is released under the Unlicense (public domain); see library_data/README.md.
 Needs Pillow for --images.
 """
@@ -37,20 +38,34 @@ def fetch(url: str) -> bytes:
         return data
 
 
-def thumbnail(ex: dict) -> None:
+def thumbnail(ex: dict, frame: int = 0) -> None:
+    """Frame 0 is the thumbnail (<id>.webp); frame 1 is the second photo (<id>-2.webp)
+    that the app crossfades with the first for a 2-frame loop."""
     from PIL import Image
 
-    raw = fetch(f"{RAW}/exercises/{ex['images'][0]}")
+    raw = fetch(f"{RAW}/exercises/{ex['images'][frame]}")
     im = Image.open(io.BytesIO(raw)).convert("RGB")
     im = im.resize((WIDTH, round(im.height * WIDTH / im.width)), Image.Resampling.LANCZOS)
-    im.save(OUT_IMG / f"{slugify(ex['id'])}.webp", "WEBP", quality=QUALITY, method=6)
+    suffix = "" if frame == 0 else f"-{frame + 1}"
+    im.save(OUT_IMG / f"{slugify(ex['id'])}{suffix}.webp", "WEBP", quality=QUALITY, method=6)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--images", action="store_true", help="also rebuild the thumbnails")
+    ap.add_argument(
+        "--frames",
+        action="store_true",
+        help="only add the second frames (<id>-2.webp); the JSON is left alone",
+    )
     args = ap.parse_args()
     data = json.loads(fetch(f"{RAW}/dist/exercises.json"))
+    if args.frames:
+        OUT_IMG.mkdir(parents=True, exist_ok=True)
+        with ThreadPoolExecutor(4) as pool:
+            list(pool.map(lambda x: thumbnail(x, 1), [x for x in data if len(x["images"]) > 1]))
+        print(f"wrote second frames to {OUT_IMG.relative_to(ROOT)}")
+        return
     trimmed = [
         {
             "id": x["id"],
@@ -81,6 +96,7 @@ def main() -> None:
         OUT_IMG.mkdir(parents=True, exist_ok=True)
         with ThreadPoolExecutor(8) as pool:
             list(pool.map(thumbnail, [x for x in data if x["images"]]))
+            list(pool.map(lambda x: thumbnail(x, 1), [x for x in data if len(x["images"]) > 1]))
         print(f"wrote thumbnails to {OUT_IMG.relative_to(ROOT)}")
 
 
