@@ -81,3 +81,23 @@ def test_a_seasonal_boss_follows_your_level():
     assert boss.tier_of("Winter Wraith", "expert") == "S"
     assert boss.tier_of("Iron Golem", "expert") == "E"  # regular bosses keep their own tier
     assert boss.category_of("Harvest Colossus") == "martial_arts"
+
+
+def test_winter_runs_across_the_new_year():
+    jan = date(2027, 1, 11)
+    assert boss.season_for(jan).boss == "Winter Wraith"
+    assert boss.season_start(jan) == date(2026, 12, 7)  # the first Monday of December
+    assert boss.season_end(jan) == date(2027, 2, 28)
+    assert boss.season_start(date(2026, 12, 14)) == date(2026, 12, 7)
+    assert boss.season_for(date(2027, 3, 1)).boss == "Shadow Sovereign"
+
+
+def test_tier_bonus_and_unknown_names_have_safe_defaults():
+    assert [boss.bonus_for(t) for t in boss.TIERS] == [100, 125, 150, 175, 200, 250]
+    assert boss.bonus_for("?") == boss.BONUS_XP
+    assert boss.tier_of("Someone New") == "C" and boss.category_of("Someone New") == "strength"
+    assert boss.tier_of("Harvest Colossus") == "D"  # no level yet: the beginner tier
+    big = boss.Hp(140, "program", "x")
+    assert boss.scaled(big, "S").hp == boss.HP_MAX  # the tier never breaks the HP cap
+    small = boss.Hp(12, "starter", "x")
+    assert boss.scaled(small, "E").hp == boss.HP_MIN
