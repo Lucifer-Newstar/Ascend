@@ -102,13 +102,15 @@ class MuscleStateOut(BaseModel):
 
 Units = Literal["metric", "imperial"]
 TrainerId = Literal["iskra", "vera", "kai", "dario"]
-Theme = Literal["dark", "light", "system"]
+# v1.2: "dark" / "light" / "system" are the v1.1 looks (kept as free themes); the rest are
+# the v1.2 themes (gamification/themes.py says which are unlocked).
+Theme = Literal["dark", "light", "system", "shadow", "crimson", "frost", "emerald", "solar"]
 
 
 class SettingsOut(BaseModel):
     ai_enabled: bool
     units: Units = "metric"
-    theme: Theme = "dark"
+    theme: Theme = "shadow"
     sessions_per_week: int = 3
     reduce_motion: bool = False
     # Off by default: when on, "Add your own exercise" may ask wger.de (the only

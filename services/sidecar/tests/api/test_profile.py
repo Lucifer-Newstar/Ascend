@@ -23,7 +23,7 @@ def test_ai_toggle_round_trip(client):
         # v1.2: off by default when no local AI is installed (tests stub the probe to "none").
         "ai_enabled": False,
         "units": "metric",
-        "theme": "dark",
+        "theme": "shadow",  # v1.2 default for a new player
         "sessions_per_week": 3,
         "reduce_motion": False,
         "online_lookup": False,

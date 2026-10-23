@@ -107,8 +107,17 @@ def get_settings(db: Session = Depends(get_db)) -> SettingsOut:
 
 
 @router.put("/settings", response_model=SettingsOut)
-def put_settings(body: SettingsIn, db: Session = Depends(get_db)) -> SettingsOut:
-    """Partial update; omitted fields keep their stored value."""
+def put_settings(
+    body: SettingsIn, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> SettingsOut:
+    """Partial update; omitted fields keep their stored value. A v1.2 theme that is not
+    unlocked yet is refused (409)."""
+    from app.modules.gamification import themes
+
+    if body.theme is not None and body.theme in themes.THEME_BY_KEY:
+        if body.theme not in themes.unlocked(db, now):
+            t = themes.THEME_BY_KEY[body.theme]
+            raise HTTPException(409, f"{t.name} is locked: {themes.requirement(t)}")
     return service.update_settings(db, body)
 
 

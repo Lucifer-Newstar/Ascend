@@ -55,6 +55,18 @@ class GameSummary(BaseModel):
     quest: list[QuestItemOut]
 
 
+class ThemeOut(BaseModel):
+    """v1.2: one app theme, whether it is free or earned, and how to earn it."""
+
+    key: str
+    name: str
+    tagline: str
+    free: bool
+    unlocked: bool
+    requirement: str
+    progress: str = ""
+
+
 class StatOut(BaseModel):
     """One computed hunter stat (0-100) with the numbers behind it."""
 

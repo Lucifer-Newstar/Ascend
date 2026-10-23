@@ -18,7 +18,7 @@ def test_typo_in_set_body_is_a_422_naming_the_field(client, profile):
 
 def test_unknown_fields_rejected_on_settings_and_body_metrics(client, profile):
     assert client.put("/settings", json={"theme": "light", "colour": "red"}).status_code == 422
-    assert client.get("/settings").json()["theme"] == "dark"  # unchanged
+    assert client.get("/settings").json()["theme"] == "shadow"  # unchanged (the default)
     assert client.post("/body-metrics", json={"weight_kg": 70, "bodyfat": 12}).status_code == 422
     assert client.post("/body-metrics", json={"weight_kg": 70}).status_code in (200, 201)
 

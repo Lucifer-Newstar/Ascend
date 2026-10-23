@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
-from app.modules.gamification import boss, boss_service, service, stats
+from app.modules.gamification import boss, boss_service, service, stats, themes
 from app.modules.gamification.schemas import (
     BossOut,
     BossWhy,
@@ -15,6 +15,7 @@ from app.modules.gamification.schemas import (
     QuestItemOut,
     StatOut,
     StatsOut,
+    ThemeOut,
     TitleOut,
 )
 
@@ -43,6 +44,26 @@ def complete(
         raise HTTPException(404, str(e)) from e
     except ValueError as e:
         raise HTTPException(409, str(e)) from e
+
+
+@router.get("/themes", response_model=list[ThemeOut])
+def list_themes(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -> list[ThemeOut]:
+    """v1.2 app themes: Light, Dark and Shadow are free; the rest unlock from your record
+    (best streak, rank, bosses beaten) and stay unlocked once earned."""
+    have = themes.unlocked(db, now)
+    r = themes.record(db, now)
+    return [
+        ThemeOut(
+            key=t.key,
+            name=t.name,
+            tagline=t.tagline,
+            free=t.rule is None,
+            unlocked=t.key in have,
+            requirement=themes.requirement(t),
+            progress="" if t.key in have else themes.progress_text(t, r),
+        )
+        for t in themes.THEMES
+    ]
 
 
 @router.get("/stats", response_model=StatsOut)
