@@ -4,7 +4,7 @@ import { pageFromHash } from "./App";
 
 describe("pageFromHash", () => {
   it("maps known hashes to pages", () => {
-    expect(pageFromHash("#data")).toBe("data");
+    expect(pageFromHash("#data")).toBe("settings"); // 1.1 Import & export lives in Settings now
     expect(pageFromHash("#history")).toBe("history");
   });
 

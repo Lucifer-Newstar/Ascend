@@ -1,18 +1,19 @@
 /**
- * Settings (12-column grid): a sticky section index (3 columns) beside the settings cards
- * (9 columns): profile and targets, AI setup, online research, appearance, units, your data,
- * start fresh, shortcuts and about.
+ * Settings (v1.2): six sections, one at a time, chosen from the index on the left:
+ * Profile, Trainer, Appearance & sound, Units, Data & backups and Advanced. The 1.1
+ * "Import & export" page lives in Data & backups now; Today's numbers and online
+ * research moved to Advanced. "#settings/data" opens a section directly.
  */
 import type { EraseResult, Settings } from "@ascend/shared";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 import { api } from "../api/client";
 import { AiSetupPanel } from "../components/AiSetupPanel";
 import { BackupsPanel } from "../components/BackupsPanel";
 import { EraseDataPanel } from "../components/EraseData";
-import { IconDatabase } from "../components/Icons";
 import { PageGrid } from "../components/Page";
 import { Segmented } from "../components/Segmented";
+import { ThemePicker } from "../components/ThemePicker";
 import { TodaysNumbers } from "../components/TodaysNumbers";
 import { TrainerPicker, TrainerPortrait, useTrainer } from "../components/Trainer";
 import { LoadingLayout, SkeletonCard } from "../components/Skeleton";
@@ -22,20 +23,39 @@ import { kcal } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { play, setSoundPrefs, soundPrefs, type SoundPrefs } from "../lib/sound";
 import { isOffline, useApi } from "../lib/useApi";
+import { DataPage } from "./Data";
 import { ProfileForm } from "./Onboarding";
 
 const stagger = (i: number): CSSProperties => ({ ["--i" as string]: i }) as CSSProperties;
 
+export type SettingsSection = "profile" | "trainer" | "appearance" | "units" | "data" | "advanced";
+
+export const SECTIONS: [SettingsSection, string][] = [
+  ["profile", "Profile"],
+  ["trainer", "Trainer"],
+  ["appearance", "Appearance & sound"],
+  ["units", "Units"],
+  ["data", "Data & backups"],
+  ["advanced", "Advanced"],
+];
+
 const SHORTCUTS: [string, string][] = [
-  ["Ctrl+K", "Command bar: log a set (\"bench 80x5 @8\"), a hold, a meal or your weight, open a page, or ask your trainer"],
+  ["Ctrl+K", "Open the trainer chat: ask anything or log a set (\"10 pushups\"), a meal or your weight"],
   ["Ctrl+1 … Ctrl+9, Ctrl+0", "Open a page, in sidebar order"],
   ["Tab / Shift+Tab", "Move between controls; the first Tab offers “Skip to content”"],
   ["Alt+← / Alt+→", "Back / forward between pages"],
   ["Enter", "Log the set or confirm the form you are in"],
-  ["Esc", "Close an open detail panel"],
+  ["Esc", "Close an open panel or the full-screen timer"],
 ];
 
-export function SettingsPage({ onToggleAi, onChanged, onOpenData, onErased }: { onToggleAi: () => void; onChanged: () => void; onOpenData: () => void; onErased?: (r: EraseResult) => void }) {
+export function sectionFromHash(hash: string): SettingsSection {
+  const part = hash.replace("#", "").split("/")[1] as SettingsSection | undefined;
+  return SECTIONS.some(([id]) => id === part) ? (part as SettingsSection) : "profile";
+}
+
+export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }: {
+  onToggleAi: () => void; onChanged: () => void; onOpenHistory?: () => void; onErased?: (r: EraseResult) => void;
+}) {
   const profile = useApi(api.profile, []);
   // Fuel uses the adaptive weekly target once tdee-v1 has set one (ADR-0018); say so here too.
   const tdee = useApi(() => api.tdee(7), [profile.data]);
@@ -43,6 +63,16 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData, onErased }: { 
   const { settings, update } = usePrefs();
   const trainer = useTrainer();
   const aiEnabled = settings.ai_enabled;
+  const [section, setSection] = useState<SettingsSection>(() => sectionFromHash(window.location.hash));
+  useEffect(() => {
+    const onHash = () => setSection(sectionFromHash(window.location.hash));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  const open = (s: SettingsSection) => {
+    setSection(s);
+    window.history.replaceState(null, "", `#settings/${s}`);
+  };
 
   async function save(patch: Partial<Settings>, message: string) {
     try {
@@ -59,184 +89,158 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenData, onErased }: { 
       <LoadingLayout label="Loading settings…">
         <div className="grid grid-cols-12 gap-5">
           <SkeletonCard className="col-span-12 xl:col-span-3" lines={6} />
-          <div className="col-span-12 grid gap-5 lg:grid-cols-2 xl:col-span-9">{[6, 3, 4, 2].map((n, i) => <SkeletonCard key={i} lines={n} />)}</div>
+          <div className="col-span-12 grid gap-5 xl:col-span-9">{[6, 3].map((n, i) => <SkeletonCard key={i} lines={n} />)}</div>
         </div>
       </LoadingLayout>
     );
   }
   if (!profile.data) return <ErrorState message={profile.error ?? "No profile"} onRetry={profile.reload} offline={isOffline(profile.status)} />;
   const p = profile.data;
+  const title = SECTIONS.find(([id]) => id === section)?.[1] ?? "Profile";
 
   return (
     <PageGrid label="Settings">
-      <SettingsNav />
-      <div className="col-span-12 grid grid-cols-12 content-start gap-5 xl:col-span-9">
-      <section className="card rise-in col-span-12 self-start p-5 2xl:col-span-7" style={stagger(1)} aria-labelledby="profile-title">
-        <h2 id="profile-title" className="card-title mb-4">Profile & targets</h2>
-        <ProfileForm initial={p} submitLabel="Save profile" onSaved={() => { toast("Profile saved", "info"); profile.reload(); onChanged(); }} />
-        <p className="mt-4 text-xs text-muted">
-          Current estimate: BMR {kcal(p.energy.bmr)} · TDEE {kcal(p.energy.tdee)} · target {kcal(p.energy.kcal_target)} kcal ·
-          protein {p.energy.protein_target_g} g <span>({p.energy.formula_version}, estimate)</span>
-          {tdee.data?.target_source === "adaptive" && (
-            <> · this week's adaptive target {kcal(tdee.data.target_kcal)} kcal ({tdee.data.algo_version}, from your weigh-ins and meals; see Fuel)</>
-          )}
-        </p>
-      </section>
-      <div className="col-span-12 space-y-5 md:col-span-6 2xl:col-span-5">
-        <AiSetupPanel aiEnabled={Boolean(aiEnabled)} onToggleAi={onToggleAi} onChanged={onChanged} />
-        <OnlineResearch enabled={Boolean(settings.online_lookup)} onChange={(on) => save({ online_lookup: on }, on ? "Online research: on" : "Online research: off")} />
-        <section className="card rise-in space-y-4 p-5" style={stagger(3)} aria-labelledby="appearance-title">
-          <h2 id="appearance-title" className="card-title">Appearance</h2>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-ink">Theme</span>
-            <Segmented
-              label="Theme"
-              value={settings.theme}
-              options={[{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }, { value: "system", label: "System" }]}
-              onChange={(theme) => save({ theme }, `Theme: ${theme}`)}
-            />
-          </div>
+      <SettingsNav current={section} onOpen={open} />
+      <div className="col-span-12 space-y-5 xl:col-span-9" role="region" aria-label={title} data-testid={`settings-${section}`}>
+      {section === "profile" && (
+        <>
+          <section className="card rise-in p-5" style={stagger(1)} aria-labelledby="profile-title">
+            <h2 id="profile-title" className="card-title mb-4">Your body & goal</h2>
+            <ProfileForm initial={p} submitLabel="Save profile" onSaved={() => { toast("Profile saved", "info"); profile.reload(); onChanged(); }} />
+            <p className="mt-4 text-sm text-muted">
+              Daily target: {kcal(p.energy.kcal_target)} kcal and {p.energy.protein_target_g} g protein (an estimate).
+              {tdee.data?.target_source === "adaptive" && <> This week it follows your weigh-ins and meals: {kcal(tdee.data.target_kcal)} kcal.</>}
+            </p>
+            <details className="mt-2 text-xs text-muted">
+              <summary className="cursor-pointer text-accent">Details</summary>
+              <p className="mt-1">Resting burn (BMR) {kcal(p.energy.bmr)} kcal · daily burn (TDEE) {kcal(p.energy.tdee)} kcal, from the Mifflin-St Jeor formula and your activity level.</p>
+            </details>
+          </section>
+          <section className="card rise-in space-y-4 p-5" style={stagger(2)} aria-labelledby="privacy-title" id="privacy">
+            <h2 id="privacy-title" className="card-title">Privacy & photos</h2>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Hide calories
+                <br />
+                <span className="text-xs text-muted">Hides calorie numbers across the app. Targets still work underneath; protein stays visible.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.hide_calories)}
+                onChange={(e) => save({ hide_calories: e.target.checked }, e.target.checked ? "Calories hidden" : "Calories shown")} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Progress photo feedback (local AI)
+                <br />
+                <span className="text-xs text-muted">Off by default. Compares two of your photos on this PC. Never estimates body fat or weight, never comments on looks. Not available under 18.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.photo_feedback)} data-testid="photo-feedback-toggle"
+                disabled={p.age < 18}
+                onChange={(e) => save({ photo_feedback: e.target.checked }, e.target.checked ? "Photo feedback: on" : "Photo feedback: off")} />
+            </label>
+            {p.age < 18 && <p className="text-xs text-muted" data-testid="photo-feedback-minor">Photo feedback is off for under-18s.</p>}
+          </section>
+        </>
+      )}
+      {section === "trainer" && (
+        <>
+          <section className="card rise-in space-y-4 p-5" style={stagger(1)} aria-labelledby="trainer-title" id="trainer">
+            <h2 id="trainer-title" className="card-title">Your trainer</h2>
+            <label className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-3 text-sm text-ink">
+                <TrainerPortrait mood="neutral" size={40} />
+                <span>
+                  Trainer voice
+                  <br />
+                  <span className="text-xs text-muted">{trainer.name} speaks your insights. Off shows the same facts in plain System style.</span>
+                </span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.trainer !== false}
+                onChange={(e) => save({ trainer: e.target.checked }, e.target.checked ? "Trainer: on" : "Trainer: off (plain mode)")} />
+            </label>
+            <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
+            <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />
+          </section>
+          <AiSetupPanel aiEnabled={Boolean(aiEnabled)} onToggleAi={onToggleAi} onChanged={onChanged} />
+        </>
+      )}
+      {section === "appearance" && (
+        <section className="card rise-in space-y-5 p-5" style={stagger(1)} aria-labelledby="appearance-title">
+          <h2 id="appearance-title" className="card-title">Appearance & sound</h2>
+          <ThemePicker onSave={save} />
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">
               Reduce motion
               <br />
-              <span className="text-xs text-muted">No tilt, flips, count-ups or celebrations. Your Windows animation setting is always honoured.</span>
+              <span className="text-xs text-muted">No particles, tilt, flips, count-ups or celebrations. Your Windows animation setting is always honoured.</span>
             </span>
-            <input
-              type="checkbox"
-              className="h-5 w-5 shrink-0 accent-accent"
-              checked={Boolean(settings.reduce_motion)}
-              onChange={(e) => save({ reduce_motion: e.target.checked }, e.target.checked ? "Reduce motion: on" : "Reduce motion: off")}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-3 text-sm text-ink">
-              <TrainerPortrait mood="neutral" size={40} />
-              <span>
-                Trainer
-                <br />
-                <span className="text-xs text-muted">{trainer.name} speaks your insights. Off shows the same facts in plain System style.</span>
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              className="h-5 w-5 shrink-0 accent-accent"
-              checked={settings.trainer !== false}
-              onChange={(e) => save({ trainer: e.target.checked }, e.target.checked ? "Trainer: on" : "Trainer: off (plain mode)")}
-            />
+            <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.reduce_motion)}
+              onChange={(e) => save({ reduce_motion: e.target.checked }, e.target.checked ? "Reduce motion: on" : "Reduce motion: off")} />
           </label>
           <SoundSettings />
         </section>
-      </div>
-      <div className="col-span-12 space-y-5 md:col-span-6 2xl:col-span-7">
-        <section className="card rise-in space-y-4 p-5" style={stagger(4)} aria-labelledby="trainer-title" id="trainer">
-          <h2 id="trainer-title" className="card-title">Your trainer</h2>
-          <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
-          <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />
-        </section>
-        <section className="card rise-in space-y-4 p-5" style={stagger(4)} aria-labelledby="privacy-title" id="privacy">
-          <h2 id="privacy-title" className="card-title">Privacy & photos</h2>
-          <label className="flex items-center justify-between gap-4">
-            <span className="text-sm text-ink">
-              Hide calories
-              <br />
-              <span className="text-xs text-muted">Hides calorie numbers across the app. Targets still work underneath; protein stays visible.</span>
-            </span>
-            <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.hide_calories)}
-              onChange={(e) => save({ hide_calories: e.target.checked }, e.target.checked ? "Calories hidden" : "Calories shown")} />
-          </label>
-          <label className="flex items-center justify-between gap-4">
-            <span className="text-sm text-ink">
-              Progress photo feedback (local AI)
-              <br />
-              <span className="text-xs text-muted">Off by default. Compares two of your photos with a vision model on this PC. Never estimates body fat or weight, never comments on looks. Not available under 18.</span>
-            </span>
-            <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.photo_feedback)} data-testid="photo-feedback-toggle"
-              disabled={p.age < 18}
-              onChange={(e) => save({ photo_feedback: e.target.checked }, e.target.checked ? "Photo feedback: on" : "Photo feedback: off")} />
-          </label>
-          {p.age < 18 && <p className="text-xs text-muted" data-testid="photo-feedback-minor">Photo feedback is off for under-18s.</p>}
-        </section>
-        <section className="card rise-in space-y-4 p-5" style={stagger(4)} aria-labelledby="units-title">
+      )}
+      {section === "units" && (
+        <section className="card rise-in space-y-4 p-5" style={stagger(1)} aria-labelledby="units-title">
           <h2 id="units-title" className="card-title">Units & training</h2>
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">Units</span>
-            <Segmented
-              label="Units"
-              value={settings.units}
+            <Segmented label="Units" value={settings.units}
               options={[{ value: "metric", label: "kg · cm · km" }, { value: "imperial", label: "lb · in · mi" }]}
-              onChange={(units) => save({ units }, units === "metric" ? "Units: metric" : "Units: imperial")}
-            />
+              onChange={(units) => save({ units }, units === "metric" ? "Units: metric" : "Units: imperial")} />
           </div>
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm text-ink">
               Training days per week
               <br />
-              <span className="text-xs text-muted">Used by the weekly review to judge adherence.</span>
+              <span className="text-xs text-muted">Used by the weekly review to judge how your week went.</span>
             </span>
-            <select
-              className="input w-20"
-              value={settings.sessions_per_week}
-              onChange={(e) => save({ sessions_per_week: Number(e.target.value) }, "Training days saved")}
-            >
-              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
+            <select className="input w-20" value={settings.sessions_per_week}
+              onChange={(e) => save({ sessions_per_week: Number(e.target.value) }, "Training days saved")}>
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </label>
         </section>
-        <section className="card rise-in p-5" style={stagger(5)} aria-labelledby="data-title">
-          <h2 id="data-title" className="card-title mb-2">Your data</h2>
-          <p className="mb-3 text-sm text-muted">Import history from Strong or Hevy, or export everything you logged.</p>
-          <button type="button" className="btn-ghost" onClick={onOpenData}><IconDatabase width={16} height={16} /> Open Import & export</button>
-        </section>
-        {onErased && <EraseDataPanel onErased={onErased} />}
-        <section className="card rise-in p-5" style={stagger(5)} aria-labelledby="numbers-title" id="todays-numbers">
-          <h2 id="numbers-title" tabIndex={-1} className="card-title mb-1 outline-none">Today&apos;s numbers</h2>
-          <p className="mb-3 text-sm text-muted">Every number on Today, the engine that computed it and the data behind it. Numbers marked rough rest on too little data so far.</p>
-          <NumbersToggle />
-        </section>
-        <BackupsPanel style={stagger(6)} />
-        <section className="card rise-in p-5" style={stagger(6)} aria-labelledby="keys-title">
-          <h2 id="keys-title" className="card-title mb-3">Keyboard shortcuts</h2>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
-            {SHORTCUTS.map(([keys, what]) => (
-              <div key={keys} className="contents">
-                <dt><kbd className="chip font-mono">{keys}</kbd></dt>
-                <dd className="text-muted">{what}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-        <section className="card rise-in p-5 text-xs leading-relaxed text-muted" style={stagger(7)} aria-labelledby="about-title">
-          <h2 id="about-title" className="card-title mb-2">About</h2>
-          ASCEND {__APP_VERSION__} · MIT licence · © the ASCEND team.<br />
-          Muscle map: ASCEND's own anatomical artwork (54 muscles and heads).<br />
-          Trainer: Instructor Iskra Vey, an original character made for ASCEND (see ART_PROVENANCE.md).<br />
-          Food values: approximate, IFCT 2017 / INDB-style.<br />
-          TDEE (Mifflin-St Jeor), e1RM (Epley) and burn (MET) are estimates.
-        </section>
-      </div>
+      )}
+      {section === "data" && (
+        <>
+          <DataPage onChanged={onChanged} onOpenHistory={onOpenHistory ?? (() => { window.location.hash = "history"; })} />
+          <BackupsPanel style={stagger(2)} />
+          {onErased && <EraseDataPanel onErased={onErased} />}
+        </>
+      )}
+      {section === "advanced" && (
+        <>
+          <section className="card rise-in p-5" style={stagger(1)} aria-labelledby="numbers-title" id="todays-numbers">
+            <h2 id="numbers-title" tabIndex={-1} className="card-title mb-1 outline-none">Today&apos;s numbers</h2>
+            <p className="mb-3 text-sm text-muted">Every number on Today, how it was worked out and the data behind it. Numbers marked rough rest on too little data so far.</p>
+            <NumbersToggle />
+          </section>
+          <OnlineResearch enabled={Boolean(settings.online_lookup)} onChange={(on) => save({ online_lookup: on }, on ? "Online research: on" : "Online research: off")} />
+          <section className="card rise-in p-5" style={stagger(3)} aria-labelledby="keys-title">
+            <h2 id="keys-title" className="card-title mb-3">Keyboard shortcuts</h2>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
+              {SHORTCUTS.map(([keys, what]) => (
+                <div key={keys} className="contents">
+                  <dt><kbd className="chip font-mono">{keys}</kbd></dt>
+                  <dd className="text-muted">{what}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+          <section className="card rise-in p-5 text-xs leading-relaxed text-muted" style={stagger(4)} aria-labelledby="about-title">
+            <h2 id="about-title" className="card-title mb-2">About</h2>
+            ASCEND {__APP_VERSION__} · MIT licence · © the ASCEND team.<br />
+            Muscle map: ASCEND&apos;s own anatomical artwork (54 muscles and heads).<br />
+            Trainers, themes and bosses: original art made for ASCEND.<br />
+            Food values: approximate, from IFCT 2017 and food labels.<br />
+            Calorie burn, daily targets and strength estimates are estimates.
+          </section>
+        </>
+      )}
       </div>
     </PageGrid>
   );
 }
-
-const SECTIONS: [string, string][] = [
-  ["profile-title", "Profile & targets"],
-  ["ai-title", "AI setup"],
-  ["online-title", "Online research"],
-  ["appearance-title", "Appearance"],
-  ["trainer-title", "Your trainer"],
-  ["privacy-title", "Privacy & photos"],
-  ["units-title", "Units & training"],
-  ["data-title", "Your data"],
-  ["erase-title-section", "Start fresh"],
-  ["numbers-title", "Today's numbers"],
-  ["backups-title", "Backups"],
-  ["keys-title", "Keyboard shortcuts"],
-  ["about-title", "About"],
-];
 
 /** The audit table loads on request, so opening Settings stays one quick request. */
 function NumbersToggle() {
@@ -250,21 +254,17 @@ function NumbersToggle() {
   );
 }
 
-/** Section index (sticky on wide windows): jumps to a section and moves focus to its heading. */
-function SettingsNav() {
-  function go(id: string) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView?.({ block: "start" });
-    el.setAttribute("tabindex", "-1");
-    el.focus({ preventScroll: true });
-  }
+/** Section index (sticky on wide windows): shows one section at a time. */
+function SettingsNav({ current, onOpen }: { current: SettingsSection; onOpen: (s: SettingsSection) => void }) {
   return (
     <nav className="col-span-12 xl:col-span-3" aria-label="Settings sections">
       <ul className="card rise-in flex flex-wrap gap-1 p-2 xl:sticky xl:top-0 xl:flex-col" style={stagger(0)}>
         {SECTIONS.map(([id, label]) => (
           <li key={id}>
-            <button type="button" className="w-full rounded-md px-3 py-1.5 text-left text-sm text-muted hover:bg-panel-2 hover:text-ink" onClick={() => go(id)}>{label}</button>
+            <button type="button" aria-current={current === id ? "page" : undefined} onClick={() => onOpen(id)}
+              className={`w-full rounded-md px-3 py-1.5 text-left text-sm ${current === id ? "bg-accent/10 font-medium text-accent" : "text-muted hover:bg-panel-2 hover:text-ink"}`}>
+              {label}
+            </button>
           </li>
         ))}
       </ul>

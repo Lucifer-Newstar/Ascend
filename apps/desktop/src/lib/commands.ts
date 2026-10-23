@@ -37,8 +37,7 @@ export const PAGE_WORDS: { page: Page; label: string; words: string[] }[] = [
   { page: "planner", label: "Planner", words: ["planner", "plan", "plans", "program", "meal plan"] },
   { page: "profile", label: "Profile", words: ["profile", "photos", "gallery", "achievements", "hunter"] },
   { page: "history", label: "History", words: ["history", "calendar", "past"] },
-  { page: "data", label: "Import & export", words: ["import", "export", "data", "backup", "csv"] },
-  { page: "settings", label: "Settings", words: ["settings", "preferences", "prefs", "options", "units"] },
+  { page: "settings", label: "Settings", words: ["settings", "preferences", "prefs", "options", "units", "import", "export", "data", "backup", "csv", "theme", "themes"] },
 ];
 
 const LB = 0.45359237;

@@ -73,9 +73,9 @@ export const SECTION_TOURS: Record<string, Tour> = {
     main("Profile", "Your Hunter card, achievements to share as a card, and private progress photos."),
   ] },
   history: { id: "history", page: "history", steps: [main("History", "Every past day: sessions, sets, meals and weigh-ins. Click a day to edit.")] },
-  data: { id: "data", page: "data", steps: [main("Import & export", "Bring in Strong or Hevy CSVs (with a dry run first) or export everything.")] },
+  data: { id: "data", page: "settings", steps: [main("Data & backups", "Settings > Data & backups: bring in Strong or Hevy CSVs (with a dry run first), export everything, or restore a backup.")] },
   settings: { id: "settings", page: "settings", steps: [
-    main("Settings", "Profile and targets, AI setup, appearance, units and backups."),
+    main("Settings", "Six sections: profile, trainer, appearance and themes, units, data and backups, advanced."),
     main("Start fresh", "Erase my data deletes your logs after a backup and keeps the exercise library."),
   ] },
 };

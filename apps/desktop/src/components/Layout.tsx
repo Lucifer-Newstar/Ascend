@@ -1,11 +1,11 @@
 import { useEffect, useRef, type JSX, type ReactNode } from "react";
 
-import { IconBowl, IconChart, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconProfile, IconSettings, IconSkill } from "./Icons";
+import { IconBowl, IconChart, IconDashboard, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconProfile, IconSettings, IconSkill } from "./Icons";
 import { PAGE_KEYS } from "../lib/shortcuts";
 import { ThemeAmbience } from "./ThemeAmbience";
 import { TrainerToggle } from "./Trainer";
 
-export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "data" | "settings";
+export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "settings";
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
   { id: "dashboard", label: "Today", icon: IconDashboard },
@@ -17,7 +17,6 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
   { id: "planner", label: "Planner", icon: IconPlanner },
   { id: "profile", label: "Profile", icon: IconProfile },
   { id: "history", label: "History", icon: IconHistory },
-  { id: "data", label: "Import & export", icon: IconDatabase },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 

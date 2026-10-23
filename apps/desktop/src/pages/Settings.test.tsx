@@ -7,7 +7,7 @@ import { ToastProvider } from "../components/Toast";
 import { DEFAULT_SETTINGS, PrefsProvider } from "../lib/prefs";
 import { expectNoAxeViolations } from "../test/axe";
 import { api } from "../api/client";
-import { SettingsPage } from "./Settings";
+import { SettingsPage, sectionFromHash } from "./Settings";
 
 vi.mock("../api/client", () => ({
   api: {
@@ -22,47 +22,92 @@ vi.mock("../api/client", () => ({
     clearOnlineLog: vi.fn().mockResolvedValue(undefined),
     tdee: vi.fn().mockResolvedValue({ algo_version: "tdee-v1", target_source: "adaptive", target_kcal: 2790 }),
     aiSetup: vi.fn().mockRejectedValue(new Error("engine offline")),
+    themes: vi.fn().mockResolvedValue([
+      { key: "shadow", name: "Shadow", tagline: "Night dungeon", free: true, unlocked: true, requirement: "Free", progress: "" },
+      { key: "dark", name: "Dark", tagline: "The original look, dark", free: true, unlocked: true, requirement: "Free", progress: "" },
+      { key: "light", name: "Light", tagline: "The original look, light", free: true, unlocked: true, requirement: "Free", progress: "" },
+      { key: "crimson", name: "Crimson Gate", tagline: "A red battlefield", free: false, unlocked: false, requirement: "Reach a 7-day streak", progress: "Best streak 2 of 7 days" },
+    ]),
   },
 }));
 
-function setup(save: (p: Partial<Settings>) => Promise<Settings>, onOpenData = () => {}) {
+function setup(save: (p: Partial<Settings>) => Promise<Settings>, initial: Settings = DEFAULT_SETTINGS) {
   return render(
-    <PrefsProvider initial={DEFAULT_SETTINGS} save={save}>
+    <PrefsProvider initial={initial} save={save}>
       <ToastProvider>
-        <SettingsPage onToggleAi={() => {}} onChanged={() => {}} onOpenData={onOpenData} />
+        <SettingsPage onToggleAi={() => {}} onChanged={() => {}} />
       </ToastProvider>
     </PrefsProvider>,
   );
 }
 
+async function openSection(name: string) {
+  const nav = await screen.findByRole("navigation", { name: "Settings sections" });
+  await userEvent.click(within(nav).getByRole("button", { name }));
+}
+
 describe("SettingsPage", () => {
   beforeEach(() => {
     document.documentElement.removeAttribute("data-theme");
+    window.history.replaceState(null, "", "#settings");
   });
 
-  it("saves the light theme and applies it to <html>", async () => {
+  it("has six sections and shows one at a time", async () => {
+    setup(vi.fn());
+    const nav = await screen.findByRole("navigation", { name: "Settings sections" });
+    expect(within(nav).getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "Profile", "Trainer", "Appearance & sound", "Units", "Data & backups", "Advanced",
+    ]);
+    expect(screen.getByRole("region", { name: "Profile" })).toBeInTheDocument();
+    await openSection("Units");
+    expect(screen.getByRole("region", { name: "Units" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Profile" })).toBeNull();
+    expect(window.location.hash).toBe("#settings/units");
+  });
+
+  it("opens a section from the address", () => {
+    expect(sectionFromHash("#settings/data")).toBe("data");
+    expect(sectionFromHash("#settings")).toBe("profile");
+    expect(sectionFromHash("#settings/nope")).toBe("profile");
+  });
+
+  it("picks a theme, shows locked ones with what earns them, and applies it to <html>", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
-    await screen.findByRole("heading", { name: "Appearance" });
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    await userEvent.click(screen.getByLabelText("Light"));
+    await openSection("Appearance & sound");
+    const crimson = await screen.findByTestId("theme-crimson");
+    expect(crimson).toBeDisabled();
+    expect(crimson).toHaveTextContent("Reach a 7-day streak");
+    expect(crimson).toHaveTextContent("Best streak 2 of 7 days");
+    expect(document.documentElement.dataset.theme).toBe("shadow");
+    await userEvent.click(screen.getByTestId("theme-light"));
     expect(save).toHaveBeenCalledWith({ theme: "light" });
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe("light"));
-    expect(screen.getByLabelText("Light")).toBeChecked();
+  });
+
+  it("dims or turns off the background art on a v1.2 theme", async () => {
+    const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
+    setup(save);
+    await openSection("Appearance & sound");
+    await userEvent.click(await screen.findByLabelText("Dim"));
+    expect(save).toHaveBeenCalledWith({ background_art: "dim" });
+    await waitFor(() => expect(document.documentElement.dataset.art).toBe("dim"));
   });
 
   it("switches units and training days", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
+    await openSection("Units");
     await userEvent.click(await screen.findByLabelText("lb · in · mi"));
     expect(save).toHaveBeenCalledWith({ units: "imperial" });
     await userEvent.selectOptions(screen.getByRole("combobox", { name: /training days/i }), "5");
     expect(save).toHaveBeenCalledWith({ sessions_per_week: 5 });
   });
 
-  it("asks for consent before turning on online research", async () => {
+  it("asks for consent before turning on online research (Advanced)", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
+    await openSection("Advanced");
     const toggle = await screen.findByRole("checkbox", { name: /research exercises you add on wger.de and wikipedia/i });
     expect(toggle).not.toBeChecked();
     await userEvent.click(toggle);
@@ -85,6 +130,7 @@ describe("SettingsPage", () => {
         sources: [{ source: "wger", url: "https://wger.de/api/v2/exercise-translation/?name=spoto+press", status: "not_found" }, { source: "wger", url: "https://wger.de/api/v2/exercise-translation/?name=Spoto+Press", status: "ok" }, { source: "wikipedia", url: "https://en.wikipedia.org/api/rest_v1/page/summary/Spoto_press", status: "not_found" }] },
     ]).mockResolvedValueOnce([]);
     const { container } = setup(vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p })));
+    await openSection("Advanced");
     expect(await screen.findByText("“spoto press”")).toBeInTheDocument();
     expect(screen.getByText(/wger.de, Wikipedia/)).toBeInTheDocument();
     expect(screen.getByText("found")).toBeInTheDocument();
@@ -97,6 +143,7 @@ describe("SettingsPage", () => {
   it("turns on Reduce motion and mirrors it onto <html data-motion>", async () => {
     const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
     setup(save);
+    await openSection("Appearance & sound");
     const toggle = await screen.findByRole("checkbox", { name: /reduce motion/i });
     expect(toggle).not.toBeChecked();
     expect(document.documentElement.dataset.motion).toBe("full");
@@ -106,46 +153,31 @@ describe("SettingsPage", () => {
     expect(toggle).toBeChecked();
   });
 
-  it("groups appearance apart from units and training", async () => {
-    setup(vi.fn());
-    const appearance = await screen.findByRole("region", { name: "Appearance" });
-    expect(within(appearance).getByRole("group", { name: "Theme" })).toBeInTheDocument();
-    expect(within(appearance).getByRole("checkbox", { name: /reduce motion/i })).toBeInTheDocument();
-    const units = screen.getByRole("region", { name: "Units & training" });
-    expect(within(units).getByRole("group", { name: "Units" })).toBeInTheDocument();
-    expect(within(units).getByRole("combobox", { name: /training days/i })).toBeInTheDocument();
-  });
-
   it("keeps the old value when saving fails", async () => {
     const save = vi.fn().mockRejectedValue(new Error("engine offline"));
     setup(save);
-    await userEvent.click(await screen.findByLabelText("Light"));
+    await openSection("Units");
+    await userEvent.click(await screen.findByLabelText("lb · in · mi"));
     expect(await screen.findByText("engine offline")).toBeInTheDocument();
-    expect(screen.getByLabelText("Dark")).toBeChecked();
+    expect(screen.getByLabelText("kg · cm · km")).toBeChecked();
   });
 
-  it("links to the Import & export page", async () => {
-    const open = vi.fn();
-    setup(vi.fn(), open);
-    await userEvent.click(await screen.findByRole("button", { name: /open import & export/i }));
-    expect(open).toHaveBeenCalled();
+  it("has one trainer voice switch, in the Trainer section", async () => {
+    setup(vi.fn());
+    await openSection("Trainer");
+    expect(await screen.findAllByRole("checkbox", { name: /trainer voice/i })).toHaveLength(1);
+  });
+
+  it("keeps the formula numbers behind Details", async () => {
+    setup(async (p) => ({ ...DEFAULT_SETTINGS, ...p }));
+    expect(await screen.findByText(/This week it follows your weigh-ins and meals: 2,790 kcal/)).toBeInTheDocument();
+    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.queryByText(/tdee-v1/)).toBeNull(); // no version tags
   });
 
   it("has no axe violations", async () => {
     const { container } = setup(vi.fn());
-    await screen.findByRole("heading", { name: "Appearance" });
+    await screen.findByRole("heading", { name: "Your body & goal" });
     await expectNoAxeViolations(container);
-  });
-
-  it("indexes every section and jumps to one", async () => {
-    setup(vi.fn());
-    const nav = await screen.findByRole("navigation", { name: "Settings sections" });
-    await userEvent.click(within(nav).getByRole("button", { name: "Keyboard shortcuts" }));
-    expect(screen.getByRole("heading", { name: "Keyboard shortcuts" })).toHaveFocus();
-  });
-
-  it("names this week's adaptive target beside the formula estimate", async () => {
-    setup(async (p) => ({ ...DEFAULT_SETTINGS, ...p }));
-    expect(await screen.findByText(/this week's adaptive target 2,790 kcal \(tdee-v1/)).toBeInTheDocument();
   });
 });

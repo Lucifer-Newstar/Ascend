@@ -12,7 +12,8 @@ describe("pageForKey", () => {
     expect(pageForKey(key("3", { ctrlKey: true }))).toBe("library");
     expect(pageForKey(key("4", { ctrlKey: true }))).toBe("skills");
     expect(pageForKey(key("7", { ctrlKey: true }))).toBe("planner");
-    expect(pageForKey(key("9", { ctrlKey: true }))).toBe("data");
+    expect(pageForKey(key("8", { ctrlKey: true }))).toBe("profile");
+    expect(pageForKey(key("9", { ctrlKey: true }))).toBe("history");
     expect(pageForKey(key("0", { ctrlKey: true }))).toBe("settings");
     expect(PAGE_KEYS).toHaveLength(10);
   });

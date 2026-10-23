@@ -21,7 +21,6 @@ import { DashboardPage } from "./pages/Dashboard";
 
 // The Dashboard is the first screen, so it ships in the main chunk; every other page
 // (and first-run onboarding) is its own chunk, loaded from disk the first time it opens.
-const DataPage = lazy(() => import("./pages/Data").then((m) => ({ default: m.DataPage })));
 const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.DietPage })));
 const SkillsPage = lazy(() => import("./pages/Skills").then((m) => ({ default: m.SkillsPage })));
 const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default: m.LibraryPage })));
@@ -43,7 +42,6 @@ const TITLES: Record<Page, string> = {
   planner: "Planner",
   profile: "Profile",
   history: "History",
-  data: "Import & export",
   settings: "Settings",
 };
 
@@ -66,8 +64,10 @@ async function waitForEngine(timeoutMs = 30_000): Promise<void> {
 
 export function pageFromHash(hash: string): Page {
   // "#skills/front_lever" opens the Skills page; the page reads the rest itself.
-  const fromHash = hash.replace("#", "").split("/")[0] as Page;
-  return fromHash in TITLES ? fromHash : "dashboard";
+  const fromHash = hash.replace("#", "").split("/")[0];
+  // v1.2: the 1.1 "Import & export" page is Settings > Data & backups now.
+  if (fromHash === "data") return "settings";
+  return fromHash in TITLES ? (fromHash as Page) : "dashboard";
 }
 
 const initialPage = (): Page => pageFromHash(window.location.hash);
@@ -230,8 +230,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
       {page === "planner" && <PlannerPage onChanged={bump} />}
       {page === "profile" && <ProfilePage refreshKey={refreshKey} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
-      {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
-      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} onErased={erased} />}
+      {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenHistory={() => navigate("history")} onErased={erased} />}
       </Suspense>
       </div>
     </Layout>
