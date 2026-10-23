@@ -5,7 +5,7 @@
  * navigation and new windows blocked, and the renderer can only reach the
  * sidecar through the typed IPC channels in @ascend/shared (IPC).
  */
-import { app, BrowserWindow, clipboard, ClipboardItem, dialog, ipcMain, nativeImage, shell } from "electron";
+import { app, BrowserWindow, clipboard, ClipboardItem, dialog, ipcMain, nativeImage, powerSaveBlocker, shell } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -123,11 +123,31 @@ function registerIpc(): void {
     return true;
   });
 
+  // The full-screen timer keeps the screen awake (no dimming or sleep) until it ends.
+  // One blocker at most; anything but a strict true releases it.
+  ipcMain.handle(IPC.keepAwake, (_e, on: unknown) => {
+    if (on === true) {
+      if (awakeBlocker === null || !powerSaveBlocker.isStarted(awakeBlocker)) {
+        awakeBlocker = powerSaveBlocker.start("prevent-display-sleep");
+      }
+      return true;
+    }
+    releaseAwake();
+    return false;
+  });
+
   ipcMain.handle(IPC.appInfo, () => ({
     version: app.getVersion(),
     platform: process.platform,
     electron: process.versions.electron,
   }));
+}
+
+let awakeBlocker: number | null = null;
+
+function releaseAwake(): void {
+  if (awakeBlocker !== null && powerSaveBlocker.isStarted(awakeBlocker)) powerSaveBlocker.stop(awakeBlocker);
+  awakeBlocker = null;
 }
 
 // One running instance only: a second launch focuses the existing window.
@@ -148,7 +168,10 @@ if (!app.requestSingleInstanceLock()) {
     }
   });
 
-  app.on("window-all-closed", () => app.quit());
+  app.on("window-all-closed", () => {
+    releaseAwake();
+    app.quit();
+  });
   app.on("before-quit", (e) => {
     if (sidecar.getStatus().state === "stopped") return;
     e.preventDefault();

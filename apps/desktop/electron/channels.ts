@@ -13,4 +13,5 @@ export const IPC = {
   imageSave: "image:save",
   clipboardWrite: "clipboard:write",
   shareOpen: "share:open",
+  keepAwake: "power:keep-awake",
 } as const satisfies typeof SharedIPC;

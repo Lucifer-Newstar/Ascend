@@ -14,6 +14,7 @@ export const IPC = {
   imageSave: "image:save",
   clipboardWrite: "clipboard:write",
   shareOpen: "share:open",
+  keepAwake: "power:keep-awake",
 } as const;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -80,4 +81,9 @@ export interface AscendBridge {
   copyToClipboard(req: ClipboardWriteRequest): Promise<boolean>;
   /** Open an allowlisted share link (X's post composer) in the default browser. */
   openShareLink(url: string): Promise<boolean>;
+  /**
+   * Keep the screen awake (true) or let it sleep again (false), for the full-screen
+   * timer. Resolves to whether the screen is being kept awake now.
+   */
+  keepAwake(on: boolean): Promise<boolean>;
 }
