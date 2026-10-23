@@ -18,6 +18,14 @@
   the detail view says so. Entries with no fitting photo (levers, planche, flags, martial
   arts, meditation...) and custom exercises get a designed tile in the renderer
   (`apps/desktop/src/components/ExerciseArt.tsx`), never an empty box.
+- **Animations (v1.2):** 25 moves (22 library moves and the Jab-Cross Shadow, Front Kick and
+  Roundhouse Kick drills) also ship `<slug>-anim.webp`: a 320x213 looping animated webp at
+  10 fps, about 100-120 KB each, listed in `apps/desktop/src/lib/animations.ts`. Each was
+  made on 2026-10-23 with a hosted image-to-video model, using the move's two library photos
+  as the first and last frame, then played forward and back as a loop. The three drills had
+  no photo, so their start and end frames were first drawn in the library's photo style; they
+  ship as `<slug>.webp` and `<slug>-2.webp`. Every loop was checked frame by frame for the same
+  person throughout and no warped limbs; under reduced motion the still first frame shows.
 - **Rebuild:** `python scripts/build_exercise_library.py` (needs network access once).
 
 The mapping onto ASCEND's 19 muscle regions, sections and movement patterns is in
