@@ -26,6 +26,7 @@ const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.Die
 const SkillsPage = lazy(() => import("./pages/Skills").then((m) => ({ default: m.SkillsPage })));
 const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default: m.LibraryPage })));
 const HistoryPage = lazy(() => import("./pages/History").then((m) => ({ default: m.HistoryPage })));
+const PlannerPage = lazy(() => import("./pages/Planner").then((m) => ({ default: m.PlannerPage })));
 const ProgressPage = lazy(() => import("./pages/Progress").then((m) => ({ default: m.ProgressPage })));
 const Onboarding = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.Onboarding })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
@@ -38,6 +39,7 @@ const TITLES: Record<Page, string> = {
   skills: "Skills",
   progress: "Progress",
   diet: "Fuel",
+  planner: "Planner",
   history: "History",
   data: "Import & export",
   settings: "Settings",
@@ -151,6 +153,9 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
       navigate(a.target as Page);
     } else if (a.kind === "tour") {
       startTour(a.target);
+    } else if (a.kind === "planner") {
+      setChatOpen(false);
+      navigate("planner");
     } else if (a.kind === "trainer_picker") {
       setChatOpen(false);
       navigate("settings");
@@ -189,7 +194,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
       aiState={aiState} aiModel={coach.data?.model} command={<CommandButton onOpen={() => setCommandOpen(true)} />}
       trainer={<TrainerChatButton icon={trainerById(settings.trainer_id).icon} name={trainerById(settings.trainer_id).name} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
       <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction}
-        supports={["navigate", "tour", "trainer_picker"]} question={chatQuestion} onAsked={() => setChatQuestion(null)} onActionDone={bump} />
+        supports={["navigate", "tour", "trainer_picker", "planner"]} question={chatQuestion} onAsked={() => setChatQuestion(null)} onActionDone={bump} />
       {tour && <TourOverlay tour={tour} onDone={() => { void api.updateTrainerState({ tour_done: tour.id }).catch(() => undefined); setTour(null); }} />}
       {trainerState.data && !trainerState.data.onboarded && !welcomeDone && !tour && (
         <FirstRunCard state={trainerState.data} onDone={markOnboarded} onTour={() => { markOnboarded(); startTour("app"); }} onErased={erased} />
@@ -205,6 +210,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased }: { page: Page; nav
       {page === "skills" && <SkillsPage onNavigate={navigate} onChanged={bump} />}
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
+      {page === "planner" && <PlannerPage onChanged={bump} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "data" && <DataPage onChanged={bump} onOpenHistory={() => navigate("history")} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenData={() => navigate("data")} onErased={erased} />}

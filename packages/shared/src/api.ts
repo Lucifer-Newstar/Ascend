@@ -1163,6 +1163,130 @@ export interface ActionProposal {
   undone_at: string | null;
 }
 
+// --- planner (docs/contracts/planner.yaml) ------------------------------------------------
+
+export type PlanFocus = "strength" | "muscle" | "fat_loss" | "skills" | "general";
+export type PlanExperience = "beginner" | "intermediate" | "advanced";
+export type PlanEquipment = "none" | "pullup_bar" | "rings" | "dumbbells" | "gym";
+export type DietKind = "veg" | "egg" | "nonveg";
+
+export interface PlanFlag {
+  code: string;
+  severity: "info" | "warn" | "block";
+  message: string;
+  numbers?: Record<string, number>;
+}
+
+export interface GoalCheckIn {
+  weight_kg?: number | null;
+  target_weight_kg?: number | null;
+  weeks?: number | null;
+  kcal?: number | null;
+  protein_g?: number | null;
+  days_per_week?: number | null;
+  minutes?: number | null;
+  experience?: PlanExperience | null;
+}
+
+export interface GoalCheck {
+  flags: PlanFlag[];
+  worst: "info" | "warn" | "block" | null;
+  algo_version: string;
+}
+
+export interface PlanSlot {
+  exercise: string;
+  exercise_id?: number | null;
+  sets: number;
+  rep_low: number;
+  rep_high: number;
+  target_rpe?: number;
+  rest_s?: number;
+}
+
+export interface PlanDayDraft {
+  key: string;
+  name: string;
+  focus?: string;
+  weekday: number;
+  slots: PlanSlot[];
+}
+
+export interface ProgramDraft {
+  name: string;
+  summary?: string;
+  level?: string;
+  equipment?: string;
+  days: PlanDayDraft[];
+  notes?: string[];
+}
+
+export interface WorkoutPlanIn {
+  focus: PlanFocus;
+  experience?: PlanExperience | null;
+  days_per_week: number;
+  minutes: number;
+  equipment?: PlanEquipment[] | null;
+  use_ai?: boolean;
+}
+
+export interface WorkoutPlan {
+  draft: ProgramDraft;
+  flags: PlanFlag[];
+  phrased_by: string;
+  algo_version: string;
+}
+
+export interface CustomProgram extends ProgramDraft {
+  id: number;
+  key: string;
+  algo_version: string;
+  created_at: string;
+  updated_at: string;
+  following: boolean;
+}
+
+export interface DietPlanFood {
+  food: string;
+  portions: number;
+  portion_label: string;
+  kcal: number;
+  protein_g: number;
+}
+
+export interface DietPlanMeal {
+  meal: string;
+  items: DietPlanFood[];
+  kcal: number;
+  protein_g: number;
+}
+
+export interface DietPlanDay {
+  day: number;
+  meals: DietPlanMeal[];
+  kcal: number;
+  protein_g: number;
+}
+
+export interface DietPlan {
+  kcal_target: number;
+  protein_target_g: number;
+  diet: DietKind;
+  days: DietPlanDay[];
+  notes: string[];
+  flags: PlanFlag[];
+  phrased_by: string;
+  algo_version: string;
+}
+
+export interface SavedDiet {
+  id: number;
+  name: string;
+  created_at: string;
+  active: boolean;
+  plan: DietPlan;
+}
+
 // --- AI setup (ai-tiers-v1) ------------------------------------------------------------
 
 export interface AiSetup {

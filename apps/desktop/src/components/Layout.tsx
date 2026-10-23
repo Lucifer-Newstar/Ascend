@@ -1,9 +1,9 @@
 import { useEffect, useRef, type JSX, type ReactNode } from "react";
 
-import { IconBowl, IconChart, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconSettings, IconSkill } from "./Icons";
+import { IconBowl, IconChart, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconSettings, IconSkill } from "./Icons";
 import { TrainerToggle } from "./Trainer";
 
-export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "history" | "data" | "settings";
+export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "history" | "data" | "settings";
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
   { id: "dashboard", label: "Today", icon: IconDashboard },
@@ -12,13 +12,14 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
   { id: "skills", label: "Skills", icon: IconSkill },
   { id: "progress", label: "Progress", icon: IconChart },
   { id: "diet", label: "Fuel", icon: IconBowl },
+  { id: "planner", label: "Planner", icon: IconPlanner },
   { id: "history", label: "History", icon: IconHistory },
   { id: "data", label: "Import & export", icon: IconDatabase },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
 /** Nav groups: a thin divider after these items (order and Ctrl+1…0 stay as before). */
-const GROUP_ENDS = new Set<Page>(["skills", "diet", "history"]);
+const GROUP_ENDS = new Set<Page>(["skills", "planner", "history"]);
 
 export type AiState = "on" | "rules" | "off";
 

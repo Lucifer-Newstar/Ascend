@@ -73,3 +73,9 @@ export const IconSkill = (p: P) => (
 export const IconLock = (p: P) => (
   <svg {...base} {...p}><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
 );
+export const IconPlanner = (p: P) => (
+  <svg {...base} {...p}><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6" /></svg>
+);
+export const IconProfile = (p: P) => (
+  <svg {...base} {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
+);
