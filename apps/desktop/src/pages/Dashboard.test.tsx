@@ -16,6 +16,7 @@ vi.mock("../api/client", () => ({
   api: {
     dashboard: vi.fn(), stats: vi.fn(), coachTip: vi.fn(), weeklyReview: vi.fn(), completeQuest: vi.fn(),
     checkinToday: vi.fn(), checkin: vi.fn(), deload: vi.fn(), startDeload: vi.fn(), muscleActivity: vi.fn(), updateSettings: vi.fn(),
+    currentPlan: vi.fn(),
     boss: vi.fn(() => Promise.reject(new Error("not needed"))), titles: vi.fn(() => Promise.resolve([])), profile: vi.fn(() => Promise.resolve({ name: "Navin" })),
   },
 }));
@@ -53,11 +54,14 @@ const stats: Stats = {
 
 const tip: CoachReply = { source: "rules", text: "Train legs today.", tip_code: "under_quads", model: null, fallback_reason: "ai_disabled" };
 
-function renderPage(onNavigate = vi.fn()) {
+const MORNING = () => new Date(2026, 9, 20, 8, 0);
+const EVENING = () => new Date(2026, 9, 20, 19, 0);
+
+function renderPage(onNavigate = vi.fn(), now = MORNING) {
   return render(
     <PrefsProvider initial={{ ...DEFAULT_SETTINGS, reduce_motion: true }} save={vi.fn()}>
       <ToastProvider>
-        <DashboardPage refreshKey={0} onOpenChat={vi.fn()} onNavigate={onNavigate} />
+        <DashboardPage refreshKey={0} onNavigate={onNavigate} now={now} />
       </ToastProvider>
     </PrefsProvider>,
   );
@@ -73,6 +77,7 @@ describe("Today (Hunter HQ)", () => {
     vi.mocked(api.checkinToday).mockResolvedValue(null);
     vi.mocked(api.deload).mockResolvedValue({ recommended: false, kind: "none", training_weeks: 1, signals: [], guidance: null, deload_week: null, algo_version: "d" });
     vi.mocked(api.muscleActivity).mockResolvedValue([]);
+    vi.mocked(api.currentPlan).mockResolvedValue(null);
   });
 
   it("leads with the Daily Quest window and the Status panel, and starts the session", async () => {
@@ -107,6 +112,34 @@ describe("Today (Hunter HQ)", () => {
     const quest = await screen.findByRole("region", { name: "Daily quest" });
     const checkin = await screen.findByRole("form", { name: "Morning check-in" });
     expect(quest.compareDocumentPosition(checkin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hides the check-in after noon", async () => {
+    renderPage(vi.fn(), EVENING);
+    await screen.findByRole("region", { name: "Daily quest" });
+    expect(screen.queryByRole("heading", { name: "Morning check-in" })).toBeNull();
+  });
+
+  it("keeps Today to the quest, status, today's workout and the boss", async () => {
+    const nav = vi.fn();
+    renderPage(nav, EVENING);
+    const workout = await screen.findByTestId("today-workout");
+    expect(await within(workout).findByText("No program yet.")).toBeInTheDocument();
+    await userEvent.click(within(workout).getByRole("button", { name: "Pick a program" }));
+    expect(nav).toHaveBeenCalledWith("workout");
+    for (const gone of ["Fuel", "Muscle recovery", "Quick log"]) expect(screen.queryByRole("heading", { name: gone })).toBeNull();
+  });
+
+  it("shows the next session of the program followed", async () => {
+    vi.mocked(api.currentPlan).mockResolvedValue({
+      name: "Bodyweight Starter", next: { key: "a", name: "Starter A", focus: "Full body", weekday: 0, items: [
+        { exercise_id: 1, exercise: "Plank", sets: 2, rep_low: 20, rep_high: 30, target_rpe: 7, rest_s: 60, measure: "hold" },
+      ] },
+    } as never);
+    renderPage(vi.fn(), EVENING);
+    const workout = await screen.findByTestId("today-workout");
+    expect(await within(workout).findByText("Starter A")).toBeInTheDocument();
+    expect(workout).toHaveTextContent("2 × 20–30 s");
   });
 });
 

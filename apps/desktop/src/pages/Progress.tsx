@@ -11,6 +11,7 @@ import { api } from "../api/client";
 import { BarChart, LineChart } from "../components/charts";
 import { InsightsPanel } from "../components/DietCards";
 import { IconTrophy } from "../components/Icons";
+import { MuscleMap } from "../components/MuscleMap";
 import { KpiStrip, KpiTile, Panel, PageGrid } from "../components/Page";
 import { DeloadCard, WeeklyReviewCard } from "../components/PlanCards";
 import { Segmented } from "../components/Segmented";
@@ -74,6 +75,8 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
       </Panel>
 
       <InsightsPanel refreshKey={refreshKey + tick} index={6} />
+
+      <RecoveryPanel refreshKey={refreshKey + tick} />
 
       <KeyLiftsPanel prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} refreshKey={refreshKey} />
       <MuscleBandPanel refreshKey={refreshKey + tick} />
@@ -421,6 +424,18 @@ function MeasurementsCard({ refreshKey, units }: { refreshKey: number; units: Un
           </form>
         </div>
       )}
+    </Panel>
+  );
+}
+
+/** v1.2: the muscle recovery map moved here from Today. */
+function RecoveryPanel({ refreshKey }: { refreshKey: number }) {
+  const muscles = useApi(api.muscles, [refreshKey]);
+  return (
+    <Panel id="recovery" index={7} className="col-span-12" title="Muscle recovery"
+      action={<span className="text-[11px] text-muted">Hover for sets and last trained · click for details (estimates)</span>}
+      loading={muscles.loading && !muscles.data} error={!muscles.data ? muscles.error ?? null : null} onRetry={muscles.reload} skeletonLines={6}>
+      {muscles.data && <MuscleMap muscles={muscles.data} refreshKey={refreshKey} />}
     </Panel>
   );
 }

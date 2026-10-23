@@ -21,6 +21,7 @@ vi.mock("../api/client", () => ({
     logMeasurement: vi.fn(),
     updateSettings: vi.fn(),
     muscles: vi.fn(),
+    muscleActivity: vi.fn().mockResolvedValue([]),
     progression: vi.fn(),
     dietInsights: vi.fn(),
     insightExplanation: vi.fn(),
