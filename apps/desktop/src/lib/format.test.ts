@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { count, dateLabel, dayLabel, kcal, pct, portionLabel, readyAtLabel } from "./format";
+import { count, dateLabel, dayLabel, kcal, pct, portionLabel, readyAtLabel, dateRange } from "./format";
 
 describe("pct", () => {
   it("clamps to 0..1", () => {
@@ -39,5 +39,14 @@ describe("count", () => {
     expect(count(0, "set")).toBe("0 sets");
     expect(count(12, "rep")).toBe("12 reps");
     expect(count(1, "hard set")).toBe("1 hard set");
+  });
+});
+
+describe("dateRange", () => {
+  const today = new Date(2026, 9, 23);
+  it("leaves the year out inside this year and adds it when either end is in another year", () => {
+    expect(dateRange("2026-11-24", "2026-12-15", today)).toBe("24 Nov – 15 Dec");
+    expect(dateRange("2027-11-24", "2028-08-15", today)).toBe("24 Nov 2027 – 15 Aug 2028");
+    expect(dateRange("2026-12-20", "2027-01-10", today)).toBe("20 Dec 2026 – 10 Jan 2027");
   });
 });

@@ -18,7 +18,7 @@ import { Segmented } from "../components/Segmented";
 import { Empty } from "../components/States";
 import { useToast } from "../components/Toast";
 import { WeeklyRecapPanel } from "../components/WeeklyRecap";
-import { count } from "../lib/format";
+import { count, dateRange } from "../lib/format";
 import { usePrefs } from "../lib/prefs";
 import { formatLength, formatWeight, fromDisplayWeight, toDisplayWeight, weightUnit } from "../lib/units";
 import { useApi } from "../lib/useApi";
@@ -53,7 +53,7 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
           value={latest ? formatWeight(latest.trend_kg, units) : "–"}
           sub={latest && first && series.length > 1 ? `${signed(toDisplayWeight(latest.trend_kg - first.trend_kg, units))} ${weightUnit(units)} over ${count(series.length, "weigh-in")}` : "Log a weigh-in to start the trend"} />
         <KpiTile index={1} label="Goal ETA (estimate)" loading={eta.loading && !eta.data} tone={eta.data?.eta_from ? "accent" : "ink"}
-          value={eta.data?.eta_from && eta.data.eta_to ? `${shortDate(eta.data.eta_from)} – ${shortDate(eta.data.eta_to)}` : "–"}
+          value={eta.data?.eta_from && eta.data.eta_to ? dateRange(eta.data.eta_from, eta.data.eta_to) : "–"}
           sub={eta.data?.goal_kg ? `to ${formatWeight(eta.data.goal_kg, units)}` : "No goal weight set"} />
         <KpiTile index={2} label="This week" loading={weeks.loading && !weeks.data}
           value={thisWeek ? count(thisWeek.sessions, "session") : "–"}
@@ -215,7 +215,7 @@ function EtaCard({ eta, units, profile, onSaved }: { eta: Eta; units: Units; pro
         {eta.eta_from && eta.eta_to ? (
           <>
             <div className="text-xs text-muted">Estimated arrival</div>
-            <div className="mt-0.5 text-lg font-semibold text-accent">{shortDate(eta.eta_from)} – {shortDate(eta.eta_to)}</div>
+            <div className="mt-0.5 text-lg font-semibold text-accent">{dateRange(eta.eta_from, eta.eta_to)}</div>
           </>
         ) : (
           <div className="text-sm text-muted">{eta.reason ?? "Not enough data for an estimate yet."}</div>
