@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class QuestItemOut(BaseModel):
@@ -21,11 +21,18 @@ class QuestItemOut(BaseModel):
 
 
 class StreakOut(BaseModel):
+    """v1.2: a missed day is kept with a reason given by the next day (no more freezes)."""
+
     current: int
     best: int
-    freezes_held: int
-    freezes_used: int
+    excused: int = 0
     active_today: bool
+    reason_due: date | None = None
+
+
+class StreakReasonIn(BaseModel):
+    day: date
+    reason: str = Field(min_length=1, max_length=120)
 
 
 class XpOut(BaseModel):
@@ -41,7 +48,7 @@ class XpOut(BaseModel):
 
 
 class CalmStreakOut(BaseModel):
-    """Days in a row with at least one meditation sit (same freeze rules)."""
+    """Days in a row with at least one meditation sit (same reason rule)."""
 
     current: int
     best: int

@@ -15,6 +15,8 @@ from app.modules.gamification.schemas import (
     QuestItemOut,
     StatOut,
     StatsOut,
+    StreakOut,
+    StreakReasonIn,
     ThemeOut,
     TitleOut,
 )
@@ -29,6 +31,20 @@ def summary(
     now: datetime = Depends(get_now),
 ) -> GameSummary:
     return service.summary(db, bus, now)
+
+
+@router.post("/streak/reason", response_model=StreakOut)
+def streak_reason(
+    body: StreakReasonIn,
+    db: Session = Depends(get_db),
+    now: datetime = Depends(get_now),
+) -> StreakOut:
+    """v1.2: say why a day was missed. Given by the end of the next day, it keeps the
+    streak; two missed days in a row still reset it."""
+    try:
+        return service.streak_out(service.give_reason(db, body.day, body.reason, now))
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
 
 
 @router.post("/quests/{item_id}/complete", response_model=QuestItemOut)

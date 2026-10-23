@@ -60,3 +60,15 @@ class BossRaid(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
     defeated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class StreakReason(Base):
+    """v1.2: why a day was missed. A reason given by the end of the next day keeps the
+    streak (see streaks.py); the words stay on your machine like everything else."""
+
+    __tablename__ = "streak_reasons"
+
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    reason: Mapped[str] = mapped_column(String(120))
+    given_on: Mapped[date] = mapped_column(Date)
+    given_at: Mapped[datetime] = mapped_column(DateTime)

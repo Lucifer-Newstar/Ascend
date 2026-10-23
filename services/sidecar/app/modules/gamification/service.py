@@ -155,8 +155,15 @@ def active_days(db: Session) -> set[date]:
     return days
 
 
+def streak_reasons(db: Session) -> dict[date, date]:
+    """Missed day -> the day its reason was given."""
+    from app.modules.gamification.models import StreakReason
+
+    return {r.day: r.given_on for r in db.scalars(select(StreakReason)).all()}
+
+
 def streak(db: Session, today: date) -> StreakState:
-    return compute_streak(active_days(db), today)
+    return compute_streak(active_days(db), today, streak_reasons(db))
 
 
 def calm_days(db: Session) -> set[date]:
@@ -173,7 +180,7 @@ def calm_days(db: Session) -> set[date]:
 
 
 def calm_streak(db: Session, today: date) -> StreakState:
-    return compute_streak(calm_days(db), today)
+    return compute_streak(calm_days(db), today, streak_reasons(db))
 
 
 # --- quests --------------------------------------------------------------------
@@ -448,6 +455,38 @@ def add_skill_items(
 # --- summary ---------------------------------------------------------------------
 
 
+def streak_out(s: StreakState) -> StreakOut:
+    return StreakOut(
+        current=s.current,
+        best=s.best,
+        excused=s.excused,
+        active_today=s.active_today,
+        reason_due=s.reason_due,
+    )
+
+
+def give_reason(db: Session, day: date, reason: str, now: datetime) -> StreakState:
+    """Record why `day` was missed. Only yesterday (or today, ahead of time) can get one:
+    the rule is "by the next day". Raises ValueError for anything else."""
+    from app.modules.gamification.models import StreakReason
+
+    today = now.date()
+    text = " ".join(reason.split())[:120]
+    if not text:
+        raise ValueError("Say a few words about why.")
+    if day not in (today - timedelta(days=1), today):
+        raise ValueError("A reason counts for yesterday only (by the end of the next day).")
+    if day in active_days(db):
+        raise ValueError("That day already counts: nothing to explain.")
+    row = db.get(StreakReason, day)
+    if row is None:
+        db.add(StreakReason(day=day, reason=text, given_on=today, given_at=now))
+    else:
+        row.reason, row.given_on, row.given_at = text, today, now
+    db.commit()
+    return streak(db, today)
+
+
 def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
     refresh_quest(db, bus, now)
     total = total_xp(db)
@@ -467,13 +506,7 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
             daily_cap=f.DAILY_CAP,
             formula_version=f.FORMULA_VERSION,
         ),
-        streak=StreakOut(
-            current=s.current,
-            best=s.best,
-            freezes_held=s.freezes_held,
-            freezes_used=s.freezes_used,
-            active_today=s.active_today,
-        ),
+        streak=streak_out(s),
         calm=CalmStreakOut(current=c.current, best=c.best, active_today=c.active_today),
         quest=[QuestItemOut.model_validate(q) for q in ensure_quest(db, now)],
     )

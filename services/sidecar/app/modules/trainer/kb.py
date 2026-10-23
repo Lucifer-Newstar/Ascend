@@ -95,9 +95,9 @@ ENTRIES: tuple[Entry, ...] = (
     Entry(
         "streak",
         "How do streaks work?",
-        ("streak", "streaks", "freeze", "freezes"),
-        "Any day you train or log counts toward your streak. Streak freezes, earned over time, "
-        "cover a missed day automatically.",
+        ("streak", "streaks", "freeze", "freezes", "missed", "skip"),
+        "Any day you train or log counts toward your streak. Missed a day? Tell me why by the "
+        "next day and the streak is kept. Two missed days in a row, or no reason, reset it.",
         "dashboard",
     ),
     Entry(
