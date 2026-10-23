@@ -14,6 +14,11 @@ dependencies = [
     "httpx>=0.27",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Lucifer-Newstar/Ascend-"
+Repository = "https://github.com/Lucifer-Newstar/Ascend-.git"
+Issues = "https://github.com/Lucifer-Newstar/Ascend-/issues"
+
 [dependency-groups]
 dev = [
     "pytest>=8.2",

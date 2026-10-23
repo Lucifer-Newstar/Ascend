@@ -3,7 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "description": "ASCEND: an offline desktop fitness RPG (Electron + React + FastAPI sidecar)",
+  "homepage": "https://github.com/Lucifer-Newstar/Ascend-#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lucifer-Newstar/Ascend-.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lucifer-Newstar/Ascend-/issues"
+  },
   "license": "MIT",
+  "author": "The ASCEND team",
   "workspaces": [
     "apps/desktop",
     "packages/shared"
