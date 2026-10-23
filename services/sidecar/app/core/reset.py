@@ -61,6 +61,13 @@ def erase_user_data(
     counts["custom_exercises"] = (
         db.execute(delete(Exercise).where(Exercise.is_custom.is_(True))).rowcount or 0  # type: ignore[attr-defined]
     )
+    # v1.2: foods the user added are user data as well (their meals are gone by now).
+    from app.modules.nutrition.models import Food
+    from app.modules.nutrition.service import CUSTOM_SOURCE
+
+    counts["custom_foods"] = (
+        db.execute(delete(Food).where(Food.source == CUSTOM_SOURCE)).rowcount or 0  # type: ignore[attr-defined]
+    )
     db.commit()
     if data_dir is not None:
         photos = data_dir / PHOTOS_DIR

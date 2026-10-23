@@ -23,6 +23,18 @@ class FoodOut(BaseModel):
     source: str
 
 
+class FoodIn(StrictIn):
+    """A food the user adds themselves; nutrients are per ONE portion."""
+
+    name: str = Field(min_length=1, max_length=80)
+    portion_label: str = Field(default="1 portion", min_length=1, max_length=30)
+    portion_g: float = Field(default=100, gt=0, le=2000)
+    kcal: float = Field(ge=0, le=3000)
+    protein_g: float = Field(default=0, ge=0, le=300)
+    carbs_g: float = Field(default=0, ge=0, le=500)
+    fat_g: float = Field(default=0, ge=0, le=300)
+
+
 class MealItemIn(StrictIn):
     food_id: int
     portions: float = Field(gt=0, le=20)

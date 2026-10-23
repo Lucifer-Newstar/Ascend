@@ -9,18 +9,66 @@ from sqlalchemy.orm import Session
 
 from app.core.events import EventBus, MealLogged
 from app.modules.nutrition.models import Food, Meal, MealItem
-from app.modules.nutrition.schemas import MealIn, MealOut, Totals
+from app.modules.nutrition.schemas import FoodIn, MealIn, MealOut, Totals
 
 
 class NotFound(Exception):
     pass
 
 
+class Conflict(Exception):
+    pass
+
+
+# v1.2: foods the user adds themselves carry this source (the reference table has the rest).
+CUSTOM_SOURCE = "custom"
+
+
+def add_food(db: Session, data: FoodIn) -> Food:
+    """A food of the user's own ("add my own food"), searchable and loggable like the rest."""
+    name = data.name.strip()
+    taken = db.scalars(select(Food).where(func.lower(Food.name) == name.lower())).first()
+    if taken is not None:
+        raise Conflict(f"'{taken.name}' is already in the food list")
+    food = Food(
+        name=name,
+        portion_label=data.portion_label.strip(),
+        portion_g=data.portion_g,
+        kcal=data.kcal,
+        protein_g=data.protein_g,
+        carbs_g=data.carbs_g,
+        fat_g=data.fat_g,
+        source=CUSTOM_SOURCE,
+    )
+    db.add(food)
+    db.flush()
+    return food
+
+
+def delete_food(db: Session, food_id: int) -> None:
+    """Remove one of the user's own foods. Built-in foods stay; a food already logged in a
+    meal stays too (the meal keeps its numbers either way)."""
+    food = db.get(Food, food_id)
+    if food is None:
+        raise NotFound(f"food {food_id} not found")
+    if food.source != CUSTOM_SOURCE:
+        raise Conflict("only foods you added yourself can be removed")
+    if db.scalars(select(MealItem.id).where(MealItem.food_id == food_id)).first() is not None:
+        raise Conflict(f"'{food.name}' is in a logged meal, so it stays")
+    db.delete(food)
+
+
 def search_foods(db: Session, q: str = "", limit: int = 50) -> list[Food]:
-    stmt = select(Food).order_by(Food.name).limit(limit)
-    if q:
-        stmt = stmt.where(Food.name.ilike(f"%{q}%"))
-    return list(db.scalars(stmt).all())
+    """Foods whose name contains every word typed (so "chicken breast" finds "Chicken
+    breast (grilled)"); names that start with the query come first."""
+    words = [w for w in q.lower().split() if w]
+    stmt = select(Food).order_by(Food.name)
+    for w in words:
+        stmt = stmt.where(Food.name.ilike(f"%{w}%"))
+    rows = list(db.scalars(stmt).all())
+    if words:
+        rows.sort(key=lambda f: (not f.name.lower().startswith(q.lower().strip()), f.name))
+    return rows[:limit]
 
 
 def log_meal(db: Session, bus: EventBus, data: MealIn, now: datetime) -> Meal:

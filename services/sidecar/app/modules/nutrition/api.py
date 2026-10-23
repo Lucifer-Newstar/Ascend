@@ -10,7 +10,7 @@ from app.core.events import EventBus
 from app.modules.gamification import service as game
 from app.modules.intelligence import diet_service
 from app.modules.nutrition import service
-from app.modules.nutrition.schemas import DayLog, FoodOut, MealIn, MealLoggedOut
+from app.modules.nutrition.schemas import DayLog, FoodIn, FoodOut, MealIn, MealLoggedOut
 from app.modules.progress import service as progress
 
 router = APIRouter(tags=["nutrition"])
@@ -19,6 +19,27 @@ router = APIRouter(tags=["nutrition"])
 @router.get("/foods", response_model=list[FoodOut])
 def search_foods(q: str = "", db: Session = Depends(get_db)) -> list[FoodOut]:
     return [FoodOut.model_validate(f) for f in service.search_foods(db, q)]
+
+
+@router.post("/foods", response_model=FoodOut, status_code=201)
+def add_food(body: FoodIn, db: Session = Depends(get_db)) -> FoodOut:
+    """Add a food of your own (v1.2 "add my own food"); it is searchable and loggable at once."""
+    try:
+        return FoodOut.model_validate(service.add_food(db, body))
+    except service.Conflict as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@router.delete("/foods/{food_id}", status_code=204)
+def delete_food(food_id: int, db: Session = Depends(get_db)) -> Response:
+    """Remove a food you added (built-in foods and foods already in a meal stay)."""
+    try:
+        service.delete_food(db, food_id)
+    except service.NotFound as e:
+        raise HTTPException(404, str(e)) from e
+    except service.Conflict as e:
+        raise HTTPException(409, str(e)) from e
+    return Response(status_code=204)
 
 
 @router.post("/meals", response_model=MealLoggedOut, status_code=201)
