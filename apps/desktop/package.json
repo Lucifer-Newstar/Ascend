@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@ascend/shared": "0.3.0",
-    "@electron/fuses": "^1.8.0",
+    "@electron/fuses": "^2.1.3",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/dom": "^10.4.2",
