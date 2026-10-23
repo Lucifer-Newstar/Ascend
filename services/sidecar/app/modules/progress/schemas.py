@@ -139,6 +139,9 @@ class SettingsOut(BaseModel):
     pet: str = ""
     weapon: str = ""
     themed_cosmetics: bool = True
+    # v1.2: the trainer's reminders (today's workout, a missed day's reason, streak at
+    # risk, water, check-in) as a desktop notification and a bubble on Today.
+    reminders: bool = True
 
 
 class SettingsIn(StrictIn):
@@ -161,6 +164,7 @@ class SettingsIn(StrictIn):
     pet: CosmeticId | None = None
     weapon: CosmeticId | None = None
     themed_cosmetics: bool | None = None
+    reminders: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

@@ -145,3 +145,9 @@ def test_the_avatar_follows_the_profile_until_you_pick_one(client: TestClient, p
     s = client.put("/settings", json={"outfit": "", "themed_cosmetics": False}).json()
     assert s["outfit"] == "" and s["themed_cosmetics"] is False
     assert client.put("/settings", json={"outfit": "../evil"}).status_code == 422
+
+
+def test_reminders_are_on_until_switched_off(client: TestClient) -> None:
+    assert client.get("/settings").json()["reminders"] is True
+    assert client.put("/settings", json={"reminders": False}).json()["reminders"] is False
+    assert client.get("/settings").json()["reminders"] is False

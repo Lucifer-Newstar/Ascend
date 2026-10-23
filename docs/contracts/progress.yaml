@@ -1220,6 +1220,11 @@ components:
           - type: boolean
           - type: 'null'
           title: Themed Cosmetics
+        reminders:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Reminders
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1316,6 +1321,10 @@ components:
         themed_cosmetics:
           type: boolean
           title: Themed Cosmetics
+          default: true
+        reminders:
+          type: boolean
+          title: Reminders
           default: true
       type: object
       required:

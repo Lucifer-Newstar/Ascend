@@ -136,6 +136,7 @@ def read_settings(db: Session) -> SettingsOut:
         pet=get_setting(db, "pet", ""),
         weapon=get_setting(db, "weapon", ""),
         themed_cosmetics=get_setting(db, "themed_cosmetics", "true") == "true",
+        reminders=get_setting(db, "reminders", "true") == "true",
     )
 
 

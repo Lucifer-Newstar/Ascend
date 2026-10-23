@@ -38,6 +38,7 @@ def test_ai_toggle_round_trip(client):
         "pet": "",
         "weapon": "",
         "themed_cosmetics": True,
+        "reminders": True,
     }
     assert client.get("/settings").json() == defaults
     assert client.put("/settings", json={"ai_enabled": True}).json() == {
@@ -69,6 +70,7 @@ def test_settings_partial_update_keeps_other_values(client):
         "pet": "",
         "weapon": "",
         "themed_cosmetics": True,
+        "reminders": True,
     }
 
 
