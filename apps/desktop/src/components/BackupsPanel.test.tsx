@@ -10,7 +10,7 @@ const B = (reason: string, created_at: string) => ({
   sha256: "x".repeat(64),
   created_at,
   schema_revision: "0017",
-  app_version: "0.3.0",
+  app_version: "1.0.0",
   reason,
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "@ascend/shared",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Types shared by the Electron main process, preload and React renderer",
   "license": "MIT",

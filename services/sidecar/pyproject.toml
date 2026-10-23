@@ -1,6 +1,6 @@
 [project]
 name = "ascend-sidecar"
-version = "0.3.0"
+version = "1.0.0"
 description = "ASCEND local API: workouts, nutrition, gamification, progress and coach modules"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
