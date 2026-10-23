@@ -6,8 +6,8 @@
 # Electron code, then electron-builder packs both into an NSIS installer.
 #
 # On a version tag the installer is also published to a GitHub Release (the CD
-# step, job "publish"), so anyone can download ASCEND-Setup from the repo's Releases
-# page. On main and manual runs it stays a workflow artifact (Actions -> run -> Artifacts).
+# step, job "publish") with SHA256SUMS.txt and the notes from docs/releases/<tag>.md,
+# so anyone can download ASCEND-Setup from the repo's Releases page. On main and manual runs it stays a workflow artifact (Actions -> run -> Artifacts).
 #
 # Permissions: the workflow token is read-only. Only the publish job, which runs on
 # version tags alone and executes no repository code, gets contents: write.
@@ -92,18 +92,41 @@ jobs:
     permissions:
       contents: write   # create the Release and upload the installer to it
     steps:
+      # Only the release notes are read from the repository; no repository code runs here.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: docs/releases
+          persist-credentials: false
+
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ascend-windows-installer-${{ github.ref_name }}-${{ github.sha }}
           path: installer
 
+      - name: SHA-256 checksums
+        working-directory: installer
+        run: |
+          sha256sum *.exe > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # Notes come from docs/releases/<tag>.md when that file exists, else GitHub generates
+      # them. A release created by hand before this run is updated instead of failing.
       - name: Create or update the release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
         run: |
-          gh release create "${{ github.ref_name }}" installer/*.exe \
-            --repo "${{ github.repository }}" \
-            --title "ASCEND ${{ github.ref_name }}" \
-            --generate-notes \
-            || gh release upload "${{ github.ref_name }}" installer/*.exe \
-                 --repo "${{ github.repository }}" --clobber
+          notes="docs/releases/${TAG}.md"
+          if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            gh release upload "$TAG" installer/*.exe installer/SHA256SUMS.txt --repo "$REPO" --clobber
+            if [ -f "$notes" ]; then
+              gh release edit "$TAG" --repo "$REPO" --title "ASCEND $TAG" --notes-file "$notes"
+            fi
+          elif [ -f "$notes" ]; then
+            gh release create "$TAG" installer/*.exe installer/SHA256SUMS.txt --repo "$REPO" \
+              --verify-tag --title "ASCEND $TAG" --notes-file "$notes"
+          else
+            gh release create "$TAG" installer/*.exe installer/SHA256SUMS.txt --repo "$REPO" \
+              --verify-tag --title "ASCEND $TAG" --generate-notes
+          fi
