@@ -53,4 +53,4 @@ Use **Ollama** (installed by the user, `127.0.0.1:11434`) as the model runtime.
 | gemma3:4b | Multimodal and 140+ languages per its card, but 3.3 GB is tight on 4 GB; Gemma terms. Backup candidate. |
 | qwen2.5:3b / qwen2.5-vl:3b | Research/non-commercial licence on the 3B models. |
 | llama.cpp server bundled in the app | More control, but we would own GPU builds and model management; revisit if Ollama becomes a problem. |
-| Hosted API (OpenAI, Gemini) | Violates offline-first (ADR-0009). |
+| Hosted cloud LLM API | Violates offline-first (ADR-0009). |
