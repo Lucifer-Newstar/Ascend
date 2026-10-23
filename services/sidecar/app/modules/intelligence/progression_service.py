@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.intelligence import progression as prog
+from app.modules.intelligence import recovery as rec
 from app.modules.intelligence import recovery_service
 from app.modules.intelligence.models import ProgressionDecision
 from app.modules.workouts.models import Exercise, Workout, WorkoutSet
@@ -63,13 +64,22 @@ def history(
     return [prog.SessionRec(at, tuple(sets)) for at, sets in by.values()]
 
 
-def primary_readiness(db: Session, e: Exercise, now: datetime) -> tuple[float | None, str | None]:
+def primary_readiness(
+    db: Session,
+    e: Exercise,
+    now: datetime,
+    recovery: list[rec.MuscleRecovery] | None = None,
+) -> tuple[float | None, str | None]:
+    """The readiness of the move's main muscle. `recovery` is the state list when the
+    caller already read it (a program day reads it once for all its moves)."""
     prim = [m.muscle for m in e.muscles if m.weight >= 1.0] or [
         m.muscle for m in e.muscles if m.weight >= 0.5
     ]
     if not prim:
         return None, None
-    states = {m.key: m for m in recovery_service.states(db, now)}
+    states = {
+        m.key: m for m in (recovery if recovery is not None else recovery_service.states(db, now))
+    }
     worst = min((states[m] for m in prim if m in states), key=lambda m: m.readiness, default=None)
     if worst is None or worst.last_trained is None:
         return None, None
@@ -149,12 +159,17 @@ def deloaded(t: prog.Target) -> prog.Target:
     )
 
 
-def next_target(db: Session, exercise_id: int, now: datetime) -> tuple[Exercise, prog.Target]:
+def next_target(
+    db: Session,
+    exercise_id: int,
+    now: datetime,
+    recovery: list[rec.MuscleRecovery] | None = None,
+) -> tuple[Exercise, prog.Target]:
     e = db.get(Exercise, exercise_id)
     if e is None:
         raise ExerciseMissing(f"exercise {exercise_id} not found")
     hist = history(db, exercise_id, now)
-    readiness, muscle = primary_readiness(db, e, now) if hist else (None, None)
+    readiness, muscle = primary_readiness(db, e, now, recovery) if hist else (None, None)
     t = prog.next_target(
         exercise_info(e),
         hist,

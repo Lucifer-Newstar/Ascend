@@ -7,10 +7,10 @@ import math
 from datetime import date, datetime
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, lazyload
 
 from app.modules.intelligence import progression as prog
-from app.modules.intelligence import progression_service
+from app.modules.intelligence import progression_service, recovery_service
 from app.modules.intelligence.schemas import Why
 from app.modules.workouts import equipment, programs
 from app.modules.workouts.models import Exercise, PlanEnrollment, Workout, WorkoutSet
@@ -22,7 +22,10 @@ class UnknownProgram(ValueError):
 
 
 def _library(db: Session) -> dict[str, Exercise]:
-    return {e.name: e for e in db.scalars(select(Exercise).where(Exercise.archived.is_(False)))}
+    # Names, gear and measure only: the muscle rows load later for the few moves that need
+    # them (eager-loading them for the whole library cost about 0.2 s per plan read).
+    q = select(Exercise).where(Exercise.archived.is_(False)).options(lazyload(Exercise.muscles))
+    return {e.name: e for e in db.scalars(q)}
 
 
 # v1.1 stored holds as "1-1" (one hold per set); v1.2 doses holds in seconds and shows an
@@ -183,12 +186,15 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
     nxt = _day_out(p.days[state.next_index], lib)
     open_sets = _open_sets(db)
     deload = progression_service.in_deload_week(db, now)
+    # Muscle recovery is read once for the whole day, not once per move (QA: the plan took
+    # about 0.3 s, mostly re-reading the same 21 days of sets for every exercise).
+    recovery = recovery_service.states(db, now)
     for item in nxt.items:
         if deload:  # deload-v2 week: half the sets (prog-v1 also drops the RPE to 7)
             item.sets = max(1, math.ceil(item.sets / 2))
         if item.exercise_id is None or item.measure == "time":
             continue  # time-based moves keep the program's minutes
-        _, t = progression_service.next_target(db, item.exercise_id, now)
+        _, t = progression_service.next_target(db, item.exercise_id, now, recovery)
         item.target = target_text(t, item.sets)
         item.target_reason = t.reason if item.target else None
         item.done_sets = open_sets.get(item.exercise_id, 0)

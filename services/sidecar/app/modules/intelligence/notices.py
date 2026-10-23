@@ -72,9 +72,10 @@ def _raised(db: Session, now: datetime) -> Notice | None:
     if w is None or w.finished_at is None:
         return None
     best: tuple[float, Notice] | None = None
+    recovery = recovery_service.states(db, now)
     for ex_id in sorted({s.exercise_id for s in w.sets}):
         try:
-            e, t = progression_service.next_target(db, ex_id, now)
+            e, t = progression_service.next_target(db, ex_id, now, recovery)
         except progression_service.ExerciseMissing:
             continue
         if t.change not in ("up_load", "advance"):
