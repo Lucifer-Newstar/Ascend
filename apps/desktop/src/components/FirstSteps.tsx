@@ -13,7 +13,7 @@ export function FirstSteps({ onNavigate }: { onNavigate: (p: Page) => void }) {
           <h2 id="first-steps-title" className="flex items-center gap-2 text-base font-semibold text-ink">
             <IconSpark width={16} height={16} className="text-accent" /> Welcome to ASCEND
           </h2>
-          <p className="mt-1 text-sm text-muted">Log one set and one meal to light up your rings, the muscle map and your first XP.</p>
+          <p className="mt-1 text-sm text-muted">Log one set and one meal to earn your first XP and hit this week's boss.</p>
         </div>
         <div className="flex gap-2">
           <button type="button" className="btn-primary" onClick={() => onNavigate("workout")}>
