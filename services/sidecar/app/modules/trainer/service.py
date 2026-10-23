@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
@@ -37,9 +37,11 @@ def _step_name(db: Session, skill_key: str, step_key: str) -> tuple[str, str]:
     return skill.name, step.name if step else step_key
 
 
-def photos_last_day(db: Session) -> tuple[bool, datetime | None]:
-    """(photos supported, the newest progress photo's date). Filled in by the photos module."""
-    return False, None
+def photos_last_day(db: Session) -> tuple[bool, date | None]:
+    """(photos supported, the newest progress photo's date)."""
+    from app.modules.photos import service as photos
+
+    return True, photos.last_photo(db)
 
 
 def facts(db: Session, now: datetime) -> monitor.Facts:
@@ -95,7 +97,7 @@ def facts(db: Session, now: datetime) -> monitor.Facts:
         unlocks=unlocks,
         boss=(raid.week_start, raid.name, raid.title) if raid else None,
         photos_supported=supported,
-        last_photo=last_photo.date() if last_photo else None,
+        last_photo=last_photo,
         program_done=program_done,
     )
 

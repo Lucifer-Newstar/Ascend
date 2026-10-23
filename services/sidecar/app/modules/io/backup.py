@@ -3,7 +3,8 @@
     ascend-20261020-091500.ascendbak
     ├── manifest.json   {"format": "ascendbak", "format_version": 1, "app_version", "schema",
     │                    "created_at", "files": {"ascend.db": {"sha256", "size"}}}
-    └── ascend.db       SQLite online-backup copy (safe while the app is running)
+    ├── ascend.db       SQLite online-backup copy (safe while the app is running)
+    └── photos/…        progress photos (v1.1), each listed in "files" with its checksum
 
 Backups live in `<data dir>/backups/`. Restore checks the manifest, every checksum and the
 schema revision (a backup from a newer app is refused), then copies the snapshot over the
@@ -14,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 import tempfile
 import zipfile
@@ -38,6 +40,8 @@ KEEP_DAILY = 14  # one automatic snapshot per day while the app runs, two weeks 
 # only exists so a crafted zip (a "zip bomb") can't fill the disk.
 MAX_DB_BYTES = 512 * 1024 * 1024
 MAX_MANIFEST_BYTES = 64 * 1024
+MAX_PHOTO_BYTES = 16 * 1024 * 1024
+PHOTO_NAME = re.compile(r"^photos/[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9a-f]{16}\.(jpg|png)$")
 
 
 class BackupError(ValueError):
@@ -87,10 +91,18 @@ def _schema_of(db_file: Path) -> str:
     return str(row[0]) if row else "none"
 
 
+def _photo_files(db_file: Path) -> list[Path]:
+    folder = db_file.parent / "photos"
+    if not folder.is_dir():
+        return []
+    return sorted(p for p in folder.iterdir() if PHOTO_NAME.match(f"photos/{p.name}"))
+
+
 def create_backup(
     db_file: Path, out_dir: Path, now: datetime, reason: str = "manual"
 ) -> BackupInfo:
-    """Snapshot `db_file` into a new .ascendbak in `out_dir` and return its details."""
+    """Snapshot `db_file` (and the progress photos beside it) into a new .ascendbak in
+    `out_dir` and return its details."""
     if not db_file.exists():
         raise BackupError("there is no database to back up yet")
     stamp = now.strftime("%Y%m%d-%H%M%S")
@@ -117,9 +129,16 @@ def create_backup(
             "reason": reason,
             "files": {DB_NAME: {"sha256": _sha256(snap), "size": snap.stat().st_size}},
         }
+        photos = _photo_files(db_file)
+        files = manifest["files"]
+        assert isinstance(files, dict)
+        for p in photos:
+            files[f"photos/{p.name}"] = {"sha256": _sha256(p), "size": p.stat().st_size}
         with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED) as z:
             z.writestr("manifest.json", json.dumps(manifest, indent=2))
             z.write(snap, DB_NAME)
+            for p in photos:
+                z.write(p, f"photos/{p.name}")
     return read_info(target)
 
 
@@ -316,8 +335,32 @@ def restore_backup(
         finally:
             dst.close()
             src.close()
+        _restore_photos(z, files, db_file.parent / "photos", Path(tmp))
     run_migrations(db_url)
     return info
+
+
+def _restore_photos(z: zipfile.ZipFile, files: dict[str, object], folder: Path, tmp: Path) -> None:
+    """Put back the photos a backup carries. A photo whose name or checksum is wrong is
+    skipped (the database row then shows it as missing) rather than failing the restore."""
+    for name, meta in files.items():
+        if not PHOTO_NAME.match(name) or not isinstance(meta, dict):
+            continue
+        try:
+            info = z.getinfo(name)
+        except KeyError:
+            continue
+        if info.file_size > MAX_PHOTO_BYTES:
+            continue
+        staged = tmp / Path(name).name
+        try:
+            _extract_capped(z, info, staged)
+        except BackupError:
+            continue
+        if staged.stat().st_size > MAX_PHOTO_BYTES or _sha256(staged) != meta.get("sha256"):
+            continue
+        folder.mkdir(parents=True, exist_ok=True)
+        staged.replace(folder / staged.name)
 
 
 def backup_if_behind(db_file: Path, out_dir: Path, now: datetime) -> BackupInfo | None:

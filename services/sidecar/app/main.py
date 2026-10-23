@@ -32,6 +32,7 @@ from app.modules.intelligence import recovery_service
 from app.modules.intelligence.api import router as intelligence_router
 from app.modules.io.api import router as io_router
 from app.modules.nutrition.api import router as nutrition_router
+from app.modules.photos.api import router as photos_router
 from app.modules.planner.api import router as planner_router
 from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
@@ -278,6 +279,7 @@ def create_app(
         trainer_router,
         selector_router,
         actions_router,
+        photos_router,
     ):
         app.include_router(router)
     return app

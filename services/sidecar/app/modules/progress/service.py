@@ -95,7 +95,13 @@ def read_settings(db: Session) -> SettingsOut:
         trainer=get_setting(db, "trainer", "true") == "true",
         trainer_id=cast(TrainerId, _trainer_id(get_setting(db, "trainer_id", "iskra"))),
         hide_calories=get_setting(db, "hide_calories", "false") == "true",
+        photo_feedback=get_setting(db, "photo_feedback", "false") == "true" and not _minor(db),
     )
+
+
+def _minor(db: Session) -> bool:
+    p = get_profile(db)
+    return p is not None and p.age < 18
 
 
 def _trainer_id(value: str) -> str:

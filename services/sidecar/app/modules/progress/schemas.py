@@ -120,6 +120,8 @@ class SettingsOut(BaseModel):
     trainer_id: TrainerId = "iskra"
     # v1.1: hide calorie numbers across the app (targets still work underneath).
     hide_calories: bool = False
+    # v1.1: local AI feedback on progress photos. Off by default; always off under 18.
+    photo_feedback: bool = False
 
 
 class SettingsIn(StrictIn):
@@ -134,6 +136,7 @@ class SettingsIn(StrictIn):
     trainer: bool | None = None
     trainer_id: TrainerId | None = None
     hide_calories: bool | None = None
+    photo_feedback: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

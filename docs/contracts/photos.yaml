@@ -1,0 +1,333 @@
+# ASCEND contract — photos
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — photos
+  version: 0.1.0
+  description: 'Progress photos (v1.1): dated photos kept as files in the data folder with their metadata removed,
+    included in backups, and an optional local vision comparison that is off by default and never runs for under-18s.
+    Owner: Jegatheesan (backend).'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: photos
+  description: Progress photos
+paths:
+  /photos:
+    get:
+      tags:
+      - photos
+      summary: List Photos
+      description: Every progress photo, newest first (metadata only; the image is /photos/{id}/file).
+      operationId: list_photos_photos_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PhotoOut'
+                type: array
+                title: Response List Photos Photos Get
+      x-status: implemented
+    post:
+      tags:
+      - photos
+      summary: Add Photo
+      description: Store a progress photo in the data folder with its metadata (EXIF, GPS) removed.
+      operationId: add_photo_photos_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhotoIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /photos/{photo_id}/file:
+    get:
+      tags:
+      - photos
+      summary: Photo File
+      description: The image itself, as stored (already without metadata). Also what Export saves.
+      operationId: photo_file_photos__photo_id__file_get
+      parameters:
+      - name: photo_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Photo Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            image/jpeg: {}
+            image/png: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /photos/{photo_id}:
+    delete:
+      tags:
+      - photos
+      summary: Delete Photo
+      description: Delete the photo and its file.
+      operationId: delete_photo_photos__photo_id__delete
+      parameters:
+      - name: photo_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Photo Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /photos/feedback/status:
+    get:
+      tags:
+      - photos
+      summary: Feedback Status
+      description: 'Whether AI photo feedback can run: the user''s switch, the age rule, the model.'
+      operationId: feedback_status_photos_feedback_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackStatus'
+      x-status: implemented
+  /photos/feedback:
+    post:
+      tags:
+      - photos
+      summary: Photo Feedback
+      description: 'Compare two photos with the local vision model. Never estimates body fat or weight,
+
+        never comments on looks; the reply passes a guard before you see it.'
+      operationId: photo_feedback_photos_feedback_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackOut'
+        '409':
+          description: Feedback is off or the model is missing
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: Per-launch token from Electron main.
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    FeedbackStatus:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+        available:
+          type: boolean
+          title: Available
+        model:
+          type: string
+          title: Model
+        reason:
+          type: string
+          title: Reason
+      type: object
+      required:
+      - enabled
+      - available
+      - model
+      - reason
+      title: FeedbackStatus
+    FeedbackOut:
+      properties:
+        text:
+          type: string
+          title: Text
+        guarded:
+          type: boolean
+          title: Guarded
+        model:
+          type: string
+          title: Model
+        version:
+          type: string
+          title: Version
+        is_ai:
+          type: boolean
+          title: Is Ai
+          default: true
+      type: object
+      required:
+      - text
+      - guarded
+      - model
+      - version
+      title: FeedbackOut
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    PhotoIn:
+      properties:
+        data_url:
+          type: string
+          minLength: 20
+          title: Data Url
+        taken_on:
+          type: string
+          format: date
+          title: Taken On
+        pose:
+          type: string
+          enum:
+          - front
+          - side
+          - back
+          - other
+          title: Pose
+          default: front
+        note:
+          type: string
+          maxLength: 200
+          title: Note
+          default: ''
+      additionalProperties: false
+      type: object
+      required:
+      - data_url
+      - taken_on
+      title: PhotoIn
+    PhotoOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        taken_on:
+          type: string
+          format: date
+          title: Taken On
+        pose:
+          type: string
+          title: Pose
+        note:
+          type: string
+          title: Note
+        mime:
+          type: string
+          title: Mime
+        bytes:
+          type: integer
+          title: Bytes
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - taken_on
+      - pose
+      - note
+      - mime
+      - bytes
+      - created_at
+      title: PhotoOut
+    FeedbackIn:
+      properties:
+        older_id:
+          type: integer
+          title: Older Id
+        newer_id:
+          type: integer
+          title: Newer Id
+      additionalProperties: false
+      type: object
+      required:
+      - older_id
+      - newer_id
+      title: FeedbackIn

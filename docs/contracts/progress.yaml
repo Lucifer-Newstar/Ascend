@@ -1117,6 +1117,11 @@ components:
           - type: boolean
           - type: 'null'
           title: Hide Calories
+        photo_feedback:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Photo Feedback
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1169,6 +1174,10 @@ components:
         hide_calories:
           type: boolean
           title: Hide Calories
+          default: false
+        photo_feedback:
+          type: boolean
+          title: Photo Feedback
           default: false
       type: object
       required:

@@ -63,7 +63,9 @@ Checked against the code in October 2026 (external review, see [SECURITY.md](../
    only behind a consent dialog in Settings, and is asked again per exercise in "Add your own
    exercise". It runs from the sidecar and sends only the exercise name (ADR-0013). A CI test runs the packaged app's E2E journey with outbound
    network blocked except `127.0.0.1` and fails on any other connection attempt.
-3. **EXIF stripped** from every photo on import (location, device).
+3. **EXIF stripped** from every photo on import (location, device): built in v1.1, see
+   [photos-and-sharing.md](photos-and-sharing.md). Optional AI photo feedback is off by default,
+   never runs for under-18s and never estimates body fat or weight.
 4. **Delete everything:** typed confirmation, then the database, photos, backups and
    logs are wiped.
 5. **Export everything:** CSV/JSON/`.ascendbak` at any time ([ADR-0010](adr/0010-import-export-formats.md)).
@@ -97,7 +99,7 @@ Checked against the code in October 2026 (external review, see [SECURITY.md](../
 | Dependabot | Security alerts and security updates on (repo settings); no version-update config, upgrades are done by hand |
 | Code signing | Unsigned until decided; Azure Artifact Signing (Basic $9.99/month per Microsoft's pricing page) — **eligibility for an individual in India unverified** |
 
-## 7. Optional encryption (v1.1)
+## 7. Optional encryption (planned; not in v1.1.0)
 
 SQLCipher for the database and AES-256-GCM for photos. The key lives in Windows DPAPI
 via Electron `safeStorage` and reaches the sidecar over stdin at launch. A printed
