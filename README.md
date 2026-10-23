@@ -37,12 +37,12 @@ that runs beside it, deterministic training and diet engines, and an MLOps pipel
 ## Download and install
 
 1. Open the [latest release](https://github.com/Lucifer-Newstar/Ascend-/releases/latest) and download **`ASCEND-Setup-<version>.exe`**
-   (for 1.1.0: `ASCEND-Setup-1.1.0.exe`). `SHA256SUMS.txt` next to it lets you check the download.
+   (for 1.2.0: `ASCEND-Setup-1.2.0.exe`). `SHA256SUMS.txt` next to it lets you check the download.
 2. Run it. The installer is **not code-signed yet**, so Windows SmartScreen shows "Windows protected
    your PC": click **More info → Run anyway**.
 3. Pick a folder (default: `%LOCALAPPDATA%\Programs\ASCEND`, no admin rights needed) and finish.
-   ASCEND starts with one first-run flow: your profile, a baseline test, your trainer, then a
-   five-step tour.
+   ASCEND starts with the System intro and a three-step setup (your body, your goal, your kit),
+   then an optional baseline test and a short tour.
 
 **System requirements:** Windows 10 or 11, 64-bit (x64). Nothing else: the engine ships inside the
 installer. For the optional AI coach, install [Ollama](https://ollama.com) and run
@@ -54,7 +54,7 @@ uninstall, and a reinstall picks it up again. The app also writes a daily automa
 Check a download in PowerShell (compare with the line for the file in `SHA256SUMS.txt`):
 
 ```powershell
-Get-FileHash .\ASCEND-Setup-1.1.0.exe -Algorithm SHA256
+Get-FileHash .\ASCEND-Setup-1.2.0.exe -Algorithm SHA256
 ```
 
 Release notes for each version: [GitHub Releases](https://github.com/Lucifer-Newstar/Ascend-/releases) and [docs/releases](docs/releases/);
@@ -159,8 +159,9 @@ what the engines computed.
 - **The weight-trend insight is a hint:** precision 0.397, recall 0.408 on synthetic weeks.
 - **Built-in programs are a fixed catalog.** The Planner builds new programs from rules, but you
   cannot edit an exercise inside a saved program yet; build a new one instead.
-- **Backups are unencrypted and include progress photos.** Keep `%APPDATA%\ASCEND` private and
-  copy backups to another drive yourself (encryption is planned, not in 1.1.0).
+- **Backups are unencrypted.** They include progress photos unless you untick **Include progress
+  photos** (Settings > Data & backups). Keep `%APPDATA%\ASCEND` private and copy backups to another
+  drive yourself (encryption is planned, not in 1.2.0).
 - **AI photo feedback is tested with a mocked vision model.** Real model replies are filtered by
   the photo guard at run time; with the feature off (the default) no model sees your photos.
 - **The trainer's own posts follow fixed rules.** The selector's thresholds were set by hand and
@@ -337,24 +338,21 @@ Workflows in [.github/workflows](.github/workflows/):
 
 How a release is cut: [docs/operations/release-process.md](docs/operations/release-process.md).
 
-### Verified for 1.1.0
+### Verified for 1.2.0
 
-On Linux, at the 1.1.0 commit:
+On Linux, on the `v12-test` branch before the merge:
 
-- 837 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
-  with `TestClient`); ruff and mypy are clean (157 source files).
-- Alembic migrations apply to a fresh SQLite database (`0025`), downgrade to base and apply again.
-- tsc (renderer, Electron, shared), eslint (0 errors) and 411 vitest tests (66 files) pass, three
-  runs in a row; `vite build` succeeds.
-- The contract drift check passes (128 implemented operations match 16 contracts).
-- ML lint and tests pass (18 tests).
-- From a clean clone: the PyInstaller sidecar builds, passes the smoke test and contains no dev
-  tooling (`packaging/check_bundle.py`); `electron-builder --linux dir` packs the app with all
-  nine Electron fuses set (`build/fuses.cjs --check`). The Windows installer is built by
-  `release.yml` on `windows-latest`.
+- 904 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
+  with `TestClient`); ruff and mypy are clean (165 source files).
+- Alembic migrations apply to a fresh SQLite database (`0031`), downgrade to base and apply again.
+- tsc (renderer, Electron, shared), eslint (0 errors) and 523 vitest tests (73 files) pass;
+  `vite build` succeeds.
+- The contract drift check passes (137 implemented operations match 16 contracts).
+- The ML pipeline is unchanged since 1.1.0 (18 tests).
+- Every page and the main dialogs were walked in a headless browser at 1366x768 and at 1280x720 with 125%
+  scaling, in the Shadow, Dark and Light looks, as a new player and with a full test save.
 
-On GitHub Actions: the CI, ML and installer workflows were green on `main` for 1.0.0; 1.1.0's
-runs start when it is pushed.
+The Windows installer is built by `release.yml` on `windows-latest` once the branch is merged.
 
 Not covered by automation: the installed app's screens on a real Windows PC (check by hand before tagging), real
 `qwen3:4b` and vision-model answers, and the live wger.de and Wikipedia APIs (tests use mocks; the live APIs were

@@ -9,6 +9,104 @@ where a number you see could change. User-facing release notes live in
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-23
+
+v1.2 is the "make it feel like a game, and make it simpler" release: a real start screen, app
+themes, a big trainer with moods, avatars and cosmetics, seasonal bosses, programs in every
+section, a weekly recap video and India's food guide. Built on the `v12-test` branch and tested
+on a real PC before it goes to `main`. Database `0025` → `0031`; the app backs up your data
+before it migrates it. Release notes: [docs/releases/v1.2.0.md](docs/releases/v1.2.0.md).
+
+### Added
+
+- **App themes** (`themes-v1`): Shadow (the new default), Crimson Gate, Frost, Emerald and Solar
+  Gold, each with its own landing art, frames, buttons, timer and event screens, plus the old
+  Light and Dark looks. The four extra themes unlock with a 7-day streak, rank D, your first
+  weekly boss and rank C. Text always sits on a solid panel; every theme passes an automated
+  WCAG AA contrast test. **Settings > Appearance > Background art: On / Dim / Off.**
+- **System intro and a three-step onboarding**: Begin or Restore my data, then your body (empty
+  fields, no placeholder numbers), your goal in plain words and your kit. Your weight is saved as
+  your first weigh-in.
+- **Big trainer with moods** (neutral, hyped, proud, warning) on Today and in the chat, with new
+  Iskra and Vera art. **Trainer reminders**: today's workout, a missed day's reason, a streak at
+  risk, water and the check-in, as a desktop notification and a bubble on Today (Settings >
+  Trainer > Reminders).
+- **Exercise animations**: every library move and drill plays a smooth 2-frame loop with three
+  short form tips in Train, Exercises and the full-screen timer, and 25 of the most used
+  moves play a proper looping animation.
+- **Solo-safe martial arts**: 16 drills for boxing, kickboxing and Muay Thai solo work, basic
+  kicks and stances and fighter conditioning, all done alone (no partner, weapons, grappling,
+  throws or locks).
+- **Loadout and class**: the kit you pick (for example rings and bodyweight, "Calisthenics
+  Ronin") filters Train, Exercises, Skills, the Planner, programs and quests; "Explore all" shows
+  the rest greyed out with what gear they need.
+- **Programs v2**: 12 more built-in programs, so every section has Beginner, Intermediate and
+  Expert, plus Mobility and Calm starters. In every section: pick one, **Generate one for me**
+  (offline rules) or **Build your own**. **Follow your program**: Today's quest and the trainer
+  follow it, and every exercise in it can be logged.
+- **Bosses** (`boss-v2`): tiers E to S by level and category (strength, calisthenics, cardio,
+  martial arts), a boss ladder on Profile, a full-size boss screen, and four seasonal bosses
+  (Harvest Colossus, Winter Wraith, Monsoon Serpent, Shadow Sovereign) that drop their own
+  cosmetic.
+- **Avatars and cosmetics**: a male or female avatar that ranks up E to S (rank, gear and aura,
+  never body changes) and a catalog of 17 outfits, weapons, relics and pets earned by streaks, PRs, bosses
+  and seasons. Faith-flavoured items are optional, behind a "themed items" switch, with neutral
+  names.
+- **Full-screen timer**: a run-through view with a big countdown, the move's animation, sets,
+  what is next and a trainer cue; the screen stays awake until the timer ends.
+- **Workout finish moment**: XP, rank progress and a trainer reaction, with the 3-set rule
+  explained.
+- **Weekly recap** (`recap-v1`): a short video of your week on Progress (sessions, records, the
+  boss, your streak and habits, rank), drawn on your PC and saved as a WebM file. No body numbers.
+- **India's food guide** (`foodrules-v1`): the ICMR-NIN 2024 Dietary Guidelines for Indians in
+  plain words on Fuel, with a check of today's plate by food group and up to three kind tips. It
+  never changes your targets.
+- **Bigger food list**: 157 everyday Indian foods (milk, bread, oats, paneer dishes, Maggi and
+  more) and **Add your own food**.
+- **Tester save** for checking the release: a normal backup with everything unlocked.
+
+### Changed
+
+- **Streak rule**: miss a day and give the reason by the next day, and the streak is kept; two
+  missed days in a row, or no reason, resets it. This replaces the automatic freezes.
+- **Today** shows only today's quest, today's workout, your streak and the boss.
+- **Settings** has six sections; Import & export moved into Settings > Data, and "Today's
+  numbers" and "Online research" into Settings > Advanced.
+- **One chat box**: the Ctrl+K command bar is part of the trainer chat, and it answers "what
+  should I train today?", "I missed a day" and "log 3 pushups" without a local AI. The local AI
+  is off unless a model is installed.
+- **Plain words**: simple muscle names; effort, estimated max and energy terms sit behind
+  "details"; no version labels in the app.
+- The meal planner moved from Planner to Fuel; "Sessions by source" on History shows only after
+  an import.
+- **Photo safety**: progress photos blur again when you leave the app, a backup can leave the
+  photos out (Settings > Data > Include progress photos), and Settings > Privacy has **Delete all
+  progress photos** and a plain list of where photos live. Photos never leave your PC.
+
+### Fixed
+
+- Custom and bodyweight programs: every item opens its own logger, and beginner targets fit your
+  baseline.
+- No false "above range" muscle warnings after a few push-ups, no fake "Mastered" steps, no 75 kg
+  placeholder, and a realistic weight-gain estimate.
+- Moves wrongly listed as bodyweight have the right gear; the Full Body programs no longer list a
+  plank that could not be logged.
+- The erase box and full-screen moments draw above every card; the morning check-in shows only in
+  the morning; no console error when no plan is chosen.
+- Every dialog (Share, boss screen, workout finish, erase, welcome, recap, timer) scrolls and
+  closes on a 768 px screen and at 125% Windows scaling; a click on the backdrop closes it.
+- Opening the app no longer fails a request when two screens spawn the weekly boss at once, and
+  Today loads faster (a program day reads muscle recovery once, not once per exercise).
+- Train and Today fit a 1024 px wide window; the trainer says the day is done only when today's
+  quest is done; onboarding asks for your kit instead of saving none.
+
+### Removed
+
+- The AI status pill in the top bar and the Ollama step in the tour, the "Keyboard" card on
+  Train, the muscle layers and Recovery/Volume switch on Today, muscle weights like "x0.375",
+  the duplicate trainer switch and the Cut/Maintain/Bulk picker (your focus decides it).
+- "BJJ Rolling" from the library.
+
 ## [1.1.0] - 2026-10-23
 
 One trainer, one chat: the trainer you pick watches your log, answers questions, shows you
@@ -608,7 +706,9 @@ First skeleton: Electron + React desktop shell, FastAPI sidecar with SQLite, wor
 logging with PRs, Indian food log with approximate IFCT/INDB-style values, muscle
 recovery map, XP, quests and streaks, rule-based coach with optional local AI.
 
-[Unreleased]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v0.4.0...v1.0.0
 [0.4.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v0.2.0...v0.3.0
