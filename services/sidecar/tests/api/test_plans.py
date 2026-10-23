@@ -105,7 +105,7 @@ def test_targets_use_the_programs_rep_range(client, clock):
 
     t = client.get(f"/intelligence/progression/{raise_id}").json()
     assert t["rep_range"] == [12, 20]
-    assert (t["change"], t["reps"], t["weight_kg"]) == ("up_reps", 15, 10)
+    assert (t["change"], t["reps"], t["weight_kg"], t["sets"]) == ("up_reps", 15, 10, 3)
     assert t["explanation"]["inputs"]["range_from"] == "your program's range"
     plan = client.get("/plans/current").json()
     item = next(i for i in plan["next"]["items"] if i["exercise"] == "Lateral Raise")
@@ -114,3 +114,21 @@ def test_targets_use_the_programs_rep_range(client, clock):
     client.delete("/plans/current")  # not following a program: the library range again
     t = client.get(f"/intelligence/progression/{raise_id}").json()
     assert t["rep_range"] == [8, 12] and t["change"] == "up_load"
+
+
+def test_the_suggestion_takes_the_programs_set_count(client, clock):
+    """ppl_6 Pull gives Barbell Row 4 sets; three logged last time must not make the logger
+    suggest 3 while the program card counts to 4."""
+    client.put("/plans/current", json={"program_key": "ppl_6"})
+    ids = ex_ids(client)
+    row = ids["Barbell Row"]
+    w = client.post("/workouts", json={"section": "gym"}).json()
+    for _ in range(3):
+        client.post(
+            f"/workouts/{w['id']}/sets",
+            json={"exercise_id": row, "weight_kg": 50, "reps": 8, "rpe": 8},
+        )
+    client.post(f"/workouts/{w['id']}/finish")
+    clock.now += timedelta(days=3)
+    t = client.get(f"/intelligence/progression/{row}").json()
+    assert (t["sets"], t["reps"], t["rep_range"]) == (4, 9, [6, 10])
