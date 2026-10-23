@@ -1287,6 +1287,45 @@ export interface SavedDiet {
   plan: DietPlan;
 }
 
+// --- progress photos and share cards (v1.1, docs/contracts/photos.yaml, share.yaml) ----
+
+export type PhotoPose = "front" | "side" | "back" | "other";
+
+export interface ProgressPhoto {
+  id: number;
+  taken_on: string;
+  pose: PhotoPose | string;
+  note: string;
+  mime: string;
+  bytes: number;
+  created_at: string;
+}
+
+export interface PhotoFeedbackStatus {
+  enabled: boolean;
+  available: boolean;
+  model: string;
+  reason: string;
+}
+
+export interface PhotoFeedback {
+  text: string;
+  guarded: boolean;
+  model: string;
+  version: string;
+  is_ai: boolean;
+}
+
+export interface ShareCardText {
+  kind: string;
+  title: string;
+  headline: string;
+  detail: string;
+  caption: string;
+  x_url: string;
+  version: string;
+}
+
 // --- AI setup (ai-tiers-v1) ------------------------------------------------------------
 
 export interface AiSetup {

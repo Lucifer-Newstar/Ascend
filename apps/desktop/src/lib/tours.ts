@@ -69,6 +69,9 @@ export const SECTION_TOURS: Record<string, Tour> = {
     main("Planner", "Build a week of training and a meal plan from rules, sized to your days, time and food."),
     main("Goal check", "Checks a goal against safe published rates before you commit to it."),
   ] },
+  profile: { id: "profile", page: "profile", steps: [
+    main("Profile", "Your Hunter card, achievements to share as a card, and private progress photos."),
+  ] },
   history: { id: "history", page: "history", steps: [main("History", "Every past day: sessions, sets, meals and weigh-ins. Click a day to edit.")] },
   data: { id: "data", page: "data", steps: [main("Import & export", "Bring in Strong or Hevy CSVs (with a dry run first) or export everything.")] },
   settings: { id: "settings", page: "settings", steps: [

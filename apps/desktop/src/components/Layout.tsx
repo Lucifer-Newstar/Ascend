@@ -1,9 +1,10 @@
 import { useEffect, useRef, type JSX, type ReactNode } from "react";
 
-import { IconBowl, IconChart, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconSettings, IconSkill } from "./Icons";
+import { IconBowl, IconChart, IconDashboard, IconDatabase, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconProfile, IconSettings, IconSkill } from "./Icons";
+import { PAGE_KEYS } from "../lib/shortcuts";
 import { TrainerToggle } from "./Trainer";
 
-export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "history" | "data" | "settings";
+export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "data" | "settings";
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
   { id: "dashboard", label: "Today", icon: IconDashboard },
@@ -13,6 +14,7 @@ const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Eleme
   { id: "progress", label: "Progress", icon: IconChart },
   { id: "diet", label: "Fuel", icon: IconBowl },
   { id: "planner", label: "Planner", icon: IconPlanner },
+  { id: "profile", label: "Profile", icon: IconProfile },
   { id: "history", label: "History", icon: IconHistory },
   { id: "data", label: "Import & export", icon: IconDatabase },
   { id: "settings", label: "Settings", icon: IconSettings },
@@ -77,18 +79,20 @@ export function Layout({ page, onNavigate, aiEnabled, onToggleAi, children, titl
         </div>
         <nav className="flex-1 px-3" aria-label="Main">
           <ul className="space-y-0.5">
-          {NAV.map(({ id, label, icon: Icon }, i) => {
+          {NAV.map(({ id, label, icon: Icon }) => {
             const active = page === id;
-            const key = i === 9 ? 0 : i + 1;
+            // Ctrl+1…0 follow PAGE_KEYS (Profile has no shortcut, so the others keep theirs).
+            const at = PAGE_KEYS.indexOf(id);
+            const key = at < 0 ? null : at === 9 ? 0 : at + 1;
             return (
               <li key={id} className={GROUP_ENDS.has(id) ? "mb-2 border-b border-line pb-2" : undefined}>
               <button type="button" onClick={() => onNavigate(id)} aria-current={active ? "page" : undefined} data-tour={`nav-${id}`}
-                title={`${label} (Ctrl+${key})`} aria-keyshortcuts={`Control+${key}`}
+                title={key === null ? label : `${label} (Ctrl+${key})`} aria-keyshortcuts={key === null ? undefined : `Control+${key}`}
                 className={`group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors duration-150 ${active ? "bg-accent/10 font-medium text-accent" : "text-muted hover:bg-panel-2 hover:text-ink"}`}>
                 {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-accent" />}
                 <Icon width={18} />
                 <span className="flex-1 truncate text-left">{label}</span>
-                <kbd aria-hidden="true" className={`font-sans text-[10px] ${active ? "text-accent" : "text-faint opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"}`}>Ctrl {key}</kbd>
+                <kbd aria-hidden="true" className={`font-sans text-[10px] ${active ? "text-accent" : "text-faint opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"}`}>{key === null ? "" : `Ctrl ${key}`}</kbd>
               </button>
               </li>
             );

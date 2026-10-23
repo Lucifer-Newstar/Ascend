@@ -27,6 +27,7 @@ export const PAGE_WORDS: { page: Page; label: string; words: string[] }[] = [
   { page: "progress", label: "Progress", words: ["progress", "charts", "weight", "prs", "records"] },
   { page: "diet", label: "Fuel", words: ["fuel", "diet", "food", "meals", "nutrition", "macros"] },
   { page: "planner", label: "Planner", words: ["planner", "plan", "plans", "program", "meal plan"] },
+  { page: "profile", label: "Profile", words: ["profile", "photos", "gallery", "achievements", "hunter"] },
   { page: "history", label: "History", words: ["history", "calendar", "past"] },
   { page: "data", label: "Import & export", words: ["import", "export", "data", "backup", "csv"] },
   { page: "settings", label: "Settings", words: ["settings", "preferences", "prefs", "options", "units"] },
