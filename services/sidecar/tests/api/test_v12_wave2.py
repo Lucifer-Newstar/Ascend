@@ -51,3 +51,41 @@ def test_a_day_that_counts_needs_no_reason(client: TestClient, clock) -> None:
     today = clock.now.date().isoformat()
     r = client.post("/game/streak/reason", json={"day": today, "reason": "x"})
     assert r.status_code == 422
+
+
+# --- solo-safe martial arts (item 9) ------------------------------------------------------
+
+UNSAFE = (
+    "bjj",
+    "rolling",
+    "sparring",
+    "partner",
+    "pad work",
+    "kalari",
+    "sword",
+    "stick",
+    "throw",
+    "lock",
+    "choke",
+)
+
+
+def test_martial_arts_is_its_own_solo_safe_category(client: TestClient) -> None:
+    drills = client.get("/exercises", params={"section": "martial_arts"}).json()
+    names = {d["name"] for d in drills}
+    for name in (
+        "Jab-Cross Shadow Drill",
+        "Teep Push Kick Drill",
+        "Horse Stance Hold",
+        "Sprawl Drill",
+    ):
+        assert name in names
+    assert len(drills) >= 20
+    for d in drills:
+        assert not any(w in d["name"].lower() for w in UNSAFE), d["name"]
+        assert d["time_based"] is True
+    detail = client.get(
+        f"/exercises/{next(d['id'] for d in drills if d['name'] == 'Front Kick Drill')}"
+    ).json()
+    assert len(detail["instructions"]) >= 3
+    assert detail["muscles"]
