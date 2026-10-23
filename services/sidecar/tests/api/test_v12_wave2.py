@@ -151,3 +151,57 @@ def test_reminders_are_on_until_switched_off(client: TestClient) -> None:
     assert client.get("/settings").json()["reminders"] is True
     assert client.put("/settings", json={"reminders": False}).json()["reminders"] is False
     assert client.get("/settings").json()["reminders"] is False
+
+
+# --- programs v2 (items 10-11) ------------------------------------------------------------
+
+SECTIONS = ("gym", "calisthenics", "cardio", "martial_arts", "flexibility", "meditation")
+
+
+def test_every_section_has_programs_tagged_by_level(client: TestClient) -> None:
+    progs = client.get("/plans/programs").json()
+    assert len(progs) >= 18
+    by_section: dict[str, set[str]] = {}
+    for p in progs:
+        assert p["level"] in ("beginner", "intermediate", "expert"), p["key"]
+        assert p["section"] in SECTIONS
+        by_section.setdefault(p["section"], set()).add(p["level"])
+        for d in p["days"]:
+            for it in d["items"]:
+                assert it["exercise_id"] is not None, (
+                    p["key"],
+                    it["exercise"],
+                )  # all in the library
+    assert set(by_section) == set(SECTIONS)
+    for s in ("gym", "calisthenics", "cardio", "martial_arts"):
+        assert by_section[s] == {"beginner", "intermediate", "expert"}, s
+    keys = {p["key"] for p in progs}
+    assert {"bodyweight_starter_3", "bar_floor_starter_3"} <= keys  # day-1 programs stay
+
+
+def test_generate_one_for_me_in_a_time_section(client: TestClient, profile) -> None:
+    r = client.post(
+        "/planner/workout", json={"section": "martial_arts", "days_per_week": 4, "use_ai": False}
+    )
+    assert r.status_code == 200, r.text
+    draft = r.json()["draft"]
+    assert len(draft["days"]) == 4 and [d["weekday"] for d in draft["days"]] == [0, 1, 3, 5]
+    names = {s["exercise"] for d in draft["days"] for s in d["slots"]}
+    assert "Jab-Cross Shadow Drill" in names
+    saved = client.post("/planner/programs", json=draft)
+    assert saved.status_code == 201, saved.text
+    assert client.post(f"/planner/programs/{saved.json()['id']}/follow").status_code == 200
+    plan = client.get("/plans/current").json()
+    assert plan["source"] == "custom" and plan["next"]["items"][0]["measure"] == "time"
+
+
+def test_generate_calisthenics_leaves_gym_kit_out(client: TestClient, profile) -> None:
+    r = client.post(
+        "/planner/workout",
+        json={"section": "calisthenics", "days_per_week": 3, "equipment": ["gym"], "use_ai": False},
+    )
+    assert r.status_code == 200, r.text
+    lib = {e["name"]: e for e in client.get("/exercises").json()}
+    for d in r.json()["draft"]["days"]:
+        for s in d["slots"]:
+            assert lib[s["exercise"]]["equipment"] in ("bodyweight", "none", "mat"), s["exercise"]

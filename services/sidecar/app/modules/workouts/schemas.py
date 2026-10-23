@@ -388,11 +388,13 @@ class ProgramOut(BaseModel):
     key: str
     name: str
     summary: str
-    level: str
+    level: str  # beginner | intermediate | expert
     equipment: str
     days_per_week: int
     fits_equipment: bool
     days: list[PlanDayOut]
+    # v1.2: gym, calisthenics, cardio, martial_arts, flexibility or meditation
+    section: str = "gym"
 
 
 class PlanDoneOut(BaseModel):

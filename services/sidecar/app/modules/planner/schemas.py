@@ -11,6 +11,7 @@ Focus = Literal["strength", "muscle", "fat_loss", "skills", "general"]
 Experience = Literal["beginner", "intermediate", "advanced"]
 EquipmentChoice = Literal["none", "pullup_bar", "rings", "dumbbells", "gym"]
 Diet = Literal["veg", "egg", "nonveg"]
+Section = Literal["gym", "calisthenics", "cardio", "martial_arts", "flexibility", "meditation"]
 Phrased = Literal["rules", "ollama"]
 
 
@@ -53,6 +54,9 @@ class WorkoutPlanIn(StrictIn):
     minutes: int = Field(default=60, ge=10, le=180)
     equipment: list[EquipmentChoice] | None = None  # default: the profile's checklist
     use_ai: bool = True
+    # v1.2: generate for one section. gym/calisthenics use the split rules (calisthenics
+    # leaves gym kit out); cardio, martial arts, flexibility and meditation use section_gen.
+    section: Section | None = None
 
 
 class SlotIO(BaseModel):

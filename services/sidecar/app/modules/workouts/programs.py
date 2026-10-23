@@ -53,8 +53,17 @@ class Program:
     name: str
     summary: str
     level: str
-    equipment: str  # "gym" | "dumbbells" | "bar" (pull-up bar + floor) | "bodyweight"
+    equipment: str  # "gym" | "dumbbells" | "bar" (pull-up bar + floor) | "rings" | "bodyweight"
     days: tuple[Day, ...]
+    # v1.2: the section it trains (gym, calisthenics, cardio, martial_arts, flexibility,
+    # meditation); empty = from the equipment (gym/dumbbells -> gym, else calisthenics).
+    section: str = ""
+
+    @property
+    def section_key(self) -> str:
+        if self.section:
+            return self.section
+        return "gym" if self.equipment in ("gym", "dumbbells") else "calisthenics"
 
     @property
     def days_per_week(self) -> int:
@@ -185,7 +194,7 @@ PROGRAMS: dict[str, Program] = {
                         _s("Barbell Bench Press", 3, 5, 8, rest=180),
                         _s("Barbell Row", 3, 6, 10),
                         _s("Lateral Raise", 2, 10, 15, rest=60),
-                        _s("Plank (60 s = 1 set)", 2, 1, 1, 7.0, 60),
+                        _s("Plank", 2, 30, 60, 7.0, 60),
                     ),
                 ),  # fmt: skip
                 Day(
@@ -211,7 +220,7 @@ PROGRAMS: dict[str, Program] = {
                         _s("Barbell Bench Press", 3, 5, 8, rest=180),
                         _s("Barbell Row", 3, 6, 10),
                         _s("Lateral Raise", 2, 10, 15, rest=60),
-                        _s("Plank (60 s = 1 set)", 2, 1, 1, 7.0, 60),
+                        _s("Plank", 2, 30, 60, 7.0, 60),
                     ),
                 ),  # fmt: skip
             ),
@@ -283,7 +292,7 @@ PROGRAMS: dict[str, Program] = {
             "ppl_6",
             "Push / pull / legs, 6 days",
             "The classic split run twice a week. High volume; needs good recovery.",
-            "advanced",
+            "expert",
             "gym",
             tuple(
                 Day(f"{k}{n}", name, focus, wd, slots)
@@ -348,7 +357,7 @@ PROGRAMS: dict[str, Program] = {
                         _s("Dumbbell Bench Press", 3, 8, 12),
                         _s("One-arm Dumbbell Row", 3, 8, 12),
                         _s("Lateral Raise", 2, 12, 20, rest=60),
-                        _s("Plank (60 s = 1 set)", 2, 1, 1, 7.0, 60),
+                        _s("Plank", 2, 30, 60, 7.0, 60),
                     ),
                 ),  # fmt: skip
                 Day(
@@ -447,3 +456,14 @@ def plan_state(
             f"you last trained {prev.name} on {done[-1].day.isoformat()}, so {nxt.name} is next"
         )
     return PlanState(due, len(done), this_week, week_start, tuple(done), last, reason)
+
+
+def _add_programs_v2() -> None:
+    """v1.2: programs v2 join the catalog (programs_v12.py imports this module's types)."""
+    from app.modules.workouts.programs_v12 import PROGRAMS_V12
+
+    for p in PROGRAMS_V12:
+        PROGRAMS[p.key] = p
+
+
+_add_programs_v2()

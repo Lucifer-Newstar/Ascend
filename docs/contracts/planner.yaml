@@ -925,6 +925,18 @@ components:
           type: boolean
           title: Use Ai
           default: true
+        section:
+          anyOf:
+          - type: string
+            enum:
+            - gym
+            - calisthenics
+            - cardio
+            - martial_arts
+            - flexibility
+            - meditation
+          - type: 'null'
+          title: Section
       additionalProperties: false
       type: object
       title: WorkoutPlanIn
@@ -953,3 +965,132 @@ components:
       - phrased_by
       - algo_version
       title: WorkoutPlanOut
+    PlanDayOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        focus:
+          type: string
+          title: Focus
+        weekday:
+          type: integer
+          title: Weekday
+        items:
+          items:
+            $ref: '#/components/schemas/PlanItemOut'
+          type: array
+          title: Items
+      type: object
+      required:
+      - key
+      - name
+      - focus
+      - weekday
+      - items
+      title: PlanDayOut
+    PlanItemOut:
+      properties:
+        exercise_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Id
+        exercise:
+          type: string
+          title: Exercise
+        sets:
+          type: integer
+          title: Sets
+        rep_low:
+          type: integer
+          title: Rep Low
+        rep_high:
+          type: integer
+          title: Rep High
+        target_rpe:
+          type: number
+          title: Target Rpe
+        rest_s:
+          type: integer
+          title: Rest S
+        target:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target
+        target_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Reason
+        done_sets:
+          type: integer
+          title: Done Sets
+          default: 0
+        measure:
+          type: string
+          title: Measure
+          default: reps
+        section:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Section
+      type: object
+      required:
+      - exercise_id
+      - exercise
+      - sets
+      - rep_low
+      - rep_high
+      - target_rpe
+      - rest_s
+      title: PlanItemOut
+      description: One exercise of a program day; target and done_sets are filled for the next session.
+    ProgramOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        name:
+          type: string
+          title: Name
+        summary:
+          type: string
+          title: Summary
+        level:
+          type: string
+          title: Level
+        equipment:
+          type: string
+          title: Equipment
+        days_per_week:
+          type: integer
+          title: Days Per Week
+        fits_equipment:
+          type: boolean
+          title: Fits Equipment
+        days:
+          items:
+            $ref: '#/components/schemas/PlanDayOut'
+          type: array
+          title: Days
+        section:
+          type: string
+          title: Section
+          default: gym
+      type: object
+      required:
+      - key
+      - name
+      - summary
+      - level
+      - equipment
+      - days_per_week
+      - fits_equipment
+      - days
+      title: ProgramOut

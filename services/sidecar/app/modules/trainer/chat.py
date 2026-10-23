@@ -350,7 +350,14 @@ def _program_pick(db: Session) -> ChatOut:
             actions=[ChatAction(kind="planner", target="workout", label="Build my own")],
         )
     order = {"beginner": 0, "intermediate": 1, "advanced": 2, "expert": 3}
-    fits.sort(key=lambda p: (order.get(p.level, 9), p.days_per_week))
+    # Strength first (gym, calisthenics); cardio, fight, mobility and calm programs follow.
+    fits.sort(
+        key=lambda p: (
+            order.get(p.level, 9),
+            0 if p.section in ("gym", "calisthenics") else 1,
+            p.days_per_week,
+        )
+    )
     best = fits[0]
     others = ", ".join(p.name for p in fits[1:3])
     more = f" Also fits your kit: {others}." if others else ""

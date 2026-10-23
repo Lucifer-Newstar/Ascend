@@ -6,14 +6,24 @@ from datetime import date, timedelta
 import pytest
 
 from app.modules.workouts import programs as pg
+from app.modules.workouts.activity_seed import ACTIVITIES
 from app.modules.workouts.calisthenics_seed import CALISTHENICS
 from app.modules.workouts.library import fedb_entries
+from app.modules.workouts.martial_arts_seed import DRILLS
 from app.modules.workouts.seed import EXERCISES
 
 LIBRARY = (
     {name for name, _, _ in EXERCISES}
     | {c["name"] for c in CALISTHENICS}
     | {e.name for e in fedb_entries()}
+    | {a[0] for a in ACTIVITIES}
+    | {d.name for d in DRILLS}
+)
+# v1.2: time-based moves (cardio, martial arts, mobility, meditation) are dosed in minutes.
+TIMED = (
+    {a[0] for a in ACTIVITIES}
+    | {d.name for d in DRILLS}
+    | {e.name for e in fedb_entries() if e.section in ("cardio", "flexibility")}
 )
 HOLDS = {c["name"] for c in CALISTHENICS if c["measure"] == "hold"} | {
     e.name for e in fedb_entries() if e.measure == "hold"
@@ -28,13 +38,15 @@ def names(p: pg.Program, i: int) -> set[str]:
 @pytest.mark.parametrize("key", sorted(pg.PROGRAMS))
 def test_every_program_uses_library_exercises_and_sane_slots(key: str) -> None:
     p = pg.PROGRAMS[key]
-    assert p.key == key and 3 <= p.days_per_week <= 6
+    assert p.key == key and 3 <= p.days_per_week <= 7
+    assert p.level in ("beginner", "intermediate", "expert")
     for d in p.days:
         assert 0 <= d.weekday <= 6
         for s in d.slots:
             assert s.exercise in LIBRARY, s.exercise
-            top = 120 if s.exercise in HOLDS else 20  # v1.2: holds are dosed in seconds
-            assert 1 <= s.sets <= 5 and 1 <= s.rep_low <= s.rep_high <= top
+            # v1.2: holds are dosed in seconds, time-based moves in minutes
+            top = 120 if s.exercise in HOLDS else 60 if s.exercise in TIMED else 20
+            assert 1 <= s.sets <= 6 and 1 <= s.rep_low <= s.rep_high <= top
     assert len({d.weekday for d in p.days}) == p.days_per_week
     assert len({d.key for d in p.days}) == p.days_per_week
 

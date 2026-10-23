@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.modules.coach import ollama, validate
 from app.modules.nutrition.models import Food
-from app.modules.planner import diet_gen, workout_gen
+from app.modules.planner import diet_gen, section_gen, workout_gen
 from app.modules.planner import validate as goalcheck
 from app.modules.planner.models import CustomProgram, DietPlan
 from app.modules.planner.schemas import (
@@ -150,10 +150,50 @@ def baseline_capacity(p: object | None) -> dict[str, int | None]:
     return out
 
 
+def _draft_section(
+    db: Session, settings: Settings, body: WorkoutPlanIn, experience: str
+) -> WorkoutPlanOut:
+    """v1.2: a cardio, martial-arts, mobility or meditation plan (section_gen)."""
+    lib = _library(db)
+    gen = section_gen.generate(str(body.section), experience, body.days_per_week)
+    summary, phrased = phrase(db, settings, gen.summary, body.use_ai)
+    draft = ProgramDraft(
+        name=gen.name,
+        summary=summary,
+        level="advanced" if gen.level == "expert" else gen.level,  # type: ignore[arg-type]
+        equipment="bodyweight",
+        notes=list(gen.notes),
+        days=[
+            DayIO(
+                key=d.key,
+                name=d.name,
+                focus=d.focus,
+                weekday=d.weekday,
+                slots=[
+                    SlotIO(**asdict(s), exercise_id=lib[s.exercise].id)
+                    for s in d.slots
+                    if s.exercise in lib
+                ],
+            )
+            for d in gen.days
+        ],
+    )
+    return WorkoutPlanOut(
+        draft=draft,
+        flags=flags_out(profile_flags(db)),
+        phrased_by=phrased,
+        algo_version=f"{workout_gen.ALGO_VERSION}+section",
+    )
+
+
 def draft_workout(db: Session, settings: Settings, body: WorkoutPlanIn) -> WorkoutPlanOut:
     p = progress.get_profile(db)
     experience = body.experience or (p.experience if p and p.experience else "beginner")
+    if body.section in section_gen.TIME_SECTIONS:
+        return _draft_section(db, settings, body, experience)
     choices = body.equipment if body.equipment is not None else (p.equipment if p else [])
+    if body.section == "calisthenics":  # body weight, bar and rings only
+        choices = [c for c in choices if c in ("none", "pullup_bar", "rings")] or ["none"]
     allowed = equipment_rules.allowed_equipment(choices)
     lib = _library(db)
     flags = goalcheck.check_schedule(body.days_per_week, body.minutes, experience)  # type: ignore[arg-type]

@@ -222,8 +222,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
-      description: Lifts send weight_kg + reps; time-based sections (cardio, martial_arts, flexibility, meditation) must send
-        duration_s (422 otherwise).
+      description: Lifts send weight_kg + reps; time-based sections (cardio, martial_arts, flexibility, meditation)
+        must send duration_s (422 otherwise).
   /workouts/{workout_id}/finish:
     post:
       tags:
@@ -2191,6 +2191,10 @@ components:
             $ref: '#/components/schemas/PlanDayOut'
           type: array
           title: Days
+        section:
+          type: string
+          title: Section
+          default: gym
       type: object
       required:
       - key

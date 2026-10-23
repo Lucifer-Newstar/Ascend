@@ -76,6 +76,7 @@ def catalog(db: Session) -> list[ProgramOut]:
                 summary=p.summary,
                 level=p.level,
                 equipment=p.equipment,
+                section=p.section_key,
                 days_per_week=p.days_per_week,
                 fits_equipment=fits,
                 days=[_day_out(d, lib) for d in p.days],
@@ -181,8 +182,8 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
     for item in nxt.items:
         if deload:  # deload-v2 week: half the sets (prog-v1 also drops the RPE to 7)
             item.sets = max(1, math.ceil(item.sets / 2))
-        if item.exercise_id is None:
-            continue
+        if item.exercise_id is None or item.measure == "time":
+            continue  # time-based moves keep the program's minutes
         _, t = progression_service.next_target(db, item.exercise_id, now)
         item.target = target_text(t, item.sets)
         item.target_reason = t.reason if item.target else None
