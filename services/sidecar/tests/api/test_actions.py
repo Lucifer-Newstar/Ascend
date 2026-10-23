@@ -27,6 +27,23 @@ def test_log_set_from_chat_needs_confirm_and_can_be_undone(client: TestClient, p
     assert log[0]["id"] == card["id"] and log[0]["origin_text"] == "log 3x10 bench at 60 kg"
 
 
+def test_bare_log_lines_in_chat_are_proposals_not_help_notes(
+    client: TestClient, profile, monkeypatch
+) -> None:
+    """The command bar's grammar holds in the chat too ("weight 81.4" used to get the
+    weigh-in help note); such lines are matched by rules only, never sent to the model."""
+
+    def no_model(*a, **k):  # pragma: no cover - must not be reached
+        raise AssertionError("the model was asked to parse a bare log line")
+
+    monkeypatch.setattr(ollama, "chat", no_model)
+    for text, kind in (("weight 81.4", "log_weight"), ("bench 80x5 @8", "log_set")):
+        r = client.post("/trainer/chat", json={"text": text}).json()
+        assert r["intent"] == "action" and r["proposal"]["kind"] == kind, text
+    faq = client.post("/trainer/chat", json={"text": "how do I log a weigh-in?"}).json()
+    assert faq["proposal"] is None
+
+
 def test_weigh_in_meal_and_program(client: TestClient, profile) -> None:
     p = client.post("/actions/parse", json={"text": "i weigh 71.2 kg"}).json()["proposal"]
     client.post(f"/actions/{p['id']}/confirm", json={})

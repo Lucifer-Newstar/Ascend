@@ -35,12 +35,16 @@ def from_chat(
                 proposal=_card(db, row.id),
                 actions=[ChatAction(kind="proposal", target=str(row.id), label="Review")],
             )
-        hit = service.parse_text(db, settings, text, now)
+        # "rules" is a line the intent router did not take as an action ("weight 81.4",
+        # "bench 80x5"): only the shared grammar may claim it, never the model.
+        hit = service.parse_text(db, settings, text, now, rules_only=kind == "rules")
         if hit is None:
             return None
         k, params, how = hit
         row = service.propose(db, k, params, "ai" if how == "ai" else "chat", text, now)
     except ActionError as e:
+        if kind == "rules":
+            return None  # not clearly a log line: let the help note or the coach answer
         return ChatOut(reply=str(e), mood="neutral", intent="action", source="rules")
     return ChatOut(
         reply="Here's what I'll do. Confirm and it's done; you can undo it after.",

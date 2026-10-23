@@ -145,6 +145,12 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
         out = _action_parser[0](db, settings, now, text, k)
         if out is not None:
             return out
+    # A bare log line the router read as a question ("weight 81.4" matched the weigh-in
+    # note): the command bar's grammar is the same, so it is a proposal, not a help note.
+    if k not in ("why", "goal_check", "erase", "action") and _action_parser:
+        out = _action_parser[0](db, settings, now, text, "rules")
+        if out is not None:
+            return out
     if k == "greeting":
         name = _name(db)
         return ChatOut(

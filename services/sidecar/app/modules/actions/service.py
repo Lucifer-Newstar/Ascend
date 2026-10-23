@@ -179,13 +179,16 @@ AI_SCHEMA: dict[str, Any] = {
 
 
 def parse_text(
-    db: Session, settings: Settings, text: str, now: datetime
+    db: Session, settings: Settings, text: str, now: datetime, rules_only: bool = False
 ) -> tuple[str, dict[str, Any], str] | None:
-    """(kind, params, source) from rules, else from the local model when it is on."""
+    """(kind, params, source) from rules, else from the local model when it is on
+    (never with rules_only: then only the shared grammar can propose an action)."""
     units = progress.get_setting(db, "units", "metric")
     hit = parser.parse(text, units, now.hour)
     if hit is not None:
         return hit.kind, hit.params, "rules"
+    if rules_only:
+        return None
     from app.modules.coach import ollama, runtime
     from app.modules.coach.validate import check_numbers
 
