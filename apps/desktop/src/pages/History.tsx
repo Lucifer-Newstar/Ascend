@@ -70,7 +70,7 @@ export function HistoryPage({ refreshKey, onNavigate }: { refreshKey: number; on
         <KpiTile index={0} label="Training days" value={String(trainingDays)} sub={`out of ${count(data.length, "day")} with a log`} />
         <KpiTile index={1} label="Sets" value={count(totalSets, "set")} sub={trainingDays ? `≈ ${Math.round(totalSets / trainingDays)} per training day` : undefined} />
         <KpiTile index={2} label="Avg logged intake" value={mealDays.length ? `${kcal(avgKcal)} kcal` : "–"} sub={mealDays.length ? `over ${count(mealDays.length, "logged day")}` : "No meals logged"} />
-        <KpiTile index={3} label="XP earned" tone="xp" value={`+${totalXp}`} />
+        <KpiTile index={3} label="XP earned" tone="xp" value={`+${totalXp.toLocaleString("en-IN")}`} />
       </KpiStrip>
 
       <div className="col-span-12 space-y-4 xl:col-span-8">
