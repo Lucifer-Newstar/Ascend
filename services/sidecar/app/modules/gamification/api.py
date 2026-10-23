@@ -9,6 +9,7 @@ from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
 from app.modules.gamification import boss, boss_service, service, stats, themes
 from app.modules.gamification.schemas import (
+    BossLadderOut,
     BossOut,
     BossWhy,
     GameSummary,
@@ -142,6 +143,47 @@ def boss_raid(db: Session = Depends(get_db), now: datetime = Depends(get_now)) -
         season_ends=boss.season_end(raid.week_start) if season else None,
         drop=season.drop if season else None,
     )
+
+
+@router.get("/bosses", response_model=list[BossLadderOut])
+def boss_ladder(db: Session = Depends(get_db)) -> list[BossLadderOut]:
+    """The boss ladder (boss-v2): the twelve weekly bosses by tier, then the four seasonal
+    ones. `beaten` counts your wins against each."""
+    wins: dict[str, int] = {}
+    for r in boss_service.titles(db):
+        wins[r.name] = wins.get(r.name, 0) + 1
+    out = [
+        BossLadderOut(
+            name=name,
+            title=title,
+            tier=boss.BOSS_TIER[name],
+            category=boss.BOSS_CATEGORY[name],
+            min_level=boss.BOSS_GATES[name][0],
+            seasonal=False,
+            season=None,
+            months=[],
+            drop=None,
+            beaten=wins.get(name, 0),
+        )
+        for name, title in boss.BOSSES
+    ]
+    out.sort(key=lambda b: boss.TIERS.index(b.tier))
+    out += [
+        BossLadderOut(
+            name=s.boss,
+            title=s.title,
+            tier="level",
+            category=s.category,
+            min_level="beginner",
+            seasonal=True,
+            season=s.name,
+            months=list(s.months),
+            drop=s.drop,
+            beaten=wins.get(s.boss, 0),
+        )
+        for s in boss.SEASONS
+    ]
+    return out
 
 
 @router.get("/titles", response_model=list[TitleOut])

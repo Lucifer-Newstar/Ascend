@@ -253,6 +253,26 @@ paths:
       x-status: implemented
       tags:
       - gamification
+  /game/bosses:
+    get:
+      summary: Boss Ladder
+      description: 'The boss ladder (boss-v2): the twelve weekly bosses by tier, then the four seasonal
+
+        ones. `beaten` counts your wins against each.'
+      operationId: boss_ladder_game_bosses_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BossLadderOut'
+                type: array
+                title: Response Boss Ladder Game Bosses Get
+      x-status: implemented
+      tags:
+      - gamification
 components:
   securitySchemes:
     launchToken:
@@ -774,3 +794,55 @@ components:
       - day
       - reason
       title: StreakReasonIn
+    BossLadderOut:
+      properties:
+        name:
+          type: string
+          title: Name
+        title:
+          type: string
+          title: Title
+        tier:
+          type: string
+          title: Tier
+        category:
+          type: string
+          title: Category
+        min_level:
+          type: string
+          title: Min Level
+        seasonal:
+          type: boolean
+          title: Seasonal
+        season:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Season
+        months:
+          items:
+            type: integer
+          type: array
+          title: Months
+        drop:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Drop
+        beaten:
+          type: integer
+          title: Beaten
+      type: object
+      required:
+      - name
+      - title
+      - tier
+      - category
+      - min_level
+      - seasonal
+      - season
+      - months
+      - drop
+      - beaten
+      title: BossLadderOut
+      description: 'GET /game/bosses: every boss, by tier and category, and how often you beat it.'

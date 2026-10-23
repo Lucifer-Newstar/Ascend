@@ -123,6 +123,21 @@ class BossOut(BaseModel):
     drop: str | None = None
 
 
+class BossLadderOut(BaseModel):
+    """GET /game/bosses: every boss, by tier and category, and how often you beat it."""
+
+    name: str
+    title: str
+    tier: str  # a seasonal boss: "follows your level"
+    category: str
+    min_level: str
+    seasonal: bool
+    season: str | None
+    months: list[int]
+    drop: str | None
+    beaten: int
+
+
 class TitleOut(BaseModel):
     """A title earned by beating a weekly boss: the only source of titles."""
 

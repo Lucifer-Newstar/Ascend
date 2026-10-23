@@ -89,3 +89,39 @@ def test_martial_arts_is_its_own_solo_safe_category(client: TestClient) -> None:
     ).json()
     assert len(detail["instructions"]) >= 3
     assert detail["muscles"]
+
+
+# --- boss ladder (item 7) -----------------------------------------------------------------
+
+
+def test_the_boss_ladder_lists_every_boss_by_tier_then_the_seasons(client: TestClient) -> None:
+    ladder = client.get("/game/bosses").json()
+    assert len(ladder) == 16
+    regular = [b for b in ladder if not b["seasonal"]]
+    order = "EDCBAS"
+    assert [order.index(b["tier"]) for b in regular] == sorted(
+        order.index(b["tier"]) for b in regular
+    )
+    assert regular[-1]["name"] == "Bone Titan"
+    seasonal = {b["name"]: b for b in ladder if b["seasonal"]}
+    assert set(seasonal) == {
+        "Winter Wraith",
+        "Shadow Sovereign",
+        "Monsoon Serpent",
+        "Harvest Colossus",
+    }
+    assert all(b["drop"] for b in seasonal.values()) and all(b["beaten"] == 0 for b in ladder)
+
+
+def test_the_weekly_boss_says_its_tier_and_season(client: TestClient, profile, clock) -> None:
+    b = client.get("/game/boss").json()
+    assert b["tier"] in "EDCBAS" and b["category"] in (
+        "strength",
+        "calisthenics",
+        "cardio",
+        "martial_arts",
+    )
+    if b["seasonal"]:
+        assert b["season"] and b["drop"] and b["season_ends"] >= b["week_end"]
+    else:
+        assert b["season"] is None and b["drop"] is None
