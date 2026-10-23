@@ -124,8 +124,13 @@ def _ai_or_fallback(db: Session, settings: Settings, now: datetime, text: str) -
     if r.source == "ollama":
         return ChatOut(reply=r.text, mood="neutral", intent="unknown", source="ollama")
     best = [e.question for e in kb.ENTRIES if kb.score(e, text) > 0][:3] or START_SUGGESTIONS[:3]
+    # v1.2: with AI off (the default) the reply says what the trainer CAN answer, once,
+    # instead of a note about a local model most PCs don't have.
+    extra = "" if r.fallback_reason == "ai_disabled" else coach.fallback_sentence(r.fallback_reason)
     return ChatOut(
-        reply="That one isn't in my notes. " + coach.fallback_sentence(r.fallback_reason),
+        reply=(
+            "I don't have a note on that one yet. Try one of these, or ask it another way. " + extra
+        ).strip(),
         mood="neutral",
         intent="unknown",
         source="rules",
@@ -232,7 +237,16 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
             source="rules",
             actions=[ChatAction(kind="trainer_picker", label="Choose a trainer")],
         )
+    if k == "missed_day":
+        return _missed_day(db, now, text)
+    if k == "feeling":
+        return _feeling(db, now)
+    if k == "program_pick":
+        return _program_pick(db)
     if k == "train_today":
+        today = _today_from_program(db, now)
+        if today is not None:
+            return today
         r = coach.reply(db, settings, now, None)
         return ChatOut(
             reply=r.text,
@@ -246,6 +260,108 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
     if k == "why":
         return _why(db)
     return _ai_or_fallback(db, settings, now, text)
+
+
+def _session_text(db: Session, now: datetime) -> tuple[str, str] | None:
+    """(program name, "Starter A: Bodyweight Squat 3 x 8-12, ...") for the next session."""
+    from app.modules.workouts import programs_service
+
+    plan = programs_service.plan(db, now)
+    if plan is None:
+        return None
+    parts = []
+    for i in plan.next.items:
+        unit = " s" if i.measure == "hold" else ""
+        reps = f"{i.rep_low}" if i.rep_low == i.rep_high else f"{i.rep_low}-{i.rep_high}"
+        parts.append(f"{i.exercise} {i.sets} x {reps}{unit}")
+    return plan.name, f"{plan.next.name}: " + ", ".join(parts)
+
+
+def _today_from_program(db: Session, now: datetime) -> ChatOut | None:
+    """v1.2: "what should I train today?" follows the program the user follows."""
+    s = _session_text(db, now)
+    if s is None:
+        return None
+    name, session = s
+    return ChatOut(
+        reply=f"Today is {session}. Open Train and tap an exercise in {name} to log it.",
+        mood="hyped",
+        intent="train_today",
+        source="rules",
+        actions=[ChatAction(kind="navigate", target="workout", label="Open Train")],
+    )
+
+
+def _missed_day(db: Session, now: datetime, text: str) -> ChatOut:
+    reason = ""
+    low = text.lower()
+    for word, line in (
+        (
+            ("sick", "fever", "ill", "cold", "unwell"),
+            "Rest when you're ill; that was the right call.",
+        ),
+        (("exam", "study", "college", "class"), "Studies come first some days. Fair."),
+        (("work", "office", "shift"), "Work happens."),
+        (("travel", "trip", "wedding", "function", "family"), "Life events count."),
+        (("tired", "sleep", "late"), "Sleep is training too."),
+    ):
+        if any(w in low for w in word):
+            reason = line + " "
+            break
+    s = _session_text(db, now)
+    nxt = f" Next up: {s[1]}." if s else " Today, any short session gets you moving again."
+    return ChatOut(
+        reply=f"No stress. {reason}One missed day changes nothing; just pick up where you "
+        f"left off, no doubling up.{nxt}",
+        mood="neutral",
+        intent="missed_day",
+        source="rules",
+        actions=[ChatAction(kind="navigate", target="workout", label="Open Train")],
+    )
+
+
+def _feeling(db: Session, now: datetime) -> ChatOut:
+    s = _session_text(db, now)
+    first = (
+        f" Just do the first exercise of {s[1].split(':')[0]} and see how you feel."
+        if s
+        else " Just do 10 squats or a 10-minute walk and call it a win."
+    )
+    return ChatOut(
+        reply="That's okay, it happens to everyone. Let's make today small." + first + " Small "
+        "days still count toward your streak.",
+        mood="neutral",
+        intent="feeling",
+        source="rules",
+    )
+
+
+def _program_pick(db: Session) -> ChatOut:
+    from app.modules.workouts import programs_service
+
+    fits = [p for p in programs_service.catalog(db) if p.fits_equipment]
+    if not fits:
+        return ChatOut(
+            reply="None of the ready-made programs fit your kit yet. The planner can build one "
+            "around exactly what you have.",
+            mood="neutral",
+            intent="program_pick",
+            source="rules",
+            actions=[ChatAction(kind="planner", target="workout", label="Build my own")],
+        )
+    order = {"beginner": 0, "intermediate": 1, "advanced": 2, "expert": 3}
+    fits.sort(key=lambda p: (order.get(p.level, 9), p.days_per_week))
+    best = fits[0]
+    others = ", ".join(p.name for p in fits[1:3])
+    more = f" Also fits your kit: {others}." if others else ""
+    return ChatOut(
+        reply=f"With your kit, start with {best.name} ({best.level}, {best.days_per_week} days "
+        f"a week).{more} Pick one on Train and I'll follow it with you.",
+        mood="hyped",
+        intent="program_pick",
+        source="rules",
+        actions=[ChatAction(kind="navigate", target="workout", label="See programs")],
+    )
 
 
 def _route_coach_question(

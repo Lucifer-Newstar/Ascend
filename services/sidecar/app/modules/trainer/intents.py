@@ -27,6 +27,9 @@ IntentKind = Literal[
     "goal_check",
     "change_trainer",
     "train_today",
+    "missed_day",
+    "feeling",
+    "program_pick",
     "action",
     "faq",
     "why",
@@ -122,6 +125,27 @@ def goal_numbers(text: str) -> dict[str, float] | None:
     return {"change_kg": round(sign * kg, 2), "weeks": round(weeks, 2)}
 
 
+# v1.2 beginner intents (answered by rules, no model needed).
+_MISSED = re.compile(
+    r"\b(missed|skipped|skip(ped)?|couldn'?t (train|work ?out|go)"
+    r"|did(n'?t| not) (train|work ?out|go)|no workout|bunked)\b"
+    r".*\b(yesterday|today|day|session|workout|gym|training)\b"
+    r"|\b(yesterday|today)\b.*\b(missed|skipped)\b",
+    re.I,
+)
+_FEELING = re.compile(
+    r"\b(overwhelm\w*|demotivat\w*|unmotivat\w*|no motivation|lazy|stressed|burn(ed|t)? out|"
+    r"give up|giving up|can'?t do (this|it)|too hard|feel(ing)? (bad|low|down|sad|tired)|"
+    r"exhausted|so tired)\b",
+    re.I,
+)
+_PROGRAM_PICK = re.compile(
+    r"\b(what|which|best|good|suggest|recommend)\b.*\b(program|programme|routine|plan)\b"
+    r"|\bonly have (a |an )?(pull ?-?up bar|dumbbells?|rings|no equipment|nothing)\b",
+    re.I,
+)
+
+
 def classify(text: str) -> Intent:
     t = text.strip()
     if not t:
@@ -130,6 +154,10 @@ def classify(text: str) -> Intent:
         return Intent("why")
     if _ERASE.search(t):
         return Intent("erase")
+    if _MISSED.search(t):
+        return Intent("missed_day")
+    if _FEELING.search(t):
+        return Intent("feeling")
     nums = goal_numbers(t)
     if nums:
         return Intent("goal_check", numbers=nums)
@@ -139,6 +167,8 @@ def classify(text: str) -> Intent:
         return Intent("change_trainer")
     if _TOUR.search(t):
         return Intent("tour", section=kb.section_in(t))
+    if _PROGRAM_PICK.search(t) and not _DIET_WORDS.search(t):
+        return Intent("program_pick")
     if _PLAN.search(t) and _PLAN_WORD.search(t):
         if _DIET_WORDS.search(t):
             return Intent("plan_diet")

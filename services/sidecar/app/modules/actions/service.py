@@ -178,6 +178,58 @@ AI_SCHEMA: dict[str, Any] = {
 }
 
 
+def _bodyweight_variant(db: Session, ex: Any) -> Any:
+    """ "10 squats" with no barbell in the kit is the bodyweight squat, not a back squat."""
+    from app.modules.workouts.equipment import allowed_for_profile, fits
+    from app.modules.workouts.models import Exercise
+
+    allowed = allowed_for_profile(db)
+    if fits(ex.equipment, allowed):
+        return ex
+    base = ex.name.split()[-1]
+    alt = db.scalars(
+        select(Exercise).where(Exercise.name == f"Bodyweight {base}", Exercise.archived.is_(False))
+    ).first()
+    return alt if alt is not None else ex
+
+
+def _resolve_ambiguous(db: Session, hit: parser.Parsed) -> tuple[str, dict[str, Any]] | None:
+    """ "10 pushups" is a set, "2 idli" is food: an exercise name wins, then a food."""
+    from app.modules.actions import registry
+
+    p = hit.params
+    if hit.kind == "log_food_grams":
+        try:
+            food_id, _name = registry.resolve_food(db, str(p["food"]))
+        except registry.ActionError:
+            return None
+        from app.modules.nutrition.models import Food
+
+        food = db.get(Food, food_id)
+        assert food is not None
+        portions = max(0.1, min(20.0, round(float(p["grams"]) / food.portion_g, 2)))
+        return "log_meal", {"food": food.name, "portions": portions, "meal_type": p["meal_type"]}
+    name, count = str(p["name"]), int(p["count"])
+    try:
+        ex = _bodyweight_variant(db, registry.resolve_exercise(db, name, strict=True))
+        return "log_set", {"exercise": ex.name, "reps": count, "weight_kg": 0.0, "sets": 1,
+                           "rpe": None}  # fmt: skip
+    except registry.ActionError:
+        pass
+    try:
+        _fid, food_name = registry.resolve_food(db, name)
+        return "log_meal", {"food": food_name, "portions": float(count),
+                            "meal_type": p["meal_type"]}  # fmt: skip
+    except registry.ActionError:
+        pass
+    try:
+        ex = registry.resolve_exercise(db, name)
+    except registry.ActionError:
+        return None
+    return "log_set", {"exercise": ex.name, "reps": count, "weight_kg": 0.0, "sets": 1,
+                       "rpe": None}  # fmt: skip
+
+
 def parse_text(
     db: Session, settings: Settings, text: str, now: datetime, rules_only: bool = False
 ) -> tuple[str, dict[str, Any], str] | None:
@@ -185,6 +237,9 @@ def parse_text(
     (never with rules_only: then only the shared grammar can propose an action)."""
     units = progress.get_setting(db, "units", "metric")
     hit = parser.parse(text, units, now.hour)
+    if hit is not None and hit.kind in parser.AMBIGUOUS_KINDS:
+        resolved = _resolve_ambiguous(db, hit)
+        return (*resolved, "rules") if resolved else None
     if hit is not None:
         return hit.kind, hit.params, "rules"
     if rules_only:

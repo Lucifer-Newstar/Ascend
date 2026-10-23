@@ -68,6 +68,16 @@ _MEAL = re.compile(r"^(?:(i ate|ate|eat|had|meal|breakfast|lunch|dinner|snack):?
 _ADD_FOOD = re.compile(r"^add " + NUM + r" (?:x |× )?([a-z].*)$")
 _MEAL_FOR = re.compile(r"^(.+?) for (breakfast|lunch|dinner|snack)$")
 _QTY = re.compile(r"^(\d+(?:[.,]\d+)?|a|an|one|two|three|four|five|half) (?:of )?(.+)$")
+# v1.2 natural forms: "10 pushups", "log 3 pull-ups", "2 idli for breakfast" (count first;
+# the service decides exercise vs food by looking both up) and "chicken breast 200g".
+_COUNT_FIRST = re.compile(
+    r"^(?:log |add |i did |did |i ate |ate |had )?(\d+) ([a-z][a-z' /-]*?)"
+    r"(?: for (breakfast|lunch|dinner|snack))?$"
+)
+_GRAMS = re.compile(
+    r"^(?:log |add |i ate |ate |had )?([a-z][a-z' /()-]*?) " + NUM + r" ?(?:g|gm|gms|grams)"
+    r"(?: for (breakfast|lunch|dinner|snack))?$"
+)
 _FOLLOW = re.compile(
     r"^(?:switch me to|switch to|follow|start|put me on|enrol me in|enroll me in) "
     r"(?:the )?(.+?)(?: program| programme| plan| split)?$"
@@ -118,6 +128,17 @@ def parse(text: str, units: str = "metric", hour: int = 12) -> Parsed | None:
             rest = q.group(2)
         return Parsed("log_meal", {"food": rest, "portions": portions,
                                    "meal_type": meal_type_for(word, hour)})  # fmt: skip
+    m = _GRAMS.match(t)
+    if m:
+        return Parsed("log_food_grams", {"food": m.group(1), "grams": _n(m.group(2)),
+                                         "meal_type": meal_type_for(m.group(3), hour)})  # fmt: skip
+    m = _COUNT_FIRST.match(t)
+    if m and not t.startswith("add "):
+        if m.group(3):
+            return Parsed("log_meal", {"food": m.group(2), "portions": float(m.group(1)),
+                                       "meal_type": m.group(3)})  # fmt: skip
+        return Parsed("log_count", {"name": m.group(2), "count": int(m.group(1)),
+                                    "meal_type": meal_type_for(None, hour)})  # fmt: skip
     m = _ADD_FOOD.match(t)
     if m:
         return Parsed("log_meal", {"food": m.group(2), "portions": _n(m.group(1)),
@@ -126,3 +147,7 @@ def parse(text: str, units: str = "metric", hour: int = 12) -> Parsed | None:
     if m:
         return Parsed("follow_program", {"program": m.group(1)})
     return None
+
+
+# Parsed kinds that need a lookup before they become an action (see actions.service).
+AMBIGUOUS_KINDS = frozenset({"log_count", "log_food_grams"})

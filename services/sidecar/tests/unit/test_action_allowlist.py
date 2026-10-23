@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from app.modules.actions import registry
-from app.modules.actions.parser import parse
+from app.modules.actions.parser import AMBIGUOUS_KINDS, parse
 from app.modules.trainer.schemas import ChatAction
 
 
@@ -59,7 +59,9 @@ def test_the_parser_only_proposes_allowlisted_kinds() -> None:
     ]
     for line in lines:
         got = parse(line, "metric", 13)
-        assert got is None or got.kind in ALLOWED, line
+        # "10 pushups" / "chicken breast 200g" parse to a kind that needs a lookup; the
+        # service turns it into log_set or log_meal (both allowlisted) or into nothing.
+        assert got is None or got.kind in ALLOWED or got.kind in AMBIGUOUS_KINDS, line
 
 
 def test_chat_reply_ui_actions_match_the_shared_list() -> None:

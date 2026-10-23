@@ -102,6 +102,10 @@ PROGRAM_ALIASES = {
     "full body": "full_body_3",
     "home": "home_full_body_3",
     "home full body": "home_full_body_3",
+    "bodyweight starter": "bodyweight_starter_3",
+    "starter": "bodyweight_starter_3",
+    "bar starter": "bar_floor_starter_3",
+    "bar and floor": "bar_floor_starter_3",
 }
 
 
@@ -109,7 +113,8 @@ def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
 
 
-def resolve_exercise(db: Session, query: str) -> Exercise:
+def resolve_exercise(db: Session, query: str, strict: bool = False) -> Exercise:
+    """An exercise by name, plural, alias or (unless `strict`) a name containing the query."""
     q = _norm(query)
     q = _norm(COMMON_EXERCISES.get(q, q))
     rows = [e for e in db.scalars(select(Exercise).where(Exercise.archived.is_(False)))]
@@ -120,7 +125,7 @@ def resolve_exercise(db: Session, query: str) -> Exercise:
     for e in rows:
         if any(_norm(a) == q for a in e.aliases):
             return e
-    hits = [e for k, e in names.items() if q in k]
+    hits = [] if strict else [e for k, e in names.items() if q in k]
     if hits:
         return min(hits, key=lambda e: (e.section != "gym", len(e.name)))
     raise ActionError(f"I couldn't find an exercise called \u201c{query}\u201d.")

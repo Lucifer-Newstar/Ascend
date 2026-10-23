@@ -31,7 +31,7 @@ SECTIONS: dict[str, tuple[str, ...]] = {
     "planner": ("planner", "plan builder", "plans", "ai planner"),
     "profile": ("profile", "gallery", "progress photos", "achievements", "avatar"),
     "history": ("history", "past workouts", "calendar"),
-    "data": ("import", "export", "backup", "data page"),
+    "data": ("import", "export", "backup", "backups", "data page", "restore"),
     "settings": ("settings", "preferences", "options"),
 }
 
@@ -45,7 +45,7 @@ SECTION_TITLES: dict[str, str] = {
     "planner": "Planner",
     "profile": "Profile",
     "history": "History",
-    "data": "Import & export",
+    "data": "Data & backups",
     "settings": "Settings",
 }
 
@@ -357,6 +357,138 @@ ENTRIES: tuple[Entry, ...] = (
         'Settings > Erase my data, or tell me "start fresh". It backs up first, then deletes '
         "your logs and keeps the exercise library and food table.",
         "settings",
+    ),
+    # v1.2: the beginner questions people actually ask first (answered offline, no AI).
+    Entry(
+        "days_per_week",
+        "How many days a week should I train?",
+        ("how many days", "days a week", "how often", "every day", "daily"),
+        "Three days a week is plenty to start: full body, with a rest day between. Add a "
+        "fourth day once three feel easy. Walking on rest days is great.",
+    ),
+    Entry(
+        "results_when",
+        "How long until I see results?",
+        ("results", "see change", "how long", "notice", "progress fast"),
+        "Strength goes up in the first 2-4 weeks (your body learns the moves). Visible changes "
+        "take 8-12 weeks of steady training and eating. Watch your reps and rank climb first.",
+    ),
+    Entry(
+        "sore",
+        "Can I train when I'm sore?",
+        ("sore", "soreness", "doms", "muscle pain", "body pain"),
+        "Mild soreness is normal; train other muscles or go lighter. Sharp pain, pain in a joint "
+        "or pain that gets worse is a stop sign: rest it, and see a doctor if it stays.",
+    ),
+    Entry(
+        "warm_up",
+        "How do I warm up?",
+        ("warm up", "warmup", "warm-up", "before workout", "stretch before"),
+        "5 minutes: brisk walk or jumping in place, then arm circles, hip circles and 10 easy "
+        "squats. Do one light set of your first exercise before the real sets.",
+    ),
+    Entry(
+        "first_pullup",
+        "I can't do a pull-up. What do I do?",
+        ("can't do a pull", "cant do a pull", "first pull", "no pull", "zero pull", "pull up"),
+        "Everyone starts there. Do dead hangs (20-30 s), scapular pull-ups and slow negatives "
+        "(jump up, lower for 3-5 seconds) 2-3 times a week. Most people get the first rep in "
+        "a few weeks.",
+        "skills",
+    ),
+    Entry(
+        "pushup_form",
+        "How do I do a push-up properly?",
+        ("push up form", "pushup form", "proper push", "knee push", "can't do push", "push-up"),
+        "Hands under shoulders, body straight from head to heels, lower until your chest is a "
+        "fist above the floor, push back up. Too hard? Put your hands on a bed or table "
+        "(incline push-ups) and lower the height over the weeks.",
+        "library",
+    ),
+    Entry(
+        "gain_weight",
+        "How do I gain weight?",
+        ("gain weight", "put on weight", "skinny", "underweight", "bulk up", "weight gain"),
+        "Eat a little more than you burn, every day: 3 meals plus 2 snacks (milk, banana, "
+        "peanuts, eggs or paneer are easy wins), protein in each meal, and train 3 days a week. "
+        "About 0.25-0.5 kg a week is a healthy pace.",
+        "diet",
+    ),
+    Entry(
+        "lose_fat",
+        "How do I lose fat?",
+        ("lose fat", "lose weight", "fat loss", "belly fat", "weight loss"),
+        "Eat a little less than you burn, keep protein high and keep training so the weight "
+        "lost is fat. Walk daily. You can't burn fat from one spot; it comes off everywhere "
+        "over time. About 0.5 kg a week is a safe pace.",
+        "diet",
+    ),
+    Entry(
+        "water",
+        "How much water should I drink?",
+        ("water", "hydrat", "drink"),
+        "Roughly 2-3 litres a day, more on hot days and training days. Pale yellow urine is a "
+        "good sign you're drinking enough.",
+    ),
+    Entry(
+        "sleep",
+        "How much sleep do I need?",
+        ("sleep", "sleeping", "rest night", "how many hours"),
+        "7-9 hours. Muscles recover and grow while you sleep, so a late night costs more "
+        "progress than a missed set.",
+    ),
+    Entry(
+        "pre_workout_food",
+        "What should I eat before a workout?",
+        ("before workout", "pre workout", "pre-workout", "eat before", "empty stomach"),
+        "A light meal 1-2 hours before (idli, poha, banana with peanut butter, curd rice) or a "
+        "banana 30 minutes before. Training on an empty stomach is fine if you feel good.",
+        "diet",
+    ),
+    Entry(
+        "post_workout_food",
+        "What should I eat after a workout?",
+        ("after workout", "post workout", "post-workout", "eat after", "recovery meal"),
+        "A normal meal with protein within a few hours: eggs, paneer, dal and rice, chicken, "
+        "curd or milk. No special shake needed.",
+        "diet",
+    ),
+    Entry(
+        "rest_between_sets",
+        "How long should I rest between sets?",
+        ("rest between", "rest time", "how long rest", "break between"),
+        "About 1-2 minutes for most exercises, up to 3 for heavy ones. The rest timer on Train "
+        "counts it for you.",
+        "workout",
+    ),
+    Entry(
+        "set_rep",
+        "What is a set and a rep?",
+        ("what is a set", "what is a rep", "sets and reps", "what are reps", "meaning of set"),
+        "A rep is one movement (one push-up). A set is a group of reps done in a row (10 "
+        "push-ups = 1 set of 10). '3 x 8' means 3 sets of 8 reps with rests between.",
+    ),
+    Entry(
+        "cardio_or_weights",
+        "Should I do cardio or weights?",
+        ("cardio or weights", "cardio vs", "running or gym", "cardio first"),
+        "Both help. Strength training builds muscle and shape; cardio helps your heart and "
+        "stamina. A good start: 3 strength days and some walking or cycling on other days.",
+    ),
+    Entry(
+        "home_workout",
+        "Can I train at home without equipment?",
+        ("home workout", "at home", "no equipment", "without equipment", "no gym"),
+        "Yes. Push-ups, squats, lunges, glute bridges, planks and their harder versions build "
+        "real strength. The Bodyweight Starter program is made for exactly this.",
+        "workout",
+    ),
+    Entry(
+        "missed_day",
+        "I missed a day. What now?",
+        ("missed a day", "missed workout", "skipped", "missed yesterday"),
+        "No problem; one missed day changes nothing. Tell me why if you like, then just do "
+        "today's session. Pick up where you left off, don't double up.",
     ),
     Entry(
         "cardio",
