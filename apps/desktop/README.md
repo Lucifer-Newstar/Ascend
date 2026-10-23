@@ -8,8 +8,9 @@ electron/
   channels.ts   IPC channel names, checked against @ascend/shared at compile time
 src/
   api/client.ts      typed calls; IPC in Electron, fetch() in browser dev mode
-  components/        Layout, Rings, XpBar, QuestList, MuscleMap, Toast, States, Icons
-  pages/             Onboarding, Dashboard, Workout, Diet, Coach, History, Settings
+  components/        Layout, Rings, XpBar, MuscleMap, TrainerChat, ActionCard, ShareCard, Toast, States, Icons
+  pages/             Onboarding, Dashboard, Workout, Library, Skills, Progress, Diet, Planner, Profile,
+                     History, Data, Settings
   lib/               pure helpers (+ *.test.ts for vitest)
 electron-builder.yml Windows NSIS installer config
 ```
