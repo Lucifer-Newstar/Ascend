@@ -83,7 +83,10 @@ def test_a_symlink_in_the_backups_folder_to_elsewhere_is_refused(client, setting
     real = settings.data_dir / "elsewhere.ascendbak"
     shutil.copy(_backup(client), real)
     link = settings.data_dir / "backups" / "link.ascendbak"
-    link.symlink_to(real)
+    try:
+        link.symlink_to(real)
+    except OSError as exc:  # Windows without Developer Mode cannot create symlinks
+        pytest.skip(f"symlinks are not permitted here: {exc}")
     r = _restore(client, str(link))
     assert r.status_code == 422 and "backups folder" in r.json()["detail"]
 
