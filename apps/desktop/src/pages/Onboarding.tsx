@@ -73,7 +73,11 @@ export function EquipmentPicker({ value, onChange }: { value: EquipmentChoice[];
           );
         })}
       </div>
-      <p className="mt-2 text-sm text-ink" data-testid="hunter-class">Your class: <span className="font-semibold text-accent">{hunterClass(value).name}</span> <span className="text-xs text-muted">({hunterClass(value).blurb})</span></p>
+      {value.length > 0 ? (
+        <p className="mt-2 text-sm text-ink" data-testid="hunter-class">Your class: <span className="font-semibold text-accent">{hunterClass(value).name}</span> <span className="text-xs text-muted">({hunterClass(value).blurb})</span></p>
+      ) : (
+        <p className="mt-2 text-sm text-muted" data-testid="hunter-class">Tick what you have (or No equipment) to get your class.</p>
+      )}
       <p className="mt-1 text-xs text-muted">Train, Exercises, Skills, programs and quests only use what you tick. New kit later unlocks more, like loot.</p>
     </fieldset>
   );
@@ -303,6 +307,8 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       if (typeof body === "string") return setError(body);
     }
     if (stage === 2 && !d.goalId) return setError("Pick a goal (or “Just get fit”).");
+    // Nothing ticked would mean "no filter" (the whole gym) while the class said Home Hunter.
+    if (stage === 3 && d.equipment.length === 0) return setError("Tick what you have, or “No equipment”.");
     setError(null);
     if (stage === 3) void saveProfile();
     else if (typeof stage === "number") setStage((stage + 1) as Stage);

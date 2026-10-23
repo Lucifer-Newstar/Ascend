@@ -61,8 +61,8 @@ function HunterCard({ refreshKey }: { refreshKey: number }) {
         <div className="min-w-0">
           <p className="text-display-l text-ink" data-testid="hunter-name">{profile.data?.name ?? "Hunter"}</p>
           {xp && <p className="text-sm text-muted">Level {xp.level} · Rank {xp.rank} · {xp.rank_title}</p>}
-          {profile.data && <p className="text-sm font-semibold text-accent" data-testid="hunter-class">{hunterClass(profile.data.equipment).name}</p>}
-          {game.data && <p className="text-sm text-muted">Streak {game.data.streak.current} days · best {game.data.streak.best}</p>}
+          {profile.data && (profile.data.equipment?.length ?? 0) > 0 && <p className="text-sm font-semibold text-accent" data-testid="hunter-class">{hunterClass(profile.data.equipment).name}</p>}
+          {game.data && <p className="text-sm text-muted">Streak {game.data.streak.current} day{game.data.streak.current === 1 ? "" : "s"} · best {game.data.streak.best}</p>}
           <p className="mt-1 text-[11px] text-muted">Trained by {trainer.name}</p>
         </div>
       </div>

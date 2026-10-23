@@ -85,7 +85,13 @@ describe("Onboarding (v1.2)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Next" }));
 
     expect(await screen.findByRole("img", { name: "Step 3 of 3" })).toBeInTheDocument();
+    // Nothing ticked would mean the whole gym: it asks instead of saving.
+    expect(screen.getByTestId("hunter-class")).toHaveTextContent("Tick what you have");
+    await userEvent.click(screen.getByRole("button", { name: "Finish" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Tick what you have, or “No equipment”.");
+    expect(api.saveProfile).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("checkbox", { name: /Pull-up bar/ }));
+    expect(screen.getByTestId("hunter-class")).toHaveTextContent("Bar Ronin");
     await userEvent.click(screen.getByRole("button", { name: "Finish" }));
     await waitFor(() => expect(api.saveProfile).toHaveBeenCalledWith(expect.objectContaining({
       name: "Navin", age: 21, height_cm: 172, weight_kg: 68, focus: "skills", goal: "maintain", equipment: ["pullup_bar"], target_weight_kg: null,
