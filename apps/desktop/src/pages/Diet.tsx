@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { api } from "../api/client";
 import { IconMinus, IconPlus, IconSearch, IconTrash } from "../components/Icons";
 import { TdeePanel } from "../components/DietCards";
+import { FoodGuidePanel } from "../components/FoodGuide";
 import { DietPlanner } from "../components/MealPlanner";
 import { KpiStrip, KpiTile, PageGrid, Panel } from "../components/Page";
 import { Empty } from "../components/States";
@@ -127,6 +128,8 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
       </Panel>
 
       <TdeePanel refreshKey={tick} />
+
+      <FoodGuidePanel refreshKey={tick} index={5} />
 
       <Panel id="builder" index={6} className="col-span-12" title="Add a meal" hover={false}
         action={

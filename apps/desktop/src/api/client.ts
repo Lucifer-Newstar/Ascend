@@ -7,6 +7,7 @@
  * falls back to fetch() against http://127.0.0.1:8765 with the dev token.
  */
 import type {
+  FoodGuide,
   AscendBridge,
   BackupInfo,
   BossRaid,
@@ -169,7 +170,7 @@ async function call<T>(method: HttpMethod, path: string, body?: unknown): Promis
 
 export const api = {
   backups: () => call<BackupInfo[]>("GET", "/backups"),
-  backupNow: () => call<BackupInfo>("POST", "/backup"),
+  backupNow: (includePhotos = true) => call<BackupInfo>("POST", "/backup", includePhotos ? undefined : { include_photos: false }),
   restoreBackup: (path: string) => call<RestoreResult>("POST", "/restore", { path }),
   dashboard: () => call<Dashboard>("GET", "/dashboard"),
   profile: () => call<Profile>("GET", "/profile"),
@@ -241,6 +242,7 @@ export const api = {
   addFood: (body: FoodIn) => call<Food>("POST", "/foods", body),
   deleteFood: (id: number) => call<null>("DELETE", `/foods/${id}`),
   dayLog: () => call<DayLog>("GET", "/meals/day"),
+  foodGuide: () => call<FoodGuide>("GET", "/meals/guide"),
   logMeal: (meal_type: MealType, items: { food_id: number; portions: number }[]) =>
     call<{ meal: unknown; xp_awarded: number }>("POST", "/meals", { meal_type, items }),
   deleteMeal: (id: number) => call<null>("DELETE", `/meals/${id}`),
@@ -277,6 +279,7 @@ export const api = {
   addPhoto: (body: { data_url: string; taken_on: string; pose: PhotoPose; note?: string }) => call<ProgressPhoto>("POST", "/photos", body),
   photoData: (id: number) => call<{ id: number; mime: string; data_url: string }>("GET", `/photos/${id}/data`),
   deletePhoto: (id: number) => call<null>("DELETE", `/photos/${id}`),
+  deleteAllPhotos: () => call<{ deleted: number }>("DELETE", "/photos"),
   photoFeedbackStatus: () => call<PhotoFeedbackStatus>("GET", "/photos/feedback/status"),
   photoFeedback: (older_id: number, newer_id: number) => call<PhotoFeedback>("POST", "/photos/feedback", { older_id, newer_id }),
   shareCard: (payload: Record<string, unknown>) => call<ShareCardText>("POST", "/share/card", { payload }),

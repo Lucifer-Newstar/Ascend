@@ -1163,6 +1163,9 @@ export interface BackupInfo {
   schema_revision: string;
   app_version: string;
   reason: string;
+  /** v1.2: how many progress photos the backup carries, and whether they were left out. */
+  photos?: number;
+  photos_included?: boolean;
 }
 
 /** POST /restore */
@@ -1461,3 +1464,17 @@ export interface CoachWarm {
   model: string;
   seconds: number;
 }
+
+/** GET /meals/guide (v1.2): India's food guidelines (ICMR-NIN 2024) and the day's plate check. */
+export interface FoodGuide {
+  day: string;
+  source: string;
+  version: string;
+  guidelines: { title: string; detail: string }[];
+  foods_logged: number;
+  groups: { key: string; label: string; count: number; core: boolean }[];
+  missing: string[];
+  hfss: string[];
+  tips: string[];
+}
+
