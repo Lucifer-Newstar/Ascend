@@ -2,7 +2,7 @@ import type { Exercise, ProgressionTarget, Section, SetIn, SetPatch, SkillUnlock
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
-import { ExerciseArt } from "../components/ExerciseArt";
+import { ExerciseArt, formTips } from "../components/ExerciseArt";
 import { ProgramCard } from "../components/ProgramCard";
 import { RunThrough } from "../components/RunThrough";
 import { WorkoutFinish, type FinishSummary } from "../components/WorkoutFinish";
@@ -294,6 +294,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         paused={restPaused}
         busy={busy}
         nextUp={nextUp}
+        tips={formTips(detail.data?.instructions)}
         onTogglePause={() => setRestPaused((p) => !p)}
         onSkipRest={() => setRestLeft(0)}
         onSetDone={() => void logSet()}
@@ -388,7 +389,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
           {selected ? (
             <>
               <div className="flex items-start justify-between gap-4">
-                <div className="w-24 shrink-0 overflow-hidden rounded-lg" data-testid="train-exercise-art"><ExerciseArt exercise={selected} className="h-24" /></div>
+                <div className="w-24 shrink-0 overflow-hidden rounded-lg" data-testid="train-exercise-art"><ExerciseArt exercise={selected} className="h-24" loop /></div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-h2 truncate text-ink">{selected.name}</h2>
                   <p className="mt-0.5 text-small text-muted">
@@ -493,6 +494,14 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                 ))}
               </ul>
             )}
+          </section>
+        )}
+        {selected && formTips(detail.data?.instructions).length > 0 && (
+          <section className="card p-4" aria-labelledby="ctx-tips" data-testid="form-tips">
+            <h2 id="ctx-tips" className="card-title mb-2">Form tips</h2>
+            <ol className="list-decimal space-y-1 pl-4 text-xs text-ink">
+              {formTips(detail.data?.instructions).map((t) => <li key={t}>{t}</li>)}
+            </ol>
           </section>
         )}
         {selected && (

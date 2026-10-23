@@ -19,7 +19,7 @@ import { SkeletonCard } from "../components/Skeleton";
 import { ErrorState, Loading } from "../components/States";
 import { setPendingExercise } from "../lib/pending";
 import { MUSCLES, REGIONS, muscleLabel } from "../lib/muscles";
-import { ExerciseArt } from "../components/ExerciseArt";
+import { ExerciseArt, formTips } from "../components/ExerciseArt";
 import { useApi } from "../lib/useApi";
 
 export type LibraryType = "all" | "strength" | "calisthenics" | "cardio" | "mobility" | "other";
@@ -221,15 +221,15 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
 }
 
 /** Kept for existing imports: the exercise picture (photo or designed tile). */
-export function Thumb({ exercise, className = "" }: { exercise: Pick<Exercise, "image" | "name" | "section"> & { muscles?: Exercise["muscles"] }; className?: string }) {
-  return <ExerciseArt exercise={exercise} className={className} />;
+export function Thumb({ exercise, className = "", loop = false }: { exercise: Pick<Exercise, "image" | "name" | "section"> & { muscles?: Exercise["muscles"] }; className?: string; loop?: boolean | "hover" }) {
+  return <ExerciseArt exercise={exercise} className={className} loop={loop} />;
 }
 
 function ExerciseCard({ exercise: e, onOpen, locked = false }: { exercise: Exercise; onOpen: () => void; locked?: boolean }) {
   const primary = e.muscles.filter((m) => m.weight >= 1).map((m) => muscleLabel(m.muscle));
   return (
     <button type="button" onClick={onOpen} className={`card card-hover card-lift group block w-full overflow-hidden text-left ${locked ? "opacity-55" : ""}`}>
-      <Thumb exercise={e} className="aspect-[3/2]" />
+      <Thumb exercise={e} className="aspect-[3/2]" loop="hover" />
       <div className="p-3">
         <div className="line-clamp-2 text-sm font-medium text-ink group-hover:text-accent">{e.name}</div>
         <div className="mt-1 truncate text-xs text-muted">{primary.length ? primary.join(", ") : SECTION_TYPE_LABEL[e.section]}</div>
@@ -298,7 +298,7 @@ function ExerciseDetailBody({ e, onLog, onOpenSkill }: { e: ExerciseDetail; onLo
   return (
     <article className="grid grid-cols-12 gap-4" aria-labelledby="exercise-title">
       <section className="card col-span-12 overflow-hidden md:col-span-5">
-        <Thumb exercise={e} className="aspect-[3/2]" />
+        <Thumb exercise={e} className="aspect-[3/2]" loop />
         <div className="space-y-2 p-4 text-xs text-muted">
           <div><span className="text-faint">Type</span> · {SECTION_TYPE_LABEL[e.section]}<SourceTag source={fs.section} /></div>
           <div><span className="text-faint">Equipment</span> · {e.equipment.replace(/_/g, " ")}<SourceTag source={fs.equipment} /></div>
@@ -343,6 +343,14 @@ function ExerciseDetailBody({ e, onLog, onOpenSkill }: { e: ExerciseDetail; onLo
                   </button>
                 </li>
               ))}
+            </ul>
+          </>
+        )}
+        {formTips(e.instructions).length > 0 && (
+          <>
+            <h3 className="mt-5 text-[11px] uppercase tracking-wider text-faint">Form tips</h3>
+            <ul className="mt-1 space-y-1 text-sm text-ink" data-testid="detail-tips">
+              {formTips(e.instructions).map((t) => <li key={t}>· {t}</li>)}
             </ul>
           </>
         )}

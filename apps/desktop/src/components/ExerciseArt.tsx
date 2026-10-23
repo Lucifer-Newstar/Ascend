@@ -3,6 +3,11 @@
  * public domain); everything else (custom exercises, curated skills with no photo, or a
  * file that fails to load) gets a designed tile built from the section and the main
  * muscles, so no card ever shows an empty box.
+ *
+ * v1.2: with `loop`, the photo crossfades with the move's second photo (<id>-2.webp, the
+ * end position) as a smooth 2-frame loop; `loop="hover"` plays it only while the card is
+ * hovered. Reduce motion shows the first frame only. `formTips` turns the library's
+ * instructions into three short tips.
  */
 import { useState, type ReactNode } from "react";
 import type { Exercise, Section } from "@ascend/shared";
@@ -131,9 +136,38 @@ export function ExerciseTile({ exercise: e, className = "" }: { exercise: ArtExe
   );
 }
 
+/** The second frame's path: "/exercises/push-up.webp" -> "/exercises/push-up-2.webp". */
+export function secondFrame(image: string | null | undefined): string | null {
+  return image && /\.webp$/.test(image) ? image.replace(/\.webp$/, "-2.webp") : null;
+}
+
+/** Up to three short form tips from the instructions: each step's first sentence. */
+export function formTips(instructions: readonly string[] | null | undefined, max = 3): string[] {
+  const out: string[] = [];
+  for (const step of instructions ?? []) {
+    const first = step.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/)[0] ?? "";
+    const tip = first.length > 110 ? `${first.slice(0, 107).replace(/\s+\S*$/, "")}…` : first;
+    if (tip) out.push(tip.replace(/^Note:\s*/i, ""));
+    if (out.length === max) break;
+  }
+  return out;
+}
+
 /** Photo when there is one (and it loads), otherwise the designed tile. */
-export function ExerciseArt({ exercise, className = "" }: { exercise: ArtExercise; className?: string }) {
+export function ExerciseArt({ exercise, className = "", loop = false }: { exercise: ArtExercise; className?: string; loop?: boolean | "hover" }) {
   const [broken, setBroken] = useState(false);
+  const [noSecond, setNoSecond] = useState(false);
+  const frame2 = loop ? secondFrame(exercise.image) : null;
+  if (exercise.image && !broken && frame2 && !noSecond) {
+    return (
+      <span className={`exercise-loop relative block w-full overflow-hidden bg-white ${loop === "hover" ? "loop-on-hover" : ""} ${className}`} data-testid="exercise-loop">
+        <img src={exercise.image} alt="" loading="lazy" decoding="async" data-testid="exercise-photo" onError={() => setBroken(true)}
+          className="absolute inset-0 h-full w-full object-contain" />
+        <img src={frame2} alt="" loading="lazy" decoding="async" data-testid="exercise-frame-2" onError={() => setNoSecond(true)}
+          className="exercise-frame-2 absolute inset-0 h-full w-full object-contain" />
+      </span>
+    );
+  }
   if (exercise.image && !broken) {
     return (
       <img

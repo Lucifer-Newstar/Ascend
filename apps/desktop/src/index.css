@@ -1061,3 +1061,31 @@ nav[aria-label="Main"] button:not([aria-current]) svg {
     display: none;
   }
 }
+
+/* v1.2 exercise loop: the second photo crossfades in and out over the first. */
+.exercise-frame-2 {
+  opacity: 0;
+  animation: asc-frame-2 2.4s ease-in-out infinite;
+}
+.loop-on-hover .exercise-frame-2 {
+  animation-play-state: paused;
+}
+.group:hover .loop-on-hover .exercise-frame-2,
+.loop-on-hover:hover .exercise-frame-2 {
+  animation-play-state: running;
+}
+@keyframes asc-frame-2 {
+  0%, 35% { opacity: 0; }
+  50%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+:root[data-motion="reduce"] .exercise-frame-2 {
+  animation: none;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .exercise-frame-2 {
+    animation: none;
+    opacity: 0;
+  }
+}

@@ -30,7 +30,7 @@ export function timerCue(restLeft: number, setsDone: number): { mood: "neutral" 
 }
 
 export function RunThrough({
-  exercise, target, setsDone, restLeft, restTotal, paused, busy = false, nextUp,
+  exercise, target, setsDone, restLeft, restTotal, paused, busy = false, nextUp, tips = [],
   onTogglePause, onSkipRest, onSetDone, onExit,
 }: {
   exercise: Pick<Exercise, "name" | "image" | "section" | "muscles">;
@@ -41,6 +41,8 @@ export function RunThrough({
   paused: boolean;
   busy?: boolean;
   nextUp?: string | null;
+  /** Up to three short form tips (ExerciseArt.formTips). */
+  tips?: string[];
   onTogglePause: () => void;
   onSkipRest: () => void;
   onSetDone: () => void;
@@ -103,7 +105,7 @@ export function RunThrough({
         </div>
         <div className="space-y-4 rounded-xl bg-panel p-6">
           <div className="flex items-start gap-4">
-            <div className="w-36 shrink-0 overflow-hidden rounded-lg"><ExerciseArt exercise={exercise} className="h-36" /></div>
+            <div className="w-36 shrink-0 overflow-hidden rounded-lg"><ExerciseArt exercise={exercise} className="h-36" loop /></div>
             <div className="min-w-0">
               <h2 className="text-h2 text-ink">{exercise.name}</h2>
               <p className="mt-1 text-sm text-muted">{target ? <>This set: <span className="text-ink">{target}</span></> : "Pick your own target"}</p>
@@ -111,6 +113,11 @@ export function RunThrough({
               {nextUp && <p className="mt-2 text-sm text-muted">Next up: <span className="text-ink">{nextUp}</span></p>}
             </div>
           </div>
+          {tips.length > 0 && (
+            <ol className="list-decimal space-y-1 pl-5 text-sm text-muted" aria-label="Form tips">
+              {tips.map((t) => <li key={t}>{t}</li>)}
+            </ol>
+          )}
           {trainerOn && (
             <div className="flex items-center gap-3 rounded-lg bg-panel-2 p-3" data-testid="run-cue">
               <TrainerPortrait mood={cue.mood} size={64} />
