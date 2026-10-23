@@ -2,6 +2,7 @@
 
 from app.core import outbox_models  # noqa: F401
 from app.core.db import Base
+from app.modules.actions import models as actions_models  # noqa: F401
 from app.modules.gamification import models as gamification_models  # noqa: F401
 from app.modules.intelligence import models as intelligence_models  # noqa: F401
 from app.modules.nutrition import models as nutrition_models  # noqa: F401

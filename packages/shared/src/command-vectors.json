@@ -1,0 +1,103 @@
+{
+  "_comment": "One grammar, two parsers: the sidecar's actions parser and the command bar must agree on these lines (units metric unless stated). kind null = not an action.",
+  "vectors": [
+    {
+      "text": "log 3x10 bench at 60 kg",
+      "kind": "log_set",
+      "params": {
+        "exercise": "bench",
+        "reps": 10,
+        "weight_kg": 60,
+        "sets": 3
+      }
+    },
+    {
+      "text": "bench 80x5 @8",
+      "kind": "log_set",
+      "params": {
+        "exercise": "bench",
+        "reps": 5,
+        "weight_kg": 80,
+        "sets": 1,
+        "rpe": 8
+      }
+    },
+    {
+      "text": "squat 100 kg x 5",
+      "kind": "log_set",
+      "params": {
+        "exercise": "squat",
+        "reps": 5,
+        "weight_kg": 100,
+        "sets": 1
+      }
+    },
+    {
+      "text": "pull-up x8",
+      "kind": "log_set",
+      "params": {
+        "exercise": "pull-up",
+        "reps": 8,
+        "weight_kg": 0,
+        "sets": 1
+      }
+    },
+    {
+      "text": "push-up 20 reps",
+      "kind": "log_set",
+      "params": {
+        "exercise": "push-up",
+        "reps": 20,
+        "weight_kg": 0,
+        "sets": 1
+      }
+    },
+    {
+      "text": "plank 45s",
+      "kind": "log_hold",
+      "params": {
+        "exercise": "plank",
+        "seconds": 45
+      }
+    },
+    {
+      "text": "weight 81.4",
+      "kind": "log_weight",
+      "params": {
+        "weight_kg": 81.4
+      }
+    },
+    {
+      "text": "weight 180 lb",
+      "kind": "log_weight",
+      "params": {
+        "weight_kg": 81.6
+      }
+    },
+    {
+      "text": "lunch chicken rice",
+      "kind": "log_meal",
+      "params": {
+        "food": "chicken rice",
+        "portions": 1,
+        "meal_type": "lunch"
+      }
+    },
+    {
+      "text": "add 2 eggs",
+      "kind": "log_meal",
+      "params": {
+        "food": "eggs",
+        "portions": 2
+      }
+    },
+    {
+      "text": "dark",
+      "kind": null
+    },
+    {
+      "text": "fuel",
+      "kind": null
+    }
+  ]
+}

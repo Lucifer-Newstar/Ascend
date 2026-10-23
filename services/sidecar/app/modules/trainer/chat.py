@@ -159,7 +159,8 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
         return ChatOut(
             reply="I answer questions about the app, give a tour of any section, watch your log "
             "(PRs, missed sessions, overtraining, weigh-in trends) and tell you when a goal is "
-            "unrealistic. The planner builds workout and meal plans.",
+            "unrealistic. The planner builds workout and meal plans. I can also log a set, a "
+            "meal or a weigh-in, or switch your program; you confirm first and can undo.",
             mood="neutral",
             intent=k,
             source="rules",

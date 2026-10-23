@@ -192,6 +192,13 @@ def erase(
     """Delete the user's data and keep the exercise library and food table ("start
     fresh"). A safety backup (reason "pre-erase") is written first, so it can be undone
     from Settings > Backups; an in-memory test database has none."""
+    return EraseOut(**do_erase(request, db, body.keep_preferences, now))
+
+
+def do_erase(
+    request: Request, db: Session, keep_preferences: bool, now: datetime
+) -> dict[str, Any]:
+    """Safety backup first, then erase (shared with the erase_data action)."""
     safety: str | None = None
     try:
         db_file, folder = _dirs(request)
@@ -199,6 +206,6 @@ def erase(
     except (HTTPException, backup.BackupError):
         safety = None
     erased = erase_user_data(
-        db, keep_preferences=body.keep_preferences, data_dir=request.app.state.settings.data_dir
+        db, keep_preferences=keep_preferences, data_dir=request.app.state.settings.data_dir
     )
-    return EraseOut(erased=erased, safety_backup=safety)
+    return {"erased": erased, "safety_backup": safety}

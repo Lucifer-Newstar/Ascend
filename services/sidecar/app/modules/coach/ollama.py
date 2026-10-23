@@ -66,6 +66,7 @@ def chat(
     question: str,
     timeout: float = 20.0,
     system: str = SYSTEM_PROMPT,
+    format: dict[str, object] | None = None,
 ) -> str:
     if not host:
         raise OllamaUnavailable("no usable OLLAMA_HOST")
@@ -74,6 +75,7 @@ def chat(
         "stream": False,
         "think": False,  # qwen3: skip the hidden reasoning pass for faster replies
         "keep_alive": KEEP_ALIVE,
+        **({"format": format} if format else {}),
         "options": {"temperature": 0.4, "num_predict": 220},
         "messages": [
             {"role": "system", "content": system},

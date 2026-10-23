@@ -193,6 +193,19 @@
         "implemented": 4,
         "planned": 0
       }
+    },
+    {
+      "id": "actions",
+      "package": "app.modules.actions",
+      "contract": "actions.yaml",
+      "path_prefixes": [
+        "/actions"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 8,
+        "planned": 0
+      }
     }
   ]
 }

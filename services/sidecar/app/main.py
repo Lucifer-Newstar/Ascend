@@ -23,6 +23,7 @@ from app.core.db import checkpoint_wal, make_engine, make_session_factory
 from app.core.events import EventBus
 from app.core.migrate import current_revision, head_revision, run_migrations
 from app.core.security import TokenAuthMiddleware, health_proof
+from app.modules.actions.api import router as actions_router
 from app.modules.ai.api import router as ai_router
 from app.modules.coach.api import router as coach_router
 from app.modules.gamification import service as gamification_service
@@ -276,6 +277,7 @@ def create_app(
         planner_router,
         trainer_router,
         selector_router,
+        actions_router,
     ):
         app.include_router(router)
     return app
