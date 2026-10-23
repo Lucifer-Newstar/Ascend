@@ -24,6 +24,15 @@ class OllamaUnavailable(Exception):
     pass
 
 
+class OllamaTimeout(OllamaUnavailable):
+    """The model did not answer in time (often the first, cold load of the model)."""
+
+
+# How long Ollama keeps the model in memory after a request (its own `keep_alive`), so the
+# next question doesn't pay the cold load again.
+KEEP_ALIVE = "30m"
+
+
 def reply_content(body: object) -> str:
     """message.content of an /api/chat reply. Raises ValueError for any other shape (a
     list, a string, a message that isn't an object), so callers never see AttributeError."""
@@ -64,6 +73,7 @@ def chat(
         "model": model,
         "stream": False,
         "think": False,  # qwen3: skip the hidden reasoning pass for faster replies
+        "keep_alive": KEEP_ALIVE,
         "options": {"temperature": 0.4, "num_predict": 220},
         "messages": [
             {"role": "system", "content": system},
@@ -77,9 +87,28 @@ def chat(
         r = httpx.post(f"{host}/api/chat", json=payload, timeout=timeout)
         r.raise_for_status()
         content = reply_content(r.json())
+    except httpx.TimeoutException as e:
+        raise OllamaTimeout(f"no reply in {timeout:g} s") from e
     except (httpx.HTTPError, ValueError) as e:
         raise OllamaUnavailable(str(e)) from e
     text = THINK_RE.sub("", content).strip()
     if not text:
         raise OllamaUnavailable("empty reply")
     return text
+
+
+def warm(host: str, model: str, timeout: float = 90.0) -> bool:
+    """Load the model into memory without generating anything (an empty generate request,
+    Ollama's documented way to preload), so the first real question is fast."""
+    if not host:
+        return False
+    try:
+        r = httpx.post(
+            f"{host}/api/generate",
+            json={"model": model, "keep_alive": KEEP_ALIVE},
+            timeout=timeout,
+        )
+        r.raise_for_status()
+        return True
+    except httpx.HTTPError:
+        return False

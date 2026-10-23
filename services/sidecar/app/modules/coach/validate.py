@@ -136,6 +136,16 @@ def _matches(n: Num, allowed: Num) -> bool:
     return fewer and abs(n.value - allowed.value) / abs(allowed.value) <= 0.02
 
 
+# "3 tips", "2 quick things", "step 1": a small count that only structures the wording, not
+# an engine figure. Only these phrasings are exempt; "add 2 eggs" or "6 sets" is still checked.
+SMALL_COUNT = re.compile(
+    r"\b(?:[1-5]|one|two|three|four|five)\s+(?:(?:quick|simple|small|easy|key)\s+)?"
+    r"(?:things?|tips?|ways?|habits?|ideas?|options?|reasons?|points?|questions?|steps?)\b"
+    r"|\bstep\s+[1-5]\b",
+    re.I,
+)
+
+
 @dataclass
 class NumberCheck:
     ok: bool
@@ -146,7 +156,7 @@ def check_numbers(reply: str, *sources: str) -> NumberCheck:
     """V3: each number in `reply` must be allowed by one of `sources` (facts, question)."""
     allowed = [n for s in sources for n in extract_numbers(s)]
     bad: list[str] = []
-    for n in extract_numbers(reply):
+    for n in extract_numbers(SMALL_COUNT.sub(" ", reply)):
         if n.word and n.raw in ALWAYS_ALLOWED_WORDS:
             continue
         if not any(_matches(n, a) for a in allowed):

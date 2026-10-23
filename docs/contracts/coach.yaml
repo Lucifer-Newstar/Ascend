@@ -281,6 +281,23 @@ paths:
       x-status: planned
       tags:
       - coach
+  /coach/warm:
+    post:
+      summary: Warm
+      description: 'Preload the local model (called when the trainer chat opens), so the first answer
+
+        does not pay the cold load. A no-op when the AI is off or Ollama isn''t running.'
+      operationId: warm_coach_warm_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarmOut'
+      x-status: implemented
+      tags:
+      - coach
 components:
   securitySchemes:
     launchToken:
@@ -656,3 +673,20 @@ components:
       - title
       - detail
       - numbers
+    WarmOut:
+      properties:
+        loaded:
+          type: boolean
+          title: Loaded
+        model:
+          type: string
+          title: Model
+        seconds:
+          type: number
+          title: Seconds
+      type: object
+      required:
+      - loaded
+      - model
+      - seconds
+      title: WarmOut

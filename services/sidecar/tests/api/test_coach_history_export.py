@@ -32,7 +32,7 @@ def test_coach_uses_ollama_when_available(client, profile, monkeypatch):
     monkeypatch.setattr(ollama, "is_available", lambda host, model, timeout=1.5: True)
     seen = {}
 
-    def fake_chat(host, model, facts, question, timeout=20.0):
+    def fake_chat(host, model, facts, question, timeout=20.0, **kwargs):
         seen["facts"] = facts
         return "Train legs today."
 
@@ -53,11 +53,29 @@ def test_coach_falls_back_on_ollama_error(client, profile, monkeypatch):
     monkeypatch.setattr(ollama, "is_available", lambda host, model, timeout=1.5: True)
 
     def boom(*a, **k):
-        raise ollama.OllamaUnavailable("timeout")
+        raise ollama.OllamaUnavailable("connection reset")
 
     monkeypatch.setattr(ollama, "chat", boom)
     r = client.get("/coach/tip").json()
-    assert r["source"] == "rules" and r["fallback_reason"].startswith("ollama_error")
+    assert r["source"] == "rules" and r["fallback_reason"] == "model_error"
+
+
+def test_a_timeout_is_named_and_counted(client, profile, monkeypatch):
+    from app.modules.coach import runtime
+
+    runtime._warm.clear()
+    monkeypatch.setattr(ollama, "is_available", lambda host, model, timeout=1.5: True)
+    waits: list[float] = []
+
+    def slow(*a, timeout=20.0, **k):
+        waits.append(timeout)
+        raise ollama.OllamaTimeout("no reply")
+
+    monkeypatch.setattr(ollama, "chat", slow)
+    r = client.get("/coach/tip").json()
+    assert r["source"] == "rules" and r["fallback_reason"] == "timeout"
+    assert waits == [60.0]  # a cold model gets the long first-call timeout
+    assert client.get("/settings").status_code == 200
 
 
 def test_coach_status(client):

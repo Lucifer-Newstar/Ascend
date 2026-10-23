@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
 from app.core.schemas import StrictIn
-from app.modules.coach import service, weekly_review
+from app.modules.coach import runtime, service, weekly_review
 
 router = APIRouter(prefix="/coach", tags=["coach"])
 
@@ -35,6 +35,20 @@ class CoachStatus(BaseModel):
 @router.get("/status", response_model=CoachStatus)
 def coach_status(request: Request, db: Session = Depends(get_db)) -> CoachStatus:
     return CoachStatus(**service.status(db, request.app.state.settings))  # type: ignore[arg-type]
+
+
+class WarmOut(BaseModel):
+    loaded: bool
+    model: str
+    seconds: float
+
+
+@router.post("/warm", response_model=WarmOut)
+def warm(request: Request, db: Session = Depends(get_db)) -> WarmOut:
+    """Preload the local model (called when the trainer chat opens), so the first answer
+    does not pay the cold load. A no-op when the AI is off or Ollama isn't running."""
+    loaded, model, seconds = runtime.warm(db, request.app.state.settings)
+    return WarmOut(loaded=loaded, model=model, seconds=seconds)
 
 
 @router.get("/tip", response_model=CoachOut)

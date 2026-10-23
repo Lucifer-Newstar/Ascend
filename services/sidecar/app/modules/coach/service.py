@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -10,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.modules.coach import ollama, validate
+from app.modules.coach import ollama, runtime, validate
 from app.modules.coach.rules import CoachContext, Tip, rule_tip
 from app.modules.gamification import service as game
 from app.modules.nutrition import service as nutrition
@@ -71,44 +72,91 @@ def facts_text(ctx: CoachContext, tip: Tip) -> str:
     return "\n".join(lines)
 
 
-def reply(db: Session, settings: Settings, now: datetime, question: str | None) -> CoachReply:
-    ctx = build_context(db, now)
-    tip = rule_tip(ctx)
-    if not progress.ai_enabled(db):
-        return CoachReply("rules", tip.text, tip.code, None, "ai_disabled")
-    if not ollama.is_available(settings.ollama_host, settings.coach_model):
-        return CoachReply("rules", tip.text, tip.code, None, "ollama_unavailable")
-    q = question or "Give me today's single most useful tip, based on the facts."
-    facts = facts_text(ctx, tip)
-    try:
-        text = ollama.chat(
-            settings.ollama_host,
-            settings.coach_model,
-            facts,
-            q,
-            timeout=settings.coach_timeout_s,
-        )
-    except ollama.OllamaUnavailable as e:
-        return CoachReply("rules", tip.text, tip.code, None, f"ollama_error: {e}"[:120])
-    # The user never sees an unchecked model reply (coach-llm.md section 5.2).
-    checks = validate.check_reply(text, facts, question)
+FALLBACK_SENTENCES: dict[str, str] = {
+    "ai_disabled": "The AI is switched off in Settings, so this is a rule-based answer.",
+    "ollama_unavailable": "The local AI isn't running (Settings > AI setup), so this is a "
+    "rule-based answer.",
+    "timeout": "The local AI took too long (it may still be loading), so this is a rule-based "
+    "answer.",
+    "model_error": "The local AI returned an error, so this is a rule-based answer.",
+    "guard_rejected": "The AI reply didn't pass the safety check, so here's a rule-based answer.",
+}
+
+
+def fallback_sentence(reason: str | None) -> str:
+    """What the user is told when a rule-based answer stands in for the model's."""
+    return FALLBACK_SENTENCES.get(reason or "", "")
+
+
+def _ask_checked(
+    db: Session, settings: Settings, facts: str, question: str, user_question: str | None
+) -> tuple[str | None, str | None, str, dict[str, str] | None]:
+    """(text, fallback reason, model, checks). The user never sees an unchecked model reply
+    (coach-llm.md section 5.2)."""
+    r = runtime.ask(db, settings, facts, question)
+    if r.text is None:
+        return None, r.reason, r.model, None
+    checks = validate.check_reply(r.text, facts, user_question)
     if not checks.ok:
         failed = "numbers" if not checks.numbers.ok else "banned"
         log.info("coach reply replaced: %s check failed (%s)", failed, checks.summary())
-        return CoachReply(
-            "rules",
-            tip.text,
-            tip.code,
-            settings.coach_model,
-            f"check_failed: {failed}",
-            checks.summary(),
-        )
-    return CoachReply("ollama", text, tip.code, settings.coach_model, None, checks.summary())
+        return None, "guard_rejected", r.model, checks.summary()
+    return r.text, None, r.model, checks.summary()
+
+
+def reply(db: Session, settings: Settings, now: datetime, question: str | None) -> CoachReply:
+    """Today's tip (worded by the model when it can), or an answer to `question`.
+
+    A question that is not about today's training is routed by the trainer's rules first
+    (greetings, app how-to, "start fresh", tours...), so it never gets the muscle tip as
+    its answer; the tip is only the reply to "what should I train?"-type questions."""
+    ctx = build_context(db, now)
+    tip = rule_tip(ctx)
+    if question:
+        routed = _routed(db, settings, now, question)
+        if routed is not None:
+            return routed
+    q = question or "Give me today's single most useful tip, based on the facts."
+    facts = facts_text(ctx, tip)
+    text, reason, model, checks = _ask_checked(db, settings, facts, q, question)
+    if text is None:
+        used = model if reason in ("guard_rejected", "timeout", "model_error") else None
+        return CoachReply("rules", tip.text, tip.code, used, reason, checks)
+    return CoachReply("ollama", text, tip.code, model, None, checks)
+
+
+def _routed(db: Session, settings: Settings, now: datetime, question: str) -> CoachReply | None:
+    """Hook for the trainer's intent router (registered by the trainer module)."""
+    for fn in _routers:
+        out = fn(db, settings, now, question)
+        if out is not None:
+            return out
+    return None
+
+
+_routers: list[Callable[[Session, Settings, datetime, str], CoachReply | None]] = []
+
+
+def register_router(fn: Callable[[Session, Settings, datetime, str], CoachReply | None]) -> None:
+    _routers[:] = [fn]
+
+
+def answer(db: Session, settings: Settings, now: datetime, question: str) -> CoachReply:
+    """A free-form question for the model, with no rule tip standing in: on any failure the
+    reply is empty and fallback_reason says why (the caller words the fallback)."""
+    ctx = build_context(db, now)
+    tip = rule_tip(ctx)
+    facts = facts_text(ctx, tip)
+    text, reason, model, checks = _ask_checked(db, settings, facts, question, question)
+    if text is None:
+        return CoachReply("rules", "", tip.code, model, reason, checks)
+    return CoachReply("ollama", text, tip.code, model, None, checks)
 
 
 def status(db: Session, settings: Settings) -> dict[str, object]:
+    model = runtime.model_for(db, settings)
     return {
         "ai_enabled": progress.ai_enabled(db),
-        "ollama_available": ollama.is_available(settings.ollama_host, settings.coach_model),
-        "model": settings.coach_model,
+        "ollama_available": ollama.is_available(settings.ollama_host, model),
+        "model": model,
     }
