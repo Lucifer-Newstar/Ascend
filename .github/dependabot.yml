@@ -1,5 +1,9 @@
-# Dependabot opens weekly PRs for outdated dependencies. Grouped so the team gets
-# a handful of PRs a week, not dozens. Each PR runs the full CI before merge.
+# Version-update PRs are switched off (open-pull-requests-limit: 0 on every
+# ecosystem): every push to main made Dependabot open a new batch of PRs and
+# request reviews from CODEOWNERS. Dependency upgrades are done by hand in tested
+# commits. Security updates are separate (GitHub's Dependabot alerts and security
+# updates) and are not affected by this limit. To turn version updates back on,
+# raise the limits below.
 version: 2
 updates:
   # Python sidecar (uv.lock)
@@ -10,7 +14,7 @@ updates:
       day: monday
       time: "06:00"
       timezone: Asia/Kolkata
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore(deps)"
     groups:
@@ -28,7 +32,7 @@ updates:
       day: monday
       time: "06:00"
       timezone: Asia/Kolkata
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore(deps)"
     groups:
@@ -53,6 +57,7 @@ updates:
     directory: /docker
     schedule:
       interval: monthly
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "build(docker)"
     groups:
@@ -65,7 +70,7 @@ updates:
     directory: /ml
     schedule:
       interval: monthly
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "chore(ml-deps)"
     groups:
@@ -78,6 +83,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     commit-message:
       prefix: "ci"
     groups:
