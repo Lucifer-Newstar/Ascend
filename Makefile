@@ -5,7 +5,7 @@ DESKTOP := apps/desktop
 
 .DEFAULT_GOAL := help
 .PHONY: help install hooks dev-sidecar dev-web dev-electron seed lint format typecheck test \
-        test-sidecar test-desktop coverage migrate migrate-fresh contracts check build build-sidecar \
+        test-sidecar test-desktop coverage migrate migrate-fresh contracts links check build build-sidecar \
         dist-win smoke-sidecar docker-test docker-dev docker-web docker-mlflow docker-down clean
 
 help: ## List targets
@@ -63,7 +63,10 @@ coverage: ## pytest with an HTML coverage report in services/sidecar/htmlcov/
 contracts: ## Compare the sidecar OpenAPI with docs/contracts (drift check)
 	cd $(SIDECAR) && uv run --with pyyaml python ../../scripts/check_contract_drift.py
 
-check: lint typecheck test migrate-fresh contracts build ## Everything CI runs, in one go (run before a PR)
+links: ## Check that relative links in the Markdown files resolve
+	cd $(SIDECAR) && uv run python ../../scripts/check_md_links.py
+
+check: lint typecheck test migrate-fresh contracts links build ## Everything CI runs, in one go (run before a PR)
 
 build: ## Build renderer + Electron main/preload
 	npm run build -w $(DESKTOP)
