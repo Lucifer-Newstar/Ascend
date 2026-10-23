@@ -3,7 +3,7 @@
  * user follows, with prog-v1's target per exercise and the sets already done today, or a
  * chooser when no program is followed. Picking an exercise opens it in the logger.
  */
-import type { Plan, PlanItem, ProgramSummary } from "@ascend/shared";
+import type { Plan, PlanItem, ProgramSection, ProgramSummary } from "@ascend/shared";
 import { useState } from "react";
 
 import { api } from "../api/client";
@@ -17,9 +17,22 @@ const WEEKDAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /** "3 × 8–12", or "3 × 20–30 s" for a hold (holds are dosed in seconds). */
 export function planTarget(it: PlanItem): string {
   const range = it.rep_low === it.rep_high ? `${it.rep_low}` : `${it.rep_low}–${it.rep_high}`;
-  return `${it.sets} × ${range}${it.measure === "hold" ? " s" : ""}`;
+  // v1.2: holds in seconds, time-based moves (cardio, rounds, mobility, calm) in minutes
+  const unit = it.measure === "hold" ? " s" : it.measure === "time" ? " min" : "";
+  return it.measure === "time" && it.sets === 1 ? `${range} min` : `${it.sets} × ${range}${unit}`;
 }
-const LEVEL: Record<string, string> = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
+/** v1.2: programs are tagged Beginner, Intermediate or Expert ("advanced" from older drafts reads Expert). */
+export const LEVEL: Record<string, string> = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Expert", expert: "Expert" };
+const LEVEL_ORDER: Record<string, number> = { beginner: 0, intermediate: 1, advanced: 2, expert: 2 };
+export const SECTION_TABS: { key: ProgramSection | "all"; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "gym", label: "Gym" },
+  { key: "calisthenics", label: "Calisthenics" },
+  { key: "cardio", label: "Cardio" },
+  { key: "martial_arts", label: "Martial arts" },
+  { key: "flexibility", label: "Mobility" },
+  { key: "meditation", label: "Calm" },
+];
 
 export function ProgramCard({ refreshKey = 0, onPick }: {
   refreshKey?: number;
@@ -83,9 +96,29 @@ function ProgramChooser({ current, onChosen, onCancel }: { current: string | nul
   const [busy, setBusy] = useState<string | null>(null);
   // v1.2: programs your kit can't do are hidden until you ask to explore them.
   const [explore, setExplore] = useState(false);
-  const all = progs.data ?? [];
+  const [section, setSection] = useState<ProgramSection | "all">("all");
+  const inSection = (progs.data ?? []).filter((p) => section === "all" || (p.section ?? "gym") === section);
+  const all = [...inSection].sort((a, b) => (LEVEL_ORDER[a.level] ?? 9) - (LEVEL_ORDER[b.level] ?? 9));
   const locked = all.filter((p) => !p.fits_equipment).length;
   const list = explore ? all : all.filter((p) => p.fits_equipment || p.key === current);
+
+  // v1.2: "Generate one for me" in every section: offline rules (the local AI only rewords
+  // the summary when it is installed), saved as your own program and followed at once.
+  async function generate() {
+    setBusy("generate");
+    try {
+      const target = section === "all" ? undefined : section;
+      const out = await api.planWorkout({ focus: "general", days_per_week: 3, minutes: 45, use_ai: true, section: target });
+      const saved = await api.saveProgram(out.draft);
+      await api.followProgram(saved.id);
+      toast(`Made and following ${saved.name}. Change it any time in Planner.`, "info");
+      onChosen();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not make a program", "error");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function choose(p: ProgramSummary) {
     setBusy(p.key);
@@ -118,6 +151,18 @@ function ProgramChooser({ current, onChosen, onCancel }: { current: string | nul
       hint="The program picks the exercises; your progression sets the weights."
       action={onCancel && <button type="button" className="text-xs text-accent hover:underline" onClick={onCancel}>Cancel</button>}
       loading={progs.loading && !progs.data} error={!progs.data ? progs.error ?? null : null} onRetry={progs.reload} skeletonLines={4}>
+      <div className="mb-3 flex flex-wrap gap-1.5" role="group" aria-label="Program section">
+        {SECTION_TABS.map((t) => (
+          <button key={t.key} type="button" aria-pressed={section === t.key} onClick={() => setSection(t.key)}
+            className={`chip ${section === t.key ? "border-accent text-ink" : "hover:text-ink"}`}>{t.label}</button>
+        ))}
+      </div>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button type="button" className="btn-ghost px-2 py-1 text-xs" disabled={busy !== null} onClick={() => void generate()} data-testid="generate-program">
+          {busy === "generate" ? "Making…" : "Generate one for me"}
+        </button>
+        <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={() => { window.location.hash = "planner"; }}>Build your own</button>
+      </div>
       <ul className="space-y-2">
         {list.map((p) => (
           <li key={p.key} className={`rounded-lg border border-line bg-panel-2 p-3 ${p.fits_equipment ? "" : "opacity-60"}`}>

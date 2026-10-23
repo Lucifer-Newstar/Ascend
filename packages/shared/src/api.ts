@@ -1128,7 +1128,11 @@ export interface ProgramSummary {
   days_per_week: number;
   fits_equipment: boolean;
   days: PlanDay[];
+  /** v1.2: gym, calisthenics, cardio, martial_arts, flexibility or meditation. */
+  section?: ProgramSection;
 }
+
+export type ProgramSection = "gym" | "calisthenics" | "cardio" | "martial_arts" | "flexibility" | "meditation";
 
 /** GET /plans/current */
 export interface Plan {
@@ -1324,6 +1328,8 @@ export interface WorkoutPlanIn {
   minutes: number;
   equipment?: PlanEquipment[] | null;
   use_ai?: boolean;
+  /** v1.2: generate for one section (cardio, martial arts, mobility and calm use section rules). */
+  section?: ProgramSection | null;
 }
 
 export interface WorkoutPlan {

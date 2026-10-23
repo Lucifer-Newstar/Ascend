@@ -5,11 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "../api/client";
 import { expectNoAxeViolations } from "../test/axe";
-import { ProgramCard } from "./ProgramCard";
+import { ProgramCard, planTarget } from "./ProgramCard";
 import { ToastProvider } from "./Toast";
 
 vi.mock("../api/client", () => ({
-  api: { currentPlan: vi.fn(), programs: vi.fn(), choosePlan: vi.fn(), leavePlan: vi.fn() },
+  api: { currentPlan: vi.fn(), programs: vi.fn(), choosePlan: vi.fn(), leavePlan: vi.fn(), planWorkout: vi.fn(), saveProgram: vi.fn(), followProgram: vi.fn() },
 }));
 
 const day = (key: string, name: string, weekday: number) => ({
@@ -74,5 +74,31 @@ describe("ProgramCard", () => {
     expect(await screen.findByRole("button", { name: "Follow Upper / lower, 4 days" })).toBeDisabled();
     await userEvent.click(screen.getByRole("button", { name: "Stop following a program" }));
     expect(api.leavePlan).toHaveBeenCalled();
+  });
+
+  it("filters programs by section, tags Expert, and generates one for the section", async () => {
+    vi.mocked(api.currentPlan).mockResolvedValue(null);
+    vi.mocked(api.programs).mockResolvedValue([
+      ...catalog,
+      { key: "boxing_basics_3", name: "Boxing Basics, 3 days", summary: "Solo boxing.", level: "beginner", equipment: "bodyweight", days_per_week: 3, fits_equipment: true, days: [day("d1", "Boxing A", 0)], section: "martial_arts" },
+      { key: "fighter_rounds_4", name: "Fighter Rounds, 4 days", summary: "Hard rounds.", level: "expert", equipment: "bodyweight", days_per_week: 4, fits_equipment: true, days: [day("d1", "Rounds", 0)], section: "martial_arts" },
+    ]);
+    vi.mocked(api.planWorkout).mockResolvedValue({ draft: { name: "My Martial Arts Plan, 3 days" } } as never);
+    vi.mocked(api.saveProgram).mockResolvedValue({ id: 7, name: "My Martial Arts Plan, 3 days" } as never);
+    vi.mocked(api.followProgram).mockResolvedValue({ id: 7 } as never);
+    renderCard();
+    await userEvent.click(await screen.findByRole("button", { name: "Martial arts" }));
+    expect(screen.queryByText("Full body, 3 days")).toBeNull();
+    expect(screen.getByText("Boxing Basics, 3 days")).toBeInTheDocument();
+    expect(screen.getByText("Expert")).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("generate-program"));
+    expect(api.planWorkout).toHaveBeenCalledWith(expect.objectContaining({ section: "martial_arts" }));
+    expect(api.followProgram).toHaveBeenCalledWith(7);
+  });
+
+  it("doses time-based moves in minutes", () => {
+    const it_ = { exercise_id: 1, exercise: "Running", sets: 1, rep_low: 25, rep_high: 35, target_rpe: 7, rest_s: 0, measure: "time" } as never;
+    expect(planTarget(it_)).toBe("25–35 min");
+    expect(planTarget({ ...(it_ as object), sets: 3, rep_low: 3, rep_high: 3 } as never)).toBe("3 × 3 min");
   });
 });
