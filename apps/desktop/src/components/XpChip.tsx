@@ -11,6 +11,7 @@ import type { GameSummary } from "@ascend/shared";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { api } from "../api/client";
+import { num } from "../lib/format";
 import { CountUp, useReducedMotion } from "../lib/motion";
 import { useApi } from "../lib/useApi";
 import { Confetti, Flash, Transient, useRise } from "./Celebrate";
@@ -64,8 +65,8 @@ export function XpStatus({ game }: { game: GameSummary | undefined }) {
         <XpSegments key={xp.level} fill={fill} />
         <span className="text-muted">
           <span className="text-ink"><CountUp key={xp.level} value={xp.xp_into_level} duration={600} /></span>
-          <span className="sr-only"> of {xp.xp_for_next} XP to the next level</span>
-          <span aria-hidden="true">/{xp.xp_for_next} XP</span>
+          <span className="sr-only"> of {num(xp.xp_for_next)} XP to the next level</span>
+          <span aria-hidden="true">/{num(xp.xp_for_next)} XP</span>
         </span>
         <Transient trigger={riseKey}>
           <span aria-hidden="true" className="float-up motion-decor pointer-events-none absolute -top-2 right-3 font-semibold text-xp" data-testid="xp-gain">

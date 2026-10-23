@@ -5,6 +5,11 @@ export function pct(value: number, target: number): number {
   return Math.max(0, Math.min(1, value / target));
 }
 
+/** A whole number with digit grouping, en-IN like the rest of the app (82,416 / 3,82,416). */
+export function num(n: number): string {
+  return Math.round(n).toLocaleString("en-IN");
+}
+
 export function kcal(n: number): string {
   return Math.round(n).toLocaleString("en-IN");
 }

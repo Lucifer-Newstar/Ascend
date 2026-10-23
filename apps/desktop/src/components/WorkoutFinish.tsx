@@ -9,7 +9,7 @@ import type { BossRaid, FinishedWorkout, GameSummary } from "@ascend/shared";
 import { useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { count } from "../lib/format";
+import { count, num } from "../lib/format";
 import { useAppTheme } from "../lib/prefs";
 import { themeArt } from "../lib/themeArt";
 import { EventBackdrop } from "./EventBackdrop";
@@ -98,7 +98,7 @@ export function WorkoutFinish({ summary, onClose, onToday }: { summary: FinishSu
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="Progress to the next level" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
                   <span className="block h-full rounded-full bg-xp" style={{ width: `${pct}%` }} />
                 </div>
-                <p className="mt-1 text-[11px] text-muted">{xp.xp_into_level} / {xp.xp_for_next} XP to level {xp.level + 1}</p>
+                <p className="mt-1 text-[11px] text-muted">{num(xp.xp_into_level)} / {num(xp.xp_for_next)} XP to level {xp.level + 1}</p>
               </div>
             )}
             {game && (

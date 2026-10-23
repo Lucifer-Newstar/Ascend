@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { count, dateLabel, dayLabel, kcal, pct, portionLabel, readyAtLabel, dateRange } from "./format";
+import { count, dateLabel, dayLabel, kcal, num, pct, portionLabel, readyAtLabel, dateRange } from "./format";
 
 describe("pct", () => {
   it("clamps to 0..1", () => {
@@ -30,6 +30,15 @@ describe("labels", () => {
   });
   it("says ready now without a time", () => {
     expect(readyAtLabel(null)).toBe("ready now");
+  });
+});
+
+describe("num", () => {
+  it("groups digits the same way everywhere (en-IN), so both sides of the XP bar match", () => {
+    expect(num(12541)).toBe("12,541");
+    expect(num(25974)).toBe("25,974");
+    expect(num(382416)).toBe("3,82,416");
+    expect(num(999.6)).toBe("1,000");
   });
 });
 

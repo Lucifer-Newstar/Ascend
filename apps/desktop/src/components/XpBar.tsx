@@ -1,6 +1,7 @@
 import type { StreakInfo, XpInfo } from "@ascend/shared";
 import { useEffect, useState } from "react";
 
+import { num } from "../lib/format";
 import { CountUp, useReducedMotion } from "../lib/motion";
 import { Confetti, Flash, Transient, useRise } from "./Celebrate";
 import { IconFlame } from "./Icons";
@@ -126,7 +127,7 @@ export function XpBar({ xp, streak }: { xp: XpInfo; streak: StreakInfo }) {
             </Transient>
           </div>
           <span className="text-xs text-muted">
-            <span className="text-ink"><CountUp key={xp.level} value={xp.xp_into_level} /></span> / {xp.xp_for_next.toLocaleString()} XP
+            <span className="text-ink"><CountUp key={xp.level} value={xp.xp_into_level} /></span> / {num(xp.xp_for_next)} XP
           </span>
         </div>
         <XpFill fill={fill} className="mt-2 h-2" sheenKey={xpRise + (levelUpOnMount ? 1 : 0)} />

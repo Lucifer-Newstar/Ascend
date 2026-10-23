@@ -9,6 +9,7 @@
 import type { GameSummary, Stat, Stats } from "@ascend/shared";
 import { useId, useState } from "react";
 
+import { num } from "../lib/format";
 import { CountUp } from "../lib/motion";
 import { XpSegments } from "./XpChip";
 import { RankBadge } from "./XpBar";
@@ -101,8 +102,8 @@ export function StatusPanel({ game, stats, title = null, name = null, titlesEarn
       <div className="mt-3">
         <XpSegments key={xp.level} fill={fill} className="h-2 w-full" />
         <div className="mt-1.5 flex flex-wrap justify-between gap-x-3 text-small text-muted">
-          <span><span className="text-ink">{xp.xp_into_level}</span> / {xp.xp_for_next} XP</span>
-          <span>{xp.xp_for_next - xp.xp_into_level} to level {xp.level + 1}</span>
+          <span><span className="text-ink">{num(xp.xp_into_level)}</span> / {num(xp.xp_for_next)} XP</span>
+          <span>{num(xp.xp_for_next - xp.xp_into_level)} to level {xp.level + 1}</span>
         </div>
       </div>
       <ul className="mt-4 space-y-2.5" aria-label="Stats">

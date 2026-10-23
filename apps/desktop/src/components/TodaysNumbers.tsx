@@ -8,7 +8,7 @@ import type { Dashboard, Stats, TdeeReport } from "@ascend/shared";
 import type { ReactNode } from "react";
 
 import { api } from "../api/client";
-import { kcal } from "../lib/format";
+import { kcal, num } from "../lib/format";
 import { useApi } from "../lib/useApi";
 import { RoughBadge } from "./RoughBadge";
 import { ErrorState, Loading } from "./States";
@@ -28,7 +28,7 @@ export function todaysRows(d: Dashboard, stats: Stats | null, tdee: TdeeReport |
   const x = d.game.xp;
   const s = d.game.streak;
   const rows: Row[] = [
-    { key: "level", name: "Level and rank", value: `Level ${x.level} · ${x.rank} (${x.rank_title})`, how: `Level from total XP (${x.formula_version}); rank from level.`, data: `${x.total} XP in total · ${x.xp_into_level} of ${x.xp_for_next} into this level` },
+    { key: "level", name: "Level and rank", value: `Level ${x.level} · ${x.rank} (${x.rank_title})`, how: `Level from total XP (${x.formula_version}); rank from level.`, data: `${num(x.total)} XP in total · ${num(x.xp_into_level)} of ${num(x.xp_for_next)} into this level` },
     { key: "xp-today", name: "XP today", value: `${x.today}`, how: `Sum of today's XP events, capped at ${x.daily_cap} a day.`, data: `daily cap ${x.daily_cap}` },
     { key: "streak", name: "Streak", value: `${s.current} days`, how: "Days in a row with a finished workout, a completed quest item, or any quick log (a set, a meal or a weigh-in). A missed day is kept with a reason given by the next day; two missed days in a row reset it.", data: `best ${s.best} · ${s.excused} kept with a reason · ${s.active_today ? "today counts" : "nothing logged today yet"}` },
   ];

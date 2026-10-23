@@ -13,6 +13,7 @@
  */
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
+import { num } from "./format";
 import { useOptionalPrefs } from "./prefs";
 
 const QUERY = "(prefers-reduced-motion: reduce)";
@@ -75,7 +76,7 @@ export function useCountUp(target: number, duration = 700): number {
   return shown;
 }
 
-const defaultFormat = (n: number) => Math.round(n).toLocaleString();
+const defaultFormat = num;
 
 /**
  * A number that counts up to its value. Screen readers get the final value
