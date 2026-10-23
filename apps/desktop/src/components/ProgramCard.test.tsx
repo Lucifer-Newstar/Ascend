@@ -24,7 +24,7 @@ const plan: Plan = {
   id: 3, source: "program", algo_version: "programs-v1", program_key: "upper_lower_4", name: "Upper / lower, 4 days",
   started_on: "2026-10-12", days_per_week: 4, days: [day("upper_a", "Upper A", 0)], next: day("upper_a", "Upper A", 0),
   sessions_done: 3, this_week_done: 1, last_trained: "2026-10-17", deload_week: false, recent: [],
-  reason: "you last trained Lower B on 2026-10-17, so Upper A is next",
+  reason: "You last trained Lower B on Sat 17 Oct, so Upper A is next.",
   why: { formula: "next = the day after the last program day you trained", inputs: { sessions_done: 3 } },
 };
 
