@@ -608,9 +608,14 @@ def _reps_target(
             )
         new = load + inc
         reps = lo
-        if load > 0 and inc / load > MAX_STEP_FRACTION and e1 is not None:
-            # Smallest plate is a big jump: pick reps that keep the e1RM demand level.
-            reps = max(1, min(hi, int(30 * (e1 / new - 1) - TARGET_RIR)))
+        if load > 0 and inc / load > MAX_STEP_FRACTION:
+            # Smallest plate is a big jump: pick reps that keep the e1RM demand level. The
+            # track can lag (sets past MAX_E1RM_REPS are left out of it), so the last sets
+            # count too: 3 x 14 at 15.5 kg must not leave an older 13.3 kg e1RM asking for
+            # 3 x 1 at 18 kg.
+            rir = 0.0 if rpe is None else max(0.0, min(5.0, 10.0 - rpe))
+            basis = max(e1 or 0.0, load * (1 + (min_reps + rir) / 30))
+            reps = max(1, min(hi, int(30 * (basis / new - 1) - TARGET_RIR)))
         rated = f" at RPE {_fmt(rpe)}" if rpe is not None else ""
         return make(
             "up_load",

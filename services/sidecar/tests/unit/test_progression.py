@@ -60,6 +60,16 @@ def test_small_dumbbells_add_reps_before_a_big_jump() -> None:
     assert t2.reps is not None and 1 <= t2.reps < 14
 
 
+def test_big_jump_reps_use_the_last_sets_when_the_e1rm_track_lags() -> None:
+    # 14-rep sets are past the e1RM cap, so the track only has the older 12-rep session
+    # (13.3 kg). The jump to 18 kg must still come from what was just lifted, not 3 x 1.
+    hist = [sess(10, 10, [12, 12, 12]), sess(3, 15.5, [14, 14, 14])]
+    t = prog.next_target(RAISE, hist, NOW)
+    assert (t.change, t.reason, t.weight_kg) == ("up_load", "top_of_range", 18.0)
+    assert t.reps == 7
+    assert "back to 7" in t.why
+
+
 def test_easy_sets_raise_the_load_from_e1rm_capped_at_10_percent() -> None:
     t = prog.next_target(BENCH, [sess(3, 60, [8, 8, 8], rpe=6.0)], NOW)
     assert t.reason == "too_easy"
