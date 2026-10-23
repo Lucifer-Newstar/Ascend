@@ -9,7 +9,7 @@ commitments are in [docs/architecture/security-privacy.md](docs/architecture/sec
 
 Please report it privately with **Report a vulnerability** on the repository's
 **Security** tab on GitHub (private vulnerability reporting), not in a public issue.
-Include the version (Settings, About), the steps to reproduce and what you expected.
+Include the version (Settings → About), the steps to reproduce and what you expected.
 This is a student project, so there is no bounty and no response-time promise, but
 reports are read and answered.
 
@@ -21,7 +21,7 @@ Only the latest release on the GitHub Releases page gets fixes.
 
 An external code review reported 3 high, 6 medium and 22 low findings. Each was
 reproduced first (a failing test where practical) and fixed in its own PR (#23 to #37).
-Status as of PR #37:
+The fixes first shipped in 0.4.0 and are all in 1.0.0. Status at 1.0.0:
 
 | Finding | Status | Fix and regression test |
 |---|---|---|
@@ -62,13 +62,14 @@ Status as of PR #37:
 - **Unsigned installer.** Windows SmartScreen warns on first run. Code signing waits
   for a certificate; see security-privacy.md §6.
 - **`--extra-index-url` in `ml/requirements.txt`.** It only affects the training
-  machine and CI (the app ships ONNX Runtime alone). Every package is pinned to an exact
+  machine and CI (the app ships none of the ML pipeline's packages). Every package is pinned to an exact
   version, and uv runs with `UV_INDEX_STRATEGY=unsafe-best-match`, which is needed
   because the PyTorch index also carries numpy, pillow and others. A hash-locked file
   (`uv pip compile --generate-hashes`) is the next step.
-- **Not verified here:** the NSIS installer step and the publish job only run on the
-  Windows runner and on a version tag. The unpacked Windows build and the fuse check were
-  verified locally; the first tagged release should be watched end to end.
+- **Release pipeline:** the NSIS installer step and the publish job run only on GitHub's
+  Windows runner and on a version tag. Both ran green for the v0.4.0 tag on 2026-10-23,
+  including the fuse check on the packed `ASCEND.exe`; from 1.0.0 the release also carries
+  `SHA256SUMS.txt`.
 - **Local attackers** running as the same Windows user can read the database file
   directly; the sidecar's token and Host checks protect against other users' processes
   and web pages, not against your own account.
