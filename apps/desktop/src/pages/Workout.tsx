@@ -20,6 +20,7 @@ import { useToast } from "../components/Toast";
 import { count } from "../lib/format";
 import { sessionLoad } from "../lib/load";
 import { clearPendingExercise, peekPendingExercise } from "../lib/pending";
+import { fitsKit, hasGymKit, needsLabel, useLoadout } from "../lib/loadout";
 import { useReducedMotion } from "../lib/motion";
 import { MUSCLE_LABEL } from "../lib/muscles";
 import { usePrefs } from "../lib/prefs";
@@ -59,6 +60,16 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const [finished, setFinished] = useState<FinishSummary | null>(null);
   const [fullTimer, setFullTimer] = useState(false);
   const plan = useApi(api.currentPlan, [], { cacheKey: "plan" });
+  // v1.2: the loadout drives Train. Without gym kit it opens on Calisthenics, and the
+  // library lists the moves that fit; "Explore all" shows the rest greyed out.
+  const loadout = useLoadout();
+  const [explore, setExplore] = useState(false);
+  const [sectionChosen, setSectionChosen] = useState(Boolean(pending));
+  useEffect(() => {
+    if (sectionChosen || !loadout.loaded) return;
+    setSectionChosen(true);
+    if (!hasGymKit(loadout.choices)) setSection("calisthenics");
+  }, [sectionChosen, loadout.loaded, loadout.choices]);
 
   useEffect(() => {
     if (active.data !== undefined) setWorkout(active.data);
@@ -99,9 +110,11 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = exercises.data ?? [];
+    const all = exercises.data ?? [];
+    const list = explore ? all : all.filter((e) => fitsKit(e.equipment, loadout.allowed));
     return q ? list.filter((e) => e.name.toLowerCase().includes(q) || e.muscles.some((m) => (MUSCLE_LABEL[m.muscle] ?? m.muscle).toLowerCase().includes(q))) : list;
-  }, [exercises.data, query]);
+  }, [exercises.data, query, explore, loadout.allowed]);
+  const hiddenByKit = loadout.allowed ? (exercises.data ?? []).filter((e) => !fitsKit(e.equipment, loadout.allowed)).length : 0;
 
   // Last session's sets of the selected exercise: shown in grey ("last time") and used as
   // the target for the next set, so Enter alone repeats last time's set.
@@ -170,6 +183,7 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   if (exercises.error) return <ErrorState message={exercises.error} onRetry={exercises.reload} />;
 
   function changeSection(s: Section) {
+    setSectionChosen(true);
     setSection(s);
     setSelected(null);
     setQuery("");
@@ -327,7 +341,15 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         )}
         <section className="card flex min-h-0 flex-1 flex-col">
           <div className="border-b border-line p-4">
-            <h2 className="card-title mb-3">{sectionLabel} library</h2>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="card-title">{sectionLabel} library</h2>
+              {hiddenByKit > 0 && (
+                <label className="flex items-center gap-1.5 text-xs text-muted" title="Show moves that need kit you don't have">
+                  <input type="checkbox" className="accent-accent" checked={explore} onChange={(e) => setExplore(e.target.checked)} />
+                  Explore all
+                </label>
+              )}
+            </div>
             <div className="relative">
               <IconSearch className="absolute left-3 top-2.5 text-faint" width={16} height={16} />
               <input className="input pl-9" aria-label="Search exercises" placeholder="Exercise or muscle…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -337,9 +359,12 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
             {exercises.loading && !exercises.data && <li><Loading label="Loading exercises…" /></li>}
             {filtered.map((e) => (
               <li key={e.id}>
-                <button type="button" onClick={() => setSelected(e)}
-                  className={`w-full rounded-md px-3 py-2 text-left transition-colors duration-150 ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"}`}>
-                  <div className={`text-sm ${selected?.id === e.id ? "text-accent" : "text-ink"}`}>{e.name}</div>
+                <button type="button" onClick={() => setSelected(e)} data-fits={fitsKit(e.equipment, loadout.allowed) || undefined}
+                  className={`w-full rounded-md px-3 py-2 text-left transition-colors duration-150 ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"} ${fitsKit(e.equipment, loadout.allowed) ? "" : "opacity-55"}`}>
+                  <div className={`text-sm ${selected?.id === e.id ? "text-accent" : "text-ink"}`}>
+                    {e.name}
+                    {!fitsKit(e.equipment, loadout.allowed) && <span className="ml-2 text-[11px] text-muted">{needsLabel(e.equipment)}</span>}
+                  </div>
                   <div className={`mt-0.5 truncate text-xs ${selected?.id === e.id ? "text-muted" : "text-faint"}`}>
                     {e.equipment}
                     {e.muscles.some((m) => m.weight >= 1) && ` · ${e.muscles.filter((m) => m.weight >= 1).map((m) => MUSCLE_LABEL[m.muscle] ?? m.muscle).join(", ")}`}
@@ -348,7 +373,12 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
                 </button>
               </li>
             ))}
-            {filtered.length === 0 && <li className="p-4 text-sm text-faint">No exercise matches “{query}”.</li>}
+            {filtered.length === 0 && !exercises.loading && (
+              <li className="p-4 text-sm text-faint">
+                {query ? <>No exercise matches “{query}”.</> : "Nothing here fits your kit."}
+                {hiddenByKit > 0 && !explore && <> <button type="button" className="text-accent hover:underline" onClick={() => setExplore(true)}>Explore all</button></>}
+              </li>
+            )}
           </ul>
         </section>
       </div>

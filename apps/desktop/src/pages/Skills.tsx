@@ -65,7 +65,13 @@ function SkillGrid({ onOpen, onNavigate, onChanged }: { onOpen: (key: string) =>
   const list = useApi(() => api.skills(), []);
   const [family, setFamily] = useState<FamilyFilter>("all");
   const [view, setView] = useState<View>("tree");
-  const shown = useMemo(() => (list.data ?? []).filter((s) => family === "all" || s.family === family), [list.data, family]);
+  // v1.2: only the trees your kit can train; "Explore all" shows the rest.
+  const [explore, setExplore] = useState(false);
+  const hiddenByKit = (list.data ?? []).filter((s) => s.fits_equipment === false).length;
+  const shown = useMemo(
+    () => (list.data ?? []).filter((s) => (family === "all" || s.family === family) && (explore || s.fits_equipment !== false)),
+    [list.data, family, explore],
+  );
   if (list.error && !list.data) return <ErrorState message={list.error} onRetry={list.reload} />;
   const started = (list.data ?? []).filter((s) => s.steps_unlocked > 1 || (s.pct_to_next ?? 0) > 0).length;
   const unlockedSteps = (list.data ?? []).reduce((n, s) => n + s.steps_unlocked, 0);
@@ -86,6 +92,12 @@ function SkillGrid({ onOpen, onNavigate, onChanged }: { onOpen: (key: string) =>
         )}
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <Segmented label="Skill family" value={family} options={FAMILY_OPTIONS} onChange={setFamily} />
+          {hiddenByKit > 0 && (
+            <label className="flex items-center gap-2 text-xs text-muted" title="Show trees that need kit you don't have">
+              <input type="checkbox" className="accent-[var(--color-accent)]" checked={explore} onChange={(e) => setExplore(e.target.checked)} />
+              Explore all ({hiddenByKit} need other kit)
+            </label>
+          )}
           <Segmented label="View" value={view} options={[{ value: "tree", label: "Tree" }, { value: "cards", label: "Cards" }]} onChange={setView} />
         </div>
       </section>

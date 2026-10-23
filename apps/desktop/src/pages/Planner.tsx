@@ -6,11 +6,12 @@
  * ISSN, ACSM): a "block" flag means the plan was adjusted to stay safe.
  */
 import type { CustomProgram, GoalCheck, PlanEquipment, PlanExperience, PlanFlag, PlanFocus, WorkoutPlan } from "@ascend/shared";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
 import { PageGrid, Panel } from "../components/Page";
 import { useToast } from "../components/Toast";
+import { useLoadout } from "../lib/loadout";
 import { usePrefs } from "../lib/prefs";
 import { useApi } from "../lib/useApi";
 
@@ -61,6 +62,15 @@ function WorkoutPlanner({ onChanged }: { onChanged: () => void }) {
   const [days, setDays] = useState(3);
   const [minutes, setMinutes] = useState(60);
   const [equipment, setEquipment] = useState<PlanEquipment[]>(["gym"]);
+  // v1.2: start from the loadout chosen at setup, not "Full gym".
+  const loadout = useLoadout();
+  const [kitApplied, setKitApplied] = useState(false);
+  useEffect(() => {
+    if (kitApplied || !loadout.loaded) return;
+    setKitApplied(true);
+    const fromKit = (loadout.choices ?? []).filter((c): c is PlanEquipment => EQUIPMENT.some((q) => q.value === c));
+    if (fromKit.length) setEquipment(fromKit);
+  }, [kitApplied, loadout.loaded, loadout.choices]);
   const [plan, setPlan] = useState<WorkoutPlan | null>(null);
   const [busy, setBusy] = useState(false);
   const saved = useApi(api.customPrograms, []);

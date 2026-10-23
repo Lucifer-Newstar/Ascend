@@ -7,6 +7,8 @@
 import type { Difficulty, Exercise, ExerciseDetail, FieldSource, Section } from "@ascend/shared";
 import { useMemo, useState } from "react";
 
+import { fitsKit, needsLabel, useLoadout } from "../lib/loadout";
+
 import { api } from "../api/client";
 import type { Page } from "../components/Layout";
 import { IconPlus, IconSearch } from "../components/Icons";
@@ -98,7 +100,12 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
   const [openId, setOpenId] = useState<number | null>(null);
 
   const equipment = useMemo(() => [...new Set((list.data ?? []).map((e) => e.equipment))].sort(), [list.data]);
-  const results = useMemo(() => filterExercises(list.data ?? [], filters), [list.data, filters]);
+  // v1.2: the loadout filters the gallery; "Explore all" shows the rest greyed out.
+  const loadout = useLoadout();
+  const [explore, setExplore] = useState(false);
+  const matching = useMemo(() => filterExercises(list.data ?? [], filters), [list.data, filters]);
+  const results = useMemo(() => (explore ? matching : matching.filter((e) => fitsKit(e.equipment, loadout.allowed))), [matching, explore, loadout.allowed]);
+  const hiddenByKit = matching.length - matching.filter((e) => fitsKit(e.equipment, loadout.allowed)).length;
 
   const set = <K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -167,6 +174,12 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
             <input type="checkbox" className="accent-[var(--color-accent)]" checked={filters.customOnly} onChange={(e) => set("customOnly", e.target.checked)} />
             Added by me
           </label>
+          {loadout.allowed && (
+            <label className="flex items-center gap-2 text-muted" title="Show moves that need kit you don't have, greyed out">
+              <input type="checkbox" className="accent-[var(--color-accent)]" checked={explore} onChange={(e) => setExplore(e.target.checked)} />
+              Explore all{!explore && hiddenByKit > 0 ? ` (${hiddenByKit.toLocaleString("en-IN")} need other kit)` : ""}
+            </label>
+          )}
           {JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS) && (
             <button type="button" className="text-accent underline-offset-2 hover:underline" onClick={() => { setFilters(EMPTY_FILTERS); setShown(PAGE_SIZE); }}>
               Clear filters
@@ -190,7 +203,7 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
           <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4" aria-label="Exercises">
             {results.slice(0, shown).map((e) => (
               <li key={e.id}>
-                <ExerciseCard exercise={e} onOpen={() => setOpenId(e.id)} />
+                <ExerciseCard exercise={e} onOpen={() => setOpenId(e.id)} locked={!fitsKit(e.equipment, loadout.allowed)} />
               </li>
             ))}
           </ul>
@@ -212,15 +225,16 @@ export function Thumb({ exercise, className = "" }: { exercise: Pick<Exercise, "
   return <ExerciseArt exercise={exercise} className={className} />;
 }
 
-function ExerciseCard({ exercise: e, onOpen }: { exercise: Exercise; onOpen: () => void }) {
+function ExerciseCard({ exercise: e, onOpen, locked = false }: { exercise: Exercise; onOpen: () => void; locked?: boolean }) {
   const primary = e.muscles.filter((m) => m.weight >= 1).map((m) => muscleLabel(m.muscle));
   return (
-    <button type="button" onClick={onOpen} className="card card-hover card-lift group block w-full overflow-hidden text-left">
+    <button type="button" onClick={onOpen} className={`card card-hover card-lift group block w-full overflow-hidden text-left ${locked ? "opacity-55" : ""}`}>
       <Thumb exercise={e} className="aspect-[3/2]" />
       <div className="p-3">
         <div className="line-clamp-2 text-sm font-medium text-ink group-hover:text-accent">{e.name}</div>
         <div className="mt-1 truncate text-xs text-muted">{primary.length ? primary.join(", ") : SECTION_TYPE_LABEL[e.section]}</div>
         <div className="mt-2 flex flex-wrap gap-1">
+          {locked && <span className="chip">{needsLabel(e.equipment)}</span>}
           <span className="chip">{SECTION_TYPE_LABEL[e.section]}</span>
           {e.difficulty && <span className="chip capitalize">{e.difficulty}</span>}
           {e.measure === "hold" && <span className="chip">Hold</span>}

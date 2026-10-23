@@ -18,6 +18,9 @@ vi.mock("../api/client", () => ({
     editSet: vi.fn(),
     deleteSet: vi.fn(),
     finishWorkout: vi.fn(),
+    profile: vi.fn(),
+    game: vi.fn(),
+    boss: vi.fn(),
     updateSettings: vi.fn(),
     previousSession: vi.fn(),
     exercise: vi.fn(),
@@ -63,6 +66,34 @@ describe("Training page", () => {
     vi.mocked(api.progression).mockRejectedValue(new Error("no suggestion"));
     vi.mocked(api.currentPlan).mockResolvedValue(null);
     vi.mocked(api.programs).mockResolvedValue([]);
+    vi.mocked(api.profile).mockRejectedValue(new Error("no profile"));
+  });
+
+  it("follows the loadout: no gym kit opens on Calisthenics and hides moves that need kit", async () => {
+    const pushup: Exercise = { id: 7, name: "Push-up", equipment: "bodyweight", section: "calisthenics", met: null, time_based: false, muscles: [] };
+    const pullup: Exercise = { id: 8, name: "Pull-up", equipment: "bar", section: "calisthenics", met: null, time_based: false, muscles: [] };
+    vi.mocked(api.exercises).mockImplementation(async (...args) => (args[1] === "calisthenics" ? [pushup, pullup] : [bench]));
+    vi.mocked(api.profile).mockResolvedValue({ equipment: ["none"] } as unknown as Awaited<ReturnType<typeof api.profile>>);
+    renderPage();
+    expect(await screen.findByText("Push-up")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Calisthenics" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByText("Pull-up")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText("Explore all"));
+    expect(await screen.findByText("Pull-up")).toBeInTheDocument();
+    expect(screen.getByText("needs: a pull-up bar")).toBeInTheDocument();
+  });
+
+  it("shows the finish moment with the 3-set rule instead of a toast", async () => {
+    const lift = { id: 3, exercise_id: 1, exercise_name: "Barbell Bench Press", weight_kg: 40, reps: 8, rpe: 8, duration_s: null, distance_m: null, avg_hr: null, e1rm: 50, is_pr: false, performed_at: "2026-10-20T07:30:00" };
+    vi.mocked(api.activeWorkout).mockResolvedValue(session([lift]));
+    vi.mocked(api.game).mockRejectedValue(new Error("not needed"));
+    vi.mocked(api.boss).mockRejectedValue(new Error("not needed"));
+    vi.mocked(api.finishWorkout).mockResolvedValue({ workout: session([lift]), xp_awarded: 0, active_minutes: 5, hard_sets: 1 });
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "Finish workout" }));
+    expect(await screen.findByTestId("workout-finish")).toBeInTheDocument();
+    expect(screen.getByTestId("finish-xp")).toHaveTextContent("+0 XP");
+    expect(screen.getByText(/counts once it has 3 sets/)).toBeInTheDocument();
   });
 
   it("switches section tabs and loads that library", async () => {
