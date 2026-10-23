@@ -2,6 +2,13 @@
 
 > Milestone-level view. Phase detail: [phases.md](../planning/phases.md).
 > Calendar: [timeline.md](../planning/timeline.md). **All dates are estimates.**
+>
+> **Outcome (2026-10-23):** the plan below is the design-phase roadmap. The project moved
+> faster than planned and released **1.0.0 on 2026-10-23** (versions 0.1.0, 0.2.0 and 0.3.0
+> on 2026-10-20, 0.4.0 and 1.0.0 on 2026-10-23). 1.0.0 includes backups, Strong/Hevy import,
+> polished states and, from M5, the readiness check-in and adaptive calories; it does not
+> include auto-update, diagnostics, meal scan or a trained food classifier. What shipped in each
+> version is in the [CHANGELOG](../../CHANGELOG.md).
 
 ---
 

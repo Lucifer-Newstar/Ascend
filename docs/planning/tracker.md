@@ -3,6 +3,10 @@
 > **Status board for phases 0–3.** Updated by the lead after each weekly sync.
 > Legend: ⬜ not started · 🟨 in progress · ✅ done · ⛔ blocked · ➡ moved (see decision log).
 > Last updated: 2026-10-20 (planning; nothing started).
+>
+> **Not maintained after planning.** The work was tracked in pull requests and the
+> members' work logs instead, and ASCEND 1.0.0 was released on 2026-10-23. What shipped is in
+> the [CHANGELOG](../../CHANGELOG.md); the board below is kept as the original plan.
 
 ---
 
