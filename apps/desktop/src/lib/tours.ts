@@ -24,18 +24,13 @@ const nav = (id: Page, title: string, body: string): TourStep => ({ target: `nav
 export const APP_TOUR: Tour = {
   id: "app",
   page: "dashboard",
+  // Five steps at most (scope review): the rest is one "tour me through …" away.
   steps: [
-    { target: null, title: "Welcome to ASCEND", body: "A quick look around: about a minute. Next to continue, Esc to stop any time." },
-    nav("dashboard", "Today", "Your daily quests, rings, streak and the weekly boss. Start here each day."),
+    nav("dashboard", "Today", "Your daily quests, rings, streak and the weekly boss. Start here each day. Next to continue, Esc to stop."),
     nav("workout", "Train", "Log sets here. Every set is saved instantly and the engine suggests your next target."),
-    nav("skills", "Skills", "Calisthenics skill trees. Steps unlock from the sets you log."),
-    nav("progress", "Progress", "Weight trend, muscle map, records and your goal estimate."),
     nav("diet", "Fuel", "Log meals with Indian portions; calories and protein update straight away."),
-    nav("coach", "Coach", "The weekly review and deload check. Ask quick questions here too."),
-    { target: "xp", title: "Level and XP", body: "Everything you log earns XP. Ranks rise from E to S." },
     { target: "ai", title: "Local AI (optional)", body: "The app works fully without AI. With Ollama installed, a local model words answers on this PC. Settings > AI setup checks your PC." },
-    { target: "command", title: "Command bar", body: "Ctrl+K jumps anywhere or logs something fast." },
-    { target: "trainer", title: "Ask me anything", body: "Open the chat for help, a tour of any page, or to check if a goal is realistic." },
+    { target: "trainer", title: "Ask me anything", body: "Open the chat for help, a tour of any page (\"tour me through skills\"), or to check a goal. Ctrl+K jumps anywhere." },
   ],
 };
 

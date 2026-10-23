@@ -37,9 +37,11 @@ describe("TourOverlay", () => {
 
   it("has a tour for every section and the app", () => {
     expect(tourFor(null)).toBe(APP_TOUR);
+    expect(APP_TOUR.steps.length).toBeLessThanOrEqual(5);
     for (const id of Object.keys(SECTION_TOURS)) {
       const t = tourFor(id)!;
       expect(t.steps[0].target).toBe(`nav-${t.page}`);
+      expect(t.steps.length).toBeLessThanOrEqual(5);
     }
     expect(tourFor("nowhere")).toBeNull();
   });
