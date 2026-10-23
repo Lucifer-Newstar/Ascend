@@ -173,6 +173,28 @@ def target_text(t: prog.Target, sets: int) -> str | None:
     return work + load + rpe
 
 
+def program_rep_ranges(db: Session, now: datetime) -> dict[int, tuple[int, int]]:
+    """Exercise id -> the rep range the followed program gives it, for reps moves. A move
+    in several days takes the range of the next day that has it (from the next session
+    on, wrapping round), so the logger's suggestion matches the Train card. Empty when no
+    program is followed."""
+    e = active(db)
+    p = get_program(db, e.program_key) if e is not None else None
+    if e is None or p is None:
+        return {}
+    today = now.date()
+    state = programs.plan_state(p, e.started_on, _finished_gym(db, e.started_on, today), today)
+    lib = _library(db)
+    n = len(p.days)
+    out: dict[int, tuple[int, int]] = {}
+    for k in range(n):
+        for s in p.days[(state.next_index + k) % n].slots:
+            ex = lib.get(s.exercise)
+            if ex is not None and ex.measure == "reps" and s.rep_low < s.rep_high:
+                out.setdefault(ex.id, (s.rep_low, s.rep_high))
+    return out
+
+
 def plan(db: Session, now: datetime) -> PlanOut | None:
     e = active(db)
     if e is None:
@@ -194,7 +216,8 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
             item.sets = max(1, math.ceil(item.sets / 2))
         if item.exercise_id is None or item.measure == "time":
             continue  # time-based moves keep the program's minutes
-        _, t = progression_service.next_target(db, item.exercise_id, now, recovery)
+        rng = (item.rep_low, item.rep_high) if item.measure == "reps" else None
+        _, t = progression_service.next_target(db, item.exercise_id, now, recovery, rng)
         item.target = target_text(t, item.sets)
         item.target_reason = t.reason if item.target else None
         item.done_sets = open_sets.get(item.exercise_id, 0)

@@ -73,9 +73,12 @@ def _raised(db: Session, now: datetime) -> Notice | None:
         return None
     best: tuple[float, Notice] | None = None
     recovery = recovery_service.states(db, now)
+    from app.modules.workouts.programs_service import program_rep_ranges
+
+    ranges = program_rep_ranges(db, now)
     for ex_id in sorted({s.exercise_id for s in w.sets}):
         try:
-            e, t = progression_service.next_target(db, ex_id, now, recovery)
+            e, t = progression_service.next_target(db, ex_id, now, recovery, ranges.get(ex_id))
         except progression_service.ExerciseMissing:
             continue
         if t.change not in ("up_load", "advance"):

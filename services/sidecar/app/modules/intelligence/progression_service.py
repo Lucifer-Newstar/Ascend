@@ -164,14 +164,26 @@ def next_target(
     exercise_id: int,
     now: datetime,
     recovery: list[rec.MuscleRecovery] | None = None,
+    program_range: tuple[int, int] | None = None,
 ) -> tuple[Exercise, prog.Target]:
+    """`program_range`: the rep range the followed program gives this move (see
+    programs_service.program_rep_ranges); it replaces the library's range for reps moves,
+    so the Train card, Today and the logger's suggestion agree with the program."""
     e = db.get(Exercise, exercise_id)
     if e is None:
         raise ExerciseMissing(f"exercise {exercise_id} not found")
     hist = history(db, exercise_id, now)
     readiness, muscle = primary_readiness(db, e, now, recovery) if hist else (None, None)
+    info = exercise_info(e)
+    if program_range is not None and e.measure == "reps":
+        info = replace(
+            info,
+            rep_low=program_range[0],
+            rep_high=program_range[1],
+            range_source="your program's range",
+        )
     t = prog.next_target(
-        exercise_info(e),
+        info,
         hist,
         now,
         readiness=readiness,

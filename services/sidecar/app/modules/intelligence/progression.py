@@ -107,6 +107,9 @@ class ExerciseInfo:
     pattern: str = "other"
     rep_low: int | None = None
     rep_high: int | None = None
+    # Set when rep_low/rep_high come from somewhere other than the exercise (v1.2: the
+    # program you follow), so they win even when they equal the library's 6-12 marker.
+    range_source: str | None = None
 
 
 @dataclass(frozen=True)
@@ -242,6 +245,8 @@ def performance(s: SessionRec, hold: bool) -> float | None:
 
 def rep_range(ex: ExerciseInfo, history: Sequence[SessionRec]) -> tuple[int, int, str]:
     lo, hi = ex.rep_low, ex.rep_high
+    if ex.range_source and lo and hi and lo < hi:
+        return lo, hi, ex.range_source
     if lo and hi and (lo, hi) != (6, 12) and lo < hi:
         return lo, hi, "the exercise's range"
     medians = [

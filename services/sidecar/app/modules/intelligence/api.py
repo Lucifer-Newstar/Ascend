@@ -181,7 +181,10 @@ def target_out(db: Session, e: Exercise, t: prog.Target, now: datetime) -> Targe
 
 def _target(db: Session, exercise_id: int, now: datetime) -> tuple[Exercise, prog.Target]:
     try:
-        return progression_service.next_target(db, exercise_id, now)
+        from app.modules.workouts.programs_service import program_rep_ranges
+
+        rng = program_rep_ranges(db, now).get(exercise_id)
+        return progression_service.next_target(db, exercise_id, now, program_range=rng)
     except progression_service.ExerciseMissing as exc:
         raise HTTPException(404, str(exc)) from exc
 

@@ -84,3 +84,33 @@ def test_sets_in_the_open_workout_show_on_the_next_session(client):
         )
     items = {i["exercise"]: i for i in client.get("/plans/current").json()["next"]["items"]}
     assert items["Back Squat"]["done_sets"] == 2 and items["Barbell Row"]["done_sets"] == 0
+
+
+def test_targets_use_the_programs_rep_range(client, clock):
+    """ppl_6 gives Lateral Raise 12-20. 3 x 14 sits inside that range, so the next target
+    adds a rep; the library's 8-12 isolation default made it a load jump (QA pass 4: the
+    Train card read "3 x 1 @ 18 kg" and Today read "3 x 12-20" for the same move)."""
+    client.put("/plans/current", json={"program_key": "ppl_6"})
+    ids = ex_ids(client)
+    raise_id = ids["Lateral Raise"]
+    w = client.post("/workouts", json={"section": "gym"}).json()
+    for _ in range(3):
+        r = client.post(
+            f"/workouts/{w['id']}/sets",
+            json={"exercise_id": raise_id, "weight_kg": 10, "reps": 14, "rpe": 8},
+        )
+        assert r.status_code == 201, r.text
+    assert client.post(f"/workouts/{w['id']}/finish").status_code == 200
+    clock.now += timedelta(days=3)
+
+    t = client.get(f"/intelligence/progression/{raise_id}").json()
+    assert t["rep_range"] == [12, 20]
+    assert (t["change"], t["reps"], t["weight_kg"]) == ("up_reps", 15, 10)
+    assert t["explanation"]["inputs"]["range_from"] == "your program's range"
+    plan = client.get("/plans/current").json()
+    item = next(i for i in plan["next"]["items"] if i["exercise"] == "Lateral Raise")
+    assert item["target"] == "3 × 15 @ 10 kg, RPE 8"
+
+    client.delete("/plans/current")  # not following a program: the library range again
+    t = client.get(f"/intelligence/progression/{raise_id}").json()
+    assert t["rep_range"] == [8, 12] and t["change"] == "up_load"
