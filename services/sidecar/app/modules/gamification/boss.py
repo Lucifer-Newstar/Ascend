@@ -46,9 +46,54 @@ def week_start(d: date) -> date:
     return d - timedelta(days=d.weekday())
 
 
-def boss_for(week: date) -> tuple[str, str]:
-    """The boss and title for the week that starts on `week` (a Monday)."""
-    return BOSSES[(week.toordinal() // 7) % len(BOSSES)]
+# select-v1: each boss is a catalog item gated by experience level, tagged with the training
+# category it "guards" (the selector prefers the boss of your most under-trained category,
+# so the raid nudges balance). Advanced and expert bosses count as hard: never picked on a
+# low-readiness day. (name -> minimum level, category)
+BOSS_GATES: dict[str, tuple[str, str]] = {
+    "Iron Golem": ("beginner", "push"),
+    "Ash Wyvern": ("beginner", "cardio"),
+    "Frost Colossus": ("beginner", "legs"),
+    "Stone Basilisk": ("beginner", "core"),
+    "Storm Chimera": ("intermediate", "pull"),
+    "Grave Warden": ("intermediate", "legs"),
+    "Crimson Ogre": ("intermediate", "push"),
+    "Obsidian Hydra": ("intermediate", "calisthenics"),
+    "Thunder Behemoth": ("advanced", "legs"),
+    "Venom Manticore": ("advanced", "pull"),
+    "Dusk Leviathan": ("advanced", "cardio"),
+    "Bone Titan": ("expert", "push"),
+}
+LEVEL_ORDER = ("beginner", "intermediate", "advanced", "expert")
+
+
+def eligible_bosses(level: str, low_readiness: bool = False) -> list[tuple[str, str]]:
+    rank = LEVEL_ORDER.index(level) if level in LEVEL_ORDER else 0
+    out = []
+    for name, title in BOSSES:
+        need, _ = BOSS_GATES[name]
+        need_rank = LEVEL_ORDER.index(need)
+        if need_rank > rank or (low_readiness and need_rank >= 2):
+            continue
+        out.append((name, title))
+    return out
+
+
+def boss_for(
+    week: date,
+    level: str | None = None,
+    under: str | None = None,
+    low_readiness: bool = False,
+) -> tuple[str, str]:
+    """The boss and title for the week that starts on `week` (a Monday). Without a level,
+    the fixed rotation of all twelve; with one, a rotation over the bosses that level may
+    face, preferring the one that guards `under` (the most under-trained category)."""
+    if level is None:
+        return BOSSES[(week.toordinal() // 7) % len(BOSSES)]
+    pool = eligible_bosses(level, low_readiness) or list(BOSSES[:1])
+    preferred = [b for b in pool if under and BOSS_GATES[b[0]][1] == under]
+    pool = preferred or pool
+    return pool[(week.toordinal() // 7) % len(pool)]
 
 
 @dataclass(frozen=True)

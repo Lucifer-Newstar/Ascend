@@ -180,6 +180,19 @@
         "implemented": 3,
         "planned": 0
       }
+    },
+    {
+      "id": "selector",
+      "package": "app.modules.selector",
+      "contract": "selector.yaml",
+      "path_prefixes": [
+        "/selector"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 4,
+        "planned": 0
+      }
     }
   ]
 }

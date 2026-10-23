@@ -29,6 +29,7 @@ IntentKind = Literal[
     "train_today",
     "action",
     "faq",
+    "why",
     "unknown",
 ]
 
@@ -83,6 +84,11 @@ _GOAL = re.compile(
     r"(days?|weeks?|months?)",
     re.I,
 )
+_WHY = re.compile(
+    r"^\s*(why\??|why (did|do) you (say|post|send|tell me) (that|this)\??|"
+    r"why (that|this)( message| tip| boss)?\??|what was that about\??|explain that)\s*$",
+    re.I,
+)
 _ACTION = re.compile(
     r"^\s*(log|add|record|track|switch me|follow|start|weigh(ed)?|i weigh|i ate|ate|had)\b", re.I
 )
@@ -120,6 +126,8 @@ def classify(text: str) -> Intent:
     t = text.strip()
     if not t:
         return Intent("help")
+    if _WHY.search(t):
+        return Intent("why")
     if _ERASE.search(t):
         return Intent("erase")
     nums = goal_numbers(t)

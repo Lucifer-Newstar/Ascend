@@ -22,9 +22,15 @@ class TrainerMessage(Base):
     action_kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
     action_target: Mapped[str | None] = mapped_column(String(40), nullable=True)
     share_json: Mapped[str | None] = mapped_column("share", Text, nullable=True)
+    # Why the trainer posted it (select-v1): the rules that matched, with their numbers.
+    why_json: Mapped[str | None] = mapped_column("why", Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     read_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     @property
     def share(self) -> dict[str, object] | None:
         return json.loads(self.share_json) if self.share_json else None
+
+    @property
+    def why(self) -> list[str]:
+        return [str(w) for w in json.loads(self.why_json)] if self.why_json else []

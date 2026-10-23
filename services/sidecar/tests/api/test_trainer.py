@@ -102,16 +102,38 @@ def test_feed_posts_each_event_once(client: TestClient, profile: dict, clock) ->
         f"/workouts/{w['id']}/sets", json={"exercise_id": ex["id"], "reps": 5, "weight_kg": 100}
     )
     feed = client.get("/trainer/feed").json()
-    assert [m["kind"] for m in feed["messages"]] == ["pr"]
-    assert feed["unread"] == 1
-    assert client.get("/trainer/feed").json()["unread"] == 1  # not posted twice
+    kinds = [m["kind"] for m in feed["messages"]]
+    assert "pr" in kinds and len(kinds) <= 3  # the shared daily cap (select-v1)
+    pr = next(m for m in feed["messages"] if m["kind"] == "pr")
+    assert pr["why"] == ["you set a new best estimated 1RM in the last 3 days"]
+    unread = feed["unread"]
+    assert client.get("/trainer/feed").json()["unread"] == unread  # not posted twice
     client.post("/trainer/feed/read", json={})
     assert client.get("/trainer/feed").json()["unread"] == 0
     clock.now += timedelta(days=6)
     kinds = [m["kind"] for m in client.get("/trainer/feed").json()["messages"]]
-    assert kinds[0] == "missed"
+    assert "missed" in kinds
 
 
 def test_kb_lists_questions(client: TestClient) -> None:
     kb = client.get("/trainer/kb").json()
     assert len(kb) >= 30 and {"id", "question", "section"} <= set(kb[0])
+
+
+def test_selector_state_explain_and_why(client: TestClient, profile: dict) -> None:
+    st = client.get("/selector/state").json()
+    assert st["level"] == "beginner" and st["algo_version"] == "player-state-v1"
+    ex = client.get("/selector/explain").json()
+    assert ex["daily_cap"] == 3 and {i["id"] for i in ex["items"]} >= {"legs_under", "eat_enough"}
+    blocked = {i["id"]: i["blocked_by"] for i in ex["items"]}
+    assert blocked["expert_peaking"] == "level beginner"
+    w = client.post("/workouts", json={}).json()
+    ex_id = next(e for e in client.get("/exercises").json() if e["name"] == "Back Squat")["id"]
+    client.post(
+        f"/workouts/{w['id']}/sets", json={"exercise_id": ex_id, "reps": 5, "weight_kg": 60}
+    )
+    client.get("/trainer/feed")
+    why = chat(client, "why?")
+    assert why["intent"] == "why" and "because" in why["reply"]
+    log = client.get("/selector/log").json()
+    assert log and all(p["why"] for p in log)

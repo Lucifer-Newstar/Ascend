@@ -14,6 +14,8 @@ from app.modules.intelligence import progression_service
 from app.modules.nutrition.models import Meal
 from app.modules.progress import service as progress
 from app.modules.progress.models import BodyMetric
+from app.modules.selector import service as selector
+from app.modules.selector.catalog import ITEM_BY_ID
 from app.modules.skills.catalog import SKILL_BY_KEY
 from app.modules.skills.models import SkillUnlock
 from app.modules.trainer import monitor
@@ -99,14 +101,14 @@ def facts(db: Session, now: datetime) -> monitor.Facts:
 
 
 def scan(db: Session, now: datetime) -> int:
-    """Run the watcher and store new notices. Returns how many were new."""
+    """Run the watcher, then the content selector, and store what passes the shared gate
+    (daily cap and cooldowns, select-v1). Returns how many messages were new."""
     if progress.get_profile(db) is None:
         return 0
     known = set(db.scalars(select(TrainerMessage.key)))
+    fresh = [n for n in monitor.watch(facts(db, now)) if n.key not in known]
     new = 0
-    for n in monitor.watch(facts(db, now)):
-        if n.key in known:
-            continue
+    for n, why in selector.gate_watch(db, fresh, now):
         db.add(
             TrainerMessage(
                 key=n.key,
@@ -116,10 +118,31 @@ def scan(db: Session, now: datetime) -> int:
                 action_kind=n.action_kind,
                 action_target=n.action_target,
                 share_json=json.dumps(n.share) if n.share else None,
+                why_json=json.dumps(why),
                 created_at=now,
             )
         )
         known.add(n.key)
+        new += 1
+    db.flush()
+    for pick in selector.today(db, now):
+        key = f"pick:{pick.id}"
+        if key in known:
+            continue
+        item = ITEM_BY_ID.get(pick.item_id)
+        db.add(
+            TrainerMessage(
+                key=key,
+                kind=pick.kind,
+                mood=item.mood if item else "neutral",
+                text=pick.text,
+                action_kind=item.action[0] if item and item.action else None,
+                action_target=item.action[1] if item and item.action else None,
+                why_json=pick.why_json,
+                created_at=now,
+            )
+        )
+        known.add(key)
         new += 1
     db.commit()
     return new
@@ -143,6 +166,7 @@ def feed(db: Session, now: datetime) -> FeedOut:
                 action_kind=r.action_kind,
                 action_target=r.action_target,
                 share=r.share,
+                why=r.why,
                 created_at=r.created_at,
                 read=r.read_at is not None,
             )

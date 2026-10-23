@@ -92,6 +92,33 @@ def _goal(db: Session, intent: Intent) -> ChatOut:
     )
 
 
+def _why(db: Session) -> ChatOut:
+    """Explain the trainer's latest own message from its stored rules (select-v1)."""
+    from sqlalchemy import select
+
+    from app.modules.trainer.models import TrainerMessage
+
+    msg = db.scalars(
+        select(TrainerMessage)
+        .where(TrainerMessage.why_json.is_not(None))
+        .order_by(TrainerMessage.id.desc())
+    ).first()
+    if msg is None or not msg.why:
+        return ChatOut(
+            reply="I haven't flagged anything yet. When I do, ask me why and I'll show the rule.",
+            mood="neutral",
+            intent="why",
+            source="rules",
+        )
+    reasons = "; ".join(msg.why)
+    return ChatOut(
+        reply=f"I said \u201c{msg.text}\u201d because {reasons}.",
+        mood="neutral",
+        intent="why",
+        source="rules",
+    )
+
+
 def _ai_or_fallback(db: Session, settings: Settings, now: datetime, text: str) -> ChatOut:
     r = coach.answer(db, settings, now, text)
     if r.source == "ollama":
@@ -209,6 +236,8 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
         )
     if k == "faq":
         return _faq(intent)
+    if k == "why":
+        return _why(db)
     return _ai_or_fallback(db, settings, now, text)
 
 

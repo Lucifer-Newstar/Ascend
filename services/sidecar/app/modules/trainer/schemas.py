@@ -46,6 +46,8 @@ class FeedMessage(BaseModel):
     action_kind: str | None
     action_target: str | None
     share: dict[str, Any] | None
+    # Why the trainer posted it (select-v1); the trainer can repeat it when asked "why?".
+    why: list[str] = []
     created_at: datetime
     read: bool
 

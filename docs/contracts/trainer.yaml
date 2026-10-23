@@ -285,6 +285,12 @@ components:
             type: object
           - type: 'null'
           title: Share
+        why:
+          items:
+            type: string
+          type: array
+          title: Why
+          default: []
         created_at:
           type: string
           format: date-time

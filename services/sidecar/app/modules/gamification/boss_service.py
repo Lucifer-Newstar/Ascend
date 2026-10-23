@@ -51,7 +51,11 @@ def _hp(db: Session, week: date) -> boss.Hp:
 
 
 def _spawn(db: Session, week: date, now: datetime) -> BossRaid:
-    name, title = boss.boss_for(week)
+    # The boss is gated by the player's level and readiness (select-v1, BOSS_GATES).
+    from app.modules.selector.service import player_state
+
+    state = player_state(db, now)
+    name, title = boss.boss_for(week, state.level, state.most_under(), state.low_readiness)
     hp = _hp(db, week)
     raid = BossRaid(
         week_start=week,

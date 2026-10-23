@@ -288,10 +288,13 @@ def recovery_explanation(
 def system_notices(
     db: Session = Depends(get_db), now: datetime = Depends(get_now)
 ) -> list[NoticeOut]:
-    """The System's current notices, most important first (at most one of each kind)."""
+    """The System's current notices, most important first (at most one of each kind). They
+    share the trainer's daily cap (select-v1): a new notice posts only under today's cap."""
+    from app.modules.selector import service as selector
+
     return [
-        NoticeOut(id=n.id, code=n.code, title=n.title, text=n.text, at=n.at)  # type: ignore[arg-type]
-        for n in notices.current(db, now)
+        NoticeOut(id=n.id, code=n.code, title=n.title, text=n.text, at=n.at)
+        for n in selector.gate_system(db, notices.current(db, now), now)
     ]
 
 

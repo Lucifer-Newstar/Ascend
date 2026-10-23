@@ -1,0 +1,319 @@
+# ASCEND contract — selector
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — selector
+  version: 0.1.0
+  description: 'Player state (player-state-v1) and the content selector (select-v1, content-catalog-v1): every proactive
+    post with its why, the shared daily cap and cooldowns. Owner: Jegatheesan (backend).'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: selector
+  description: Player state and content selector
+paths:
+  /selector/state:
+    get:
+      summary: Get State
+      description: The player state the selector reads (player-state-v1).
+      operationId: get_state_selector_state_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerStateOut'
+      x-status: implemented
+      tags:
+      - selector
+  /selector/today:
+    get:
+      summary: Get Today
+      description: Today's catalog picks with their why (selected once a day).
+      operationId: get_today_selector_today_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PickOut'
+                type: array
+                title: Response Get Today Selector Today Get
+      x-status: implemented
+      tags:
+      - selector
+  /selector/log:
+    get:
+      summary: Get Log
+      description: The last 20 proactive posts of every source (catalog, watcher, System) with why.
+      operationId: get_log_selector_log_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PickOut'
+                type: array
+                title: Response Get Log Selector Log Get
+      x-status: implemented
+      tags:
+      - selector
+  /selector/explain:
+    get:
+      summary: Get Explain
+      description: 'Every catalog item: eligible right now or not, and the rule that decided it.'
+      operationId: get_explain_selector_explain_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplainOut'
+      x-status: implemented
+      tags:
+      - selector
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: Per-launch token from Electron main.
+  schemas:
+    ExplainOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ItemCheckOut'
+          type: array
+          title: Items
+        daily_cap:
+          type: integer
+          title: Daily Cap
+        kind_cap:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Kind Cap
+        catalog_version:
+          type: string
+          title: Catalog Version
+        engine_version:
+          type: string
+          title: Engine Version
+        state_version:
+          type: string
+          title: State Version
+      type: object
+      required:
+      - items
+      - daily_cap
+      - kind_cap
+      - catalog_version
+      - engine_version
+      - state_version
+      title: ExplainOut
+    ItemCheckOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        kind:
+          type: string
+          title: Kind
+        eligible:
+          type: boolean
+          title: Eligible
+        why:
+          items:
+            type: string
+          type: array
+          title: Why
+        blocked_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Blocked By
+      type: object
+      required:
+      - id
+      - kind
+      - eligible
+      - why
+      - blocked_by
+      title: ItemCheckOut
+    PickOut:
+      properties:
+        id:
+          type: integer
+          title: Id
+        day:
+          type: string
+          format: date
+          title: Day
+        source:
+          type: string
+          title: Source
+        item_id:
+          type: string
+          title: Item Id
+        kind:
+          type: string
+          title: Kind
+        text:
+          type: string
+          title: Text
+        why:
+          items:
+            type: string
+          type: array
+          title: Why
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - day
+      - source
+      - item_id
+      - kind
+      - text
+      - why
+      - created_at
+      title: PickOut
+    PlayerStateOut:
+      properties:
+        level:
+          type: string
+          title: Level
+        game_level:
+          type: integer
+          title: Game Level
+        age:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Age
+        under_18:
+          type: boolean
+          title: Under 18
+        training_weeks:
+          type: number
+          title: Training Weeks
+        sets_per_week:
+          type: number
+          title: Sets Per Week
+        ratios:
+          additionalProperties:
+            anyOf:
+            - type: number
+            - type: 'null'
+          type: object
+          title: Ratios
+        load:
+          additionalProperties:
+            type: number
+          type: object
+          title: Load
+        most_under:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Most Under
+        readiness:
+          type: integer
+          title: Readiness
+        readiness_source:
+          type: string
+          title: Readiness Source
+        streak:
+          type: integer
+          title: Streak
+        days_since_workout:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Days Since Workout
+        sessions_14d:
+          type: integer
+          title: Sessions 14D
+        planned_per_week:
+          type: integer
+          title: Planned Per Week
+        kcal_ratio:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Kcal Ratio
+        protein_ratio:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Protein Ratio
+        meal_days_7d:
+          type: integer
+          title: Meal Days 7D
+        goal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Goal
+        weight_trend_kg_week:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Weight Trend Kg Week
+        trend_matches_goal:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Trend Matches Goal
+        hide_calories:
+          type: boolean
+          title: Hide Calories
+        algo_version:
+          type: string
+          title: Algo Version
+      type: object
+      required:
+      - level
+      - game_level
+      - age
+      - under_18
+      - training_weeks
+      - sets_per_week
+      - ratios
+      - load
+      - most_under
+      - readiness
+      - readiness_source
+      - streak
+      - days_since_workout
+      - sessions_14d
+      - planned_per_week
+      - kcal_ratio
+      - protein_ratio
+      - meal_days_7d
+      - goal
+      - weight_trend_kg_week
+      - trend_matches_goal
+      - hide_calories
+      - algo_version
+      title: PlayerStateOut
