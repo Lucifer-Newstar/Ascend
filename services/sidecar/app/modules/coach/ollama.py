@@ -112,3 +112,25 @@ def warm(host: str, model: str, timeout: float = 90.0) -> bool:
         return True
     except httpx.HTTPError:
         return False
+
+
+def server_info(host: str, timeout: float = 1.5) -> tuple[str | None, list[tuple[str, int]]]:
+    """(Ollama's version, installed models as (name, bytes)), or (None, []) when it isn't
+    running. Both are Ollama's own local endpoints (/api/version, /api/tags)."""
+    if not host:
+        return None, []
+    try:
+        v = httpx.get(f"{host}/api/version", timeout=timeout)
+        v.raise_for_status()
+        t = httpx.get(f"{host}/api/tags", timeout=timeout)
+        t.raise_for_status()
+        version = v.json().get("version")
+        models = t.json().get("models", [])
+    except (httpx.HTTPError, ValueError, AttributeError):
+        return None, []
+    out = [
+        (str(m.get("name", "")), int(m.get("size", 0) or 0))
+        for m in models
+        if isinstance(m, dict) and m.get("name")
+    ]
+    return (str(version) if version else "unknown"), out

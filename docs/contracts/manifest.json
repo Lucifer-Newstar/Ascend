@@ -167,6 +167,19 @@
         "implemented": 6,
         "planned": 0
       }
+    },
+    {
+      "id": "ai",
+      "package": "app.modules.ai",
+      "contract": "ai.yaml",
+      "path_prefixes": [
+        "/ai"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 3,
+        "planned": 0
+      }
     }
   ]
 }
