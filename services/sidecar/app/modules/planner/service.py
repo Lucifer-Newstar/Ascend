@@ -400,7 +400,10 @@ def draft_diet(db: Session, settings: Settings, body: DietPlanIn) -> DietPlanOut
     flags = goalcheck.check_calories(kcal, p.sex, e.bmr)
     if flags:  # below the floor: plan at the floor and say so
         kcal = goalcheck.kcal_floor(p.sex, e.bmr)
-    under_18 = goalcheck.check_age(p.age, kcal < e.tdee - 50)
+    # The daily target is already at maintenance for a "cut" under 18 (energy_goal), so the
+    # chosen goal still counts as asking for a deficit and the plan says why it is not one.
+    asks_deficit = kcal < e.tdee - 50 or (body.kcal_target is None and p.goal == "cut")
+    under_18 = goalcheck.check_age(p.age, asks_deficit)
     if under_18:  # no deficit plans for under-18s: plan at maintenance and say so
         flags += under_18
         kcal = round(e.tdee)
