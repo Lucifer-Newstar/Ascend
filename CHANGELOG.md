@@ -107,6 +107,13 @@ before it migrates it. Release notes: [docs/releases/v1.2.0.md](docs/releases/v1
   body-weight sets show "BW", not 0 kg; a goal estimate in another year shows its years; a
   program's "next day" reason uses plain words and a short date; the session log scrolls
   sideways on narrow windows; a repeated toast replaces the last one instead of stacking.
+- The Skills page draws all its trees at once instead of sitting blank while it asks for each tree
+  one by one; XP numbers have digit grouping on both sides of the level bar ("12,541 / 25,974").
+- Workout targets: after a big dumbbell jump the next target comes from your last sets, so it no
+  longer asks for 3 × 1; targets on Train and Today use your program's rep range, and the
+  logger's suggestion uses the program's number of sets, not last session's.
+- "Lose fat" never sets a calorie deficit when you are under 18 or below a BMI of 18.5; the
+  daily target stays at maintenance and the meal plan says why.
 
 ### Removed
 

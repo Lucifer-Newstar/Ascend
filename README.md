@@ -342,10 +342,10 @@ How a release is cut: [docs/operations/release-process.md](docs/operations/relea
 
 On Linux, on the `v12-test` branch before the merge:
 
-- 904 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
+- 909 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
   with `TestClient`); ruff and mypy are clean (165 source files).
 - Alembic migrations apply to a fresh SQLite database (`0031`), downgrade to base and apply again.
-- tsc (renderer, Electron, shared), eslint (0 errors) and 529 vitest tests (74 files) pass;
+- tsc (renderer, Electron, shared), eslint (0 errors) and 531 vitest tests (74 files) pass;
   `vite build` succeeds.
 - The contract drift check passes (137 implemented operations match 16 contracts).
 - The ML pipeline is unchanged since 1.1.0 (18 tests).
