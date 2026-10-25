@@ -382,6 +382,28 @@ components:
             format: date
           - type: 'null'
           title: Reason Due
+        rest_today:
+          type: boolean
+          title: Rest Today
+          default: false
+        lifetime_sessions:
+          type: integer
+          title: Lifetime Sessions
+          default: 0
+        next_milestone:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Milestone
+          default: 1
+        weeks_in_a_row:
+          type: integer
+          title: Weeks In A Row
+          default: 0
+        week_target:
+          type: integer
+          title: Week Target
+          default: 3
       type: object
       required:
       - current
@@ -444,6 +466,20 @@ components:
         formula_version:
           type: string
           title: Formula Version
+        sub_rank:
+          type: string
+          title: Sub Rank
+          default: E1
+        next_sub_rank:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Sub Rank
+        next_sub_rank_level:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Sub Rank Level
       type: object
       required:
       - total
