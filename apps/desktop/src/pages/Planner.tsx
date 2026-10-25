@@ -5,7 +5,7 @@
  * reword the notes, never the numbers. Flags come from the goal checks (ICMR-NIN 2024,
  * ISSN, ACSM): a "block" flag means the plan was adjusted to stay safe.
  */
-import type { CustomProgram, GoalCheck, PlanEquipment, PlanExperience, PlanFlag, PlanFocus, WorkoutPlan } from "@ascend/shared";
+import type { CustomProgram, GoalCheck, PlanEquipment, PlanExperience, PlanFlag, PlanFocus, PlanSlot, WorkoutPlan } from "@ascend/shared";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
@@ -27,9 +27,16 @@ const EQUIPMENT: { value: PlanEquipment; label: string }[] = [
   { value: "pullup_bar", label: "Pull-up bar" },
   { value: "rings", label: "Rings" },
   { value: "dumbbells", label: "Dumbbells" },
+  { value: "bench", label: "Bench" },
   { value: "gym", label: "Full gym" },
 ];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** "3×8–12", or "3×30–45 s" for a hold (v1.3: holds are dosed in seconds). */
+export function slotTarget(s: PlanSlot): string {
+  const range = `${s.rep_low}${s.rep_high !== s.rep_low ? `–${s.rep_high}` : ""}`;
+  return `${s.sets}×${range}${s.measure === "hold" ? " s" : ""}`;
+}
 const TONE: Record<PlanFlag["severity"], string> = { info: "border-line-2 text-muted", warn: "border-warn/60 text-warn", block: "border-bad/60 text-bad" };
 
 export function Flags({ flags }: { flags: PlanFlag[] }) {
@@ -154,7 +161,7 @@ function WorkoutPlanner({ onChanged }: { onChanged: () => void }) {
               <section key={d.key} className="rounded-lg border border-line-2 p-3" aria-label={`${DAYS[d.weekday] ?? ""} ${d.name}`}>
                 <p className="text-[11px] uppercase tracking-wider text-accent">{DAYS[d.weekday] ?? ""} · {d.name}</p>
                 <ul className="mt-1 space-y-0.5 text-xs text-ink">
-                  {d.slots.map((s, i) => <li key={`${s.exercise}-${i}`}>{s.sets}×{s.rep_low}{s.rep_high !== s.rep_low ? `–${s.rep_high}` : ""} {s.exercise}</li>)}
+                  {d.slots.map((s, i) => <li key={`${s.exercise}-${i}`}>{slotTarget(s)} {s.exercise}</li>)}
                 </ul>
               </section>
             ))}
