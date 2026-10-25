@@ -5,3 +5,5 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 # The intent router scripts live in ml/intent/src (same convention).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "intent" / "src"))
+# Food data tools (Roboflow converter, Open Images fetch) live in ml/food/src.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "food" / "src"))
