@@ -212,9 +212,22 @@ def _setting_in(p: UpdateSettingP) -> Any:
         raise EditError(f"{p.value} isn't a choice for {SETTING_LABEL[p.key]}.") from e
 
 
+def _check_theme(db: Session, p: UpdateSettingP, now: datetime) -> None:
+    """Locked themes stay locked: the trainer can't hand out what the record hasn't earned."""
+    from app.modules.gamification import themes
+
+    if p.key != "theme":
+        return
+    t = next((t for t in themes.THEMES if t.key == p.value), None)
+    if t is None or t.key in themes.unlocked(db, now):  # "system" and the free looks
+        return
+    raise EditError(f"The {t.name} theme is still locked. {themes.requirement(t)} to unlock it.")
+
+
 def describe_setting(db: Session, p: UpdateSettingP) -> list[str]:
     from app.modules.progress import service as progress
 
+    _check_theme(db, p, datetime.now())
     new = getattr(_setting_in(p), p.key)
     old = getattr(progress.read_settings(db), p.key)
     if new == old:
@@ -233,6 +246,7 @@ def exec_setting(
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
     from app.modules.progress import service as progress
 
+    _check_theme(db, p, now)
     old = getattr(progress.read_settings(db), p.key)
     out = progress.update_settings(db, _setting_in(p))
     return {"key": p.key, "value": getattr(out, p.key)}, {"key": p.key, "old": old}

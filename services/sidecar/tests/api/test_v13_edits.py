@@ -98,6 +98,14 @@ def test_settings_edits(me: TestClient) -> None:
     assert me.get("/settings").json()["units"] == "imperial"
 
 
+def test_a_locked_theme_stays_locked(me: TestClient) -> None:
+    r = chat(me, "switch to frost theme")
+    assert r["proposal"] is None and "Frost theme is still locked" in r["reply"]
+    assert "Reach rank D" in r["reply"]
+    confirm(me, card(me, "light mode"))
+    assert me.get("/settings").json()["theme"] == "light"
+
+
 def _follow(client: TestClient, key: str) -> None:
     assert client.put("/plans/current", json={"program_key": key}).status_code == 200
 
