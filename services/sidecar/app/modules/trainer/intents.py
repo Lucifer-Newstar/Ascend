@@ -33,6 +33,9 @@ IntentKind = Literal[
     "action",
     "faq",
     "why",
+    "my_data",
+    "scoped_delete",
+    "small_talk",
     "unknown",
 ]
 
@@ -63,6 +66,94 @@ _ERASE = re.compile(
     r"not my data)",
     re.I,
 )
+# v1.3: "remove all meals" is about meals, not about wiping everything (it used to offer
+# the full erase card).
+_SCOPED_DELETE = re.compile(
+    r"\b(erase|delete|wipe|reset|clear|remove)\b.*\b(meals?|food logs?|foods?|workouts?|sets?|"
+    r"sessions?|weigh-?ins?|weights?|photos?)\b",
+    re.I,
+)
+_WHOLE = re.compile(r"\b(data|everything|account|history|logs|all my logs|profile)\b", re.I)
+_SECTION_OF = (
+    (re.compile(r"meal|food", re.I), "diet"),
+    (re.compile(r"workout|set|session", re.I), "workout"),
+    (re.compile(r"weigh|weight", re.I), "progress"),
+    (re.compile(r"photo", re.I), "profile"),
+)
+# v1.3: questions about the user's own numbers get the numbers, not a help note.
+_MY_DATA = (
+    (
+        "kcal",
+        re.compile(
+            r"\b(how many|how much|total|my)\b.*\b(calories|kcal|cal)\b.*\b(today|"
+            r"eaten|ate|eat|so far|left|remaining)\b|\bcalories (left|remaining)\b",
+            re.I,
+        ),
+    ),
+    (
+        "protein",
+        re.compile(
+            r"\b(how much|how many|total|my)\b.*\bprotein\b.*\b(today|eaten|ate|eat|"
+            r"did i|so far|left)\b",
+            re.I,
+        ),
+    ),
+    (
+        "meals",
+        re.compile(
+            r"\bwhat (did|have) i (eat|eaten|ate|had|have)\b|\bmy meals today\b|"
+            r"\bwhat i ate\b",
+            re.I,
+        ),
+    ),
+    (
+        "streak",
+        re.compile(
+            r"\b(what'?s|what is|how long is|show|my) (my |the )?(current )?streak\b|"
+            r"\bmy streak\b",
+            re.I,
+        ),
+    ),
+    ("bmi", re.compile(r"\b(what'?s|what is|my|calculate)\b.*\bbmi\b", re.I)),
+    (
+        "progress",
+        re.compile(
+            r"\b(am i|are we) (making|getting|seeing) (any )?(progress|better|"
+            r"stronger|results)\b|\bmy progress\b|\bhow am i doing\b",
+            re.I,
+        ),
+    ),
+    ("max", re.compile(r"\b(what'?s|what is|my) (my )?(max|best|pr|record)\b", re.I)),
+    (
+        "weight",
+        re.compile(
+            r"\b(what'?s|what is|how much is) my (body ?)?weight\b|\bhow much do i "
+            r"weigh\b",
+            re.I,
+        ),
+    ),
+)
+_ADVICE = re.compile(r"\b(should|need|recommend(ed)?|ideal|enough|good|healthy|normal)\b", re.I)
+_SMALL_TALK = (
+    ("bye", re.compile(r"^\s*(bye+|cya|see (you|ya)|good ?night|gn|tata|ttyl)\W*$", re.I)),
+    (
+        "ok",
+        re.compile(
+            r"^\s*(ok+|okay|k+|kk|cool|nice|great|alright|fine|hmm+|got it|"
+            r"\U0001f44d|\U0001f44c)\W*$",
+            re.I,
+        ),
+    ),
+    ("laugh", re.compile(r"^\s*(lol+|lmao|haha+|hehe+|\U0001f602|\U0001f923)\W*$", re.I)),
+    (
+        "hype",
+        re.compile(
+            r"^\s*([\U0001f4aa\U0001f525\U0001f3cb\u2764\U0001f64c\s]+|lets go+|"
+            r"let'?s go+)\W*$",
+            re.I,
+        ),
+    ),
+)
 _TOUR = re.compile(
     r"\b(tour|show me around|walk me through|guide me|give me a walkthrough|how do i use)\b", re.I
 )
@@ -77,8 +168,9 @@ _CHANGE_TRAINER = re.compile(
     r"\b(change|switch|swap|pick|choose|new|different)\b.*\btrainers?\b", re.I
 )
 _TRAIN_TODAY = re.compile(
-    r"\b(what (should|do|can) i (train|do|work)|today'?s (workout|tip|plan)|tip for today|"
-    r"what to train|which muscles?|train today)\b",
+    r"\b(what (should|do|can) i (train|do|work)|today'?s (workout|tip|plan|session)|tip for today|"
+    r"what to train|which muscles?|train today|(my )?workout (for )?today|what'?s my (next )?"
+    r"(workout|session)|my next (workout|session)|what'?s (on )?(the plan|my plan) today)\b",
     re.I,
 )
 _GOAL = re.compile(
@@ -152,6 +244,13 @@ def classify(text: str) -> Intent:
         return Intent("help")
     if _WHY.search(t):
         return Intent("why")
+    for name, rx in _SMALL_TALK:
+        if rx.search(t):
+            return Intent("small_talk", section=name)
+    scoped = _SCOPED_DELETE.search(t)
+    if scoped and not _WHOLE.search(t):
+        where = next((s for rx, s in _SECTION_OF if rx.search(scoped.group(2))), "diet")
+        return Intent("scoped_delete", section=where)
     if _ERASE.search(t):
         return Intent("erase")
     if _MISSED.search(t):
@@ -163,6 +262,9 @@ def classify(text: str) -> Intent:
         return Intent("goal_check", numbers=nums)
     if _ACTION.search(t):
         return Intent("action")
+    for name, rx in _MY_DATA:
+        if rx.search(t) and not _ADVICE.search(t):
+            return Intent("my_data", section=name)
     if _CHANGE_TRAINER.search(t):
         return Intent("change_trainer")
     if _TOUR.search(t):

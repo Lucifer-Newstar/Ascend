@@ -7,7 +7,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db, get_now
+from app.core.deps import get_bus, get_db, get_now
+from app.core.events import EventBus
 from app.modules.trainer import chat, kb, service
 from app.modules.trainer.schemas import (
     ChatIn,
@@ -24,11 +25,15 @@ router = APIRouter(prefix="/trainer", tags=["trainer"])
 
 @router.post("/chat", response_model=ChatOut)
 def post_chat(
-    body: ChatIn, request: Request, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+    body: ChatIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    bus: EventBus = Depends(get_bus),
+    now: datetime = Depends(get_now),
 ) -> ChatOut:
     """One chat turn. Rules route the message first; only an unknown question reaches the
     local model (and its reply passes the number guard)."""
-    return chat.respond(db, request.app.state.settings, now, body.text)
+    return chat.respond(db, request.app.state.settings, now, body.text, bus)
 
 
 @router.get("/feed", response_model=FeedOut)

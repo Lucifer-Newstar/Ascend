@@ -19,7 +19,7 @@ from app.core.config import Settings
 from app.modules.coach import service as coach
 from app.modules.planner import validate as goalcheck
 from app.modules.progress import service as progress
-from app.modules.trainer import kb
+from app.modules.trainer import kb, my_data
 from app.modules.trainer.intents import Intent, classify
 from app.modules.trainer.schemas import ChatAction, ChatOut
 
@@ -37,6 +37,15 @@ _action_parser: list[ActionParser] = []
 
 def register_action_parser(fn: ActionParser) -> None:
     _action_parser[:] = [fn]
+
+
+# v1.3: "yes" / "no" / "undo" typed after a card (registered by the actions module).
+TextReply = Callable[[Session, datetime, str, object], ChatOut | None]
+_text_reply: list[TextReply] = []
+
+
+def register_text_reply(fn: TextReply) -> None:
+    _text_reply[:] = [fn]
 
 
 def _name(db: Session) -> str:
@@ -139,7 +148,13 @@ def _ai_or_fallback(db: Session, settings: Settings, now: datetime, text: str) -
     )
 
 
-def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOut:
+def respond(
+    db: Session, settings: Settings, now: datetime, text: str, bus: object | None = None
+) -> ChatOut:
+    if _text_reply and bus is not None:
+        out = _text_reply[0](db, now, text, bus)
+        if out is not None:
+            return out
     intent = classify(text)
     k = intent.kind
     if k == "action" and _action_parser:
@@ -253,11 +268,52 @@ def respond(db: Session, settings: Settings, now: datetime, text: str) -> ChatOu
         return pick.model_copy(
             update={"reply": "You don't follow a program yet. " + pick.reply, "intent": k}
         )
+    if k == "faq" and _action_parser:  # "tender coconut water" is a food, not the water note
+        out = _action_parser[0](db, settings, now, text, "bare_exact")
+        if out is not None:
+            return out
     if k == "faq":
         return _faq(intent)
     if k == "why":
         return _why(db)
+    if k == "my_data":
+        return my_data.answer(db, now, intent.section or "", text)
+    if k == "scoped_delete":
+        return ChatOut(
+            reply="I won't wipe everything for that. To remove one meal or workout, open it on "
+            "Fuel or Train and delete it there; say undo to take back the last thing I logged. "
+            "Erasing all your data is a separate step (\u201cstart fresh\u201d).",
+            mood="neutral",
+            intent=k,
+            source="rules",
+            actions=[
+                ChatAction(
+                    kind="navigate",
+                    target=intent.section or "diet",
+                    label=f"Open {kb.SECTION_TITLES[intent.section or 'diet']}",
+                )
+            ],
+        )
+    if k == "small_talk":
+        return ChatOut(
+            reply=_SMALL_TALK.get(intent.section or "", "\U0001f44d"),
+            mood="neutral",
+            intent=k,
+            source="rules",
+        )
+    if k == "unknown" and _action_parser:
+        out = _action_parser[0](db, settings, now, text, "bare")
+        if out is not None:
+            return out
     return _ai_or_fallback(db, settings, now, text)
+
+
+_SMALL_TALK = {
+    "bye": "See you. Log your next session and I'll be here.",
+    "ok": "\U0001f44d Anything else? Log a set, a meal, or ask me something.",
+    "laugh": "\U0001f604",
+    "hype": "That's the energy. Log it and keep the streak going.",
+}
 
 
 def _session_text(db: Session, now: datetime) -> tuple[str, str] | None:
