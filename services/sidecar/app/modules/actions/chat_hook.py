@@ -8,7 +8,7 @@ from urllib.parse import quote
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.modules.actions import service, text_actions
+from app.modules.actions import edit_parser, service, text_actions
 from app.modules.actions.registry import ActionError, AmbiguousName, UnknownFood
 from app.modules.trainer import chat
 from app.modules.trainer.schemas import ChatAction, ChatOut
@@ -36,6 +36,12 @@ def from_chat(
                 proposal=_card(db, row.id),
                 actions=[ChatAction(kind="proposal", target=str(row.id), label="Review")],
             )
+        if kind == "edit":  # v1.3: profile, kit, settings and plan edits (rules only)
+            edit = edit_parser.parse_edit(text)
+            if edit is None:
+                return None
+            row = service.propose(db, edit[0], edit[1], "chat", text, now)
+            return _proposal_reply(db, row.id, row.source)
         # "rules" is a line the intent router did not take as an action ("weight 81.4",
         # "bench 80x5"): only the shared grammar may claim it, never the model.
         if kind in ("bare", "bare_exact"):  # v1.3: a line that only names a food

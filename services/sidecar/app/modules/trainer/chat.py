@@ -155,6 +155,12 @@ def respond(
         out = _text_reply[0](db, now, text, bus)
         if out is not None:
             return out
+    # v1.3: "change my goal to bulk", "I have a bench", "swap bench press for push-ups":
+    # a clear edit command becomes a card before any help note can claim the words.
+    if _action_parser:
+        out = _action_parser[0](db, settings, now, text, "edit")
+        if out is not None:
+            return out
     intent = classify(text)
     k = intent.kind
     if k == "action" and _action_parser:
