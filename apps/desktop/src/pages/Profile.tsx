@@ -13,7 +13,7 @@ import { useEffect, useState, type ChangeEvent } from "react";
 import { api } from "../api/client";
 import { PageGrid, Panel } from "../components/Page";
 import { Avatar } from "../components/Avatar";
-import { BossLadder } from "../components/BossLadder";
+import { TrophyShelf } from "../components/TrophyShelf";
 import { ShareDialog } from "../components/ShareCard";
 import { useTrainer } from "../components/Trainer";
 import { useToast } from "../components/Toast";
@@ -35,7 +35,7 @@ export function ProfilePage({ refreshKey }: { refreshKey: number }) {
       <HunterCard refreshKey={refreshKey} />
       <Achievements refreshKey={refreshKey} onShare={setShare} />
       <WardrobePanel refreshKey={refreshKey} />
-      <BossLadderPanel refreshKey={refreshKey} />
+      <TrophyShelfPanel refreshKey={refreshKey} />
       <Gallery />
       {share && <ShareDialog payload={share} onClose={() => setShare(null)} />}
     </PageGrid>
@@ -91,13 +91,15 @@ function HunterCard({ refreshKey }: { refreshKey: number }) {
   );
 }
 
-function BossLadderPanel({ refreshKey }: { refreshKey: number }) {
+function TrophyShelfPanel({ refreshKey }: { refreshKey: number }) {
   const ladder = useApi(api.bosses, [refreshKey]);
+  const current = useApi(api.boss, [refreshKey]);
+  const titles = useApi(api.titles, [refreshKey]);
   return (
-    <Panel id="boss-ladder" index={3} className="col-span-12" title="Boss ladder"
-      hint="Weekly bosses from E to S by category, and the seasonal bosses with their drops."
+    <Panel id="trophies" index={3} className="col-span-12" title="Trophy shelf"
+      hint="The bosses you have beaten. The next one stays a mystery until you face it."
       loading={ladder.loading && !ladder.data} error={!ladder.data ? ladder.error ?? null : null} onRetry={ladder.reload}>
-      {ladder.data && <BossLadder bosses={ladder.data} />}
+      {ladder.data && <TrophyShelf bosses={ladder.data} current={current.data} titles={titles.data} />}
     </Panel>
   );
 }

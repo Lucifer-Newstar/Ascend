@@ -7,9 +7,8 @@
 import type { BossRaid } from "@ascend/shared";
 import { useEffect, useId, useRef, useState } from "react";
 
-import { bossArt } from "../lib/bosses";
+import { CATEGORY_LABEL, bossArt } from "../lib/bosses";
 import { dropName } from "../lib/cosmetics";
-import { CATEGORY_LABEL } from "./BossLadder";
 import { play } from "../lib/sound";
 import { BossScreen } from "./BossScreen";
 import { Confetti } from "./Celebrate";

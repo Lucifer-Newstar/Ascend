@@ -7,14 +7,13 @@ import type { BossRaid } from "@ascend/shared";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { bossArt } from "../lib/bosses";
+import { CATEGORY_LABEL, bossArt } from "../lib/bosses";
 import { dropName } from "../lib/cosmetics";
 import { useAppTheme } from "../lib/prefs";
 import { themeArt } from "../lib/themeArt";
 import { EventBackdrop } from "./EventBackdrop";
 import { SystemWindow } from "./SystemWindow";
 import { TrainerSays, useTrainerOn } from "./Trainer";
-import { CATEGORY_LABEL } from "./BossLadder";
 import { bossEyebrow, bossLine } from "./BossRaid";
 
 export function BossScreen({ boss, onClose }: { boss: BossRaid; onClose: () => void }) {

@@ -13,7 +13,7 @@ vi.mock("../api/client", () => ({
   api: {
     profile: vi.fn(), game: vi.fn(), stats: vi.fn(), titles: vi.fn(), trainerFeed: vi.fn(), photos: vi.fn(), photoData: vi.fn(),
     addPhoto: vi.fn(), deletePhoto: vi.fn(), shareCard: vi.fn(),
-    prs: vi.fn(), bosses: vi.fn(),
+    prs: vi.fn(), bosses: vi.fn(), boss: vi.fn(),
   },
 }));
 
@@ -41,6 +41,7 @@ describe("ProfilePage", () => {
       { name: "Bone Titan", title: "Titan Toppler", tier: "S", category: "strength", min_level: "expert", seasonal: false, season: null, months: [], drop: null, beaten: 0 },
       { name: "Harvest Colossus", title: "Harvest Breaker", tier: "level", category: "martial_arts", min_level: "beginner", seasonal: true, season: "Harvest Festival", months: [10, 11], drop: "outfit_harvest_festival", beaten: 0 },
     ]);
+    vi.mocked(api.boss).mockResolvedValue({ name: "Bone Titan", tier: "S", category: "strength", defeated: false, seasonal: false } as never);
     vi.mocked(api.trainerFeed).mockResolvedValue({ messages: [pr], unread: 0, algo_version: "watch-v1" });
     vi.mocked(api.photos).mockResolvedValue([photo(2, "2026-10-01"), photo(1, "2026-09-01")]);
     vi.mocked(api.photoData).mockResolvedValue({ id: 1, mime: "image/jpeg", data_url: "data:image/jpeg;base64,/9j/" });
@@ -139,14 +140,23 @@ describe("ProfilePage", () => {
     });
   });
 
-  it("lists the boss ladder by tier with the seasonal bosses and their drops", async () => {
+  it("shows a trophy shelf of cleared bosses and this week's boss as a locked silhouette (v1.4)", async () => {
+    vi.mocked(api.titles).mockResolvedValue([{ title: "Golem Breaker", boss: "Iron Golem", week_start: "2026-10-12", earned_at: "2026-10-16T19:00:00" }]);
+    vi.mocked(api.boss).mockResolvedValue({ name: "Bone Titan", tier: "S", category: "strength", defeated: false, seasonal: false } as never);
     renderPage();
-    const ladder = await screen.findByTestId("boss-ladder");
-    expect(within(ladder).getByRole("region", { name: "Tier E" })).toHaveTextContent("Iron Golem");
-    expect(within(ladder).getByRole("region", { name: "Tier S" })).toHaveTextContent("Bone Titan");
-    const seasonal = within(ladder).getByRole("region", { name: "Seasonal bosses" });
-    expect(seasonal).toHaveTextContent("Harvest Festival, Oct to Nov");
-    expect(seasonal).toHaveTextContent("drops Harvest Festival set");
-    expect(within(ladder).getAllByTestId("ladder-boss")[0]).toHaveTextContent("Beaten 1x");
+    const shelf = await screen.findByTestId("trophy-shelf");
+    expect(shelf).toHaveTextContent("1 of 3 bosses cleared");
+    const trophies = within(shelf).getAllByTestId("trophy");
+    expect(trophies).toHaveLength(1);
+    expect(trophies[0]).toHaveTextContent("Iron Golem");
+    expect(trophies[0]).toHaveTextContent("beaten 1x · last 16 Oct 2026");
+    const locked = await within(shelf).findByTestId("trophy-locked");
+    await waitFor(() => expect(locked).toHaveTextContent("Tier S · Strength"));
+    expect(locked).toHaveTextContent("???");
+    expect(locked).toHaveTextContent("How to unlock: beat this week's boss");
+    // no spoilers: unbeaten bosses (and the seasonal one's drop) are not named anywhere
+    expect(shelf).not.toHaveTextContent("Bone Titan");
+    expect(shelf).not.toHaveTextContent("Harvest Colossus");
+    expect(screen.queryByTestId("boss-ladder")).toBeNull();
   });
 });
