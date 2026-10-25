@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core.events import EventBus
 from app.modules.actions import resolve
+from app.modules.actions.errors import ActionError
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.models import Food
 from app.modules.nutrition.schemas import FoodIn, MealIn, MealItemIn
@@ -34,10 +35,6 @@ from app.modules.workouts.schemas import SetIn
 
 ACTIONS_VERSION = "actions-v2"
 Risk = Literal["low", "normal", "destructive"]
-
-
-class ActionError(Exception):
-    """A proposal that can't run (unknown exercise, food or program...)."""
 
 
 # --- parameter models -----------------------------------------------------------------
