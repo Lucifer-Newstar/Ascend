@@ -24,6 +24,13 @@ stages:
     metrics:
       - metrics.json:
           cache: false
+  gate:
+    cmd: python src/gate.py
+    deps: [src/gate.py, metrics.json, labels.json]
+    params: [food_gate, export.version, train.pretrained]
+    outs:
+      - models/food-gate.json:
+          cache: false
 
   # Trainer-chat intent router (intent/). Independent of the food stages above.
   intent_fetch:
