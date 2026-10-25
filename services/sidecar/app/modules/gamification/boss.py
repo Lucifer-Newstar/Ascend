@@ -141,7 +141,7 @@ SEASONS: tuple[Season, ...] = (
         "Harvest Festival",
         (10, 11),
         "martial_arts",
-        "set_harvest_festival",
+        "outfit_harvest_festival",
     ),
 )
 SEASON_BY_BOSS = {s.boss: s for s in SEASONS}
