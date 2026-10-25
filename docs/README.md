@@ -21,6 +21,7 @@
 ```text
 docs/
 ├── README.md                      ← you are here (index & reading order)
+├── RULES_AND_BASELINE.md          ← design rules, checked rules and baseline numbers (v1.3)
 │
 ├── project/                       ← WHAT & WHY
 │   ├── proposal.md                ← the project proposal (incl. AI-assistance disclosure)
