@@ -24,7 +24,8 @@ class Theme:
     key: str
     name: str
     tagline: str
-    # None = free. Otherwise (kind, amount): ("streak", 7) best streak in days,
+    # None = free. Otherwise (kind, amount): ("sessions", 10) lifetime training sessions
+    # (v1.3, review decision 7: was a 7-day streak, which only daily loggers could reach),
     # ("rank", "D") reach that rank, ("bosses", 1) weekly bosses beaten.
     rule: tuple[str, int | str] | None = None
 
@@ -33,7 +34,7 @@ THEMES: tuple[Theme, ...] = (
     Theme("shadow", "Shadow", "Night dungeon, chains and violet light"),
     Theme("dark", "Dark", "The original ASCEND look, dark"),
     Theme("light", "Light", "The original ASCEND look, light"),
-    Theme("crimson", "Crimson Gate", "A red battlefield before a cracking gate", ("streak", 7)),
+    Theme("crimson", "Crimson Gate", "A red battlefield before a cracking gate", ("sessions", 10)),
     Theme("frost", "Frost", "A frozen mountain fortress under the aurora", ("rank", "D")),
     Theme("emerald", "Emerald", "Jungle ruins wrapped in glowing vines", ("bosses", 1)),
     Theme("solar", "Solar Gold", "A sky-island arena at sunrise", ("rank", "C")),
@@ -47,6 +48,7 @@ class Record:
     best_streak: int
     rank: str
     bosses_beaten: int
+    sessions: int = 0
 
 
 def requirement(t: Theme) -> str:
@@ -55,6 +57,8 @@ def requirement(t: Theme) -> str:
     kind, amount = t.rule
     if kind == "streak":
         return f"Reach a {amount}-day streak"
+    if kind == "sessions":
+        return f"Finish {amount} training sessions"
     if kind == "rank":
         return f"Reach rank {amount}"
     return "Beat your first weekly boss" if amount == 1 else f"Beat {amount} weekly bosses"
@@ -66,6 +70,9 @@ def earned(t: Theme, r: Record) -> bool:
     kind, amount = t.rule
     if kind == "streak":
         return r.best_streak >= int(amount)
+    if kind == "sessions":
+        # Never take an unlock away: a 7-day best streak earned Crimson before v1.3.
+        return r.sessions >= int(amount) or (t.key == "crimson" and r.best_streak >= 7)
     if kind == "rank":
         return RANK_ORDER.index(r.rank) >= RANK_ORDER.index(str(amount))
     return r.bosses_beaten >= int(amount)
@@ -77,6 +84,8 @@ def progress_text(t: Theme, r: Record) -> str:
     kind, amount = t.rule
     if kind == "streak":
         return f"Best streak {r.best_streak} of {amount} days"
+    if kind == "sessions":
+        return f"{min(r.sessions, int(amount))} of {amount} sessions"
     if kind == "rank":
         return f"Rank {r.rank} now"
     return f"{r.bosses_beaten} of {amount} beaten"
@@ -89,7 +98,8 @@ def record(db: Session, now: datetime) -> Record:
 
     letter, _ = f.rank_for_level(f.level_from_total(game.total_xp(db)).level)
     beaten = db.scalar(select(func.count(BossRaid.id)).where(BossRaid.defeated_at.is_not(None)))
-    return Record(game.streak(db, now.date()).best, letter, int(beaten or 0))
+    sessions = len(game.active_days(db))
+    return Record(game.streak(db, now.date()).best, letter, int(beaten or 0), sessions)
 
 
 def stored(db: Session) -> set[str]:

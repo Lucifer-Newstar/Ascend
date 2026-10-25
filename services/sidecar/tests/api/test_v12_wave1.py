@@ -168,7 +168,7 @@ def test_themes_free_and_locked(client: TestClient, profile) -> None:
     themes = {t["key"]: t for t in client.get("/game/themes").json()}
     assert [k for k, t in themes.items() if t["free"]] == ["shadow", "dark", "light"]
     assert themes["crimson"]["unlocked"] is False
-    assert themes["crimson"]["requirement"] == "Reach a 7-day streak"
+    assert themes["crimson"]["requirement"] == "Finish 10 training sessions"
     assert client.put("/settings", json={"theme": "crimson"}).status_code == 409
     assert client.put("/settings", json={"theme": "light"}).json()["theme"] == "light"
     assert client.get("/settings").json()["theme"] == "light"

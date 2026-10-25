@@ -57,3 +57,25 @@ def test_the_xp_summary_has_a_sub_rank_and_the_next_one(client: TestClient, prof
     xp = client.get("/game/summary").json()["xp"]
     assert xp["sub_rank"] == "E1" and xp["next_sub_rank"] == "E2"
     assert xp["next_sub_rank_level"] == 4
+
+
+def test_crimson_unlocks_after_ten_sessions_not_a_daily_streak(
+    client: TestClient, profile, clock
+) -> None:
+    """Review decision 7: the 7-day streak unlock is now 10 sessions (any days)."""
+    for _ in range(9):
+        _train(client)
+        clock.now += timedelta(days=2)  # every other day: never a 7-day streak
+    crimson = next(t for t in client.get("/game/themes").json() if t["key"] == "crimson")
+    assert crimson["unlocked"] is False and crimson["progress"] == "9 of 10 sessions"
+    _train(client)
+    crimson = next(t for t in client.get("/game/themes").json() if t["key"] == "crimson")
+    assert crimson["unlocked"] is True
+
+
+def test_an_old_seven_day_streak_keeps_crimson() -> None:
+    from app.modules.gamification.themes import THEMES, Record, earned
+
+    crimson = next(t for t in THEMES if t.key == "crimson")
+    assert earned(crimson, Record(best_streak=7, rank="E", bosses_beaten=0, sessions=7))
+    assert not earned(crimson, Record(best_streak=6, rank="E", bosses_beaten=0, sessions=7))
