@@ -11,10 +11,12 @@ import { FirstRunCard } from "./components/FirstRun";
 import { ToastProvider, useToast } from "./components/Toast";
 import { TourOverlay } from "./components/Tour";
 import { TrainerChat, TrainerChatButton } from "./components/TrainerChat";
+import { UnlockScene } from "./components/UnlockScene";
 import { XpStatus } from "./components/XpChip";
 import { useDesktopHabits } from "./lib/desktopHabits";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { useReminderNotifications } from "./lib/reminderNotifications";
+import { useUnlockWatcher } from "./lib/unlocks";
 import { isChatKey, usePageShortcuts } from "./lib/shortcuts";
 import { tourFor, type Tour } from "./lib/tours";
 import { trainerById } from "./lib/trainer";
@@ -232,6 +234,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   };
   // Level, rank, streak and quest state: the top bar and the System notices share one fetch.
   const game = useApi(api.game, [refreshKey]);
+  const unlocks = useUnlockWatcher(refreshKey);
   useReminderNotifications({ game: game.data, enabled: settings.reminders !== false, evening: Boolean(settings.evening_reminder), trainerName: trainerById(settings.trainer_id).name, refreshKey, onNavigate: navigate });
   return (
     <Layout page={page} onNavigate={navigate} title={TITLES[page]}
@@ -245,6 +248,9 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
         <FirstRunCard state={trainerState.data} onDone={markOnboarded} onTour={() => { markOnboarded(); startTour("app"); }} onErased={erased} />
       )}
       <SystemEvents game={game.data ?? undefined} notices={api.notices} />
+      {unlocks.playing.length > 0 && (
+        <UnlockScene key={unlocks.playing[0].key} entries={unlocks.playing} onDone={unlocks.done} look={settings.avatar ?? "male"} rank={game.data?.xp.rank} />
+      )}
       {/* Keyed by page so each switch replays the short fade/rise (page-enter, opacity + transform). */}
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
