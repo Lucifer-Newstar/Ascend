@@ -141,10 +141,11 @@ def _library(db: Session) -> dict[str, Exercise]:
 
 
 def baseline_capacity(p: object | None) -> dict[str, int | None]:
-    """Max push-ups / pull-ups from the onboarding baseline test (None when not tested)."""
+    """Max push-ups / pull-ups and the best plank / dead hang in seconds from the onboarding
+    baseline test (None when not tested)."""
     base = getattr(p, "baseline", None) or {}
     out: dict[str, int | None] = {}
-    for key in ("pushups", "pullups"):
+    for key in ("pushups", "pullups", "plank_s", "dead_hang_s"):
         v = base.get(key) if isinstance(base, dict) else None
         out[key] = int(v) if isinstance(v, int | float) else None
     return out
@@ -203,7 +204,9 @@ def draft_workout(db: Session, settings: Settings, body: WorkoutPlanIn) -> Worko
         equipment=choices,
         days_per_week=min(body.days_per_week, workout_gen.MAX_DAYS),
         minutes=body.minutes,
-        available=lambda n: n in lib and equipment_rules.fits(lib[n].equipment, allowed),
+        available=lambda n: (
+            n in lib and equipment_rules.fits_exercise(n, lib[n].equipment, allowed)
+        ),
         is_hold=lambda n: n in lib and lib[n].measure == "hold",
         capacity=baseline_capacity(p),
     )

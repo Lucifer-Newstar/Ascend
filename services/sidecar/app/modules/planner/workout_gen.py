@@ -46,7 +46,12 @@ SLOTS: dict[str, dict[Tier, tuple[str, ...]]] = {
     },
     "hpush": {
         "gym": ("Barbell Bench Press", "Incline Dumbbell Press", "Dumbbell Bench Press"),
-        "dumbbells": ("Dumbbell Bench Press", "Incline Dumbbell Press", "Push-up"),
+        "dumbbells": (
+            "Dumbbell Bench Press",
+            "Incline Dumbbell Press",
+            "Dumbbell Floor Press",
+            "Push-up",
+        ),
         "bodyweight": ("Push-up", "Diamond Push-up", "Archer Push-up", "Incline Push-up"),
     },
     "vpush": {
@@ -78,6 +83,13 @@ SLOTS: dict[str, dict[Tier, tuple[str, ...]]] = {
         "gym": ("Lateral Raise", "Face Pull", "Rear Delt Fly"),
         "dumbbells": ("Lateral Raise", "Rear Delt Fly"),
         "bodyweight": ("Pike Push-up",),
+    },
+    # v1.3: the pull day's extra slot is a pulling shoulder move (rear delts), never a
+    # lateral raise standing in for a missing pull-up.
+    "rear_delts": {
+        "gym": ("Face Pull", "Rear Delt Fly"),
+        "dumbbells": ("Rear Delt Fly",),
+        "bodyweight": ("Inverted Row",),
     },
     "core": {
         "gym": ("Hanging Leg Raise", "Plank", "Russian Twist"),
@@ -126,7 +138,7 @@ DAY_TYPES: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "pull": (
         "Pull",
         "Back and biceps",
-        ("vpull", "hpull", "hpull", "shoulders", "biceps", "core", "biceps"),
+        ("vpull", "hpull", "hpull", "rear_delts", "biceps", "core", "biceps"),
     ),
     "legs": (
         "Legs",
@@ -166,7 +178,7 @@ SPLIT_NAMES: dict[int, str] = {
     5: "push/pull/legs + upper/lower",
     6: "push/pull/legs",
 }
-ISOLATION = {"biceps", "triceps", "shoulders", "calves", "core"}
+ISOLATION = {"biceps", "triceps", "shoulders", "rear_delts", "calves", "core"}
 
 
 @dataclass(frozen=True)
@@ -214,6 +226,13 @@ EASIER_PULLS = ("Negative Pull-up", "Inverted Row", "Scapular Pull-up")
 EASIER_PUSHES = ("Incline Push-up", "Incline Push-Up Medium")
 MIN_PULLUPS = 3  # below this, bar pulls become negatives / rows
 MIN_PUSHUPS = 5  # below this, floor push-ups become incline push-ups
+# v1.3: a working set is about 60-80 % of the baseline max (15 push-ups -> 9-12 reps, not
+# the generic 6-10), capped where the next harder variation is the better step.
+WORK_LOW, WORK_HIGH = 0.6, 0.8
+MAX_REP_TARGET = 25
+# Holds with a baseline test (seconds): the hold dosed from it, in seconds.
+HOLD_BASELINE = {"Plank": "plank_s", "Side Plank": "plank_s", "Dead Hang": "dead_hang_s"}
+MAX_HOLD_TARGET = 120
 
 
 def _fit_to_capacity(
@@ -230,15 +249,52 @@ def _fit_to_capacity(
         if pulls < MIN_PULLUPS:
             easier = next((e for e in EASIER_PULLS if usable(e)), None)
             return (easier, 3, 5) if easier else None
-        hi = min(hi, pulls)
-        lo = min(lo, max(1, round(pulls * 0.6)))
+        lo, hi = _from_max(pulls)
     elif ex in FLOOR_PUSHES and pushes is not None:
         if pushes < MIN_PUSHUPS:
             easier = next((e for e in EASIER_PUSHES if usable(e)), None)
             return (easier, 5, 8) if easier else None
-        hi = min(hi, pushes)
-        lo = min(lo, max(1, round(pushes * 0.6)))
+        # Harder variations (diamond, archer, pike) are dosed lower than plain push-ups.
+        lo, hi = _from_max(pushes if ex == "Push-up" else max(MIN_PUSHUPS, round(pushes * 0.6)))
     return ex, min(lo, hi), hi
+
+
+def _from_max(best: int) -> tuple[int, int]:
+    """(rep_low, rep_high) from a max-effort result: about 60-80 % of it."""
+    hi = max(2, min(MAX_REP_TARGET, round(best * WORK_HIGH)))
+    lo = max(1, min(hi, round(best * WORK_LOW)))
+    return lo, hi
+
+
+def hold_dose(
+    ex: str, experience: Experience, capacity: Mapping[str, int | None]
+) -> tuple[int, int]:
+    """Seconds per hold: from the baseline test when there is one (60-80 % of the best
+    hold, rounded to 5 s), else by experience."""
+    key = HOLD_BASELINE.get(ex)
+    best = capacity.get(key) if key else None
+    if not best:
+        return HOLD_SECONDS[experience]
+    scale = 0.5 if ex == "Side Plank" else 1.0
+    lo = max(10, min(MAX_HOLD_TARGET, 5 * round(best * scale * WORK_LOW / 5)))
+    hi = max(lo, min(MAX_HOLD_TARGET, 5 * round(best * scale * WORK_HIGH / 5)))
+    return lo, hi
+
+
+def swap_for_kit(name: str, available: Callable[[str], bool]) -> str | None:
+    """v1.3: a built-in program's move the user's kit can't do ("Barbell Bench Press" with
+    only dumbbells) -> the first move of the same slot they can do, dumbbells before body
+    weight. None when nothing fits."""
+    if available(name):
+        return name
+    for tiers in SLOTS.values():
+        if any(name in names for names in tiers.values()):
+            order: tuple[Tier, ...] = ("dumbbells", "bodyweight", "gym")
+            for tier in order:
+                for cand in tiers[tier]:
+                    if cand != name and available(cand):
+                        return cand
+    return None
 
 
 def tier_for(choices: Sequence[str]) -> Tier:
@@ -329,7 +385,7 @@ def generate(
             ex, lo, hi = fitted
             used.add(ex)
             if is_hold(ex):
-                lo, hi = HOLD_SECONDS[experience]
+                lo, hi = hold_dose(ex, experience, cap)
             out.append(SlotOut(ex, sets, lo, hi, rpe, rest))
         suffix = f" {repeat + 1}" if SPLITS[days_per_week].count(dtype) > 1 else ""
         days.append(
