@@ -917,6 +917,7 @@ components:
               - pullup_bar
               - rings
               - dumbbells
+              - bench
               - gym
             type: array
           - type: 'null'

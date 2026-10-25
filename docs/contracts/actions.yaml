@@ -349,7 +349,12 @@ components:
           - log_hold
           - log_weight
           - log_meal
+          - add_food
           - follow_program
+          - update_profile
+          - set_equipment
+          - update_setting
+          - edit_plan
           - erase_data
           title: Kind
         params:
@@ -411,7 +416,12 @@ components:
           - log_hold
           - log_weight
           - log_meal
+          - add_food
           - follow_program
+          - update_profile
+          - set_equipment
+          - update_setting
+          - edit_plan
           - erase_data
           title: Kind
         allow:

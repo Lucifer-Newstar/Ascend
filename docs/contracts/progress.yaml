@@ -876,9 +876,10 @@ components:
             - pullup_bar
             - rings
             - dumbbells
+            - bench
             - gym
           type: array
-          maxItems: 5
+          maxItems: 6
           title: Equipment
         experience:
           anyOf:
@@ -967,9 +968,10 @@ components:
             - pullup_bar
             - rings
             - dumbbells
+            - bench
             - gym
           type: array
-          maxItems: 5
+          maxItems: 6
           title: Equipment
         experience:
           anyOf:
@@ -1193,6 +1195,8 @@ components:
             - vera
             - kai
             - dario
+            - tara
+            - idris
           - type: 'null'
           title: Trainer Id
         hide_calories:
@@ -1312,6 +1316,8 @@ components:
           - vera
           - kai
           - dario
+          - tara
+          - idris
           title: Trainer Id
           default: iskra
         hide_calories:
