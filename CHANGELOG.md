@@ -18,6 +18,13 @@ where a number you see could change. User-facing release notes live in
   sets each. It counts for your streak like any session.
 - **The lock screen is the workout door**: "Today: Push A · 4 moves" with Enter to start, or
   "Rest day ✓". It can be switched off.
+- **The trainer builds your plan from chat.** Say "I have an 8kg dumbbell and two 5kg", "I have
+  a punching bag", "I want to train muay thai", "I trained kicks 3 years ago" or "I can't eat
+  much but I can drink" and the trainer offers to update your plan: strength days sized to your
+  dumbbells, Tuesday and Saturday skill days that start gently after a break, two rest days,
+  protein and shake targets (no oats). A too-fast weight goal gets plain words and realistic
+  targets. **Build my plan** on the Chat page is an optional six-question version. Every
+  change is a card with undo; works with the AI off.
 - **Tray and start with Windows**, both off by default. With the tray on, closing the window
   keeps ASCEND by the clock and reminders still arrive.
 

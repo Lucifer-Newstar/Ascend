@@ -33,6 +33,7 @@ A question is never an edit: "should I switch to lbs?" gets an answer, not a car
 | Other settings | "hide calories", "disable ai", "reduce motion", "switch trainer to vera" | that setting |
 | Kit | "I have a bench", "I got a pull-up bar", "I don't have rings anymore", "I have no equipment" | the equipment on your profile |
 | Profile | "change my goal to bulk", "I want to reach 50 kg", "set my age to 22", "my height is 5'7", "call me Navin", "I'm a beginner" | that profile field |
+| Plan builder (v1.4) | "I have an 8kg dumbbell and two 5kg", "I have a punching bag", "I want to train muay thai", "I trained kicks 3 years ago", "I can't eat much but I can drink", "Build my plan" | remembers it and rebuilds your week ([plan builder](plan-builder.md)) |
 
 ## Rules worth knowing
 

@@ -59,7 +59,7 @@ without saying so in its RULES CHECK line.
 
 | # | What | Value | How measured |
 |---|---|---|---|
-| B1 | Trainer battery passes (343 messages, AI off) | **251** | `cd services/sidecar && uv run python -m eval.trainer_chat` |
+| B1 | Trainer battery passes (352 messages, AI off) | **260** (was 251 of 343 before the nine plan-builder messages, `feat/v14-plan-builder`) | `cd services/sidecar && uv run python -m eval.trainer_chat` |
 | B2 | Trainer battery fails | **1** ("follow the 5 day split": no 5-day program) | same |
 | B2b | Battery rows a person reads | 91 | same |
 | B3 | Sidecar tests | **1084 passed** | `uv run pytest` |

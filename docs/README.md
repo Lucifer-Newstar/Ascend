@@ -138,6 +138,7 @@ These describe plans, not the shipped app, and each one opens with a "Design rec
 | Food classifier + MLOps | [architecture/ml-pipeline.md](architecture/ml-pipeline.md) · walkthrough: [ai/mlops-lifecycle.md](ai/mlops-lifecycle.md) |
 | **The AI part: what it does, which model, where the code is** | [ai/README.md](ai/README.md) |
 | Coach prompts, validation and safety | [ai/coach-llm.md](ai/coach-llm.md) · [ai/prompt-library.md](ai/prompt-library.md) |
+| The trainer builds your plan from chat (v1.4) | [ai/plan-builder.md](ai/plan-builder.md) · actions: [ai/trainer-actions.md](ai/trainer-actions.md) |
 | Tamil / Tanglish (beta) | [ai/multilingual-tamil.md](ai/multilingual-tamil.md) |
 | Meal photo recognition | [ai/food-recognition.md](ai/food-recognition.md) |
 | Local models, VRAM, downloads | [ai/model-manager.md](ai/model-manager.md) |
