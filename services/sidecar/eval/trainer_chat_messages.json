@@ -341,5 +341,14 @@
 ["destructive", "delete my account", "answer"],
 ["destructive", "erase all data now ERASE", "erase"],
 ["destructive", "remove all meals", "erase"],
-["destructive", "delete all workouts", "erase"]
+["destructive", "delete all workouts", "erase"],
+["plan", "I have an 8kg dumbbell and two 5kg", "plan:dumbbells 8 kg and 2 × 5 kg"],
+["plan", "I have a punching bag", "plan:punching bag"],
+["plan", "got hand wraps and a gripper", "plan:hand gripper"],
+["plan", "I want to train muay thai", "plan:muay thai"],
+["plan", "I trained kicks 3 years ago", "plan:last trained 3 years ago"],
+["plan", "kickboxing and muay thai, trained 3 years ago", "plan:kickboxing"],
+["plan", "I can't eat much but I can drink", "plan:shakes help"],
+["plan", "my goal is 50 kg from 42 kg in a month", "pace"],
+["plan", "how do I use a punching bag?", "no_action"]
 ]

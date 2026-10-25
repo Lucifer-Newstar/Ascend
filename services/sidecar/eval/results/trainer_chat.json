@@ -1,6 +1,6 @@
 {
  "tally": {
-  "pass": 251,
+  "pass": 260,
   "fail": 1,
   "judge": 91
  },
@@ -3280,6 +3280,130 @@
    "exp": "erase",
    "verdict": true,
    "reply": "I won't wipe everything for that. To remove one meal or workout, open it on Fuel or Train and delete it there; say undo to take back the last thing I logged. Erasing all your data is a separate step (\u201cstart fresh\u201d).",
+   "proposal": null
+  },
+  {
+   "cat": "plan",
+   "text": "I have an 8kg dumbbell and two 5kg",
+   "exp": "plan:dumbbells 8 kg and 2 \u00d7 5 kg",
+   "verdict": true,
+   "reply": "Noted. Want me to update your plan with this? Check the card: confirm and it's done, and you can undo it after.",
+   "proposal": [
+    "Remember: Dumbbells: 8 kg and 2 \u00d7 5 kg.",
+    "Add to your equipment: dumbbells.",
+    "New plan, 3 days a week: 3 strength, 4 rest: Mon Strength A \u00b7 Tue rest \u00b7 Wed Strength B \u00b7 Thu rest \u00b7 Fri Strength A \u00b7 Sat rest \u00b7 Sun rest.",
+    "Squats (held at your chest) and rows: the 8 kg dumbbell.",
+    "Floor press, deadlifts and curls: the two 5 kg dumbbells.",
+    "Protein: about 67-84 g a day (1.6-2 g per kg).",
+    "Eat about 300-500 kcal a day more than now, for +0.25-0.5 kg a week.",
+    "Your current program stays saved; undo switches back to it."
+   ]
+  },
+  {
+   "cat": "plan",
+   "text": "I have a punching bag",
+   "exp": "plan:punching bag",
+   "verdict": true,
+   "reply": "Noted. Want me to update your plan with this? Check the card: confirm and it's done, and you can undo it after.",
+   "proposal": [
+    "Remember: Also at home: punching bag.",
+    "New plan, 3 days a week: 2 strength, 1 skill, 4 rest: Mon Strength A \u00b7 Tue rest \u00b7 Wed rest \u00b7 Thu Strength B \u00b7 Fri rest \u00b7 Sat Skill: Striking \u00b7 Sun rest.",
+    "Skill days: form first. Kicks at waist height for the first 2-3 weeks, light power, and stop a round early if your form slips.",
+    "Bag rounds at about 60% power.",
+    "Protein: about 67-84 g a day (1.6-2 g per kg).",
+    "Eat about 300-500 kcal a day more than now, for +0.25-0.5 kg a week.",
+    "Your current program stays saved; undo switches back to it."
+   ]
+  },
+  {
+   "cat": "plan",
+   "text": "got hand wraps and a gripper",
+   "exp": "plan:hand gripper",
+   "verdict": true,
+   "reply": "Noted. Want me to update your plan with this? Check the card: confirm and it's done, and you can undo it after.",
+   "proposal": [
+    "Remember: Also at home: hand gripper, hand wraps.",
+    "New plan, 3 days a week: 3 strength, 4 rest: Mon Strength A \u00b7 Tue rest \u00b7 Wed Strength B \u00b7 Thu rest \u00b7 Fri Strength A \u00b7 Sat rest \u00b7 Sun rest.",
+    "Protein: about 67-84 g a day (1.6-2 g per kg).",
+    "Eat about 300-500 kcal a day more than now, for +0.25-0.5 kg a week.",
+    "Your current program stays saved; undo switches back to it."
+   ]
+  },
+  {
+   "cat": "plan",
+   "text": "I want to train muay thai",
+   "exp": "plan:muay thai",
+   "verdict": true,
+   "reply": "Noted. Want me to update your plan with this? Check the card: confirm and it's done, and you can undo it after.",
+   "proposal": [
+    "Remember: Other training: Muay Thai.",
+    "New plan, 3 days a week: 2 strength, 1 skill, 4 rest: Mon Strength A \u00b7 Tue rest \u00b7 Wed rest \u00b7 Thu Strength B \u00b7 Fri rest \u00b7 Sat Skill: Muay Thai \u00b7 Sun rest.",
+    "Skill days: form first. Kicks at waist height for the first 2-3 weeks, light power, and stop a round early if your form slips.",
+    "Protein: about 67-84 g a day (1.6-2 g per kg).",
+    "Eat about 300-500 kcal a day more than now, for +0.25-0.5 kg a week.",
+    "Your current program stays saved; undo switches back to it."
+   ]
+  },
+  {
+   "cat": "plan",
+   "text": "I trained kicks 3 years ago",
+   "exp": "plan:last trained 3 years ago",
+   "verdict": true,
+   "reply": "Noted. Want me to update your plan with this? Check the card: confirm and it's done, and you can undo it after.",
+   "proposal": [
+    "Remember: Other training: kickboxing, last trained 3 years ago.",
+    "New plan, 3 days a week: 2 strength, 1 skill, 4 rest: Mon Strength A \u00b7 Tue rest \u00b7 Wed rest \u00b7 Thu Strength B \u00b7 Fri rest \u00b7 Sat Skill: kickboxing \u00b7 Sun rest.",
+    "Skill days: form first. Kicks at waist height for the first 2-3 weeks, light power, and stop a round early if your form slips.",
+    "Protein: about 67-84 g a day (1.6-2 g per kg).",
+    "Eat about 300-500 kcal a day more than now, for +0.25-0.5 kg a week.",
+    "Your current program stays saved; undo switches back to it."
+   ]
+  },
+  {
+   "cat": "plan",
+   "text": "kickboxing and muay thai, trained 3 years ago",
+   "exp": "plan:kickboxing",
+   "verdict": true,
+   "reply": "Noted. Want me to update your plan with this? Check the card: confirm and it's done, and you can undo it after.",
+   "proposal": [
+    "Remember: Other training: Muay Thai, kickboxing, last trained 3 years ago.",
+    "New plan, 3 days a week: 2 strength, 1 skill, 4 rest: Mon Strength A \u00b7 Tue rest \u00b7 Wed rest \u00b7 Thu Strength B \u00b7 Fri rest \u00b7 Sat Skill: Muay Thai + kickboxing \u00b7 Sun rest.",
+    "Skill days: form first. Kicks at waist height for the first 2-3 weeks, light power, and stop a round early if your form slips.",
+    "Protein: about 67-84 g a day (1.6-2 g per kg).",
+    "Eat about 300-500 kcal a day more than now, for +0.25-0.5 kg a week.",
+    "Your current program stays saved; undo switches back to it."
+   ]
+  },
+  {
+   "cat": "plan",
+   "text": "I can't eat much but I can drink",
+   "exp": "plan:shakes help",
+   "verdict": true,
+   "reply": "Noted. Want me to update your plan with this? Check the card: confirm and it's done, and you can undo it after.",
+   "proposal": [
+    "Remember: Eating: big meals are hard, drinks are easy (shakes help).",
+    "New plan, 3 days a week: 3 strength, 4 rest: Mon Strength A \u00b7 Tue rest \u00b7 Wed Strength B \u00b7 Thu rest \u00b7 Fri Strength A \u00b7 Sat rest \u00b7 Sun rest.",
+    "Protein: about 67-84 g a day (1.6-2 g per kg).",
+    "Eat about 300-500 kcal a day more than now, for +0.25-0.5 kg a week.",
+    "Shake (about 600 kcal): 300 ml full-fat milk, 1-2 bananas or 3-4 dates, 2 tbsp peanut butter, 1 scoop whey.",
+    "Week 1: one shake a day; week 2: two; week 3: up to three if they sit well.",
+    "Your current program stays saved; undo switches back to it."
+   ]
+  },
+  {
+   "cat": "plan",
+   "text": "my goal is 50 kg from 42 kg in a month",
+   "exp": "pace",
+   "verdict": true,
+   "reply": "8 kg in 4 weeks is 2.0 kg a week. That's faster than is healthy, so I won't plan it: most of it would be water and fat, not muscle. At 0.25-0.5 kg a week, 4 weeks gets you to about 43 kg (realistic) or 44 kg (stretch).",
+   "proposal": null
+  },
+  {
+   "cat": "plan",
+   "text": "how do I use a punching bag?",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "Let's go. I'll highlight each part; Next to continue, Esc to stop.",
    "proposal": null
   }
  ]

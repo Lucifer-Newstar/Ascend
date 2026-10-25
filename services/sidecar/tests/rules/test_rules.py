@@ -16,7 +16,7 @@ from app.modules.gamification.streaks import compute_streak
 MON = date(2026, 11, 2)
 
 # B1/B2 in the doc: the trainer battery must not get worse than this.
-HARNESS_MIN_PASS = 251
+HARNESS_MIN_PASS = 260
 HARNESS_MAX_FAIL = 1
 
 
@@ -82,7 +82,7 @@ def test_r5_every_trainer_edit_can_be_undone(client: TestClient, profile) -> Non
 
 
 def test_b1_the_trainer_battery_does_not_get_worse() -> None:
-    """B1/B2: the 343-message battery (rules only) stays at or above the baseline."""
+    """B1/B2: the 352-message battery (rules only) stays at or above the baseline."""
     from collections import Counter
 
     from eval import trainer_chat

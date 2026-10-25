@@ -1,4 +1,4 @@
-"""Trainer chat battery: 343 everyday messages through the real app with the AI off.
+"""Trainer chat battery: 352 everyday messages through the real app with the AI off.
 
 Each message has an expectation ("set:push-up|reps=10|sets=1", "meal:idli|p=2",
 "hold:plank|s=60", "weight:42", "multi", "ask", "follow", "erase", ...). Structured ones are
@@ -106,6 +106,10 @@ def check(text: str, exp: str, resp: dict[str, Any]) -> bool | None:
         return kind is None and "which" in (resp.get("reply") or "").lower()
     if head == "no_action":
         return kind is None
+    if head == "plan":  # v1.4: a plan-builder fact becomes a "update your plan" card
+        return kind == "build_plan" and norm(name) in summ
+    if head == "pace":  # v1.4: too fast to plan, said plainly with realistic targets
+        return kind is None and "won't plan it" in (resp.get("reply") or "")
     return None
 
 
