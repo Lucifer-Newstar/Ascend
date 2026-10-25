@@ -24,3 +24,41 @@ stages:
     metrics:
       - metrics.json:
           cache: false
+
+  # Trainer-chat intent router (intent/). Independent of the food stages above.
+  intent_fetch:
+    cmd: python intent/src/fetch.py
+    deps: [intent/src/fetch.py]
+    outs: [intent/raw]
+  intent_data:
+    cmd: python intent/src/build_dataset.py
+    deps:
+      - intent/src/build_dataset.py
+      - intent/src/weak_label.py
+      - intent/src/clinc.py
+      - intent/src/templates.py
+      - intent/labels
+      - intent/raw
+    params: [intent.data]
+    outs: [intent/dataset]
+  intent_train:
+    cmd: python intent/src/train_intent.py
+    deps: [intent/src/train_intent.py, intent/dataset]
+    params: [intent.train]
+    outs: [models/intent_clf.joblib, reports/intent_train.json]
+  intent_export:
+    cmd: python intent/src/export_intent.py
+    deps:
+      - intent/src/export_intent.py
+      - ../services/sidecar/app/modules/ml/intent_runtime.py
+      - models/intent_clf.joblib
+      - intent/dataset
+    params: [intent.export, intent.threshold, intent.gate.min_parity_argmax]
+    outs: [models/intent_model.json.gz, models/intent-manifest.json]
+  intent_evaluate:
+    cmd: python intent/src/evaluate_intent.py
+    deps: [intent/src/evaluate_intent.py, intent/intents.yaml, models/intent_model.json.gz, intent/dataset]
+    params: [intent.gate, intent.threshold]
+    metrics:
+      - reports/intent_metrics.json:
+          cache: false

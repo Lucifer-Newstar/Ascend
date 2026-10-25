@@ -1,0 +1,166 @@
+schema: '2.0'
+stages:
+  intent_fetch:
+    cmd: python intent/src/fetch.py
+    deps:
+    - path: intent/src/fetch.py
+      hash: md5
+      md5: 5607af4f983771a8588992ee139e99ee
+      size: 4292
+    outs:
+    - path: intent/raw
+      hash: md5
+      md5: ed4fb28b88d1d9bd67c2189d4404a3e3.dir
+      size: 7200284
+      nfiles: 2
+  intent_data:
+    cmd: python intent/src/build_dataset.py
+    deps:
+    - path: intent/labels
+      hash: md5
+      md5: 1a1aef372e9ddb8efd4812a1ced20954.dir
+      size: 8874
+      nfiles: 2
+    - path: intent/raw
+      hash: md5
+      md5: ed4fb28b88d1d9bd67c2189d4404a3e3.dir
+      size: 7200284
+      nfiles: 2
+    - path: intent/src/build_dataset.py
+      hash: md5
+      md5: 10b2c9dffee24345ec9707a2f6ee6f97
+      size: 6697
+    - path: intent/src/clinc.py
+      hash: md5
+      md5: 25e1bd98fb125d6f7ecce58aab202e0f
+      size: 3289
+    - path: intent/src/templates.py
+      hash: md5
+      md5: 8aedeb8c548923399ed677fe49dec9bc
+      size: 25629
+    - path: intent/src/weak_label.py
+      hash: md5
+      md5: 1cd6a61e220d82748327fee1b71e60dd
+      size: 4414
+    params:
+      params.yaml:
+        intent.data:
+          seed: 42
+          per_template: 8
+          val_frac: 0.1
+          clinc_per_intent: 12
+          se_cap_per_label: 2500
+    outs:
+    - path: intent/dataset
+      hash: md5
+      md5: ad9265a86739b510974f67227af74f73.dir
+      size: 1646543
+      nfiles: 6
+  intent_train:
+    cmd: python intent/src/train_intent.py
+    deps:
+    - path: intent/dataset
+      hash: md5
+      md5: ad9265a86739b510974f67227af74f73.dir
+      size: 1646543
+      nfiles: 6
+    - path: intent/src/train_intent.py
+      hash: md5
+      md5: 938db930f93c4aa77fb513c257d25973
+      size: 4503
+    params:
+      params.yaml:
+        intent.train:
+          word_ngrams:
+          - 1
+          - 2
+          char_ngrams:
+          - 2
+          - 5
+          max_word_features: 20000
+          max_char_features: 40000
+          min_df: 2
+          sublinear_tf: true
+          c_grid:
+          - 1.0
+          - 4.0
+          - 10.0
+    outs:
+    - path: models/intent_clf.joblib
+      hash: md5
+      md5: 180ab1bd41e0321735a9bcf8ede71bdf
+      size: 7408156
+    - path: reports/intent_train.json
+      hash: md5
+      md5: c8415ad7dc985b668c0eb066a1bd30b0
+      size: 880
+  intent_export:
+    cmd: python intent/src/export_intent.py
+    deps:
+    - path: ../services/sidecar/app/modules/ml/intent_runtime.py
+      hash: md5
+      md5: 94715bbd9ba391b141001895fd48c874
+      size: 4500
+    - path: intent/dataset
+      hash: md5
+      md5: ad9265a86739b510974f67227af74f73.dir
+      size: 1646543
+      nfiles: 6
+    - path: intent/src/export_intent.py
+      hash: md5
+      md5: 560472755b0276ef4794948f191ee7c7
+      size: 5092
+    - path: models/intent_clf.joblib
+      hash: md5
+      md5: 180ab1bd41e0321735a9bcf8ede71bdf
+      size: 7408156
+    params:
+      params.yaml:
+        intent.export:
+          version: 1.0.0
+          prune_below: 0.02
+          decimals: 3
+        intent.gate.min_parity_argmax: 0.995
+        intent.threshold: 0.55
+    outs:
+    - path: models/intent-manifest.json
+      hash: md5
+      md5: 7f8179acffe1a0592f0799d7ca732330
+      size: 831
+    - path: models/intent_model.json.gz
+      hash: md5
+      md5: bfc25705ee32506e0d2e5e9faa283efd
+      size: 742263
+  intent_evaluate:
+    cmd: python intent/src/evaluate_intent.py
+    deps:
+    - path: intent/dataset
+      hash: md5
+      md5: ad9265a86739b510974f67227af74f73.dir
+      size: 1646543
+      nfiles: 6
+    - path: intent/intents.yaml
+      hash: md5
+      md5: 54d76dd82ed0e4af8b4d9e7f9832f427
+      size: 3123
+    - path: intent/src/evaluate_intent.py
+      hash: md5
+      md5: e8f49590043c7107b1dc0876d0c2b7f6
+      size: 5275
+    - path: models/intent_model.json.gz
+      hash: md5
+      md5: bfc25705ee32506e0d2e5e9faa283efd
+      size: 742263
+    params:
+      params.yaml:
+        intent.gate:
+          min_templates_macro_f1: 0.8
+          min_se_hand_accuracy: 0.6
+          min_oos_recall: 0.85
+          min_parity_argmax: 0.995
+        intent.threshold: 0.55
+    outs:
+    - path: reports/intent_metrics.json
+      hash: md5
+      md5: 9347f8038ee9df4ce65ca0524066bbfe
+      size: 1936

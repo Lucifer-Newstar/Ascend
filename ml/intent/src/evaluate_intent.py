@@ -106,7 +106,10 @@ def main() -> None:
     m = evaluate(external=a.external)
     reports = ML / "reports"
     reports.mkdir(exist_ok=True)
-    (reports / "intent_metrics.json").write_text(json.dumps(m, indent=2))
+    # The DVC-tracked metrics file holds the internal sets only; a run with --external
+    # writes its own file so `dvc metrics` stays reproducible on any machine.
+    name = "intent_metrics_external.json" if a.external else "intent_metrics.json"
+    (reports / name).write_text(json.dumps(m, indent=2))
     for name, s in m.items():
         if isinstance(s, dict) and "accuracy" in s:
             print(
