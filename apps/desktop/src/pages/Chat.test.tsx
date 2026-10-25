@@ -1,5 +1,5 @@
 import type { ChatReply } from "@ascend/shared";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,7 +10,10 @@ import { expectNoAxeViolations } from "../test/axe";
 import { ChatPage } from "./Chat";
 
 vi.mock("../api/client", () => ({
-  api: { trainerChat: vi.fn(), trainerFeed: vi.fn(), trainerFeedRead: vi.fn(), coachWarm: vi.fn() },
+  api: {
+    trainerChat: vi.fn(), trainerFeed: vi.fn(), trainerFeedRead: vi.fn(), coachWarm: vi.fn(),
+    confirmAction: vi.fn(), undoAction: vi.fn(),
+  },
 }));
 
 const reply = (r: Partial<ChatReply>): ChatReply => ({
@@ -20,12 +23,13 @@ const reply = (r: Partial<ChatReply>): ChatReply => ({
 
 function renderChat(trainer_id: "tara" | "iskra" = "tara") {
   const onPickTrainer = vi.fn();
+  const onActionDone = vi.fn();
   const view = render(
     <PrefsProvider initial={{ ...DEFAULT_SETTINGS, trainer_id }} save={vi.fn()}>
-      <ChatPage onAction={vi.fn()} onActionDone={vi.fn()} onPickTrainer={onPickTrainer} />
+      <ChatPage onAction={vi.fn()} onActionDone={onActionDone} onPickTrainer={onPickTrainer} />
     </PrefsProvider>,
   );
-  return { onPickTrainer, ...view };
+  return { onPickTrainer, onActionDone, ...view };
 }
 
 describe("Chat page (v1.3)", () => {
@@ -65,5 +69,28 @@ describe("Chat page (v1.3)", () => {
     );
     expect(screen.getByText("10 pushups")).toBeInTheDocument();
     expect(screen.getByText("Logged. Strong start.")).toBeInTheDocument();
+  });
+
+  it("a plan edit from chat runs only on Confirm and tells the app after Confirm and Undo", async () => {
+    const proposal = {
+      id: 12, kind: "edit_plan", label: "Edit my plan", risk: "low",
+      params: { op: "rest", exercise: "squats", rest_s: 90 },
+      summary: ["Bodyweight Squat: rest 90 s between sets instead of 60 s."], status: "proposed",
+      source: "chat", origin_text: "rest 90s on squats", confirm_word: null, undoable: true,
+      auto_ok: false, result: null, error: null, created_at: "2026-10-25T09:00:00",
+      executed_at: null, undone_at: null,
+    };
+    vi.mocked(api.trainerChat).mockResolvedValue(reply({ reply: "Here's the change.", proposal }));
+    vi.mocked(api.confirmAction).mockResolvedValue({ ...proposal, status: "executed" });
+    vi.mocked(api.undoAction).mockResolvedValue({ ...proposal, status: "undone" });
+    const { onActionDone } = renderChat("iskra");
+    await userEvent.type(screen.getByLabelText("Message the trainer"), "rest 90s on squats{Enter}");
+    expect(await screen.findByTestId("action-card")).toHaveTextContent("rest 90 s between sets");
+    expect(onActionDone).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(onActionDone).toHaveBeenCalledTimes(1));
+    await userEvent.click(await screen.findByRole("button", { name: "Undo" }));
+    expect(await screen.findByText("Undone.")).toBeInTheDocument();
+    expect(onActionDone).toHaveBeenCalledTimes(2);
   });
 });
