@@ -293,7 +293,12 @@ def _plan(t: str) -> Hit | None:
         rf"(?:swap|replace|switch|change|sub|substitute) (.+?) (?:for|with|to|by) (.+?){_PLAN}?{on}",
         t,
     )
-    if m and not re.search(r"\b(?:goal|units?|theme|trainer|name|age|height|weight)\b", m.group(1)):
+    whole_plan = r"(?:me|myself|us|it|(?:my |the )?(?:plan|program|programme|split|routine))"
+    if (
+        m
+        and not re.search(r"\b(?:goal|units?|theme|trainer|name|age|height|weight)\b", m.group(1))
+        and not re.fullmatch(whole_plan, m.group(1))
+    ):
         return "edit_plan", {
             "op": "swap",
             "exercise": m.group(1),

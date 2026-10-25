@@ -71,6 +71,8 @@ def test_edit_lines(text: str, kind: str, params: dict[str, object]) -> None:
         "I have a punching bag",
         "delete everything",
         "rest day",
+        "switch me to upper lower",
+        "change my plan to ppl",
         "how long should i rest between squats?",
     ],
 )
