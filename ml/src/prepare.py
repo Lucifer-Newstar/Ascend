@@ -8,7 +8,8 @@ Written:       data/processed/images/<sha>.png      (shorter side 256, RGB)
                data/processed/prepare_report.json   (counts and what was dropped)
 
 Steps: exact dedupe by sha256, near-dedupe by average hash, stratified split with a
-fixed seed. Team photos never reach train or val (ml-pipeline.md section 3).
+fixed seed, keeping every crop of one source photo in the same split. Team photos never
+reach train or val (ml-pipeline.md section 3).
 """
 
 from __future__ import annotations
@@ -52,22 +53,37 @@ def collect(raw: Path) -> list[tuple[Path, str, str]]:
     return items
 
 
+def group_key(row: Row) -> str:
+    """Crops cut from one photo (food/src/coco_to_cls.py names them
+    <dataset>__<photo>__<box>.jpg, with Roboflow's augmented copies sharing <photo>) must
+    land in one split, or the test set would contain near-copies of training images."""
+    name = Path(row.source).name
+    parts = name.split("__")
+    return "__".join(parts[:2]) if len(parts) >= 3 else row.sha256
+
+
 def split_rows(rows: list[Row], val: float, test: float, seed: int) -> None:
-    """Stratified split in place; test-own rows are fixed to test."""
-    by_label: dict[str, list[Row]] = defaultdict(list)
+    """Stratified split in place, by source photo; test-own rows are fixed to test."""
+    units: dict[str, list[Row]] = defaultdict(list)
     for r in rows:
         if r.tag == TEST_OWN:
             r.split = "test"
         else:
-            by_label[r.label].append(r)
+            units[group_key(r)].append(r)
+    by_label: dict[str, list[list[Row]]] = defaultdict(list)
+    for unit in units.values():
+        unit.sort(key=lambda r: (r.label, r.sha256))
+        by_label[unit[0].label].append(unit)
     rng = random.Random(seed)
     for label in sorted(by_label):
-        group = sorted(by_label[label], key=lambda r: r.sha256)
+        group = sorted(by_label[label], key=lambda u: u[0].sha256)
         rng.shuffle(group)
         n_val = max(1, round(len(group) * val)) if len(group) >= 3 else 0
         n_test = max(1, round(len(group) * test)) if len(group) >= 3 else 0
-        for i, r in enumerate(group):
-            r.split = "val" if i < n_val else "test" if i < n_val + n_test else "train"
+        for i, unit in enumerate(group):
+            split = "val" if i < n_val else "test" if i < n_val + n_test else "train"
+            for r in unit:
+                r.split = split
 
 
 def prepare(raw: Path = RAW_DIR, out: Path = PROCESSED_DIR, params: dict | None = None) -> dict:

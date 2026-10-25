@@ -53,3 +53,20 @@ def test_split_is_deterministic(tmp_path: Path) -> None:
     a = [(r.sha256, r.split) for r in read_manifest(tmp_path / "a" / "manifest.csv")]
     b = [(r.sha256, r.split) for r in read_manifest(tmp_path / "b" / "manifest.csv")]
     assert a == b
+
+
+def test_crops_of_one_photo_stay_in_one_split(tmp_path: Path) -> None:
+    raw = tmp_path / "raw"
+    rng = random.Random(5)
+    for i, label in enumerate(["idli", "dosa"]):
+        (raw / label).mkdir(parents=True)
+        for photo in range(8):
+            for box in range(3):  # three crops (or augmented copies) per source photo
+                draw_sample(i, rng).save(raw / label / f"rf__p{photo}__{box}.png")
+    prepare(raw, tmp_path / "out", PARAMS)
+    rows = read_manifest(tmp_path / "out" / "manifest.csv")
+    splits: dict[str, set[str]] = {}
+    for r in rows:
+        splits.setdefault(Path(r.source).name.rsplit("__", 1)[0], set()).add(r.split)
+    assert all(len(s) == 1 for s in splits.values())
+    assert {"train", "val", "test"} <= {r.split for r in rows}
