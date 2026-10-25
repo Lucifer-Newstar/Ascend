@@ -102,6 +102,7 @@ Measured by metric R6 (the E2E journey with Ollama stopped) in
 | [multilingual-tamil.md](multilingual-tamil.md) | Tamil and Tanglish (beta): what is known, two pipelines, test plan with sample prompts, rubric, go/no-go |
 | [food-recognition.md](food-recognition.md) | Classifier, datasets and licences, class list, model, augmentation, training, top-3, portions, VLM second opinion, DB lookup, correction loop |
 | [model-manager.md](model-manager.md) | VRAM and RAM budget, disk sizes, lifecycle state machine, GPU lock, health checks, manifest, first-run download UX |
+| [trainer-actions.md](trainer-actions.md) | v1.3: what the trainer can change from chat (plan, settings, kit, profile), with examples, confirm and undo |
 | [adaptive-planning-ai.md](adaptive-planning-ai.md) | Rules vs AI in planning, proposals, what the AI may suggest, weekly review, injury adaptation, readiness |
 | [data-and-privacy-for-ai.md](data-and-privacy-for-ai.md) | What each model sees, local-only enforcement, storage, consent for training photos, deletion |
 | [evaluation-ai.md](evaluation-ai.md) | Metrics and test sets, coach rubric, latency targets, the offline eval harness, CI regression gates |
