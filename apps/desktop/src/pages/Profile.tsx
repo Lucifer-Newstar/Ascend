@@ -15,7 +15,7 @@ import { PageGrid, Panel } from "../components/Page";
 import { Avatar } from "../components/Avatar";
 import { BossLadder } from "../components/BossLadder";
 import { ShareDialog } from "../components/ShareCard";
-import { TrainerPortrait, useTrainer } from "../components/Trainer";
+import { useTrainer } from "../components/Trainer";
 import { useToast } from "../components/Toast";
 import { Wardrobe, progressFrom } from "../components/Wardrobe";
 import { hunterClass } from "../lib/loadout";
@@ -50,15 +50,13 @@ function HunterCard({ refreshKey }: { refreshKey: number }) {
   const prefs = useOptionalPrefs();
   const xp = game.data?.xp;
   const s = prefs?.settings;
+  // v1.4: your own avatar always. It fell back to the trainer's portrait until the game
+  // summary loaded, so the look and outfit you picked seemed not to apply.
   return (
     <Panel id="hunter" index={0} className="col-span-12 xl:col-span-5" title="Hunter card"
       loading={profile.loading && !profile.data} error={!profile.data ? profile.error ?? null : null} onRetry={profile.reload}>
       <div className="flex items-start gap-4">
-        {xp ? (
-          <Avatar look={s?.avatar ?? "male"} rank={xp.rank} outfit={s?.outfit} weapon={s?.weapon} relic={s?.relic} pet={s?.pet} height={150} />
-        ) : (
-          <TrainerPortrait mood="proud" size={72} />
-        )}
+        <Avatar look={s?.avatar ?? "male"} rank={xp?.rank ?? "E"} outfit={s?.outfit} weapon={s?.weapon} relic={s?.relic} pet={s?.pet} height={150} />
         <div className="min-w-0">
           <p className="text-display-l text-ink" data-testid="hunter-name">{profile.data?.name ?? "Hunter"}</p>
           {xp && <p className="text-sm text-muted">Level {xp.level} · Rank {xp.rank} · {xp.rank_title}</p>}

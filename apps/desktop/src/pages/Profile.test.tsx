@@ -108,6 +108,21 @@ describe("ProfilePage", () => {
     await waitFor(() => expect(within(wardrobe).queryByTestId("cosmetic-outfit_celestial_warrior")).toBeNull());
   });
 
+  it("shows your own avatar in the look you picked even before the game summary loads (v1.4)", async () => {
+    vi.mocked(api.game).mockReturnValue(new Promise(() => undefined) as never); // still loading
+    const picked = { ...DEFAULT_SETTINGS, avatar: "female" as const, outfit: "outfit_cyber_hunter" };
+    const { container } = render(
+      <PrefsProvider initial={picked} save={async (p) => ({ ...picked, ...p })}>
+        <ToastProvider><ProfilePage refreshKey={0} /></ToastProvider>
+      </PrefsProvider>,
+    );
+    const hunter = await screen.findByTestId("hunter-name");
+    const card = hunter.closest("section") ?? container;
+    const avatar = within(card as HTMLElement).getByTestId("avatar");
+    expect(avatar).toHaveAttribute("data-rank", "E");
+    expect(within(avatar).getByTestId("avatar-figure").getAttribute("src")).toMatch(/outfit_cyber_hunter_female/);
+  });
+
   it("lists the boss ladder by tier with the seasonal bosses and their drops", async () => {
     renderPage();
     const ladder = await screen.findByTestId("boss-ladder");
