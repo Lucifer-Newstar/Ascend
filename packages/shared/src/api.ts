@@ -614,6 +614,29 @@ export interface EarnedTitle {
   earned_at: string;
 }
 
+/** v1.4: one unlock in the log (GET /game/unlocks), with the date it first appeared. */
+export type UnlockKind = "skill" | "boss" | "rank" | "cosmetic";
+export interface UnlockItem {
+  key: string;
+  kind: UnlockKind;
+  title: string;
+  detail?: string;
+}
+export interface UnlockEntry {
+  key: string;
+  kind: UnlockKind;
+  title: string;
+  detail: string;
+  at: string;
+  /** Recorded quietly on the first sync (it was already unlocked before v1.4). */
+  seeded: boolean;
+}
+/** POST /game/unlocks/sync: the unlocks first seen now (none on the very first sync). */
+export interface UnlocksSync {
+  new: UnlockEntry[];
+  total: number;
+}
+
 /** GET /game/stats: one computed hunter stat (0-100) and the numbers behind it (stats-v1). */
 export interface Stat {
   key: "str" | "agi" | "end" | "vit" | "int";
