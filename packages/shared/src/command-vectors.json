@@ -1,6 +1,6 @@
 {
-  "_comment": "One grammar: the sidecar's actions parser reads these lines the same way (units metric unless stated); since v1.2 the trainer chat is the one box (Ctrl+K opens it), so there is no second parser in the app. kind null = not an action. log_count and log_food_grams are natural lines (\"10 pushups\", \"chicken breast 200g\") that the sidecar resolves by looking the name up, into log_set or log_meal. `actions` is the one allowlist: the only data-changing actions the trainer chat and the local AI may propose (the sidecar's actions registry runs exactly these, each after a confirm). `chat_ui` lists what a trainer reply may ask the UI to do (open a page, a tour, the planner, the picker, an action card, a share card); none of them changes data.",
-  "version": "actions-v1",
+  "_comment": "One grammar: the sidecar's actions parser reads these lines the same way (units metric unless stated); since v1.2 the trainer chat is the one box (Ctrl+K opens it), so there is no second parser in the app. kind null = not an action. log_count, log_food_grams and log_items are natural lines (\"10 pushups\", \"chicken breast 200g\") that the sidecar resolves by looking the name up, into log_set or log_meal. `actions` is the one allowlist: the only data-changing actions the trainer chat and the local AI may propose (the sidecar's actions registry runs exactly these, each after a confirm). `chat_ui` lists what a trainer reply may ask the UI to do (open a page, a tour, the planner, the picker, an action card, a share card); none of them changes data.",
+  "version": "actions-v2",
   "actions": [
     {
       "kind": "log_set",
@@ -24,6 +24,12 @@
       "kind": "log_meal",
       "risk": "low",
       "command": "meal",
+      "chat": true
+    },
+    {
+      "kind": "add_food",
+      "risk": "low",
+      "command": null,
       "chat": true
     },
     {
@@ -169,6 +175,72 @@
       "params": {
         "food": "chicken breast",
         "grams": 200
+      }
+    },
+    {
+      "text": "pushups 3x10",
+      "kind": "log_set",
+      "params": {
+        "exercise": "pushups",
+        "reps": 10,
+        "weight_kg": 0,
+        "sets": 3
+      }
+    },
+    {
+      "text": "bench 20kg 8 reps",
+      "kind": "log_set",
+      "params": {
+        "exercise": "bench",
+        "reps": 8,
+        "weight_kg": 20,
+        "sets": 1
+      }
+    },
+    {
+      "text": "plank 1:30",
+      "kind": "log_hold",
+      "params": {
+        "exercise": "plank",
+        "seconds": 90
+      }
+    },
+    {
+      "text": "1 min plank",
+      "kind": "log_hold",
+      "params": {
+        "exercise": "plank",
+        "seconds": 60
+      }
+    },
+    {
+      "text": "I'm 42.5 kg today",
+      "kind": "log_weight",
+      "params": {
+        "weight_kg": 42.5
+      }
+    },
+    {
+      "text": "pullups 7",
+      "kind": "log_count",
+      "params": {
+        "name": "pullups",
+        "count": 7
+      }
+    },
+    {
+      "text": "bro did 10 pushups da",
+      "kind": "log_count",
+      "params": {
+        "name": "pushups",
+        "count": 10
+      }
+    },
+    {
+      "text": "2 idli and sambar for breakfast",
+      "kind": "log_items",
+      "params": {
+        "meal_type": "breakfast"
       }
     },
     {
