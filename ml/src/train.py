@@ -95,20 +95,23 @@ def recalibrate_bn(model: nn.Module, loader: DataLoader[Any]) -> None:
         m.reset_running_stats()
         m.momentum = None  # cumulative moving average
     model.train()
+    device = next(model.parameters()).device
     with torch.no_grad():
         for x, _ in loader:
-            model(x)
+            model(x.to(device))
     for m, mom in zip(bns, saved, strict=True):
         m.momentum = mom
 
 
 def evaluate(model: nn.Module, loader: DataLoader[Any]) -> tuple[float, float]:
     model.eval()
+    device = next(model.parameters()).device
     correct = total = 0
     loss_sum = 0.0
     with torch.no_grad():
         for x, y in loader:
-            out = model(x)
+            x, y = x.to(device), y.to(device)
+            out = model(x).float()
             loss_sum += nn.functional.cross_entropy(out, y, reduction="sum").item()
             correct += int((out.argmax(1) == y).sum())
             total += len(y)
@@ -137,6 +140,13 @@ def mlflow_or_none() -> Any:
     return mlflow
 
 
+def pick_device(wanted: str = "auto") -> torch.device:
+    """`auto` takes the GPU when PyTorch sees one (the CUDA build on the training laptop)."""
+    if wanted == "auto":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device(wanted)
+
+
 def train(
     params: dict[str, Any] | None = None, processed: Path = PROCESSED_DIR, out: Path = MODELS_DIR
 ) -> dict[str, Any]:
@@ -149,18 +159,27 @@ def train(
     g = torch.Generator().manual_seed(params["prepare"]["seed"])
     train_rows = [r for r in rows if r.split == "train"]
     val_rows = [r for r in rows if r.split == "val"]
+    device = pick_device(str(p.get("device", "auto")))
+    workers = int(p.get("num_workers", 0))
+    # Mixed precision on the GPU halves activation memory (a 4 GB card fits batch 64).
+    amp = device.type == "cuda" and bool(p.get("amp", True))
+    print(f"training on {device} (amp={amp}, workers={workers})")
     tl = DataLoader(
         FoodImages(train_rows, classes, processed, True),
         batch_size=p["batch_size"],
         shuffle=True,
         generator=g,
+        num_workers=workers,
+        pin_memory=device.type == "cuda",
+        persistent_workers=workers > 0,
     )
     vl = DataLoader(FoodImages(val_rows, classes, processed, False), batch_size=p["batch_size"])
     calib = DataLoader(
         FoodImages(train_rows, classes, processed, False), batch_size=p["batch_size"]
     )
 
-    model = build_model(p["backbone"], len(classes), p.get("pretrained", False))
+    model = build_model(p["backbone"], len(classes), p.get("pretrained", False)).to(device)
+    scaler = torch.amp.GradScaler("cuda", enabled=amp)
     opt = torch.optim.AdamW(
         model.parameters(), lr=p["lr"], weight_decay=p.get("weight_decay", 0.01)
     )
@@ -183,12 +202,15 @@ def train(
         model.train()
         loss_sum, n = 0.0, 0
         for x, y in tl:
+            x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
             opt.zero_grad()
-            loss = nn.functional.cross_entropy(
-                model(x), y, label_smoothing=p.get("label_smoothing", 0.0)
-            )
-            loss.backward()
-            opt.step()
+            with torch.autocast(device_type=device.type, enabled=amp):
+                loss = nn.functional.cross_entropy(
+                    model(x), y, label_smoothing=p.get("label_smoothing", 0.0)
+                )
+            scaler.scale(loss).backward()
+            scaler.step(opt)
+            scaler.update()
             loss_sum += loss.item() * len(y)
             n += len(y)
         sched.step()
@@ -209,7 +231,7 @@ def train(
             out.mkdir(parents=True, exist_ok=True)
             torch.save(
                 {
-                    "state_dict": model.state_dict(),
+                    "state_dict": {k: v.cpu() for k, v in model.state_dict().items()},
                     "classes": classes,
                     "backbone": p["backbone"],
                     "epoch": epoch,
@@ -224,6 +246,7 @@ def train(
         "seconds": round(time.time() - started, 1),
         "train_rows": len(train_rows),
         "val_rows": len(val_rows),
+        "device": str(device),
         "run_id": run.info.run_id if run else None,
     }
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)

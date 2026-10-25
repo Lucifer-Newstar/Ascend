@@ -13,6 +13,9 @@ train:
   epochs: 20
   batch_size: 64
   lr: 0.001
+  device: auto        # cuda when the CUDA build of torch sees the GPU, else cpu
+  amp: true           # mixed precision on the GPU (ignored on cpu)
+  num_workers: 4      # data loading processes; 0 if Windows complains
   weight_decay: 0.01
   label_smoothing: 0.05
 export:
