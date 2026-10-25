@@ -1,0 +1,72 @@
+{
+  "name": "ascend-intent",
+  "version": "1.0.0",
+  "file": "intent_model.json.gz",
+  "sha256": "f75804d1a0ac8e15e1ea7c29cd060910c6595b4e149491c5abb89930b8109fc2",
+  "bytes": 742263,
+  "labels": [
+    "add_food",
+    "ask_progress",
+    "ask_workout_today",
+    "erase_data",
+    "exercise_howto",
+    "greeting",
+    "help",
+    "injury_pain",
+    "log_hold",
+    "log_meal",
+    "log_set",
+    "log_weight",
+    "motivation",
+    "nutrition_question",
+    "out_of_scope",
+    "plan_edit",
+    "plan_request",
+    "profile_change",
+    "settings_change",
+    "thanks",
+    "training_question",
+    "undo_cancel"
+  ],
+  "threshold": 0.55,
+  "parity": {
+    "texts": 5414,
+    "argmax_agreement": 0.9989,
+    "max_prob_diff": 0.0122
+  },
+  "weights_kept": 288216,
+  "weights_total": 770396,
+  "created_at": "2026-10-25T10:46:05Z",
+  "metrics": {
+    "test_templates": {
+      "n": 580,
+      "accuracy": 0.8155,
+      "macro_f1": 0.8215,
+      "route_accuracy": 0.8379
+    },
+    "test_clinc": {
+      "n": 2463,
+      "accuracy": 0.877,
+      "macro_f1": 0.8677,
+      "route_accuracy": 0.877
+    },
+    "test_se_hand": {
+      "n": 200,
+      "accuracy": 0.755,
+      "macro_f1": 0.5661,
+      "route_accuracy": 0.955
+    },
+    "real160": {
+      "n": 160,
+      "accuracy": 0.7125,
+      "macro_f1": 0.4058,
+      "route_accuracy": 0.9437
+    },
+    "app343": {
+      "n": 329,
+      "accuracy": 0.9179,
+      "macro_f1": 0.8408,
+      "route_accuracy": 0.9271
+    }
+  }
+}
