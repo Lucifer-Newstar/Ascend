@@ -245,6 +245,19 @@
         "implemented": 5,
         "planned": 0
       }
+    },
+    {
+      "id": "ml",
+      "package": "app.modules.ml",
+      "contract": "ml.yaml",
+      "path_prefixes": [
+        "/ml"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 4,
+        "planned": 0
+      }
     }
   ]
 }

@@ -192,6 +192,36 @@ components:
       additionalProperties: false
       type: object
       title: ChatIn
+    ChatCitation:
+      properties:
+        passage_id:
+          type: string
+          title: Passage Id
+        title:
+          type: string
+          title: Title
+        source:
+          type: string
+          title: Source
+        licence:
+          type: string
+          title: Licence
+        url:
+          type: string
+          title: Url
+        ref:
+          type: string
+          title: Ref
+      type: object
+      required:
+      - passage_id
+      - title
+      - source
+      - licence
+      - url
+      - ref
+      title: ChatCitation
+      description: Where a knowledge-base answer came from (ml/knowledge/SOURCES.md).
     ChatOut:
       properties:
         reply:
@@ -214,6 +244,7 @@ components:
           - rules
           - faq
           - ollama
+          - knowledge
           title: Source
         fallback_reason:
           anyOf:
@@ -243,6 +274,12 @@ components:
             type: object
           - type: 'null'
           title: Proposal
+        citations:
+          items:
+            $ref: '#/components/schemas/ChatCitation'
+          type: array
+          title: Citations
+          default: []
       type: object
       required:
       - reply

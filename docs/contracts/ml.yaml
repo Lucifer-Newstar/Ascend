@@ -1,0 +1,472 @@
+# ASCEND contract — ml
+# Contracts-first: frontend mocks this file with Prism; CI compares the sidecar's emitted OpenAPI against it.
+# Edit by PR only; see docs/contracts/README.md.
+openapi: 3.1.0
+info:
+  title: ASCEND sidecar — ml
+  version: 0.1.0
+  description: 'On-device ML (v1.3): model status, the trainer-chat intent model, BM25 search over the bundled knowledge base
+    with source citations, and food-photo suggestions that only exist when a gated model is installed and never log a meal.
+    Owner: Jegatheesan (backend); models: Navin (ml/).'
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+- url: http://127.0.0.1:{port}
+  description: Sidecar on localhost. Random port in the app; 8765 with --dev.
+  variables:
+    port:
+      default: '8765'
+security:
+- launchToken: []
+tags:
+- name: ml
+  description: On-device models
+paths:
+  /ml/status:
+    get:
+      tags:
+      - ml
+      summary: Ml Status
+      description: Which models this install has and why one is unavailable.
+      operationId: ml_status_ml_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MlStatus'
+      x-status: implemented
+  /ml/intent:
+    post:
+      tags:
+      - ml
+      summary: Classify
+      description: What the trainer-chat router thinks a message is (for the chat and for debugging).
+      operationId: classify_ml_intent_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntentIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntentOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /ml/knowledge:
+    get:
+      tags:
+      - ml
+      summary: Search
+      description: Top passages from the bundled knowledge base, each with its source and licence.
+      operationId: search_ml_knowledge_get
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 500
+          title: Q
+      - name: k
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 10
+          minimum: 1
+          default: 3
+          title: K
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+  /ml/food-photo:
+    post:
+      tags:
+      - ml
+      summary: Food Photo Suggest
+      description: 'Top-3 food suggestions for a meal photo. Never logs anything: the user confirms a
+
+        food (or searches) and logs it through the normal meal flow.'
+      operationId: food_photo_suggest_ml_food_photo_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodPhotoIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodPhotoOut'
+        '409':
+          description: No usable food model on this PC (see /ml/status)
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+components:
+  securitySchemes:
+    launchToken:
+      type: http
+      scheme: bearer
+      description: Per-launch token from Electron main.
+  schemas:
+    Citation:
+      properties:
+        passage_id:
+          type: string
+          title: Passage Id
+        title:
+          type: string
+          title: Title
+        source:
+          type: string
+          title: Source
+        licence:
+          type: string
+          title: Licence
+        url:
+          type: string
+          title: Url
+        ref:
+          type: string
+          title: Ref
+      type: object
+      required:
+      - passage_id
+      - title
+      - source
+      - licence
+      - url
+      - ref
+      title: Citation
+    FoodPhotoIn:
+      properties:
+        data_url:
+          type: string
+          minLength: 20
+          title: Data Url
+      additionalProperties: false
+      type: object
+      required:
+      - data_url
+      title: FoodPhotoIn
+    FoodPhotoOut:
+      properties:
+        suggestions:
+          items:
+            $ref: '#/components/schemas/FoodSuggestion'
+          type: array
+          title: Suggestions
+        result:
+          type: string
+          enum:
+          - food
+          - not_food
+          - unsure
+          title: Result
+        model_version:
+          type: string
+          title: Model Version
+        must_confirm:
+          type: boolean
+          const: true
+          title: Must Confirm
+          default: true
+      type: object
+      required:
+      - suggestions
+      - result
+      - model_version
+      title: FoodPhotoOut
+      description: 'Suggestions only: nothing is logged until the user confirms a food in the meal form.'
+    FoodPhotoStatus:
+      properties:
+        available:
+          type: boolean
+          title: Available
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Version
+        classes:
+          type: integer
+          title: Classes
+      type: object
+      required:
+      - available
+      - reason
+      - version
+      - classes
+      title: FoodPhotoStatus
+    FoodSuggestion:
+      properties:
+        label:
+          type: string
+          title: Label
+        food_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Food Id
+        name:
+          type: string
+          title: Name
+        confidence:
+          type: number
+          title: Confidence
+      type: object
+      required:
+      - label
+      - food_id
+      - name
+      - confidence
+      title: FoodSuggestion
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    IntentIn:
+      properties:
+        text:
+          type: string
+          maxLength: 1000
+          minLength: 1
+          title: Text
+      additionalProperties: false
+      type: object
+      required:
+      - text
+      title: IntentIn
+    IntentOut:
+      properties:
+        intent:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Intent
+        confidence:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Confidence
+        trusted:
+          type: boolean
+          title: Trusted
+        threshold:
+          type: number
+          title: Threshold
+        top:
+          items:
+            $ref: '#/components/schemas/IntentScore'
+          type: array
+          title: Top
+        model_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model Version
+      type: object
+      required:
+      - intent
+      - confidence
+      - trusted
+      - threshold
+      - top
+      - model_version
+      title: IntentOut
+    IntentScore:
+      properties:
+        intent:
+          type: string
+          title: Intent
+        confidence:
+          type: number
+          title: Confidence
+      type: object
+      required:
+      - intent
+      - confidence
+      title: IntentScore
+    IntentStatus:
+      properties:
+        available:
+          type: boolean
+          title: Available
+        version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Version
+        threshold:
+          type: number
+          title: Threshold
+        labels:
+          items:
+            type: string
+          type: array
+          title: Labels
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+      type: object
+      required:
+      - available
+      - version
+      - threshold
+      - labels
+      - reason
+      title: IntentStatus
+    KnowledgeHit:
+      properties:
+        id:
+          type: string
+          title: Id
+        title:
+          type: string
+          title: Title
+        text:
+          type: string
+          title: Text
+        score:
+          type: number
+          title: Score
+        coverage:
+          type: number
+          title: Coverage
+        confident:
+          type: boolean
+          title: Confident
+        citation:
+          $ref: '#/components/schemas/Citation'
+      type: object
+      required:
+      - id
+      - title
+      - text
+      - score
+      - coverage
+      - confident
+      - citation
+      title: KnowledgeHit
+    KnowledgeOut:
+      properties:
+        query:
+          type: string
+          title: Query
+        hits:
+          items:
+            $ref: '#/components/schemas/KnowledgeHit'
+          type: array
+          title: Hits
+      type: object
+      required:
+      - query
+      - hits
+      title: KnowledgeOut
+    KnowledgeStatus:
+      properties:
+        available:
+          type: boolean
+          title: Available
+        passages:
+          type: integer
+          title: Passages
+        sources:
+          items:
+            type: string
+          type: array
+          title: Sources
+      type: object
+      required:
+      - available
+      - passages
+      - sources
+      title: KnowledgeStatus
+    MlStatus:
+      properties:
+        intent:
+          $ref: '#/components/schemas/IntentStatus'
+        knowledge:
+          $ref: '#/components/schemas/KnowledgeStatus'
+        food_photo:
+          $ref: '#/components/schemas/FoodPhotoStatus'
+      type: object
+      required:
+      - intent
+      - knowledge
+      - food_photo
+      title: MlStatus
+      description: 'What on-device ML this install has. The UI hides "Scan meal" unless
+
+        food_photo.available is true.'
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
