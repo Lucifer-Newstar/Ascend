@@ -24,7 +24,7 @@ class ProfileIn(BaseModel):
     # Onboarding answers. Equipment: an empty list means "not stated" (nothing filtered).
     focus: Literal["strength", "muscle", "skills", "fat_loss"] | None = None
     equipment: list[Literal["none", "pullup_bar", "rings", "dumbbells", "bench", "gym"]] = Field(
-        default_factory=list, max_length=5
+        default_factory=list, max_length=6
     )
     # v1.1: training age (the planner sizes volume and the goal check its limits by it).
     experience: Literal["beginner", "intermediate", "advanced"] | None = None
