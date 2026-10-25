@@ -69,7 +69,7 @@ export function AiSetupPanel({ aiEnabled, onToggleAi, onChanged }: { aiEnabled: 
         <span className="text-sm text-ink">
           Use local AI (Ollama)
           <br />
-          <span className="text-xs text-muted">Optional. Without it everything still works: chat, tours, plans and goal checks use rules. AI only adds free-form wording and photo feedback. Nothing leaves this PC either way.</span>
+          <span className="text-xs text-muted">Optional. Without it everything still works: chat, tours, plans and goal checks use rules. AI only adds free-form wording. Nothing leaves this PC either way.</span>
         </span>
         <input type="checkbox" className="h-5 w-5 accent-accent" checked={aiEnabled} onChange={onToggleAi} aria-label="Use local AI" />
       </label>
@@ -115,9 +115,6 @@ export function AiSetupPanel({ aiEnabled, onToggleAi, onChanged }: { aiEnabled: 
               ) : (
                 s.model
               )}
-            </Row>
-            <Row label="Photo feedback">
-              {s.vision.installed ? `${s.vision.model} ready` : <span>off · <Copy text={s.vision.pull_command} /></span>}
             </Row>
           </dl>
           <div className="mt-3 flex items-center gap-3">

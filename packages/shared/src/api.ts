@@ -695,8 +695,6 @@ export interface Settings {
   trainer_id?: TrainerId;
   /** v1.1: hide calorie numbers across the app (targets still work underneath). */
   hide_calories?: boolean;
-  /** v1.1: local AI feedback on progress photos. Off by default; always off under 18. */
-  photo_feedback?: boolean;
   /** v1.2: the theme's background art behind the pages. Default "on". */
   background_art?: BackgroundArt;
   /** v1.2: the avatar's look (body-neutral; rank shows as gear and aura). */
@@ -710,6 +708,10 @@ export interface Settings {
   themed_cosmetics?: boolean;
   /** v1.2: the trainer's reminders (desktop notification + Today bubble). Default true. */
   reminders?: boolean;
+  /** v1.3: opt-in nudges, all off by default (review 1.4, 1.9). */
+  evening_reminder?: boolean;
+  photo_reminder?: boolean;
+  weigh_in_reminder?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------
@@ -1408,20 +1410,6 @@ export interface ProgressPhoto {
   created_at: string;
 }
 
-export interface PhotoFeedbackStatus {
-  enabled: boolean;
-  available: boolean;
-  model: string;
-  reason: string;
-}
-
-export interface PhotoFeedback {
-  text: string;
-  guarded: boolean;
-  model: string;
-  version: string;
-  is_ai: boolean;
-}
 
 export interface ShareCardText {
   kind: string;
@@ -1449,7 +1437,6 @@ export interface AiSetup {
   failures: number;
   suggestion: string | null;
   smaller_model: string | null;
-  vision: { model: string; installed: boolean; pull_command: string };
   algo_version: string;
 }
 

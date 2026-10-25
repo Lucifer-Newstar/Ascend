@@ -130,15 +130,13 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
             </label>
             <label className="flex items-center justify-between gap-4">
               <span className="text-sm text-ink">
-                Progress photo feedback (local AI)
+                Monthly photo reminder
                 <br />
-                <span className="text-xs text-muted">Off by default. Compares two of your photos on this PC. Never estimates body fat or weight, never comments on looks. Not available under 18.</span>
+                <span className="text-xs text-muted">Off by default. Once a month the trainer suggests a progress photo.</span>
               </span>
-              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.photo_feedback)} data-testid="photo-feedback-toggle"
-                disabled={p.age < 18}
-                onChange={(e) => save({ photo_feedback: e.target.checked }, e.target.checked ? "Photo feedback: on" : "Photo feedback: off")} />
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.photo_reminder)} data-testid="photo-reminder-toggle"
+                onChange={(e) => save({ photo_reminder: e.target.checked }, e.target.checked ? "Photo reminder: on" : "Photo reminder: off")} />
             </label>
-            {p.age < 18 && <p className="text-xs text-muted" data-testid="photo-feedback-minor">Photo feedback is off for under-18s.</p>}
             <PhotoSafety />
           </section>
         </>
@@ -163,10 +161,29 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
               <span className="text-sm text-ink">
                 Reminders
                 <br />
-                <span className="text-xs text-muted">A desktop notification and a bubble on Today for what is pending: today&apos;s workout, a missed day&apos;s reason, a streak at risk, water and the check-in. Once a day each, only while the app is open.</span>
+                <span className="text-xs text-muted">One calm nudge a day for today&apos;s workout or a missed day&apos;s reason, as a desktop notification and a bubble on Today. Never on a planned rest day, only while the app is open.</span>
               </span>
               <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.reminders !== false}
                 onChange={(e) => save({ reminders: e.target.checked }, e.target.checked ? "Reminders on" : "Reminders off")} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Evening check
+                <br />
+                <span className="text-xs text-muted">Off by default. One more nudge after 6 pm if today&apos;s session is not done yet. Never more than two a day.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.evening_reminder)} data-testid="evening-reminder-toggle"
+                disabled={settings.reminders === false}
+                onChange={(e) => save({ evening_reminder: e.target.checked }, e.target.checked ? "Evening check: on" : "Evening check: off")} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Weigh-in nudge
+                <br />
+                <span className="text-xs text-muted">Off by default. The trainer mentions it when your last weigh-in is over a week old.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.weigh_in_reminder)} data-testid="weigh-in-reminder-toggle"
+                onChange={(e) => save({ weigh_in_reminder: e.target.checked }, e.target.checked ? "Weigh-in nudge: on" : "Weigh-in nudge: off")} />
             </label>
             <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
             <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />

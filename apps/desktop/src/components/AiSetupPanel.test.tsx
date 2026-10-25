@@ -14,7 +14,7 @@ const base: AiSetup = {
   models: [], model: "qwen3:4b", model_installed: false,
   recommended: { model: "qwen3:0.6b", size_gb: 0.5, reason: "8 GB of RAM: the small model keeps replies quick.", pull_command: "ollama pull qwen3:0.6b" },
   hardware: { ram_gb: 8, vram_gb: null, gpu: null }, failures: 0, suggestion: null, smaller_model: "qwen3:1.7b",
-  vision: { model: "qwen3-vl:2b", installed: false, pull_command: "ollama pull qwen3-vl:2b" }, algo_version: "ai-tiers-v1",
+  algo_version: "ai-tiers-v1",
 };
 
 describe("AiSetupPanel", () => {

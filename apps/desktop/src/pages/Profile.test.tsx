@@ -12,7 +12,7 @@ import { ProfilePage } from "./Profile";
 vi.mock("../api/client", () => ({
   api: {
     profile: vi.fn(), game: vi.fn(), stats: vi.fn(), titles: vi.fn(), trainerFeed: vi.fn(), photos: vi.fn(), photoData: vi.fn(),
-    addPhoto: vi.fn(), deletePhoto: vi.fn(), photoFeedbackStatus: vi.fn(), photoFeedback: vi.fn(), shareCard: vi.fn(),
+    addPhoto: vi.fn(), deletePhoto: vi.fn(), shareCard: vi.fn(),
     prs: vi.fn(), bosses: vi.fn(),
   },
 }));
@@ -44,7 +44,6 @@ describe("ProfilePage", () => {
     vi.mocked(api.trainerFeed).mockResolvedValue({ messages: [pr], unread: 0, algo_version: "watch-v1" });
     vi.mocked(api.photos).mockResolvedValue([photo(2, "2026-10-01"), photo(1, "2026-09-01")]);
     vi.mocked(api.photoData).mockResolvedValue({ id: 1, mime: "image/jpeg", data_url: "data:image/jpeg;base64,/9j/" });
-    vi.mocked(api.photoFeedbackStatus).mockResolvedValue({ enabled: false, available: false, model: "qwen3-vl:2b", reason: "Off. Turn on Progress photo feedback in Settings to use it." });
   });
 
   it("shows the Hunter card, achievements and blurred photos", async () => {
@@ -61,29 +60,14 @@ describe("ProfilePage", () => {
     await expectNoAxeViolations(container);
   });
 
-  it("compares two photos and says why AI feedback is off", async () => {
+  it("compares two photos side by side with no AI judging them", async () => {
     renderPage();
     const tiles = await screen.findAllByTestId("photo-tile");
     await userEvent.click(within(tiles[0]).getByRole("button", { name: "Compare" }));
     await userEvent.click(within(tiles[1]).getByRole("button", { name: "Compare" }));
     expect(await screen.findByTestId("compare")).toBeInTheDocument();
-    expect(screen.getByTestId("feedback-off")).toHaveTextContent("Turn on Progress photo feedback");
-    expect(api.photoFeedback).not.toHaveBeenCalled();
-  });
-
-  it("asks the local AI only when it is available, and labels the answer", async () => {
-    vi.mocked(api.photoFeedbackStatus).mockResolvedValue({ enabled: true, available: true, model: "qwen3-vl:2b", reason: "Ready." });
-    vi.mocked(api.photoFeedback).mockResolvedValue({ text: "Shoulders look broader.", guarded: true, model: "qwen3-vl:2b", version: "photo-feedback-v1", is_ai: true });
-    renderPage();
-    const tiles = await screen.findAllByTestId("photo-tile");
-    await userEvent.click(within(tiles[0]).getByRole("button", { name: "Compare" }));
-    await userEvent.click(within(tiles[1]).getByRole("button", { name: "Compare" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Ask the local AI what changed" }));
-    const fb = await screen.findByTestId("photo-feedback");
-    expect(fb).toHaveTextContent("Shoulders look broader.");
-    expect(fb).toHaveTextContent("not medical advice");
-    expect(fb).toHaveTextContent("safety filter");
-    expect(api.photoFeedback).toHaveBeenCalledWith(1, 2); // older first
+    expect(screen.queryByRole("button", { name: /local AI/ })).toBeNull();
+    expect(screen.queryByTestId("photo-feedback")).toBeNull();
   });
 
   it("opens a share card for an achievement with the caption and the X link", async () => {

@@ -4,10 +4,10 @@
  *
  * Photos stay on this PC. They are re-encoded through a canvas before saving (no EXIF, no
  * GPS) and the sidecar strips metadata again. Thumbnails are blurred until you choose
- * "Show photos". The optional AI comparison runs on a local vision model, is off by
- * default, never runs under 18 and never estimates body fat or weight.
+ * "Show photos". Two photos compare side by side; no model judges them (v1.3: the AI
+ * photo feedback was removed, review decision 4).
  */
-import type { FeedMessage, PhotoFeedback, PhotoPose, ProgressPhoto } from "@ascend/shared";
+import type { FeedMessage, PhotoPose, ProgressPhoto } from "@ascend/shared";
 import { useEffect, useState, type ChangeEvent } from "react";
 
 import { api } from "../api/client";
@@ -153,13 +153,11 @@ export function useBlurWhenAway(setReveal: (v: boolean) => void) {
 function Gallery() {
   const toast = useToast();
   const photos = useApi(api.photos, []);
-  const status = useApi(api.photoFeedbackStatus, []);
   const [reveal, setReveal] = useState(false);
   const [date, setDate] = useState(today());
   const [pose, setPose] = useState<PhotoPose>("front");
   const [busy, setBusy] = useState(false);
   const [picked, setPicked] = useState<number[]>([]);
-  const [feedback, setFeedback] = useState<PhotoFeedback | null>(null);
   const list = photos.data ?? [];
   useBlurWhenAway(setReveal);
 
@@ -181,22 +179,8 @@ function Gallery() {
   }
 
   const togglePick = (id: number) => {
-    setFeedback(null);
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id].slice(-2)));
   };
-
-  async function compareAi() {
-    if (picked.length !== 2) return;
-    // Older photo first, whatever order they were picked in.
-    const [older, newer] = picked
-      .map((id) => list.find((p) => p.id === id)!)
-      .sort((x, y) => x.taken_on.localeCompare(y.taken_on) || x.id - y.id);
-    try {
-      setFeedback(await api.photoFeedback(older.id, newer.id));
-    } catch (err) {
-      toast((err as Error).message, "error");
-    }
-  }
 
   return (
     <Panel id="gallery" index={4} className="col-span-12" title="Progress photos"
@@ -232,17 +216,7 @@ function Gallery() {
           <div className="grid grid-cols-2 gap-3">
             {picked.map((id) => <PhotoImage key={id} id={id} reveal={reveal} large />)}
           </div>
-          {status.data?.available ? (
-            <button type="button" className="btn-ghost" onClick={() => void compareAi()}>Ask the local AI what changed</button>
-          ) : (
-            <p className="text-[11px] text-muted" data-testid="feedback-off">AI feedback: {status.data?.reason ?? "off"}</p>
-          )}
-          {feedback && (
-            <div className="rounded-lg border border-accent/40 p-3 text-sm text-ink" data-testid="photo-feedback">
-              <p>{feedback.text}</p>
-              <p className="mt-1 text-[11px] text-muted">Local AI ({feedback.model}) · not medical advice{feedback.guarded ? " · part of the reply was removed by the safety filter" : ""}</p>
-            </div>
-          )}
+          <p className="text-[11px] text-muted">You are the judge here: your training log shows the progress that matters.</p>
         </div>
       )}
     </Panel>

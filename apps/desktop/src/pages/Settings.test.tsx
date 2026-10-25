@@ -168,6 +168,20 @@ describe("SettingsPage", () => {
     expect(await screen.findAllByRole("checkbox", { name: /trainer voice/i })).toHaveLength(1);
   });
 
+  it("keeps the evening check, weigh-in and photo nudges off until turned on", async () => {
+    const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
+    setup(save);
+    await openSection("Trainer");
+    const evening = await screen.findByTestId("evening-reminder-toggle");
+    expect(evening).not.toBeChecked();
+    expect(screen.getByTestId("weigh-in-reminder-toggle")).not.toBeChecked();
+    await userEvent.click(evening);
+    expect(save).toHaveBeenCalledWith({ evening_reminder: true });
+    await openSection("Profile");
+    expect(await screen.findByTestId("photo-reminder-toggle")).not.toBeChecked();
+    expect(screen.queryByText(/photo feedback/i)).toBeNull();
+  });
+
   it("keeps the formula numbers behind Details", async () => {
     setup(async (p) => ({ ...DEFAULT_SETTINGS, ...p }));
     expect(await screen.findByText(/This week it follows your weigh-ins and meals: 2,790 kcal/)).toBeInTheDocument();
