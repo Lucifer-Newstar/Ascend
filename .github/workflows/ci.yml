@@ -59,6 +59,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check relative links
         run: python3 scripts/check_md_links.py
+      # docs/RULES_AND_BASELINE.md R8 and R9: no phone numbers or secrets, the team is the author.
+      - name: Repo rules (no phone numbers, secrets or assistant credits)
+        run: python3 scripts/check_rules.py
 
   sidecar:
     name: Sidecar (lint, types, tests) · ${{ matrix.os }}
