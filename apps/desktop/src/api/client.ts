@@ -101,6 +101,9 @@ import type {
   Stats,
   ProfileIn,
   QuestItem,
+  Schedule,
+  ShortSession,
+  WeekPlan,
   Workout,
 } from "@ascend/shared";
 
@@ -226,6 +229,12 @@ export const api = {
   programs: () => call<ProgramSummary[]>("GET", "/plans/programs"),
   /** null when no program is chosen yet (v1.2: a normal answer, not a 404). */
   currentPlan: () => call<Plan | null>("GET", "/plans/current"),
+  // v1.4 habit engine (schedule-v1)
+  schedule: () => call<Schedule>("GET", "/schedule"),
+  saveSchedule: (days: number[], time: string | null) => call<Schedule>("PUT", "/schedule", { days, time }),
+  week: (start?: string) => call<WeekPlan>("GET", start ? `/schedule/week?start=${encodeURIComponent(start)}` : "/schedule/week"),
+  planWeek: (week_start: string, days: number[]) => call<WeekPlan>("PUT", "/schedule/week", { week_start, days }),
+  shortSession: (minutes = 10) => call<ShortSession | null>("GET", `/schedule/short-session?minutes=${minutes}`),
   choosePlan: (program_key: string) => call<Plan>("PUT", "/plans/current", { program_key }),
   leavePlan: () => call<void>("DELETE", "/plans/current"),
   tdee: (days = 90) => call<TdeeReport>("GET", `/intelligence/tdee?days=${days}`),

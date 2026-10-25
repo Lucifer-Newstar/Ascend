@@ -1508,3 +1508,56 @@ export interface WeekRecap {
   headline: string;
   version: string;
 }
+
+// --- schedule (v1.4, schedule-v1) ---------------------------------------------------
+
+/** Weekdays are 0 = Monday ... 6 = Sunday. */
+export interface Schedule {
+  days: number[];
+  /** "HH:MM" local time, or null. */
+  time: string | null;
+  /** "you" = picked in Settings; "program" = the program's suggested weekdays. */
+  source: "you" | "program" | "none";
+  label: string;
+  algo_version: string;
+}
+
+export interface WeekDay {
+  day: string;
+  weekday: number;
+  planned: boolean;
+  done: boolean;
+  session: string | null;
+  today: boolean;
+  past: boolean;
+}
+
+export interface WeekPlan {
+  week_start: string;
+  days: WeekDay[];
+  planned: number;
+  done: number;
+  /** This week's days were picked on the plan-the-week screen. */
+  custom: boolean;
+  source: "you" | "program" | "none";
+  algo_version: string;
+}
+
+export interface ShortItem {
+  exercise_id: number | null;
+  exercise: string;
+  sets: number;
+  rep_low: number;
+  rep_high: number;
+  rest_s: number;
+  measure: string;
+  section: string | null;
+}
+
+export interface ShortSession {
+  session: string;
+  minutes: number;
+  items: ShortItem[];
+  note: string;
+  algo_version: string;
+}
