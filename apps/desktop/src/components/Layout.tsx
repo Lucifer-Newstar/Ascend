@@ -1,14 +1,15 @@
 import { useEffect, useRef, type JSX, type ReactNode } from "react";
 
-import { IconBowl, IconChart, IconDashboard, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconProfile, IconSettings, IconSkill } from "./Icons";
+import { IconBowl, IconChart, IconChat, IconDashboard, IconDumbbell, IconHistory, IconLibrary, IconPlanner, IconProfile, IconSettings, IconSkill } from "./Icons";
 import { PAGE_KEYS } from "../lib/shortcuts";
 import { ThemeAmbience } from "./ThemeAmbience";
 import { TrainerToggle } from "./Trainer";
 
-export type Page = "dashboard" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "settings";
+export type Page = "dashboard" | "chat" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "settings";
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
   { id: "dashboard", label: "Today", icon: IconDashboard },
+  { id: "chat", label: "Chat", icon: IconChat },
   { id: "workout", label: "Train", icon: IconDumbbell },
   { id: "library", label: "Exercises", icon: IconLibrary },
   { id: "skills", label: "Skills", icon: IconSkill },

@@ -23,6 +23,7 @@ import { DashboardPage } from "./pages/Dashboard";
 // The Dashboard is the first screen, so it ships in the main chunk; every other page
 // (and first-run onboarding) is its own chunk, loaded from disk the first time it opens.
 const DietPage = lazy(() => import("./pages/Diet").then((m) => ({ default: m.DietPage })));
+const ChatPage = lazy(() => import("./pages/Chat").then((m) => ({ default: m.ChatPage })));
 const SkillsPage = lazy(() => import("./pages/Skills").then((m) => ({ default: m.SkillsPage })));
 const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default: m.LibraryPage })));
 const HistoryPage = lazy(() => import("./pages/History").then((m) => ({ default: m.HistoryPage })));
@@ -35,6 +36,7 @@ const WorkoutPage = lazy(() => import("./pages/Workout").then((m) => ({ default:
 
 const TITLES: Record<Page, string> = {
   dashboard: "Today",
+  chat: "Chat",
   workout: "Train",
   library: "Exercises",
   skills: "Skills",
@@ -137,7 +139,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   /** Onboarding just finished: go straight into the app tour (one first-run flow, no second welcome). */
   freshStart?: boolean;
 }) {
-  const { settings, update } = usePrefs();
+  const { settings, update, reload: reloadPrefs } = usePrefs();
   const toast = useToast();
   // Trainer: chat drawer, guided tours, the one-time 1.1 welcome and the watcher's unread count.
   const [chatOpen, setChatOpen] = useState(false);
@@ -190,15 +192,24 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   usePageShortcuts(navigate);
   // v1.2: one box. Ctrl+K (Cmd+K on a Mac) opens the trainer chat from anywhere; it answers
   // questions, opens pages and logs plain lines ("10 pushups", "2 idli for breakfast").
+  // v1.3: on the Chat page the chat is already open, so Ctrl+K just puts the cursor in it.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!isChatKey(e)) return;
       e.preventDefault();
-      setChatOpen((o) => !o);
+      if (page === "chat") document.getElementById("trainer-chat-page-input")?.focus();
+      else setChatOpen((o) => !o);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [page]);
+  // The drawer and the Chat page show the same conversation; never both at once.
+  const drawerOpen = chatOpen && page !== "chat";
+  // A confirmed card can change settings (theme, units, trainer): read them again.
+  const actionDone = () => {
+    void reloadPrefs();
+    bump();
+  };
   const toggleAi = async () => {
     await update({ ai_enabled: !settings.ai_enabled });
     bump();
@@ -210,9 +221,9 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
     <Layout page={page} onNavigate={navigate} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}
 
-      trainer={<TrainerChatButton icon={trainerById(settings.trainer_id).icon} name={trainerById(settings.trainer_id).name} unread={chatOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => setChatOpen((o) => !o)} />}>
-      <TrainerChat open={chatOpen} onClose={() => setChatOpen(false)} onAction={onChatAction}
-        supports={["navigate", "tour", "trainer_picker", "planner"]} onActionDone={bump} />
+      trainer={<TrainerChatButton icon={trainerById(settings.trainer_id).icon} name={trainerById(settings.trainer_id).name} unread={drawerOpen ? 0 : feed.data?.unread ?? 0} onOpen={() => (page === "chat" ? document.getElementById("trainer-chat-page-input")?.focus() : setChatOpen((o) => !o))} />}>
+      <TrainerChat open={drawerOpen} onClose={() => setChatOpen(false)} onAction={onChatAction}
+        supports={["navigate", "tour", "trainer_picker", "planner"]} onActionDone={actionDone} />
       {tour && <TourOverlay tour={tour} onDone={() => { void api.updateTrainerState({ tour_done: tour.id }).catch(() => undefined); setTour(null); }} />}
       {trainerState.data && !trainerState.data.onboarded && !welcomeDone && !tour && (
         <FirstRunCard state={trainerState.data} onDone={markOnboarded} onTour={() => { markOnboarded(); startTour("app"); }} onErased={erased} />
@@ -222,6 +233,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
       <div key={page} className="page-enter">
       <Suspense fallback={<Loading label={`Loading ${TITLES[page]}…`} />}>
       {page === "dashboard" && <DashboardPage refreshKey={refreshKey} onChanged={bump} onNavigate={navigate} onOpenChat={() => setChatOpen(true)} />}
+      {page === "chat" && <ChatPage onAction={onChatAction} onActionDone={actionDone} onPickTrainer={() => onChatAction({ kind: "trainer_picker", target: null, label: "Choose a trainer" })} />}
       {page === "workout" && <WorkoutPage onChanged={bump} />}
       {page === "library" && <LibraryPage onNavigate={navigate} refreshKey={refreshKey} />}
       {page === "skills" && <SkillsPage onNavigate={navigate} onChanged={bump} />}

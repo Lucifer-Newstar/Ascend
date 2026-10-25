@@ -104,11 +104,12 @@ describe("Layout", () => {
     await expectNoAxeViolations(container);
   });
 
-  it("labels the rail the v5 way and keeps Ctrl+1…0 in rail order", () => {
+  it("labels the rail the v5 way and keeps Ctrl+1…0 in rail order (Chat has none)", () => {
     renderAt("dashboard", "Today");
     const nav = screen.getByRole("navigation", { name: "Main" });
     const names = [...nav.querySelectorAll("button")].map((b) => b.textContent?.replace(/Ctrl \d/, "").trim());
-    expect(names).toEqual(["Today", "Train", "Exercises", "Skills", "Progress", "Fuel", "Planner", "Profile", "History", "Settings"]);
+    expect(names).toEqual(["Today", "Chat", "Train", "Exercises", "Skills", "Progress", "Fuel", "Planner", "Profile", "History", "Settings"]);
+    expect(screen.getByRole("button", { name: "Chat" })).not.toHaveAttribute("aria-keyshortcuts");
     expect(screen.getByRole("button", { name: "Skills" })).toHaveAttribute("aria-keyshortcuts", "Control+4");
     expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-keyshortcuts", "Control+0");
     expect(screen.getByRole("button", { name: "Profile" })).toHaveAttribute("aria-keyshortcuts", "Control+8");
