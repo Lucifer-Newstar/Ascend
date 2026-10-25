@@ -184,6 +184,19 @@ describe("SettingsPage", () => {
     expect(screen.queryByText(/photo feedback/i)).toBeNull();
   });
 
+  it("keeps the tray and start with Windows off until turned on, and the lock screen on (v1.4)", async () => {
+    const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
+    setup(save);
+    await openSection("Trainer");
+    expect(await screen.findByTestId("tray-toggle")).not.toBeChecked();
+    expect(screen.getByTestId("start-with-windows-toggle")).not.toBeChecked();
+    expect(screen.getByTestId("lock-screen-toggle")).toBeChecked();
+    await userEvent.click(screen.getByTestId("tray-toggle"));
+    expect(save).toHaveBeenCalledWith({ tray: true });
+    await userEvent.click(screen.getByTestId("lock-screen-toggle"));
+    expect(save).toHaveBeenCalledWith({ lock_screen: false });
+  });
+
   it("picks training days and a time in the Trainer section (v1.4)", async () => {
     setup(vi.fn());
     await openSection("Trainer");

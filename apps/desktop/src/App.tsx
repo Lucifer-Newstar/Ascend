@@ -12,6 +12,7 @@ import { ToastProvider, useToast } from "./components/Toast";
 import { TourOverlay } from "./components/Tour";
 import { TrainerChat, TrainerChatButton } from "./components/TrainerChat";
 import { XpStatus } from "./components/XpChip";
+import { useDesktopHabits } from "./lib/desktopHabits";
 import { PrefsProvider, usePrefs } from "./lib/prefs";
 import { useReminderNotifications } from "./lib/reminderNotifications";
 import { isChatKey, usePageShortcuts } from "./lib/shortcuts";
@@ -95,6 +96,8 @@ export default function App() {
         setHasProfile(d.has_profile);
         setGame(d.game);
         setSettings(s);
+        // v1.4: the lock screen can be switched off in Settings > Trainer.
+        if (s.lock_screen === false) setLocked(false);
       })
       .catch((e: Error) => setBootError(e.message));
   }, []);
@@ -118,6 +121,7 @@ export default function App() {
 
   return (
     <PrefsProvider initial={settings}>
+      <DesktopHabits onStartWorkout={() => { setLocked(false); navigate("workout"); }} />
       <ToastProvider>
         {!hasProfile ? (
           <Suspense fallback={<Loading label="Loading…" />}>
@@ -132,6 +136,17 @@ export default function App() {
       </ToastProvider>
     </PrefsProvider>
   );
+}
+
+/** v1.4: the tray and start-with-Windows switches, and "Start today's workout" from the tray. */
+function DesktopHabits({ onStartWorkout }: { onStartWorkout: () => void }) {
+  const { settings } = usePrefs();
+  useDesktopHabits({
+    tray: Boolean(settings.tray),
+    startWithWindows: Boolean(settings.start_with_windows),
+    onTrayAction: (a) => { if (a === "start-workout") onStartWorkout(); },
+  });
+  return null;
 }
 
 function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false }: {

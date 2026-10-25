@@ -726,6 +726,12 @@ export interface Settings {
   evening_reminder?: boolean;
   photo_reminder?: boolean;
   weigh_in_reminder?: boolean;
+  /** v1.4: open on the lock screen (the workout door). Default true. */
+  lock_screen?: boolean;
+  /** v1.4: keep ASCEND in the tray when the window closes (opt-in). */
+  tray?: boolean;
+  /** v1.4: start ASCEND with Windows (opt-in). */
+  start_with_windows?: boolean;
 }
 
 // --- progress ---------------------------------------------------------------------

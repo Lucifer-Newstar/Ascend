@@ -162,7 +162,7 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
               <span className="text-sm text-ink">
                 Reminders
                 <br />
-                <span className="text-xs text-muted">One calm nudge a day for today&apos;s workout or a missed day&apos;s reason, as a desktop notification and a bubble on Today. Never on a planned rest day, only while the app is open.</span>
+                <span className="text-xs text-muted">One calm nudge a day for today&apos;s workout or a missed day&apos;s reason, as a desktop notification and a bubble on Today. Never on a planned rest day, only while the app is open or in the tray.</span>
               </span>
               <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.reminders !== false}
                 onChange={(e) => save({ reminders: e.target.checked }, e.target.checked ? "Reminders on" : "Reminders off")} />
@@ -185,6 +185,33 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
               </span>
               <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.weigh_in_reminder)} data-testid="weigh-in-reminder-toggle"
                 onChange={(e) => save({ weigh_in_reminder: e.target.checked }, e.target.checked ? "Weigh-in nudge: on" : "Weigh-in nudge: off")} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Keep ASCEND in the tray
+                <br />
+                <span className="text-xs text-muted">Off by default. Closing the window keeps ASCEND next to the clock, so the reminders still reach you. Quit from the tray icon.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.tray)} data-testid="tray-toggle"
+                onChange={(e) => save({ tray: e.target.checked }, e.target.checked ? "Tray: on" : "Tray: off")} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Start with Windows
+                <br />
+                <span className="text-xs text-muted">Off by default. ASCEND opens when you sign in to Windows.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={Boolean(settings.start_with_windows)} data-testid="start-with-windows-toggle"
+                onChange={(e) => save({ start_with_windows: e.target.checked }, e.target.checked ? "Start with Windows: on" : "Start with Windows: off")} />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Lock screen on launch
+                <br />
+                <span className="text-xs text-muted">Opens on today&apos;s session: press Enter to start it. Off goes straight to Today.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.lock_screen !== false} data-testid="lock-screen-toggle"
+                onChange={(e) => save({ lock_screen: e.target.checked }, e.target.checked ? "Lock screen: on" : "Lock screen: off")} />
             </label>
             <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
             <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />
