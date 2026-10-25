@@ -55,6 +55,9 @@ def test_ai_toggle_round_trip(client):
         "weapon": "",
         "themed_cosmetics": True,
         "reminders": True,
+        "evening_reminder": False,
+        "photo_reminder": False,
+        "weigh_in_reminder": False,
     }
     assert client.get("/settings").json() == defaults
     assert client.put("/settings", json={"ai_enabled": True}).json() == {
@@ -86,6 +89,9 @@ def test_settings_partial_update_keeps_other_values(client):
         "weapon": "",
         "themed_cosmetics": True,
         "reminders": True,
+        "evening_reminder": False,
+        "photo_reminder": False,
+        "weigh_in_reminder": False,
     }
 
 

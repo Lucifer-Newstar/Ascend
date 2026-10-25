@@ -23,11 +23,31 @@ def test_missed_sessions_after_the_expected_gap() -> None:
 
 
 def test_first_session_nudge_and_photo_reminder() -> None:
-    f = Facts(TODAY, True, TODAY - timedelta(days=8), photos_supported=True)
+    f = Facts(TODAY, True, TODAY - timedelta(days=8), photos_supported=True, photo_reminder=True)
     assert kinds(f) == ["missed", "photo_reminder"]
-    f2 = Facts(TODAY, True, TODAY - timedelta(days=60), last_workout=TODAY,
+    f2 = Facts(TODAY, True, TODAY - timedelta(days=60), last_workout=TODAY, photo_reminder=True,
                photos_supported=True, last_photo=TODAY - timedelta(days=10))  # fmt: skip
     assert "photo_reminder" not in kinds(f2)
+
+
+def test_photo_and_weigh_in_nudges_are_off_unless_turned_on() -> None:
+    """v1.3 (review 1.9): both are opt-in; the fast-loss warning is not a nudge and stays."""
+    old = [(TODAY - timedelta(days=20), 60.0)]
+    f = Facts(TODAY, True, TODAY - timedelta(days=60), last_workout=TODAY,
+              photos_supported=True, weights=old)  # fmt: skip
+    assert kinds(f) == []
+    on = Facts(TODAY, True, TODAY - timedelta(days=60), last_workout=TODAY, photos_supported=True,
+               weights=old, photo_reminder=True, weigh_in_reminder=True)  # fmt: skip
+    assert set(kinds(on)) == {"photo_reminder", "weigh_in"}
+
+
+def test_welcome_back_uses_the_reason() -> None:
+    f = Facts(TODAY, True, last_workout=TODAY, welcome_back=(TODAY, 25, "exams"))
+    (n,) = [n for n in watch(f) if n.kind == "welcome_back"]
+    assert "exams" in n.text and "+25 XP" in n.text and n.mood == "proud"
+    assert not any(w in n.text.lower() for w in ("lost", "lose", "missed", "broke"))
+    plain = Facts(TODAY, True, last_workout=TODAY, welcome_back=(TODAY, 25, None))
+    assert "Welcome back." in watch(plain)[0].text
 
 
 def test_milestones_prs_skills_and_boss_are_shareable() -> None:

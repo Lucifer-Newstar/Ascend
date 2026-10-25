@@ -140,6 +140,11 @@ class SettingsOut(BaseModel):
     # v1.2: the trainer's reminders (today's workout, a missed day's reason, streak at
     # risk, water, check-in) as a desktop notification and a bubble on Today.
     reminders: bool = True
+    # v1.3 (review 1.4, 1.9): reminders are calm by default. The evening "not done yet"
+    # nudge, the monthly photo reminder and the weigh-in nudge are opt-in.
+    evening_reminder: bool = False
+    photo_reminder: bool = False
+    weigh_in_reminder: bool = False
 
 
 class SettingsIn(StrictIn):
@@ -162,6 +167,9 @@ class SettingsIn(StrictIn):
     weapon: CosmeticId | None = None
     themed_cosmetics: bool | None = None
     reminders: bool | None = None
+    evening_reminder: bool | None = None
+    photo_reminder: bool | None = None
+    weigh_in_reminder: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

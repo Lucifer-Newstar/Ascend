@@ -142,6 +142,9 @@ def read_settings(db: Session) -> SettingsOut:
         weapon=get_setting(db, "weapon", ""),
         themed_cosmetics=get_setting(db, "themed_cosmetics", "true") == "true",
         reminders=get_setting(db, "reminders", "true") == "true",
+        evening_reminder=get_setting(db, "evening_reminder", "false") == "true",
+        photo_reminder=get_setting(db, "photo_reminder", "false") == "true",
+        weigh_in_reminder=get_setting(db, "weigh_in_reminder", "false") == "true",
     )
 
 

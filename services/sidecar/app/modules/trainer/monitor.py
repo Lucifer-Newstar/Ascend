@@ -50,6 +50,11 @@ class Facts:
     photos_supported: bool = False
     last_photo: date | None = None
     program_done: tuple[str, int] | None = None  # program name, sessions done
+    # v1.3: opt-in nudges (Settings), off by default (review 1.9).
+    photo_reminder: bool = False
+    weigh_in_reminder: bool = False
+    # v1.3 (review M8): today's welcome-back bonus, with the reason given for the miss.
+    welcome_back: tuple[date, int, str | None] | None = None  # day, xp, reason
 
 
 def _missed(f: Facts) -> list[Notice]:
@@ -154,7 +159,7 @@ def _weight(f: Facts) -> list[Notice]:
     out: list[Notice] = []
     if f.weights:
         last_day = f.weights[-1][0]
-        if (f.today - last_day).days >= 10:
+        if f.weigh_in_reminder and (f.today - last_day).days >= 10:
             out.append(
                 Notice(
                     f"weighin:{last_day.isoformat()}",
@@ -189,7 +194,7 @@ def _weight(f: Facts) -> list[Notice]:
 
 
 def _photo(f: Facts) -> list[Notice]:
-    if not f.photos_supported or not f.has_profile:
+    if not f.photo_reminder or not f.photos_supported or not f.has_profile:
         return []
     month = f.today.strftime("%Y-%m")
     if f.last_photo is None:
@@ -254,7 +259,25 @@ def _program(f: Facts) -> list[Notice]:
     ]
 
 
-RULES = (_prs, _unlocks, _boss, _streak, _program, _overload, _stalled, _weight, _missed, _photo)
+def _welcome_back(f: Facts) -> list[Notice]:
+    if f.welcome_back is None:
+        return []
+    day, xp, reason = f.welcome_back
+    said = f" You told me \u201c{reason}\u201d; that happens." if reason else ""
+    return [
+        Notice(
+            f"welcome:{day.isoformat()}",
+            "welcome_back",
+            "proud",
+            f"Welcome back.{said} Coming back is the part that counts: +{xp} XP.",
+        )
+    ]
+
+
+RULES = (
+    _welcome_back, _prs, _unlocks, _boss, _streak, _program, _overload, _stalled, _weight,
+    _missed, _photo,
+)  # fmt: skip
 
 
 def watch(f: Facts) -> list[Notice]:

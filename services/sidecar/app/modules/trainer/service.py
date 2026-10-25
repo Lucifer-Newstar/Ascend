@@ -81,6 +81,7 @@ def facts(db: Session, now: datetime) -> monitor.Facts:
         if plan.sessions_done % block == 0:
             program_done = (plan.name, plan.sessions_done)
     supported, last_photo = photos_last_day(db)
+    prefs = progress.read_settings(db)
     return monitor.Facts(
         today=today,
         has_profile=p is not None,
@@ -99,7 +100,29 @@ def facts(db: Session, now: datetime) -> monitor.Facts:
         photos_supported=supported,
         last_photo=last_photo,
         program_done=program_done,
+        photo_reminder=prefs.photo_reminder,
+        weigh_in_reminder=prefs.weigh_in_reminder,
+        welcome_back=_welcome_back(db, today),
     )
+
+
+def _welcome_back(db: Session, today: date) -> tuple[date, int, str | None] | None:
+    """Today's welcome-back bonus and the latest reason given before it, if any."""
+    from app.modules.gamification.models import StreakReason, XpEvent
+
+    xp = db.scalar(
+        select(func.coalesce(func.sum(XpEvent.amount), 0)).where(
+            XpEvent.source == "welcome_back", XpEvent.day == today
+        )
+    )
+    if not xp:
+        return None
+    reason = db.scalars(
+        select(StreakReason.reason)
+        .where(StreakReason.day < today, StreakReason.day >= today - timedelta(days=14))
+        .order_by(StreakReason.day.desc())
+    ).first()
+    return today, int(xp), reason
 
 
 def scan(db: Session, now: datetime) -> int:

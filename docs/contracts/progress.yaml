@@ -1259,6 +1259,21 @@ components:
           - type: boolean
           - type: 'null'
           title: Reminders
+        evening_reminder:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Evening Reminder
+        photo_reminder:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Photo Reminder
+        weigh_in_reminder:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Weigh In Reminder
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1358,6 +1373,18 @@ components:
           type: boolean
           title: Reminders
           default: true
+        evening_reminder:
+          type: boolean
+          title: Evening Reminder
+          default: false
+        photo_reminder:
+          type: boolean
+          title: Photo Reminder
+          default: false
+        weigh_in_reminder:
+          type: boolean
+          title: Weigh In Reminder
+          default: false
       type: object
       required:
       - ai_enabled
