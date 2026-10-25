@@ -1,4 +1,4 @@
-"""In-app actions (actions-v1): propose, confirm, cancel, undo and the audit log."""
+"""In-app actions (actions-v2): propose, confirm, cancel, undo and the audit log."""
 
 from __future__ import annotations
 
@@ -19,7 +19,9 @@ from app.modules.actions.registry import SPECS, ActionError
 
 router = APIRouter(prefix="/actions", tags=["actions"])
 
-Kind = Literal["log_set", "log_hold", "log_weight", "log_meal", "follow_program", "erase_data"]
+Kind = Literal[
+    "log_set", "log_hold", "log_weight", "log_meal", "add_food", "follow_program", "erase_data"
+]
 
 
 class ActionOut(BaseModel):

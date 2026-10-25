@@ -106,10 +106,16 @@ def confirm(
         # The erase wiped the audit log too; record the erase itself as its first entry.
         kind, params_json, source, origin, summary = snapshot
         row = ActionLog(
-            kind=kind, params_json=params_json, status="executed", source=source,
-            origin_text=origin, summary_json=summary, result_json=dumps(result),
-            created_at=now, executed_at=now,
-        )  # fmt: skip
+            kind=kind,
+            params_json=params_json,
+            status="executed",
+            source=source,
+            origin_text=origin,
+            summary_json=summary,
+            result_json=dumps(result),
+            created_at=now,
+            executed_at=now,
+        )
         db.add(row)
         db.commit()
         return row
@@ -180,11 +186,11 @@ AI_SCHEMA: dict[str, Any] = {
 
 def _bodyweight_variant(db: Session, ex: Any) -> Any:
     """ "10 squats" with no barbell in the kit is the bodyweight squat, not a back squat."""
-    from app.modules.workouts.equipment import allowed_for_profile, fits
+    from app.modules.workouts.equipment import allowed_for_profile, fits_exercise
     from app.modules.workouts.models import Exercise
 
     allowed = allowed_for_profile(db)
-    if fits(ex.equipment, allowed):
+    if fits_exercise(ex.name, ex.equipment, allowed):
         return ex
     base = ex.name.split()[-1]
     alt = db.scalars(
@@ -193,41 +199,135 @@ def _bodyweight_variant(db: Session, ex: Any) -> Any:
     return alt if alt is not None else ex
 
 
+def _as_set(db: Session, name: str, reps: int, sets: int = 1, kg: float = 0.0) -> dict[str, Any]:
+    from app.modules.actions import registry
+
+    ex = registry.resolve_exercise(db, name, strict=True)
+    if not kg:
+        ex = _bodyweight_variant(db, ex)
+    return {"exercise": ex.name, "reps": reps, "weight_kg": kg, "sets": sets}
+
+
+def _resolve_items(db: Session, hit: parser.Parsed) -> tuple[str, dict[str, Any]] | None:
+    """ "2 idli and sambar" -> one meal; "10 pushups, 5 pullups" -> one card of sets. Every
+    item must resolve the same way (all food or all exercises)."""
+    from app.modules.actions import registry, resolve
+    from app.modules.nutrition.models import Food
+
+    p = hit.params
+    items = list(p["items"])
+    if not any(it.get("food_only") for it in items):
+        sets = []
+        for it in items:
+            try:
+                sets.append(
+                    _as_set(
+                        db,
+                        str(it["name"]),
+                        int(it["count"]),
+                        int(it.get("sets", 1)),
+                        float(it.get("weight_kg", 0.0)),
+                    )
+                )
+            except registry.ActionError:
+                sets = []
+                break
+        if sets:
+            first, more = sets[0], sets[1:]
+            return "log_set", {**first, "rpe": None, "more": more}
+    foods: list[dict[str, Any]] = []
+    loose = not p.get("meal_word") and all(it.get("bare") for it in items)
+    for it in items:
+        name = str(it["name"])
+        if loose:  # "running with a backpack": only a line of known dishes is a meal
+            exact = resolve.strict_food(db, name)
+            if not exact:
+                return None
+            foods += [{"food": f.name, "portions": 1.0} for f in exact]
+            continue
+        if "grams" in it:
+            found = registry.resolve_foods(db, name, grams=True)
+            f = db.get(Food, found[0].id)
+            assert f is not None
+            portions = max(0.1, min(20.0, round(float(it["grams"]) / f.portion_g, 2)))
+            foods.append({"food": f.name, "portions": portions})
+            continue
+        for f in registry.resolve_foods(db, name):  # raises: unknown / which one?
+            foods.append({"food": f.name, "portions": float(it.get("count", 1.0))})
+    first, more = foods[0], foods[1:]
+    return "log_meal", {**first, "meal_type": p["meal_type"], "more": more}
+
+
 def _resolve_ambiguous(db: Session, hit: parser.Parsed) -> tuple[str, dict[str, Any]] | None:
     """ "10 pushups" is a set, "2 idli" is food: an exercise name wins, then a food."""
     from app.modules.actions import registry
 
     p = hit.params
+    if hit.kind == "log_items":
+        return _resolve_items(db, hit)
     if hit.kind == "log_food_grams":
         try:
-            food_id, _name = registry.resolve_food(db, str(p["food"]))
-        except registry.ActionError:
+            foods = registry.resolve_foods(db, str(p["food"]), grams=True)
+        except registry.UnknownFood:
             return None
-        from app.modules.nutrition.models import Food
-
-        food = db.get(Food, food_id)
-        assert food is not None
+        food = foods[0]
         portions = max(0.1, min(20.0, round(float(p["grams"]) / food.portion_g, 2)))
         return "log_meal", {"food": food.name, "portions": portions, "meal_type": p["meal_type"]}
     name, count = str(p["name"]), int(p["count"])
     try:
-        ex = _bodyweight_variant(db, registry.resolve_exercise(db, name, strict=True))
-        return "log_set", {"exercise": ex.name, "reps": count, "weight_kg": 0.0, "sets": 1,
-                           "rpe": None}  # fmt: skip
+        return "log_set", {**_as_set(db, name, count), "rpe": None}
     except registry.ActionError:
         pass
     try:
-        _fid, food_name = registry.resolve_food(db, name)
-        return "log_meal", {"food": food_name, "portions": float(count),
-                            "meal_type": p["meal_type"]}  # fmt: skip
+        foods = registry.resolve_foods(db, name)
+        first = {"food": foods[0].name, "portions": float(count)}
+        more = [{"food": f.name, "portions": float(count)} for f in foods[1:]]
+        return "log_meal", {**first, "meal_type": p["meal_type"], "more": more}
+    except registry.AmbiguousName:
+        raise
     except registry.ActionError:
         pass
     try:
         ex = registry.resolve_exercise(db, name)
     except registry.ActionError:
+        # Neither an exercise nor a food we know: offer to add it as the user's own food.
+        if count <= 20 and len(name.split()) <= 4:
+            raise registry.UnknownFood(name) from None
         return None
-    return "log_set", {"exercise": ex.name, "reps": count, "weight_kg": 0.0, "sets": 1,
-                       "rpe": None}  # fmt: skip
+    if count > 60:  # "bench 80" is not 80 reps
+        return None
+    ex = _bodyweight_variant(db, ex)
+    return "log_set", {"exercise": ex.name, "reps": count, "weight_kg": 0.0, "sets": 1, "rpe": None}
+
+
+def bare_food(
+    db: Session, text: str, now: datetime, exact_only: bool = False
+) -> tuple[str, dict[str, Any]] | None:
+    """A line that only names a food ("ven pongal", "chutney"): one portion, by the clock.
+    `exact_only`: the food's full name only ("tender coconut water"), no aliases."""
+    from app.modules.actions import resolve
+
+    t = text.strip().lower().rstrip(".!")
+    foods = resolve.strict_food(db, t, exact_only)
+    if not foods:
+        return None
+    first = {"food": foods[0].name, "portions": 1.0}
+    more = [{"food": f.name, "portions": 1.0} for f in foods[1:]]
+    return "log_meal", {**first, "meal_type": parser.meal_type_for(None, now.hour), "more": more}
+
+
+def _with_kit(db: Session, params: dict[str, Any]) -> dict[str, Any]:
+    """ "3x12 squats" for a user without a barbell is the bodyweight squat (v1.3: every
+    path, not only "10 squats")."""
+    from app.modules.actions import registry
+
+    if params.get("weight_kg"):
+        return params
+    try:
+        ex = _bodyweight_variant(db, registry.resolve_exercise(db, str(params["exercise"])))
+    except registry.ActionError:
+        return params
+    return {**params, "exercise": ex.name}
 
 
 def parse_text(
@@ -240,6 +340,8 @@ def parse_text(
     if hit is not None and hit.kind in parser.AMBIGUOUS_KINDS:
         resolved = _resolve_ambiguous(db, hit)
         return (*resolved, "rules") if resolved else None
+    if hit is not None and hit.kind == "log_set":
+        return hit.kind, _with_kit(db, hit.params), "rules"
     if hit is not None:
         return hit.kind, hit.params, "rules"
     if rules_only:
@@ -252,9 +354,14 @@ def parse_text(
         return None
     try:
         raw = ollama.chat(
-            settings.ollama_host, model, "", text, timeout=runtime.timeout_for(settings, model),
-            system=AI_SYSTEM, format=AI_SCHEMA,
-        )  # fmt: skip
+            settings.ollama_host,
+            model,
+            "",
+            text,
+            timeout=runtime.timeout_for(settings, model),
+            system=AI_SYSTEM,
+            format=AI_SCHEMA,
+        )
         data = json.loads(raw)
     except (ollama.OllamaUnavailable, ValueError):
         return None
