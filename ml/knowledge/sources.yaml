@@ -1,0 +1,34 @@
+# Every source the knowledge base may contain. build_corpus.py refuses a passage whose
+# source is not listed here, and the app shows `name` + `licence` under every answer.
+# Licences were read on each source's own page on 2026-10-25 (see SOURCES.md).
+sources:
+  free_exercise_db:
+    name: free-exercise-db
+    licence: Unlicense (public domain)
+    url: https://github.com/yuhonas/free-exercise-db
+    attribution: Exercise instructions from free-exercise-db by yuhonas and contributors.
+  pag_2018:
+    name: Physical Activity Guidelines for Americans, 2nd edition (2018)
+    licence: US federal government work (public domain, 17 U.S.C. 105)
+    url: https://odphp.health.gov/sites/default/files/2019-09/Physical_Activity_Guidelines_2nd_edition.pdf
+    attribution: U.S. Department of Health and Human Services. Physical Activity Guidelines for Americans, 2nd edition. 2018.
+  usda_fdc_sr:
+    name: USDA FoodData Central, SR Legacy (2018)
+    licence: CC0 1.0 (public domain); USDA asks users to cite FoodData Central
+    url: https://fdc.nal.usda.gov/
+    attribution: U.S. Department of Agriculture, Agricultural Research Service. FoodData Central, SR Legacy, 2019. fdc.nal.usda.gov.
+  who_pa_2020:
+    name: WHO physical activity guidance (our summary)
+    licence: Summary written in our own words (MIT, part of ASCEND); WHO's documents are CC BY-NC-SA 3.0 IGO and are not copied
+    url: https://www.who.int/news-room/fact-sheets/detail/physical-activity
+    attribution: Summarised from WHO's physical activity fact sheet and the WHO guidelines on physical activity and sedentary behaviour (2020).
+  ascend_food_table:
+    name: ASCEND food table
+    licence: MIT (part of ASCEND); approximate values in the style of IFCT 2017 / INDB, not copied from them
+    url: https://github.com/Lucifer-Newstar/Ascend-
+    attribution: ASCEND's own rounded household-portion values. See IFCT 2017 (NIN, Hyderabad) for measured values.
+  ascend_notes:
+    name: ASCEND team notes
+    licence: MIT (part of ASCEND)
+    url: https://github.com/Lucifer-Newstar/Ascend-
+    attribution: General guidance written by the ASCEND team; not reviewed by a medical professional.

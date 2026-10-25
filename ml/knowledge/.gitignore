@@ -1,0 +1,3 @@
+# Large downloads and the built corpus (rebuilt by dvc repro; published to the sidecar).
+raw/
+build/
