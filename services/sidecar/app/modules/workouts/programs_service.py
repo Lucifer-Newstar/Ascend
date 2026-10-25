@@ -4,6 +4,7 @@ prog-v1 targets (programs-v1, ADR-0020)."""
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from datetime import date, datetime
 
 from sqlalchemy import select
@@ -62,16 +63,49 @@ def _day_out(day: programs.Day, lib: dict[str, Exercise]) -> PlanDayOut:
     )
 
 
+def for_kit(
+    p: programs.Program, lib: dict[str, Exercise], allowed: frozenset[str] | None
+) -> programs.Program:
+    """v1.3: the program with each move the user's kit can't do swapped for the same
+    slot's move it can (Barbell Bench Press -> Dumbbell Bench Press or Push-up). Moves
+    nothing replaces stay as written."""
+    if allowed is None:
+        return p
+    from app.modules.planner.workout_gen import swap_for_kit
+
+    def ok(n: str) -> bool:
+        return n in lib and equipment.fits_exercise(n, lib[n].equipment, allowed)
+
+    days = []
+    for d in p.days:
+        slots: list[programs.Slot] = []
+        seen: set[str] = set()
+        for s in d.slots:
+            name = s.exercise
+            if name in lib and not ok(name):
+                taken = frozenset(seen)
+
+                def usable(n: str, taken: frozenset[str] = taken) -> bool:
+                    return ok(n) and n not in taken
+
+                name = swap_for_kit(name, usable) or name
+            seen.add(name)
+            slots.append(replace(s, exercise=name))
+        days.append(replace(d, slots=tuple(slots)))
+    return replace(p, days=tuple(days))
+
+
 def catalog(db: Session) -> list[ProgramOut]:
     lib = _library(db)
     allowed = equipment.allowed_for_profile(db)
     out = []
     for p in programs.PROGRAMS.values():
         fits = all(
-            equipment.fits(lib[n].equipment, allowed)
+            equipment.fits_exercise(n, lib[n].equipment, allowed)
             for n in programs.exercise_names(p)
             if n in lib
         )
+        p = for_kit(p, lib, allowed)
         out.append(
             ProgramOut(
                 key=p.key,
@@ -204,8 +238,9 @@ def plan(db: Session, now: datetime) -> PlanOut | None:
     if p is None:  # a program removed from the catalog in a later version, or deleted
         return None
     today = now.date()
-    state = programs.plan_state(p, e.started_on, _finished_gym(db, e.started_on, today), today)
     lib = _library(db)
+    p = for_kit(p, lib, equipment.allowed_for_profile(db))
+    state = programs.plan_state(p, e.started_on, _finished_gym(db, e.started_on, today), today)
     nxt = _day_out(p.days[state.next_index], lib)
     open_sets = _open_sets(db)
     deload = progression_service.in_deload_week(db, now)
