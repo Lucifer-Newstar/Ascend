@@ -15,13 +15,23 @@ def streak(client: TestClient) -> dict:
     return client.get("/game/summary").json()["streak"]
 
 
+def train(client: TestClient) -> None:
+    """v1.3: only training keeps the streak, so these tests log one set (not a weigh-in)."""
+    ex = next(e["id"] for e in client.get("/exercises", params={"q": "Push-up"}).json()
+              if e["name"] == "Push-up")  # fmt: skip
+    w = client.post("/workouts").json()["id"]
+    r = client.post(f"/workouts/{w}/sets", json={"exercise_id": ex, "reps": 10, "weight_kg": 0})
+    assert r.status_code in (200, 201), r.text
+    assert client.post(f"/workouts/{w}/finish").status_code == 200
+
+
 # --- streak reasons (item 12) ------------------------------------------------------------
 
 
 def test_a_reason_by_the_next_day_keeps_the_streak(client: TestClient, clock) -> None:
-    weigh(client)
+    train(client)
     clock.now += timedelta(days=1)
-    weigh(client)
+    train(client)
     clock.now += timedelta(days=2)  # one day missed in between
     s = streak(client)
     missed = (clock.now - timedelta(days=1)).date().isoformat()
@@ -29,17 +39,17 @@ def test_a_reason_by_the_next_day_keeps_the_streak(client: TestClient, clock) ->
     r = client.post("/game/streak/reason", json={"day": missed, "reason": "fever, stayed in bed"})
     assert r.status_code == 200, r.text
     assert r.json()["excused"] == 1 and r.json()["reason_due"] is None
-    weigh(client)
+    train(client)
     s = streak(client)
     assert s["current"] == 3 and s["excused"] == 1
 
 
 def test_no_reason_or_two_missed_days_reset(client: TestClient, clock) -> None:
-    weigh(client)
+    train(client)
     clock.now += timedelta(days=1)
-    weigh(client)
+    train(client)
     clock.now += timedelta(days=3)  # two days missed
-    weigh(client)
+    train(client)
     assert streak(client)["current"] == 1
     old = (clock.now - timedelta(days=2)).date().isoformat()
     r = client.post("/game/streak/reason", json={"day": old, "reason": "busy"})
@@ -47,7 +57,7 @@ def test_no_reason_or_two_missed_days_reset(client: TestClient, clock) -> None:
 
 
 def test_a_day_that_counts_needs_no_reason(client: TestClient, clock) -> None:
-    weigh(client)
+    train(client)
     today = clock.now.date().isoformat()
     r = client.post("/game/streak/reason", json={"day": today, "reason": "x"})
     assert r.status_code == 422

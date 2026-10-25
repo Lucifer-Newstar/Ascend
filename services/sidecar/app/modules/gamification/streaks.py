@@ -1,8 +1,10 @@
 """Streaks with reasons, recomputed from history (no hidden mutable counter).
 
-Rules (v1.2, replacing the automatic freezes of plan v2):
-  * an active day = any workout finished, any quest item completed, or any quick log
-    (a set, a meal or a weigh-in);
+Rules (v1.3; v1.2 replaced the automatic freezes of plan v2):
+  * an active day = a training day: a finished workout or at least one logged set. Meals,
+    weigh-ins and quest ticks earn XP but no longer keep the streak (review S2);
+  * a planned rest day of the program you follow is neutral: it neither adds to the
+    streak nor breaks it, and never asks for a reason (review S1);
   * a missed day keeps the streak when you give a reason for it by the end of the next
     day; it does not add to the streak ("excused");
   * two missed days in a row reset the streak, reason or not;
@@ -37,12 +39,15 @@ def compute_streak(
     active_days: Iterable[date],
     today: date,
     reasons: Mapping[date, date] | None = None,
+    rest_days: Iterable[date] | None = None,
 ) -> StreakState:
-    """`reasons` maps a missed day to the day its reason was given."""
+    """`reasons` maps a missed day to the day its reason was given; `rest_days` are the
+    followed program's planned rest days (skipped: they keep the streak as it is)."""
     days = sorted({d for d in active_days if d <= today})
     if not days:
         return StreakState(0, 0, 0, False)
     active = set(days)
+    rest = set(rest_days or ()) - active
     reasons = reasons or {}
     current = best = excused = 0
     due: date | None = None
@@ -54,6 +59,8 @@ def compute_streak(
         if cursor in active:
             current += 1
             prev_missed = False
+        elif cursor in rest:
+            pass  # a planned rest day: neutral
         else:
             given = reasons.get(cursor)
             if prev_missed:

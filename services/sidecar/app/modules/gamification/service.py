@@ -139,22 +139,48 @@ def xp_for_refs(db: Session, sources: Iterable[str], ref_id: int) -> int:
 
 
 def active_days(db: Session) -> set[date]:
-    """Days that keep the streak: a finished workout or a completed quest item, and since
-    v8 any quick log too: a single logged set, a meal or a weigh-in (Quick log on Today)."""
-    from app.modules.nutrition.models import Meal
-    from app.modules.progress.models import BodyMetric
+    """Days that keep the streak (v1.3, review S2): training days only, a finished workout
+    or at least one logged set. Meals, weigh-ins and quest ticks still earn XP and quest
+    progress, but logging a meal no longer keeps a training streak alive."""
     from app.modules.workouts.models import Workout, WorkoutSet
 
     days = set(db.scalars(select(Workout.day).where(Workout.finished_at.is_not(None))).all())
-    days |= set(db.scalars(select(QuestItem.day).where(QuestItem.completed_at.is_not(None))).all())
     days |= set(
         db.scalars(
             select(Workout.day).join(WorkoutSet, WorkoutSet.workout_id == Workout.id).distinct()
         ).all()
     )
-    days |= set(db.scalars(select(Meal.day).distinct()).all())
-    days |= {d.date() for d in db.scalars(select(BodyMetric.measured_at)).all()}
     return days
+
+
+def planned_rest_days(db: Session, today: date) -> set[date]:
+    """Days the followed program planned as rest (review S1): the weekdays none of its
+    days falls on, for each stretch a program was followed. Neutral for the streak."""
+    from app.modules.workouts import programs_service
+    from app.modules.workouts.models import PlanEnrollment
+
+    out: set[date] = set()
+    for e in db.scalars(select(PlanEnrollment).order_by(PlanEnrollment.id)).all():
+        try:
+            p = programs_service.get_program(db, e.program_key)
+        except Exception:  # a broken custom program must never break the streak
+            p = None
+        if p is None or not p.days:
+            continue
+        training = {d.weekday % 7 for d in p.days}
+        if len(training) >= 7:
+            continue
+        end = e.ended_at.date() if e.ended_at is not None else today
+        day = e.started_on
+        while day <= min(end, today):
+            if day.weekday() not in training:
+                out.add(day)
+            day += timedelta(days=1)
+    return out
+
+
+def is_rest_day(db: Session, day: date) -> bool:
+    return day in planned_rest_days(db, day)
 
 
 def streak_reasons(db: Session) -> dict[date, date]:
@@ -165,7 +191,7 @@ def streak_reasons(db: Session) -> dict[date, date]:
 
 
 def streak(db: Session, today: date) -> StreakState:
-    return compute_streak(active_days(db), today, streak_reasons(db))
+    return compute_streak(active_days(db), today, streak_reasons(db), planned_rest_days(db, today))
 
 
 def calm_days(db: Session) -> set[date]:
@@ -193,7 +219,7 @@ def _exercise_refs(db: Session) -> list[ExerciseRef]:
     exercises and any other library exercise they have actually logged; never archived
     ones. (Suggesting one of 873 imported library entries at random reads as noise.)
     Only exercises that fit the equipment the user said they have."""
-    from app.modules.workouts.equipment import allowed_for_profile, fits
+    from app.modules.workouts.equipment import allowed_for_profile, fits_exercise
     from app.modules.workouts.models import Exercise, WorkoutSet
 
     allowed = allowed_for_profile(db)
@@ -205,7 +231,7 @@ def _exercise_refs(db: Session) -> list[ExerciseRef]:
     return [
         ExerciseRef(e.id, e.name, {m.muscle: m.weight for m in e.muscles})
         for e in db.scalars(stmt).all()
-        if fits(e.equipment, allowed)
+        if fits_exercise(e.name, e.equipment, allowed)
     ]
 
 
@@ -304,6 +330,32 @@ def _plan_item(db: Session, now: datetime) -> QuestItemSpec | None:
     )
 
 
+REST_DAY_XP = 10
+
+
+def _rest_item(db: Session, now: datetime) -> QuestItemSpec | None:
+    """v1.3: on a planned rest day the training item is "Rest day ✓" (already done) and
+    the streak is safe; nothing asks you to train."""
+    from app.modules.workouts import programs_service
+
+    today = now.date()
+    if today not in planned_rest_days(db, today) or today in active_days(db):
+        return None
+    plan = programs_service.active(db)
+    if plan is None:
+        return None
+    return QuestItemSpec(
+        kind="training",
+        code="rest_day",
+        title="Rest day \u2713",
+        detail="A planned rest day in your program: your streak is safe. A walk or a stretch "
+        "is a bonus, not a must.",
+        metric="rest_day",
+        target=1,
+        xp=REST_DAY_XP,
+    )
+
+
 def follow_plan_today(db: Session, now: datetime) -> None:
     """A program chosen mid-day takes over today's training item too, as long as nothing
     has been counted on it yet (no progress, not completed)."""
@@ -343,7 +395,11 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
         select(func.count()).select_from(QuestItem).where(QuestItem.day < today)
     )
     yesterday = today - timedelta(days=1)
-    missed = bool(had_history) and yesterday not in active_days(db)
+    missed = (
+        bool(had_history)
+        and yesterday not in active_days(db)
+        and yesterday not in planned_rest_days(db, today)
+    )
     specs = generate_daily_quest(
         today,
         progress.muscle_states(db, now),
@@ -354,9 +410,9 @@ def ensure_quest(db: Session, now: datetime) -> list[QuestItem]:
         readiness_band=_band_today(db, today),
         tuning=_tuning(db, now),
     )
-    plan_item = _plan_item(db, now)
+    plan_item = _rest_item(db, now) or _plan_item(db, now)
     if plan_item is not None and specs and specs[0].kind == "training":
-        specs[0] = plan_item  # v1.2: the quest follows your program
+        specs[0] = plan_item  # v1.2: the quest follows your program (v1.3: its rest days)
     # Two first requests of the day (the dashboard and the quest panel at app start) can
     # both find no quest and both build one; the second insert then hits the unique
     # (day, code) index. A savepoint keeps that from failing the request: the loser rolls
@@ -436,6 +492,8 @@ def _metric_value(db: Session, metric: str, day: date) -> int | None:
     if metric.startswith("plan:"):
         # plan:<enrollment id>:<day key>: exercises of that program day with a set today.
         return _plan_progress(db, metric, day)
+    if metric == "rest_day":
+        return 1
     if metric == "meals":
         return nutrition.meal_count(db, day)
     if metric == "protein_g":
@@ -555,6 +613,8 @@ def give_reason(db: Session, day: date, reason: str, now: datetime) -> StreakSta
         raise ValueError("A reason counts for yesterday only (by the end of the next day).")
     if day in active_days(db):
         raise ValueError("That day already counts: nothing to explain.")
+    if day in planned_rest_days(db, today):
+        raise ValueError("That was a planned rest day: it never breaks your streak.")
     row = db.get(StreakReason, day)
     if row is None:
         db.add(StreakReason(day=day, reason=text, given_on=today, given_at=now))
