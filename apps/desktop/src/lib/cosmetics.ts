@@ -1,6 +1,10 @@
 /**
  * The cosmetics catalog (v1.2). Outfits, relics, pets and weapons the avatar can wear,
- * each unlocked by playing: rank, streaks, PRs, weekly bosses and seasonal bosses.
+ * each unlocked by playing: rank, sessions, PRs, weekly bosses and seasonal bosses.
+ *
+ * v1.3 (review decision 7): the 7/14/30-day streak unlocks became 10/25/50 lifetime
+ * sessions, so a three-days-a-week plan can earn them. An old best streak still counts
+ * (`legacyStreak`): nothing already earned is taken away.
  *
  * Adding an item is art plus one entry: drop `<id>.webp` (or `<id>_male.webp` and
  * `<id>_female.webp` for an outfit) into assets/cosmetics and add a line to CATALOG.
@@ -15,7 +19,7 @@ export type AvatarLook = "male" | "female";
 export type Unlock =
   | { kind: "start" }
   | { kind: "rank"; rank: Rank }
-  | { kind: "streak"; days: number }
+  | { kind: "sessions"; count: number; legacyStreak?: number }
   | { kind: "prs"; count: number }
   | { kind: "bosses"; count: number }
   | { kind: "boss"; boss: string };
@@ -40,7 +44,7 @@ export const SLOTS: { key: CosmeticSlot; label: string }[] = [
 export const CATALOG: Cosmetic[] = [
   // outfits (4 sets + the Harvest Festival set from its seasonal boss)
   { id: "outfit_cyber_hunter", name: "Cyber Hunter", slot: "outfit", unlock: { kind: "start" }, blurb: "Neon-lined field gear. Yours from day one." },
-  { id: "outfit_ronin", name: "Ronin", slot: "outfit", unlock: { kind: "streak", days: 7 }, blurb: "A wanderer's coat for a week without a break." },
+  { id: "outfit_ronin", name: "Ronin", slot: "outfit", unlock: { kind: "sessions", count: 10, legacyStreak: 7 }, blurb: "A wanderer's coat for your first ten sessions." },
   { id: "outfit_celestial_warrior", name: "Celestial Warrior", slot: "outfit", unlock: { kind: "rank", rank: "C" }, blurb: "Gold and starlight armour.", themed: true },
   { id: "outfit_shadow_monarch", name: "Shadow Monarch", slot: "outfit", unlock: { kind: "boss", boss: "Shadow Sovereign" }, blurb: "Dropped by the Shadow Sovereign." },
   { id: "outfit_harvest_festival", name: "Harvest Festival set", slot: "outfit", unlock: { kind: "boss", boss: "Harvest Colossus" }, blurb: "Festive harvest colours, dropped by the Harvest Colossus.", themed: true },
@@ -48,11 +52,11 @@ export const CATALOG: Cosmetic[] = [
   { id: "weapon_shadow_dagger", name: "Shadow Dagger", slot: "weapon", unlock: { kind: "bosses", count: 1 }, blurb: "For your first boss win." },
   { id: "weapon_katana", name: "Katana", slot: "weapon", unlock: { kind: "prs", count: 10 }, blurb: "Ten personal records, one clean edge." },
   { id: "weapon_energy_gauntlet", name: "Energy Gauntlet", slot: "weapon", unlock: { kind: "boss", boss: "Monsoon Serpent" }, blurb: "Storm-charged, dropped by the Monsoon Serpent." },
-  { id: "weapon_spear_of_valor", name: "Spear of Valor", slot: "weapon", unlock: { kind: "streak", days: 30 }, blurb: "A month of showing up.", themed: true },
+  { id: "weapon_spear_of_valor", name: "Spear of Valor", slot: "weapon", unlock: { kind: "sessions", count: 50, legacyStreak: 30 }, blurb: "Fifty sessions of showing up.", themed: true },
   // relics
   { id: "relic_ancient_tome", name: "Ancient Tome", slot: "relic", unlock: { kind: "prs", count: 3 }, blurb: "Your first three records, written down." },
   { id: "relic_plume_charm", name: "Plume Charm", slot: "relic", unlock: { kind: "rank", rank: "D" }, blurb: "A feather charm on a gold cord.", themed: true },
-  { id: "relic_focus_charm", name: "Focus Charm", slot: "relic", unlock: { kind: "streak", days: 14 }, blurb: "A flute charm with a calm blue glow.", themed: true },
+  { id: "relic_focus_charm", name: "Focus Charm", slot: "relic", unlock: { kind: "sessions", count: 25, legacyStreak: 14 }, blurb: "A flute charm with a calm blue glow.", themed: true },
   { id: "relic_monarch_ring", name: "Monarch Ring", slot: "relic", unlock: { kind: "rank", rank: "A" }, blurb: "Worn by A-rank hunters." },
   // pets
   { id: "pet_tiger_cub", name: "Tiger Cub", slot: "pet", unlock: { kind: "start" }, blurb: "Follows you from day one." },
@@ -80,6 +84,8 @@ export function avatarArt(look: AvatarLook, rank: string): string | null {
 export interface Progress {
   rank: string;
   bestStreak: number;
+  /** v1.3: lifetime training sessions (never goes down). */
+  sessions?: number;
   prs: number;
   bossesBeaten: string[];
 }
@@ -89,7 +95,7 @@ export function isUnlocked(c: Cosmetic, p: Progress): boolean {
   switch (u.kind) {
     case "start": return true;
     case "rank": return RANKS.indexOf(p.rank as Rank) >= RANKS.indexOf(u.rank);
-    case "streak": return p.bestStreak >= u.days;
+    case "sessions": return (p.sessions ?? 0) >= u.count || (u.legacyStreak !== undefined && p.bestStreak >= u.legacyStreak);
     case "prs": return p.prs >= u.count;
     case "bosses": return p.bossesBeaten.length >= u.count;
     case "boss": return p.bossesBeaten.includes(u.boss);
@@ -100,7 +106,7 @@ export function unlockText(u: Unlock): string {
   switch (u.kind) {
     case "start": return "Starter item";
     case "rank": return `Reach rank ${u.rank}`;
-    case "streak": return `Reach a ${u.days}-day streak`;
+    case "sessions": return `Finish ${u.count} training sessions`;
     case "prs": return `Set ${u.count} personal record${u.count === 1 ? "" : "s"}`;
     case "bosses": return u.count === 1 ? "Beat a weekly boss" : `Beat ${u.count} weekly bosses`;
     case "boss": return `Beat the ${u.boss}`;

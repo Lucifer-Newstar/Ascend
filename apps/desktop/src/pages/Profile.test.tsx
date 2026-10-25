@@ -93,7 +93,7 @@ describe("ProfilePage", () => {
     );
     const wardrobe = await screen.findByTestId("wardrobe");
     expect((await screen.findAllByTestId("avatar"))[0]).toHaveAttribute("data-rank", "D");
-    // a starter outfit is open; rank C, a 30-day streak and a seasonal drop are not yet
+    // a starter outfit is open; rank C, 50 sessions and a seasonal drop are not yet
     expect(within(wardrobe).getByTestId("cosmetic-outfit_cyber_hunter")).toBeEnabled();
     expect(within(wardrobe).getByTestId("cosmetic-outfit_celestial_warrior")).toBeDisabled();
     expect(within(wardrobe).getByTestId("cosmetic-outfit_celestial_warrior")).toHaveTextContent("Reach rank C");

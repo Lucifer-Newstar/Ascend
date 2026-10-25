@@ -17,6 +17,7 @@ export function progressFrom(game: GameSummary | null | undefined, prs: number, 
   return {
     rank: game?.xp.rank ?? "E",
     bestStreak: game?.streak.best ?? 0,
+    sessions: game?.streak.lifetime_sessions ?? 0,
     prs,
     bossesBeaten: (titles ?? []).map((t) => t.boss),
   };
