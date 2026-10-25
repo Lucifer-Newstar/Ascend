@@ -1,6 +1,6 @@
 {
-  "_comment": "One grammar: the sidecar's actions parser reads these lines the same way (units metric unless stated); since v1.2 the trainer chat is the one box (Ctrl+K opens it), so there is no second parser in the app. kind null = not an action. log_count, log_food_grams and log_items are natural lines (\"10 pushups\", \"chicken breast 200g\") that the sidecar resolves by looking the name up, into log_set or log_meal. `actions` is the one allowlist: the only data-changing actions the trainer chat and the local AI may propose (the sidecar's actions registry runs exactly these, each after a confirm). `chat_ui` lists what a trainer reply may ask the UI to do (open a page, a tour, the planner, the picker, an action card, a share card); none of them changes data.",
-  "version": "actions-v2",
+  "_comment": "One grammar: the sidecar's actions parser reads these lines the same way (units metric unless stated); since v1.2 the trainer chat is the one box (Ctrl+K opens it), so there is no second parser in the app. kind null = not an action. log_count, log_food_grams and log_items are natural lines (\"10 pushups\", \"chicken breast 200g\") that the sidecar resolves by looking the name up, into log_set or log_meal. `actions` is the one allowlist: the only data-changing actions the trainer chat and the local AI may propose (the sidecar's actions registry runs exactly these, each after a confirm). `chat_ui` lists what a trainer reply may ask the UI to do (open a page, a tour, the planner, the picker, an action card, a share card); none of them changes data. v1.3 adds four edit actions (update_profile, set_equipment, update_setting, edit_plan); their chat lines (\"change my goal to bulk\", \"I have a bench\") are read by the sidecar's actions/edit_parser.py, not by this grammar.",
+  "version": "actions-v3",
   "actions": [
     {
       "kind": "log_set",
@@ -34,6 +34,30 @@
     },
     {
       "kind": "follow_program",
+      "risk": "normal",
+      "command": null,
+      "chat": true
+    },
+    {
+      "kind": "update_profile",
+      "risk": "normal",
+      "command": null,
+      "chat": true
+    },
+    {
+      "kind": "set_equipment",
+      "risk": "normal",
+      "command": null,
+      "chat": true
+    },
+    {
+      "kind": "update_setting",
+      "risk": "low",
+      "command": null,
+      "chat": true
+    },
+    {
+      "kind": "edit_plan",
       "risk": "normal",
       "command": null,
       "chat": true

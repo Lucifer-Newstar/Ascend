@@ -21,7 +21,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.events import EventBus
-from app.modules.actions import resolve
+from app.modules.actions import edits, resolve
 from app.modules.actions.errors import ActionError
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.models import Food
@@ -33,7 +33,7 @@ from app.modules.workouts import service as workouts
 from app.modules.workouts.models import Exercise
 from app.modules.workouts.schemas import SetIn
 
-ACTIONS_VERSION = "actions-v2"
+ACTIONS_VERSION = "actions-v3"
 Risk = Literal["low", "normal", "destructive"]
 
 
@@ -482,6 +482,42 @@ SPECS: dict[str, Spec] = {
             _describe_follow,
             _exec_follow,
             _undo_follow,
+        ),
+        Spec(
+            "update_profile",
+            "Change your profile",
+            "normal",
+            edits.UpdateProfileP,
+            edits.describe_profile,
+            edits.exec_profile,
+            edits.undo_profile,
+        ),
+        Spec(
+            "set_equipment",
+            "Change your equipment",
+            "normal",
+            edits.SetEquipmentP,
+            edits.describe_equipment,
+            edits.exec_equipment,
+            edits.undo_equipment,
+        ),
+        Spec(
+            "update_setting",
+            "Change a setting",
+            "low",
+            edits.UpdateSettingP,
+            edits.describe_setting,
+            edits.exec_setting,
+            edits.undo_setting,
+        ),
+        Spec(
+            "edit_plan",
+            "Edit your plan",
+            "normal",
+            edits.EditPlanP,
+            edits.describe_plan,
+            edits.exec_plan,
+            edits.undo_plan,
         ),
         Spec(
             "erase_data",

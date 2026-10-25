@@ -20,8 +20,9 @@ from app.modules.actions.registry import SPECS, ActionError
 router = APIRouter(prefix="/actions", tags=["actions"])
 
 Kind = Literal[
-    "log_set", "log_hold", "log_weight", "log_meal", "add_food", "follow_program", "erase_data"
-]
+    "log_set", "log_hold", "log_weight", "log_meal", "add_food", "follow_program",
+    "update_profile", "set_equipment", "update_setting", "edit_plan", "erase_data",
+]  # fmt: skip
 
 
 class ActionOut(BaseModel):
