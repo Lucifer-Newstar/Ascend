@@ -167,7 +167,10 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const onChatAction = (a: ChatAction) => {
-    if (a.kind === "navigate" && a.target && a.target in TITLES) {
+    if (a.kind === "navigate" && a.target && pageFromHash(a.target) !== "dashboard" && a.target.includes("/")) {
+      // v1.3: "diet/add-food/<name>" opens the page and lets it read the rest of the hash
+      window.location.hash = a.target;
+    } else if (a.kind === "navigate" && a.target && a.target in TITLES) {
       navigate(a.target as Page);
     } else if (a.kind === "tour") {
       startTour(a.target);
