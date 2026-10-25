@@ -29,4 +29,6 @@ def test_not_food_needs_no_food_row_but_must_not_name_one() -> None:
     ok = {"classes": {"not_food": {"food_name": None, "en": "Not food", "ta": "x"}}}
     assert check(ok, {}) == []
     bad = {"classes": {"not_food": {"food_name": "Idli", "en": "Not food", "ta": "x"}}}
-    assert check(bad, {"Idli": "1 piece"}) == ["not_food: a non-food class must have food_name null"]
+    assert check(bad, {"Idli": "1 piece"}) == [
+        "not_food: a non-food class must have food_name null"
+    ]
