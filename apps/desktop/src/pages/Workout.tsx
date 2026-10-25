@@ -111,10 +111,10 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const all = exercises.data ?? [];
-    const list = explore ? all : all.filter((e) => fitsKit(e.equipment, loadout.allowed));
+    const list = explore ? all : all.filter((e) => fitsKit(e.equipment, loadout.allowed, e.name));
     return q ? list.filter((e) => e.name.toLowerCase().includes(q) || e.muscles.some((m) => (MUSCLE_LABEL[m.muscle] ?? m.muscle).toLowerCase().includes(q))) : list;
   }, [exercises.data, query, explore, loadout.allowed]);
-  const hiddenByKit = loadout.allowed ? (exercises.data ?? []).filter((e) => !fitsKit(e.equipment, loadout.allowed)).length : 0;
+  const hiddenByKit = loadout.allowed ? (exercises.data ?? []).filter((e) => !fitsKit(e.equipment, loadout.allowed, e.name)).length : 0;
 
   // Last session's sets of the selected exercise: shown in grey ("last time") and used as
   // the target for the next set, so Enter alone repeats last time's set.
@@ -360,11 +360,11 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
             {exercises.loading && !exercises.data && <li><Loading label="Loading exercises…" /></li>}
             {filtered.map((e) => (
               <li key={e.id}>
-                <button type="button" onClick={() => setSelected(e)} data-fits={fitsKit(e.equipment, loadout.allowed) || undefined}
-                  className={`w-full rounded-md px-3 py-2 text-left transition-colors duration-150 ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"} ${fitsKit(e.equipment, loadout.allowed) ? "" : "opacity-55"}`}>
+                <button type="button" onClick={() => setSelected(e)} data-fits={fitsKit(e.equipment, loadout.allowed, e.name) || undefined}
+                  className={`w-full rounded-md px-3 py-2 text-left transition-colors duration-150 ${selected?.id === e.id ? "bg-accent/10" : "hover:bg-panel-2"} ${fitsKit(e.equipment, loadout.allowed, e.name) ? "" : "opacity-55"}`}>
                   <div className={`text-sm ${selected?.id === e.id ? "text-accent" : "text-ink"}`}>
                     {e.name}
-                    {!fitsKit(e.equipment, loadout.allowed) && <span className="ml-2 text-[11px] text-muted">{needsLabel(e.equipment)}</span>}
+                    {!fitsKit(e.equipment, loadout.allowed, e.name) && <span className="ml-2 text-[11px] text-muted">{needsLabel(e.equipment, e.name, loadout.allowed)}</span>}
                   </div>
                   <div className={`mt-0.5 truncate text-xs ${selected?.id === e.id ? "text-muted" : "text-faint"}`}>
                     {e.equipment}

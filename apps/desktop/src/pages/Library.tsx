@@ -104,8 +104,8 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
   const loadout = useLoadout();
   const [explore, setExplore] = useState(false);
   const matching = useMemo(() => filterExercises(list.data ?? [], filters), [list.data, filters]);
-  const results = useMemo(() => (explore ? matching : matching.filter((e) => fitsKit(e.equipment, loadout.allowed))), [matching, explore, loadout.allowed]);
-  const hiddenByKit = matching.length - matching.filter((e) => fitsKit(e.equipment, loadout.allowed)).length;
+  const results = useMemo(() => (explore ? matching : matching.filter((e) => fitsKit(e.equipment, loadout.allowed, e.name))), [matching, explore, loadout.allowed]);
+  const hiddenByKit = matching.length - matching.filter((e) => fitsKit(e.equipment, loadout.allowed, e.name)).length;
 
   const set = <K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -203,7 +203,7 @@ export function LibraryPage({ onNavigate, refreshKey }: { onNavigate: (p: Page) 
           <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4" aria-label="Exercises">
             {results.slice(0, shown).map((e) => (
               <li key={e.id}>
-                <ExerciseCard exercise={e} onOpen={() => setOpenId(e.id)} locked={!fitsKit(e.equipment, loadout.allowed)} />
+                <ExerciseCard exercise={e} onOpen={() => setOpenId(e.id)} locked={!fitsKit(e.equipment, loadout.allowed, e.name)} allowed={loadout.allowed} />
               </li>
             ))}
           </ul>
@@ -225,7 +225,7 @@ export function Thumb({ exercise, className = "", loop = false }: { exercise: Pi
   return <ExerciseArt exercise={exercise} className={className} loop={loop} />;
 }
 
-function ExerciseCard({ exercise: e, onOpen, locked = false }: { exercise: Exercise; onOpen: () => void; locked?: boolean }) {
+function ExerciseCard({ exercise: e, onOpen, locked = false, allowed = null }: { exercise: Exercise; onOpen: () => void; locked?: boolean; allowed?: Set<string> | null }) {
   const primary = e.muscles.filter((m) => m.weight >= 1).map((m) => muscleLabel(m.muscle));
   return (
     <button type="button" onClick={onOpen} className={`card card-hover card-lift group block w-full overflow-hidden text-left ${locked ? "opacity-55" : ""}`}>
@@ -234,7 +234,7 @@ function ExerciseCard({ exercise: e, onOpen, locked = false }: { exercise: Exerc
         <div className="line-clamp-2 text-sm font-medium text-ink group-hover:text-accent">{e.name}</div>
         <div className="mt-1 truncate text-xs text-muted">{primary.length ? primary.join(", ") : SECTION_TYPE_LABEL[e.section]}</div>
         <div className="mt-2 flex flex-wrap gap-1">
-          {locked && <span className="chip">{needsLabel(e.equipment)}</span>}
+          {locked && <span className="chip">{needsLabel(e.equipment, e.name, allowed)}</span>}
           <span className="chip">{SECTION_TYPE_LABEL[e.section]}</span>
           {e.difficulty && <span className="chip capitalize">{e.difficulty}</span>}
           {e.measure === "hold" && <span className="chip">Hold</span>}

@@ -48,8 +48,9 @@ export const goalIdFor = (focus: Focus | null | undefined): string => GOALS.find
 export const EQUIPMENT: { id: EquipmentChoice; label: string; hint: string }[] = [
   { id: "none", label: "No equipment", hint: "Floor and body weight" },
   { id: "pullup_bar", label: "Pull-up bar", hint: "Pull-ups, hangs, levers" },
-  { id: "rings", label: "Rings", hint: "Ring dips, rows, support holds" },
+  { id: "rings", label: "Rings", hint: "Ring dips, rows, pull-ups, holds" },
   { id: "dumbbells", label: "Dumbbells", hint: "Presses, rows, curls, lunges" },
+  { id: "bench", label: "Bench", hint: "Bench presses, incline work, hip thrusts" },
   { id: "gym", label: "Full gym", hint: "Barbells, cables and machines" },
 ];
 

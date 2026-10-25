@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { allowedEquipment, fitsKit, hasGymKit, needsLabel, hunterClass } from "./loadout";
+import { allowedEquipment, fitsKit, hasGymKit, needsBench, needsLabel, hunterClass } from "./loadout";
 
 describe("loadout", () => {
   it("filters nothing without a checklist or with a gym", () => {
@@ -18,6 +18,18 @@ describe("loadout", () => {
     expect(fitsKit("bar", bar)).toBe(true);
     expect(fitsKit("rings", bar)).toBe(true);
     expect(fitsKit(null, bar)).toBe(true);
+  });
+
+  it("counts rings as a bar and keeps bench presses for a bench (v1.3)", () => {
+    const rings = allowedEquipment(["rings"]);
+    expect(fitsKit("bar", rings, "Pull-up")).toBe(true);
+    const db = allowedEquipment(["dumbbells"]);
+    expect(fitsKit("dumbbell", db, "Dumbbell Bench Press")).toBe(false);
+    expect(fitsKit("dumbbell", db, "Dumbbell Floor Press")).toBe(true);
+    expect(needsLabel("dumbbell", "Dumbbell Bench Press", db)).toBe("needs: a bench");
+    expect(fitsKit("dumbbell", allowedEquipment(["dumbbells", "bench"]), "Incline Dumbbell Press")).toBe(true);
+    expect(fitsKit("barbell", allowedEquipment(["gym"]), "Barbell Bench Press")).toBe(true);
+    expect(needsBench("Bench Dips")).toBe(false);
   });
 
   it("says what a locked move needs, and when Train starts on gym", () => {

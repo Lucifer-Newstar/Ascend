@@ -13,10 +13,18 @@ const ALWAYS = ["bodyweight", "none", "mat"];
 const BY_CHOICE: Record<EquipmentChoice, string[]> = {
   none: [],
   pullup_bar: ["bar"],
-  rings: ["rings"],
+  // v1.3: rings hang where a bar does, so bar moves (pull-ups, hangs) fit too
+  rings: ["rings", "bar"],
   dumbbells: ["dumbbell"],
+  bench: ["bench"],
   gym: [],
 };
+/** Moves that need a bench whatever their library equipment says (same list as the sidecar). */
+const NEEDS_BENCH = /\b(bench press|incline (?:dumbbell|barbell|bench)|decline|chest fly(?:e)?s?|dumbbell flyes?|hip thrust|pullover|preacher)\b/i;
+
+export function needsBench(name: string | null | undefined): boolean {
+  return !!name && NEEDS_BENCH.test(name);
+}
 
 /** Library equipment the player can use, or null for "no filter". */
 export function allowedEquipment(choices: readonly EquipmentChoice[] | null | undefined): Set<string> | null {
@@ -26,8 +34,10 @@ export function allowedEquipment(choices: readonly EquipmentChoice[] | null | un
   return out;
 }
 
-export function fitsKit(equipment: string | null | undefined, allowed: Set<string> | null): boolean {
-  return allowed === null || allowed.has(equipment || "none");
+export function fitsKit(equipment: string | null | undefined, allowed: Set<string> | null, name?: string): boolean {
+  if (allowed === null) return true;
+  if (needsBench(name) && !allowed.has("bench")) return false;
+  return allowed.has(equipment || "none");
 }
 
 const NEEDS: Record<string, string> = {
@@ -46,8 +56,9 @@ const NEEDS: Record<string, string> = {
   other: "extra kit",
 };
 
-/** "needs: a barbell" for a move outside the loadout. */
-export function needsLabel(equipment: string | null | undefined): string {
+/** "needs: a barbell" for a move outside the loadout ("needs: a bench" for a bench press). */
+export function needsLabel(equipment: string | null | undefined, name?: string, allowed?: Set<string> | null): string {
+  if (needsBench(name) && allowed && !allowed.has("bench") && allowed.has(equipment || "none")) return "needs: a bench";
   return `needs: ${NEEDS[equipment ?? ""] ?? (equipment ?? "kit").replace(/_/g, " ")}`;
 }
 
