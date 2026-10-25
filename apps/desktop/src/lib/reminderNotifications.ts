@@ -3,6 +3,9 @@
  * again every 30 minutes; each kind of reminder notifies at most once a day, and only when
  * Reminders are on (Settings). Clicking a notification brings the app forward on the page
  * where the action is.
+ *
+ * v1.4: with the tray on, this keeps running while the window is closed, and the workout
+ * reminder waits for the usual training time.
  */
 import type { GameSummary } from "@ascend/shared";
 import { useEffect, useState } from "react";
@@ -30,6 +33,8 @@ export function useReminderNotifications({ game, enabled, evening = false, train
   const [tick, setTick] = useState(0);
   const plan = useApi(api.currentPlan, [refreshKey, tick], { cacheKey: "plan" });
   const checkin = useApi(api.checkinToday, [refreshKey, tick]);
+  // v1.4: the usual training time decides when today's workout reminder arrives.
+  const schedule = useApi(api.schedule, [refreshKey]);
   useEffect(() => {
     const id = window.setInterval(() => setTick((n) => n + 1), EVERY_MS);
     return () => window.clearInterval(id);
@@ -37,7 +42,7 @@ export function useReminderNotifications({ game, enabled, evening = false, train
   useEffect(() => {
     if (!enabled || !game || plan.loading || checkin.loading || typeof window === "undefined" || !("Notification" in window)) return;
     const now = new Date();
-    const items = pendingReminders({ game, nextSession: plan.data?.next.name ?? null, checkedIn: Boolean(checkin.data), now, evening });
+    const items = pendingReminders({ game, nextSession: plan.data?.next.name ?? null, checkedIn: Boolean(checkin.data), now, evening, plannedTime: schedule.data?.time ?? null });
     if (items.length === 0) return;
     const send = () => {
       for (const r of toNotify(items, localDay(now), window.localStorage)) {
@@ -50,5 +55,5 @@ export function useReminderNotifications({ game, enabled, evening = false, train
     };
     if (Notification.permission === "granted") send();
     else if (Notification.permission === "default") void Notification.requestPermission().then((p) => { if (p === "granted") send(); });
-  }, [enabled, evening, game, plan.loading, plan.data, checkin.loading, checkin.data, trainerName, onNavigate, tick]);
+  }, [enabled, evening, game, plan.loading, plan.data, checkin.loading, checkin.data, schedule.data, trainerName, onNavigate, tick]);
 }

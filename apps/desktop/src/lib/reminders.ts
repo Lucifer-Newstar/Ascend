@@ -9,6 +9,10 @@
  * - today's workout (a program is followed and nothing is logged yet today)
  * - evening check, opt-in (Settings > Trainer), from 6 pm on a training day
  * - check-in (before noon, no morning check-in yet)
+ *
+ * v1.4 (review 2.2, M6): with a usual training time picked (Settings > Trainer > Your
+ * training week), the workout reminder waits until an hour before it and names the time,
+ * and the evening check waits until an hour after it.
  */
 import type { GameSummary } from "@ascend/shared";
 
@@ -37,24 +41,43 @@ export interface ReminderInput {
   now: Date;
   /** Settings > Trainer > Evening check (off by default). */
   evening?: boolean;
+  /** v1.4: the usual training time, "HH:MM" local, or null. */
+  plannedTime?: string | null;
 }
+
+/** Minutes since midnight for "HH:MM", or null when it is not a time. */
+export function minutesOf(hhmm: string | null | undefined): number | null {
+  const m = /^(\d{2}):(\d{2})$/.exec(hhmm ?? "");
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  return h < 24 && min < 60 ? h * 60 + min : null;
+}
+
+/** How long before the usual time the workout reminder may appear. */
+export const LEAD_MINUTES = 60;
 
 const dayName = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" });
 
-export function pendingReminders({ game, nextSession, checkedIn, now, evening = false }: ReminderInput): Reminder[] {
+export function pendingReminders({ game, nextSession, checkedIn, now, evening = false, plannedTime = null }: ReminderInput): Reminder[] {
   if (!game) return [];
   const s = game.streak;
   // A planned rest day is part of the plan: nothing to remind about.
   if (s.rest_today) return [];
   const out: Reminder[] = [];
   const hour = now.getHours();
+  const nowMin = hour * 60 + now.getMinutes();
+  const planned = minutesOf(plannedTime);
   if (s.reason_due) {
     out.push({ key: "reason", text: `How did ${dayName(s.reason_due)} go? If something came up, tell me and I'll count it as rest.`, page: "dashboard", action: "Add a note", urgent: false });
   }
-  if (nextSession && !s.active_today) {
-    out.push({ key: "workout", text: `Today's workout is ready when you are: ${nextSession}.`, page: "workout", action: "Start workout", urgent: false });
+  if (nextSession && !s.active_today && (planned === null || nowMin >= planned - LEAD_MINUTES)) {
+    const text = planned === null
+      ? `Today's workout is ready when you are: ${nextSession}.`
+      : `Your ${plannedTime} session is ready when you are: ${nextSession}.`;
+    out.push({ key: "workout", text, page: "workout", action: "Start workout", urgent: false });
   }
-  if (evening && !s.active_today && hour >= 18) {
+  if (evening && !s.active_today && hour >= 18 && (planned === null || nowMin >= planned + 60)) {
     out.push({ key: "evening", text: "Still time for a short session if you feel like it. Ten minutes counts.", page: "workout", action: "Start something short", urgent: false });
   }
   if (checkedIn === false && hour < 12) {

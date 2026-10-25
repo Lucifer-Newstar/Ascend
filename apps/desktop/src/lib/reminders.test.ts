@@ -1,7 +1,7 @@
 import type { GameSummary } from "@ascend/shared";
 import { describe, expect, it } from "vitest";
 
-import { MAX_PER_DAY, pendingReminders, quietLine, reminderMood, toNotify } from "./reminders";
+import { MAX_PER_DAY, minutesOf, pendingReminders, quietLine, reminderMood, toNotify } from "./reminders";
 
 const game = (over: Partial<GameSummary["streak"]> = {}, quest: Partial<GameSummary["quest"][number]>[] = []) =>
   ({
@@ -40,6 +40,22 @@ describe("trainer reminders", () => {
     const on = pendingReminders({ game: game(), nextSession: null, checkedIn: true, now: at(19), evening: true });
     expect(on.map((r) => r.key)).toEqual(["evening"]);
     expect(pendingReminders({ game: game(), nextSession: null, checkedIn: true, now: at(15), evening: true })).toEqual([]);
+  });
+
+  it("waits for the usual training time when one is picked (v1.4)", () => {
+    const base = { game: game(), nextSession: "Push A", checkedIn: true };
+    expect(pendingReminders({ ...base, now: at(16), plannedTime: "18:30" })).toEqual([]);
+    const near = pendingReminders({ ...base, now: new Date(2026, 9, 23, 17, 30), plannedTime: "18:30" });
+    expect(near.map((r) => r.key)).toEqual(["workout"]);
+    expect(near[0].text).toBe("Your 18:30 session is ready when you are: Push A.");
+    // The evening check waits until an hour after the usual time.
+    expect(pendingReminders({ ...base, now: at(19), plannedTime: "18:30", evening: true }).map((r) => r.key)).toEqual(["workout"]);
+    expect(pendingReminders({ ...base, now: at(20), plannedTime: "18:30", evening: true }).map((r) => r.key)).toEqual(["workout", "evening"]);
+    // No time picked: as before.
+    expect(pendingReminders({ ...base, now: at(9) }).map((r) => r.key)).toEqual(["workout"]);
+    expect(minutesOf("07:05")).toBe(425);
+    expect(minutesOf("25:00")).toBeNull();
+    expect(minutesOf(null)).toBeNull();
   });
 
   it("notifies each kind at most once a day", () => {

@@ -33,6 +33,7 @@ export function TrainerHero({ game, name, refreshKey = 0, onNavigate, onOpenChat
   const t = useTrainer();
   const plan = useApi(api.currentPlan, [refreshKey], { cacheKey: "plan" });
   const checkin = useApi(api.checkinToday, [refreshKey]);
+  const schedule = useApi(api.schedule, [refreshKey]);
   const prefs = useOptionalPrefs();
   const at = now();
   const items = pendingReminders({
@@ -41,6 +42,7 @@ export function TrainerHero({ game, name, refreshKey = 0, onNavigate, onOpenChat
     checkedIn: checkin.loading ? undefined : Boolean(checkin.data),
     now: at,
     evening: Boolean(prefs?.settings.evening_reminder),
+    plannedTime: schedule.data?.time ?? null,
   });
   if (!trainerOn && items.length === 0) return null;
 

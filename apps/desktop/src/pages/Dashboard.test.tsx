@@ -16,7 +16,7 @@ vi.mock("../api/client", () => ({
   api: {
     dashboard: vi.fn(), stats: vi.fn(), coachTip: vi.fn(), weeklyReview: vi.fn(), completeQuest: vi.fn(),
     checkinToday: vi.fn(), checkin: vi.fn(), deload: vi.fn(), startDeload: vi.fn(), muscleActivity: vi.fn(), updateSettings: vi.fn(),
-    currentPlan: vi.fn(),
+    currentPlan: vi.fn(), schedule: vi.fn(() => Promise.resolve({ days: [0, 2, 4], time: null, source: "program", label: "", algo_version: "schedule-v1" })),
     boss: vi.fn(() => Promise.reject(new Error("not needed"))), titles: vi.fn(() => Promise.resolve([])), profile: vi.fn(() => Promise.resolve({ name: "Navin" })),
   },
 }));
