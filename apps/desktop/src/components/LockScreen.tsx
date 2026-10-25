@@ -13,6 +13,7 @@ import type { GameSummary, Plan } from "@ascend/shared";
 import { useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
+import { equippedGear } from "../lib/cosmetics";
 import { useReducedMotion } from "../lib/motion";
 import { localDay, rememberShort } from "../lib/shortSession";
 import { usePrefs } from "../lib/prefs";
@@ -116,7 +117,8 @@ export function LockScreen({ game, onEnter, onStart, now = () => new Date() }: {
       <button ref={tile} type="button" onClick={enter} data-testid="lock-tile"
         aria-label={`Enter ASCEND as ${name}, level ${level}, rank ${rank}`}
         className="lock-tile relative z-[1] flex flex-col items-center gap-2 rounded-2xl border border-line-2 bg-panel px-10 pb-6 pt-5 shadow-2xl outline-none hover:border-accent focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent">
-        <Avatar look={settings.avatar ?? "male"} rank={rank} outfit={settings.outfit} weapon={settings.weapon} relic={settings.relic} pet={settings.pet} height={200} />
+        <Avatar look={settings.avatar ?? "male"} rank={rank} height={200}
+          {...equippedGear({ outfit: settings.outfit, weapon: settings.weapon, relic: settings.relic, pet: settings.pet }, { themed: settings.themed_cosmetics ?? true })} />
         <span className="mt-1 text-h2 text-ink" data-testid="lock-name">{name}</span>
         <span className="flex items-center gap-2 text-sm text-muted" data-testid="lock-rank">
           <RankBadge rank={rank} size={26} /> Level {level} · Rank {rank}

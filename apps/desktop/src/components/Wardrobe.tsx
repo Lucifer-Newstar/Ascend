@@ -6,7 +6,7 @@
 import type { EarnedTitle, GameSummary } from "@ascend/shared";
 
 import {
-  SLOTS, byId, cosmeticArt, isUnlocked, unlockText, visibleCatalog,
+  SLOTS, byId, cosmeticArt, equippedGear, isUnlocked, unlockText, visibleCatalog,
   type AvatarLook, type Cosmetic, type CosmeticSlot, type Progress,
 } from "../lib/cosmetics";
 import { usePrefs } from "../lib/prefs";
@@ -55,7 +55,7 @@ export function Wardrobe({ progress }: { progress: Progress }) {
   return (
     <div className="flex flex-col gap-5 md:flex-row" data-testid="wardrobe">
       <div className="flex flex-col items-center gap-3 md:w-48">
-        <Avatar look={look} rank={progress.rank} outfit={worn.outfit} weapon={worn.weapon} relic={worn.relic} pet={worn.pet} height={240} />
+        <Avatar look={look} rank={progress.rank} height={240} {...equippedGear(worn, { themed, progress })} />
         <div className="flex gap-1" role="radiogroup" aria-label="Avatar look">
           {(["male", "female"] as const).map((l) => (
             <button key={l} type="button" role="radio" aria-checked={look === l} onClick={() => void save({ avatar: l })}

@@ -122,6 +122,24 @@ export function dropName(id: string | null | undefined): string | null {
   return byId(id)?.name ?? null;
 }
 
+export type Gear = Partial<Record<CosmeticSlot, string>>;
+
+/**
+ * What the avatar actually wears (v1.4 rule: "cosmetics shown only when equipped"): the
+ * item picked for each slot, if it is a real item for that slot, allowed by the themed
+ * switch and (when progress is known) unlocked. Owned-but-unequipped items appear only in
+ * the Wardrobe.
+ */
+export function equippedGear(worn: Gear, { themed = true, progress = null }: { themed?: boolean; progress?: Progress | null } = {}): Gear {
+  const out: Gear = {};
+  for (const { key } of SLOTS) {
+    const c = byId(worn[key]);
+    if (!c || c.slot !== key || (c.themed && !themed) || (progress && !isUnlocked(c, progress))) continue;
+    out[key] = c.id;
+  }
+  return out;
+}
+
 /** The catalog as shown: themed items only when they are switched on. */
 export function visibleCatalog(themed: boolean): Cosmetic[] {
   return CATALOG.filter((c) => themed || !c.themed);

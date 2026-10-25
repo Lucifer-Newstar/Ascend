@@ -18,6 +18,7 @@ import { ShareDialog } from "../components/ShareCard";
 import { useTrainer } from "../components/Trainer";
 import { useToast } from "../components/Toast";
 import { Wardrobe, progressFrom } from "../components/Wardrobe";
+import { equippedGear } from "../lib/cosmetics";
 import { hunterClass } from "../lib/loadout";
 import { localDay } from "../lib/localDate";
 import { useOptionalPrefs } from "../lib/prefs";
@@ -46,17 +47,22 @@ function HunterCard({ refreshKey }: { refreshKey: number }) {
   const game = useApi(api.game, [refreshKey]);
   const stats = useApi(api.stats, [refreshKey]);
   const titles = useApi(api.titles, [refreshKey]);
+  const prs = useApi(api.prs, [refreshKey]);
   const trainer = useTrainer();
   const prefs = useOptionalPrefs();
   const xp = game.data?.xp;
   const s = prefs?.settings;
-  // v1.4: your own avatar always. It fell back to the trainer's portrait until the game
-  // summary loaded, so the look and outfit you picked seemed not to apply.
+  // v1.4: your own avatar always (it fell back to the trainer's portrait until the game
+  // summary loaded, so the look you picked seemed not to apply), wearing only what you equipped.
+  const gear = equippedGear(
+    { outfit: s?.outfit, weapon: s?.weapon, relic: s?.relic, pet: s?.pet },
+    { themed: s?.themed_cosmetics ?? true, progress: game.data && prs.data ? progressFrom(game.data, prs.data.length, titles.data) : null },
+  );
   return (
     <Panel id="hunter" index={0} className="col-span-12 xl:col-span-5" title="Hunter card"
       loading={profile.loading && !profile.data} error={!profile.data ? profile.error ?? null : null} onRetry={profile.reload}>
       <div className="flex items-start gap-4">
-        <Avatar look={s?.avatar ?? "male"} rank={xp?.rank ?? "E"} outfit={s?.outfit} weapon={s?.weapon} relic={s?.relic} pet={s?.pet} height={150} />
+        <Avatar look={s?.avatar ?? "male"} rank={xp?.rank ?? "E"} {...gear} height={150} />
         <div className="min-w-0">
           <p className="text-display-l text-ink" data-testid="hunter-name">{profile.data?.name ?? "Hunter"}</p>
           {xp && <p className="text-sm text-muted">Level {xp.level} · Rank {xp.rank} · {xp.rank_title}</p>}

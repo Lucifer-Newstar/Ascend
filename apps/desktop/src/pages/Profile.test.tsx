@@ -123,6 +123,22 @@ describe("ProfilePage", () => {
     expect(within(avatar).getByTestId("avatar-figure").getAttribute("src")).toMatch(/outfit_cyber_hunter_female/);
   });
 
+  it("wears only what is equipped and unlocked (v1.4)", async () => {
+    // Shadow Monarch is equipped but not earned (no Shadow Sovereign win); the dagger is.
+    const picked = { ...DEFAULT_SETTINGS, outfit: "outfit_shadow_monarch", weapon: "weapon_shadow_dagger" };
+    render(
+      <PrefsProvider initial={picked} save={async (p) => ({ ...picked, ...p })}>
+        <ToastProvider><ProfilePage refreshKey={0} /></ToastProvider>
+      </PrefsProvider>,
+    );
+    await screen.findByText(/Level 7 · Rank D/);
+    await waitFor(() => {
+      const avatar = screen.getAllByTestId("avatar")[0];
+      expect(within(avatar).getByTestId("avatar-figure").getAttribute("src")).not.toMatch(/shadow_monarch/);
+      expect([...avatar.querySelectorAll("img[title]")].map((i) => i.getAttribute("title"))).toEqual(["Shadow Dagger"]);
+    });
+  });
+
   it("lists the boss ladder by tier with the seasonal bosses and their drops", async () => {
     renderPage();
     const ladder = await screen.findByTestId("boss-ladder");
