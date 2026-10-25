@@ -1,5 +1,6 @@
 /**
- * Planner (v1.1): build a week of training from rules, check a goal
+ * Planner (v1.1): this week planned vs done with a plan-next-week step (v1.4), build a
+ * week of training from rules, check a goal
  * before you commit to it, and keep what you build. Every plan comes from the sidecar's
  * deterministic planner (workout-gen); the meal planner lives on Fuel (v1.2). With the AI on, the local model may
  * reword the notes, never the numbers. Flags come from the goal checks (ICMR-NIN 2024,
@@ -10,6 +11,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
 import { PageGrid, Panel } from "../components/Page";
+import { WeekPlanPanel } from "../components/WeekPlan";
 import { useToast } from "../components/Toast";
 import { useLoadout } from "../lib/loadout";
 import { usePrefs } from "../lib/prefs";
@@ -55,6 +57,7 @@ export function Flags({ flags }: { flags: PlanFlag[] }) {
 export function PlannerPage({ onChanged }: { onChanged: () => void }) {
   return (
     <PageGrid label="Planner">
+      <div className="col-span-12"><WeekPlanPanel /></div>
       <WorkoutPlanner onChanged={onChanged} />
       <GoalChecker />
     </PageGrid>

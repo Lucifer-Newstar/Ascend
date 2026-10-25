@@ -13,6 +13,7 @@ vi.mock("../api/client", () => ({
   api: {
     customPrograms: vi.fn(), planWorkout: vi.fn(), saveProgram: vi.fn(), followProgram: vi.fn(), deleteProgram: vi.fn(),
     goalCheck: vi.fn(), planDiet: vi.fn(), savedDiets: vi.fn(), saveDiet: vi.fn(), deleteDiet: vi.fn(),
+    week: vi.fn().mockRejectedValue(new Error("no week")), planWeek: vi.fn(),
   },
 }));
 
