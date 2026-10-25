@@ -5,15 +5,16 @@
  * navigation and new windows blocked, and the renderer can only reach the
  * sidecar through the typed IPC channels in @ascend/shared (IPC).
  */
-import { app, BrowserWindow, clipboard, ClipboardItem, dialog, ipcMain, nativeImage, powerSaveBlocker, shell } from "electron";
+import { app, BrowserWindow, clipboard, ClipboardItem, dialog, ipcMain, Menu, nativeImage, powerSaveBlocker, shell, Tray } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 
-import type { SidecarRequest } from "@ascend/shared";
+import type { DesktopHabits, SidecarRequest, TrayAction } from "@ascend/shared";
 
 import { IPC } from "./channels";
-import { validateClipboard, validateExportSave, validateImageSave, validateShareUrl, validateVideoSave } from "./ipc-validate";
+import { validateClipboard, validateDesktopHabits, validateExportSave, validateImageSave, validateShareUrl, validateVideoSave } from "./ipc-validate";
 import { SidecarManager } from "./sidecar";
+import { hideOnClose, loginItemSupported, TRAY_TOOLTIP, trayMenu } from "./tray";
 
 app.setName("ASCEND");
 
@@ -61,6 +62,14 @@ function createWindow(): BrowserWindow {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("https://")) void shell.openExternal(url);
     return { action: "deny" };
+  });
+
+  // v1.4: with the tray on, closing hides the window so reminders keep arriving.
+  win.on("close", (e) => {
+    if (hideOnClose({ trayOn: tray !== null, quitting })) {
+      e.preventDefault();
+      win.hide();
+    }
   });
 
   const devUrl = process.env.VITE_DEV_SERVER_URL;
@@ -144,6 +153,8 @@ function registerIpc(): void {
     return false;
   });
 
+  ipcMain.handle(IPC.desktopHabits, (_e, raw: unknown) => applyDesktopHabits(validateDesktopHabits(raw)));
+
   ipcMain.handle(IPC.appInfo, () => ({
     version: app.getVersion(),
     platform: process.platform,
@@ -152,6 +163,52 @@ function registerIpc(): void {
 }
 
 let awakeBlocker: number | null = null;
+
+// --- v1.4: opt-in tray icon and start with Windows (review 2.2, decision 2) ---------------
+let tray: Tray | null = null;
+let quitting = false;
+
+function mainWindow(): BrowserWindow | undefined {
+  return BrowserWindow.getAllWindows()[0];
+}
+
+function showWindow(): void {
+  const win = mainWindow();
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
+function sendTrayAction(action: TrayAction): void {
+  mainWindow()?.webContents.send(IPC.trayAction, action);
+}
+
+function trayIcon(): Electron.NativeImage {
+  // Packaged: resources/tray.png (electron-builder extraResources); dev: build/icon.png.
+  const file = app.isPackaged ? path.join(process.resourcesPath, "tray.png") : path.join(__dirname, "..", "build", "icon.png");
+  return nativeImage.createFromPath(file).resize({ width: 16, height: 16 });
+}
+
+function applyDesktopHabits(h: DesktopHabits): DesktopHabits {
+  if (h.tray && tray === null) {
+    tray = new Tray(trayIcon());
+    tray.setToolTip(TRAY_TOOLTIP);
+    tray.setContextMenu(Menu.buildFromTemplate(trayMenu({ show: showWindow, action: sendTrayAction, quit: () => { quitting = true; app.quit(); } })));
+    tray.on("click", showWindow);
+  } else if (!h.tray && tray !== null) {
+    tray.destroy();
+    tray = null;
+  }
+  let openAtLogin = false;
+  if (loginItemSupported(process.platform) && !isDev) {
+    // Only the installed app registers itself; a dev run never touches the login items.
+    app.setLoginItemSettings({ openAtLogin: h.openAtLogin });
+    openAtLogin = app.getLoginItemSettings().openAtLogin;
+  }
+  log(`desktop habits: tray ${tray !== null ? "on" : "off"}, start with Windows ${openAtLogin ? "on" : "off"}`);
+  return { tray: tray !== null, openAtLogin };
+}
 
 function releaseAwake(): void {
   if (awakeBlocker !== null && powerSaveBlocker.isStarted(awakeBlocker)) powerSaveBlocker.stop(awakeBlocker);
@@ -162,7 +219,7 @@ function releaseAwake(): void {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", () => BrowserWindow.getAllWindows()[0]?.focus());
+  app.on("second-instance", showWindow);
   // Windows shows desktop notifications (the trainer's reminders) only for an app with an
   // AppUserModelID; it matches the installer's appId.
   if (process.platform === "win32") app.setAppUserModelId("app.ascend.desktop");
@@ -184,6 +241,7 @@ if (!app.requestSingleInstanceLock()) {
     app.quit();
   });
   app.on("before-quit", (e) => {
+    quitting = true;
     if (sidecar.getStatus().state === "stopped") return;
     e.preventDefault();
     void sidecar.stop().finally(() => app.exit(0));

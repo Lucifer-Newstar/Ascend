@@ -21,6 +21,8 @@ const IPC: typeof SharedIPC = {
   shareOpen: "share:open",
   keepAwake: "power:keep-awake",
   videoSave: "video:save",
+  desktopHabits: "desktop:habits",
+  trayAction: "tray:action",
 };
 
 const bridge: AscendBridge = {
@@ -33,6 +35,17 @@ const bridge: AscendBridge = {
   openShareLink: (url) => ipcRenderer.invoke(IPC.shareOpen, url),
   keepAwake: (on) => ipcRenderer.invoke(IPC.keepAwake, on),
   saveVideo: (req) => ipcRenderer.invoke(IPC.videoSave, req),
+  setDesktopHabits: (req) => ipcRenderer.invoke(IPC.desktopHabits, req),
+  // Only the two known tray picks reach the page; the listener is removed on unsubscribe.
+  onTrayAction: (cb) => {
+    const listener = (_e: unknown, action: unknown) => {
+      if (action === "open" || action === "start-workout") cb(action);
+    };
+    ipcRenderer.on(IPC.trayAction, listener);
+    return () => {
+      ipcRenderer.removeListener(IPC.trayAction, listener);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld("ascend", bridge);

@@ -18,6 +18,9 @@ extraResources:
   - from: ../../services/sidecar/dist/ascend-sidecar
     to: sidecar
     filter: ["**/*"]
+  # v1.4: the opt-in tray icon (electron/main.ts -> trayIcon()).
+  - from: build/icon.png
+    to: tray.png
 asar: true
 # Flip Electron fuses (RunAsNode off, ASAR integrity on, ...) on the packed exe.
 afterPack: build/fuses.cjs

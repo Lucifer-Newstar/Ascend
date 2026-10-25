@@ -3,7 +3,7 @@
  */
 import path from "node:path";
 
-import type { ClipboardWriteRequest, ExportSaveRequest, ImageSaveRequest, VideoSaveRequest } from "@ascend/shared";
+import type { ClipboardWriteRequest, DesktopHabits, ExportSaveRequest, ImageSaveRequest, VideoSaveRequest } from "@ascend/shared";
 
 /** Bigger than any export ASCEND writes (years of history is a few MB). */
 export const MAX_EXPORT_BYTES = 64 * 1024 * 1024;
@@ -130,4 +130,15 @@ export function validateExportSave(req: unknown): ExportSaveRequest {
     throw new Error("invalid export file name");
   }
   return { defaultName, content };
+}
+
+/**
+ * desktop:habits (v1.4): exactly two strict booleans. Anything else is refused, so a bad
+ * payload can never switch the tray or the login item on by accident.
+ */
+export function validateDesktopHabits(req: unknown): DesktopHabits {
+  if (!req || typeof req !== "object") throw new Error("invalid desktop settings");
+  const { tray, openAtLogin } = req as Record<string, unknown>;
+  if (typeof tray !== "boolean" || typeof openAtLogin !== "boolean") throw new Error("invalid desktop settings");
+  return { tray, openAtLogin };
 }

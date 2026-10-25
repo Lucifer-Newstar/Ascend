@@ -15,4 +15,6 @@ export const IPC = {
   shareOpen: "share:open",
   keepAwake: "power:keep-awake",
   videoSave: "video:save",
+  desktopHabits: "desktop:habits",
+  trayAction: "tray:action",
 } as const satisfies typeof SharedIPC;

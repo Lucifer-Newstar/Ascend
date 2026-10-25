@@ -16,6 +16,10 @@ export const IPC = {
   shareOpen: "share:open",
   keepAwake: "power:keep-awake",
   videoSave: "video:save",
+  /** v1.4: renderer -> main, the opt-in tray icon and start-with-Windows switches. */
+  desktopHabits: "desktop:habits",
+  /** v1.4: main -> renderer, a tray menu pick ("open" or "start-workout"). */
+  trayAction: "tray:action",
 } as const;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -76,6 +80,19 @@ export interface AppInfo {
   electron: string;
 }
 
+/**
+ * desktop:habits (v1.4, review 2.2): both off by default. With the tray on, closing the
+ * window keeps ASCEND in the tray so the trainer's reminders still arrive; openAtLogin
+ * registers ASCEND to start with Windows.
+ */
+export interface DesktopHabits {
+  tray: boolean;
+  openAtLogin: boolean;
+}
+
+/** What the tray menu asks the renderer to do. */
+export type TrayAction = "open" | "start-workout";
+
 /** The only API the renderer can see: `window.ascend`. */
 export interface AscendBridge {
   request<T = unknown>(req: SidecarRequest): Promise<SidecarResponse<T>>;
@@ -95,4 +112,8 @@ export interface AscendBridge {
   keepAwake(on: boolean): Promise<boolean>;
   /** Save the weekly recap video (WebM) through a native save dialog (v1.2). */
   saveVideo(req: VideoSaveRequest): Promise<ExportSaveResult>;
+  /** Apply the tray and start-with-Windows switches (v1.4). Resolves to what main applied. */
+  setDesktopHabits?(req: DesktopHabits): Promise<DesktopHabits>;
+  /** Listen for tray menu picks (v1.4). Returns the function that stops listening. */
+  onTrayAction?(cb: (action: TrayAction) => void): () => void;
 }
