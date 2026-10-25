@@ -12,6 +12,7 @@ import { IconMinus, IconPlus, IconSearch, IconTrash } from "../components/Icons"
 import { TdeePanel } from "../components/DietCards";
 import { FoodGuidePanel } from "../components/FoodGuide";
 import { DietPlanner } from "../components/MealPlanner";
+import { ScanMeal } from "../components/ScanMeal";
 import { KpiStrip, KpiTile, PageGrid, Panel } from "../components/Page";
 import { Empty } from "../components/States";
 import { useToast } from "../components/Toast";
@@ -206,6 +207,7 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
                 <IconSearch className="absolute left-3 top-2.5 text-faint" width={16} height={16} />
                 <input className="input pl-9" aria-label="Search foods" placeholder="idli, sambar, dal…" value={query} onChange={(e) => setQuery(e.target.value)} />
               </div>
+              <ScanMeal foods={foods.data ?? []} onPick={add} />
             </div>
             {adding !== null && (
               <AddFoodForm key={adding} initialName={adding} onAdded={added}
