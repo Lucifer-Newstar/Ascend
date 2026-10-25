@@ -98,6 +98,10 @@ describe("ProfilePage", () => {
     expect(within(wardrobe).getByTestId("cosmetic-outfit_cyber_hunter")).toBeEnabled();
     expect(within(wardrobe).getByTestId("cosmetic-outfit_celestial_warrior")).toBeDisabled();
     expect(within(wardrobe).getByTestId("cosmetic-outfit_celestial_warrior")).toHaveTextContent("Reach rank C");
+    // D6: locked items are silhouettes with their unlock rule, never their name
+    expect(within(wardrobe).getByTestId("cosmetic-outfit_celestial_warrior")).not.toHaveTextContent("Celestial Warrior");
+    expect(within(wardrobe).getByTestId("cosmetic-outfit_celestial_warrior")).toHaveAccessibleName("Locked outfit: Reach rank C");
+    expect(within(wardrobe).getByTestId("cosmetic-outfit_celestial_warrior").querySelector("img")).toHaveAttribute("data-locked", "true");
     expect(within(wardrobe).getByTestId("cosmetic-weapon_shadow_dagger")).toBeEnabled(); // one boss beaten
     await userEvent.click(within(wardrobe).getByTestId("cosmetic-outfit_cyber_hunter"));
     expect(save).toHaveBeenCalledWith({ outfit: "outfit_cyber_hunter" });

@@ -40,7 +40,7 @@ describe("clears and catch-up paths (v1.4)", () => {
     expect(isUnlocked(wolf, wins([], ["Winter Wraith"]))).toBe(true);
     expect(isUnlocked(wolf, wins(Array(9).fill("2026-03-02")))).toBe(false);
     expect(isUnlocked(wolf, wins(Array(10).fill("2026-03-02")))).toBe(true);
-    expect(unlockText(wolf.unlock)).toBe("Beat the Winter Wraith (back every year), or win 10 bosses in total");
+    expect(unlockText(wolf.unlock)).toBe("Beat the seasonal boss of winter (Dec to Feb), or win 10 bosses in total");
   });
 
   it("counts a monthly clear by calendar month, with a total to catch up", () => {
@@ -65,5 +65,11 @@ describe("clears and catch-up paths (v1.4)", () => {
       expect(cosmeticFilter(c.id)).toMatch(/^hue-rotate\(\d+deg\)/);
     }
     expect(cosmeticFilter("pet_tiger_cub")).toBe("");
+  });
+});
+
+describe("no spoilers (design rule D6)", () => {
+  it("never names a seasonal boss in an unlock rule", () => {
+    for (const c of CATALOG) for (const b of ["Winter Wraith", "Shadow Sovereign", "Monsoon Serpent", "Harvest Colossus"]) expect(unlockText(c.unlock)).not.toContain(b);
   });
 });

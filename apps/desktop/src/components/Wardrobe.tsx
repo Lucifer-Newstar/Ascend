@@ -86,12 +86,14 @@ export function Wardrobe({ progress }: { progress: Progress }) {
                 return (
                   <li key={c.id}>
                     <button type="button" disabled={!open} aria-pressed={on} onClick={() => toggle(c)} data-testid={`cosmetic-${c.id}`}
-                      title={open ? c.blurb : unlockText(c.unlock)}
+                      title={open ? c.blurb : unlockText(c.unlock)} aria-label={open ? undefined : `Locked ${slot.label.toLowerCase().replace(/s$/, "")}: ${unlockText(c.unlock)}`}
                       className={`flex w-full flex-col items-center gap-1 rounded-lg border p-2 text-center transition-colors ${on ? "border-accent bg-accent/10" : "border-line-2 hover:border-line"} ${open ? "" : "opacity-60"}`}>
                       <span className="flex h-16 w-full items-center justify-center">
-                        {art ? <img src={art} alt="" className="max-h-16 object-contain" style={{ filter: open ? tint || undefined : "grayscale(1)" }} /> : <span className="text-[10px] text-faint">Art coming</span>}
+                        {art ? <img src={art} alt="" className="max-h-16 object-contain" data-locked={!open || undefined}
+                          style={{ filter: open ? tint || undefined : "brightness(0)", opacity: open ? undefined : 0.45 }} /> : <span className="text-[10px] text-faint">Art coming</span>}
                       </span>
-                      <span className="text-xs font-medium text-ink">{c.name}</span>
+                      {/* D6: a locked item is a silhouette with its unlock rule, not its name. */}
+                      <span className="text-xs font-medium text-ink">{open ? c.name : "???"}</span>
                       <span className="text-[10px] text-muted">{on ? "Wearing" : open ? "Unlocked" : <><span className="sr-only">How to unlock: </span>{unlockText(c.unlock)}</>}</span>
                       {how && <span className="text-[10px] tabular-nums text-faint" data-testid="unlock-progress">{how}</span>}
                       {c.themed && <span className="text-[9px] uppercase tracking-wider text-faint">Themed</span>}

@@ -35,8 +35,14 @@ export type Unlock =
   | { kind: "period"; period: "month" | "year"; wins: number; orWins: number }
   | { kind: "seasonals"; count: number; orWins: number };
 
-/** The four seasonal bosses (gamification/boss.py SEASONS), each back every year. */
-export const SEASONAL_BOSSES = ["Winter Wraith", "Shadow Sovereign", "Monsoon Serpent", "Harvest Colossus"];
+/** The four seasonal bosses (gamification/boss.py SEASONS), each back every year, and their seasons. */
+export const SEASON_OF: Record<string, string> = {
+  "Winter Wraith": "winter (Dec to Feb)",
+  "Shadow Sovereign": "Shadow Season (Mar to May)",
+  "Monsoon Serpent": "monsoon (Jun to Sep)",
+  "Harvest Colossus": "Harvest Festival (Oct to Nov)",
+};
+export const SEASONAL_BOSSES = Object.keys(SEASON_OF);
 
 export interface Cosmetic {
   id: string;
@@ -170,7 +176,10 @@ export function unlockText(u: Unlock): string {
     case "sessions": return `Finish ${u.count} training sessions`;
     case "prs": return `Set ${u.count} personal record${u.count === 1 ? "" : "s"}`;
     case "bosses": return u.count === 1 ? "Beat a weekly boss" : `Beat ${u.count} weekly bosses`;
-    case "boss": return u.orWins ? `Beat the ${u.boss} (back every year), or win ${u.orWins} bosses in total` : `Beat the ${u.boss}`;
+    // D6: a locked boss is never named in advance; its season says when to look for it.
+    case "boss": return SEASON_OF[u.boss]
+      ? `Beat the seasonal boss of ${SEASON_OF[u.boss]}${u.orWins ? `, or win ${u.orWins} bosses in total` : ""}`
+      : `Beat the ${u.boss}`;
     case "period": return u.period === "month"
       ? `Win ${u.wins} bosses in one month, or ${u.orWins} in total`
       : `Win ${u.wins} bosses in one year, or ${u.orWins} in total`;
