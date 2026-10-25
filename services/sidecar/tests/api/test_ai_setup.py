@@ -22,11 +22,7 @@ def test_without_ollama_the_tier_is_rules(client: TestClient, monkeypatch) -> No
     assert s["tier"] == "rules" and not s["ollama_running"] and not s["ollama_installed"]
     assert s["recommended"]["model"] == "qwen3:0.6b"
     assert s["recommended"]["pull_command"] == "ollama pull qwen3:0.6b"
-    assert s["vision"] == {
-        "model": "qwen3-vl:2b",
-        "installed": False,
-        "pull_command": "ollama pull qwen3-vl:2b",
-    }
+    assert "vision" not in s  # v1.3: photo feedback and its vision model are removed
 
 
 def test_detects_models_and_switches(client: TestClient, monkeypatch) -> None:

@@ -1,4 +1,5 @@
-"""Progress photos: add, list, view, delete, and optional local AI comparison."""
+"""Progress photos: add, list, view and delete (v1.3: the AI photo feedback is removed;
+photos are compared side by side by the user, never judged by a model)."""
 
 from __future__ import annotations
 
@@ -10,19 +11,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_now
-from app.modules.coach import ollama
-from app.modules.photos import service, vision
+from app.modules.photos import service
 from app.modules.photos.models import ProgressPhoto
 from app.modules.photos.schemas import (
-    FeedbackIn,
-    FeedbackOut,
-    FeedbackStatus,
     PhotoData,
     PhotoIn,
     PhotoOut,
     PhotosDeleted,
 )
-from app.modules.progress import service as progress
 
 router = APIRouter(prefix="/photos", tags=["photos"])
 
@@ -107,64 +103,3 @@ def delete_photo(photo_id: int, request: Request, db: Session = Depends(get_db))
         service.delete(db, _data_dir(request), photo_id)
     except LookupError as e:
         raise HTTPException(404, str(e)) from e
-
-
-def _status(request: Request, db: Session) -> FeedbackStatus:
-    settings = request.app.state.settings
-    model = settings.vision_model
-    profile = progress.get_profile(db)
-    if profile is not None and profile.age < vision.MIN_AGE:
-        return FeedbackStatus(
-            enabled=False, available=False, model=model, reason="Off for under-18s."
-        )
-    if not progress.read_settings(db).photo_feedback:
-        return FeedbackStatus(
-            enabled=False,
-            available=False,
-            model=model,
-            reason="Off. Turn on Progress photo feedback in Settings to use it.",
-        )
-    if not ollama.is_available(settings.ollama_host, model):
-        return FeedbackStatus(
-            enabled=True,
-            available=False,
-            model=model,
-            reason=f"The local vision model is not installed. Run: ollama pull {model}",
-        )
-    return FeedbackStatus(enabled=True, available=True, model=model, reason="Ready.")
-
-
-@router.get("/feedback/status", response_model=FeedbackStatus)
-def feedback_status(request: Request, db: Session = Depends(get_db)) -> FeedbackStatus:
-    """Whether AI photo feedback can run: the user's switch, the age rule, the model."""
-    return _status(request, db)
-
-
-@router.post(
-    "/feedback",
-    response_model=FeedbackOut,
-    responses={409: {"description": "Feedback is off or the model is missing"}},
-)
-def photo_feedback(
-    body: FeedbackIn, request: Request, db: Session = Depends(get_db)
-) -> FeedbackOut:
-    """Compare two photos with the local vision model. Never estimates body fat or weight,
-    never comments on looks; the reply passes a guard before you see it."""
-    status = _status(request, db)
-    if not status.available:
-        raise HTTPException(409, status.reason)
-    try:
-        rows = [service.get(db, body.older_id), service.get(db, body.newer_id)]
-        rows.sort(key=lambda r: (r.taken_on, r.id))
-        data = [service.file_path(_data_dir(request), r).read_bytes() for r in rows]
-    except LookupError as e:
-        raise HTTPException(404, str(e)) from e
-    settings = request.app.state.settings
-    try:
-        raw = vision.compare(settings.ollama_host, status.model, data[0], data[1])
-    except ollama.OllamaUnavailable as e:
-        raise HTTPException(409, f"The vision model did not answer: {e}") from e
-    text, guarded = vision.guard(raw)
-    return FeedbackOut(
-        text=text, guarded=guarded, model=status.model, version=vision.VISION_VERSION
-    )

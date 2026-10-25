@@ -35,28 +35,5 @@ class PhotoData(BaseModel):
     data_url: str
 
 
-class FeedbackStatus(BaseModel):
-    # The user's switch (Settings > Progress photo feedback); always off under 18.
-    enabled: bool
-    # True when the switch is on and the local vision model answers.
-    available: bool
-    model: str
-    reason: str
-
-
-class FeedbackIn(StrictIn):
-    older_id: int
-    newer_id: int
-
-
-class FeedbackOut(BaseModel):
-    text: str
-    # True when the guard removed part of the model's reply.
-    guarded: bool
-    model: str
-    version: str
-    is_ai: bool = True
-
-
 class PhotosDeleted(BaseModel):
     deleted: int

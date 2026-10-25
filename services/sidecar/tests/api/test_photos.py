@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from app.modules.photos import strip, vision
+from app.modules.photos import strip
 
 GPS = b"GPSLatitude 12.97 GPSLongitude 77.59 SerialNumber ABC123"
 
@@ -157,64 +157,11 @@ def test_erase_removes_photo_files(client, settings, profile):
     )
 
 
-def test_feedback_is_off_by_default_and_never_for_minors(client, profile):
-    st = client.get("/photos/feedback/status").json()
-    assert not st["enabled"] and not st["available"] and "Settings" in st["reason"]
+def test_photo_feedback_is_gone(client, profile):
+    """v1.3 (review decision 4): no model judges progress photos any more."""
     a, b = add(client).json(), add(client, taken_on="2026-04-10").json()
     r = client.post("/photos/feedback", json={"older_id": a["id"], "newer_id": b["id"]})
-    assert r.status_code == 409
-    client.put("/settings", json={"photo_feedback": True})
-    st = client.get("/photos/feedback/status").json()
-    assert st["enabled"] and not st["available"] and "ollama pull" in st["reason"]
-    client.put("/profile", json={**profile_body(), "age": 16})
-    assert client.get("/settings").json()["photo_feedback"] is False
-    st = client.get("/photos/feedback/status").json()
-    assert st == {**st, "enabled": False, "reason": "Off for under-18s."}
-
-
-def profile_body():
-    return {
-        "name": "Navin",
-        "age": 21,
-        "sex": "male",
-        "height_cm": 175,
-        "weight_kg": 70,
-        "goal": "bulk",
-        "activity": "moderate",
-    }
-
-
-def test_feedback_runs_through_the_guard(client, profile, monkeypatch):
-    client.put("/settings", json={"photo_feedback": True})
-    monkeypatch.setattr("app.modules.coach.ollama.is_available", lambda *a, **k: True)
-    seen = {}
-
-    def fake(host, model, older, newer, timeout=120.0):
-        seen["n"] = (older, newer)
-        return (
-            "Your shoulders look broader and your posture is straighter. "
-            "You look about 3 kg lighter with less body fat. "
-            "Keep training rows for your upper back."
-        )
-
-    monkeypatch.setattr(vision, "compare", fake)
-    a, b = add(client).json(), add(client, taken_on="2026-04-10").json()
-    r = client.post("/photos/feedback", json={"older_id": b["id"], "newer_id": a["id"]})
-    assert r.status_code == 200, r.text
-    out = r.json()
-    assert out["guarded"] and out["is_ai"]
-    assert "kg" not in out["text"] and "fat" not in out["text"]
-    assert out["text"].startswith("Your shoulders look broader")
-
-
-@pytest.mark.parametrize(
-    "reply",
-    [
-        "You are about 15% body fat.",
-        "You look skinny. Your weight dropped.",
-        "You look really attractive now!",
-    ],
-)
-def test_guard_falls_back_when_nothing_safe_is_left(reply):
-    text, removed = vision.guard(reply)
-    assert removed and text == vision.FALLBACK
+    assert r.status_code in (404, 405)
+    assert client.get("/photos/feedback/status").status_code in (404, 405, 422)
+    assert "photo_feedback" not in client.get("/settings").json()
+    assert client.put("/settings", json={"photo_feedback": True}).status_code == 422

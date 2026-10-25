@@ -127,8 +127,6 @@ class SettingsOut(BaseModel):
     trainer_id: TrainerId = "iskra"
     # v1.1: hide calorie numbers across the app (targets still work underneath).
     hide_calories: bool = False
-    # v1.1: local AI feedback on progress photos. Off by default; always off under 18.
-    photo_feedback: bool = False
     # v1.2: the theme's background art behind the pages: on, dimmed, or off (plain colour).
     background_art: BackgroundArt = "on"
     # v1.2: the avatar's look (body-neutral: rank shows as gear and aura, never body
@@ -156,7 +154,6 @@ class SettingsIn(StrictIn):
     trainer: bool | None = None
     trainer_id: TrainerId | None = None
     hide_calories: bool | None = None
-    photo_feedback: bool | None = None
     background_art: BackgroundArt | None = None
     avatar: AvatarLook | None = None
     outfit: CosmeticId | None = None

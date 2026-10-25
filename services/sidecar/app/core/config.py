@@ -105,8 +105,6 @@ class Settings:
     ollama_host: str = DEFAULT_OLLAMA_HOST
     coach_model: str = "qwen3:4b"
     coach_timeout_s: float = 20.0
-    # Optional vision model for progress-photo feedback (off until the user pulls it).
-    vision_model: str = "qwen3-vl:2b"
 
     @property
     def resolved_db_url(self) -> str:
@@ -130,5 +128,4 @@ def load_settings() -> Settings:
             env.get("OLLAMA_HOST"), allow_remote=env.get("ASCEND_OLLAMA_ALLOW_REMOTE", "") == "1"
         ),
         coach_model=env.get("ASCEND_COACH_MODEL", "qwen3:4b"),
-        vision_model=env.get("ASCEND_VISION_MODEL", "qwen3-vl:2b"),
     )

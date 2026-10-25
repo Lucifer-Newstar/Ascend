@@ -324,16 +324,16 @@ ENTRIES: tuple[Entry, ...] = (
         "How do progress photos work?",
         ("photo", "photos", "picture", "pictures", "gallery", "selfie"),
         "On Profile add a photo for any date. They stay in your data folder, are included in "
-        "backups and can be compared side by side. I remind you once a month.",
+        "backups and can be compared side by side. A monthly photo reminder is off unless you "
+        "turn it on in Settings.",
         "profile",
     ),
     Entry(
         "photo_ai",
         "Can the AI rate my physique?",
         ("physique", "body fat", "analyse photo", "analyze photo", "rate my", "photo feedback"),
-        "With the optional vision model installed, I can compare two of your photos and comment "
-        "on visible changes like definition and posture. It never estimates body fat and it is "
-        "not medical advice.",
+        "No. I don't rate bodies or photos. Put two of your photos side by side on Profile and "
+        "judge the change yourself; your training log shows the progress that matters.",
         "profile",
     ),
     Entry(

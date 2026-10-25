@@ -33,12 +33,6 @@ class HardwareOut(BaseModel):
     gpu: str | None
 
 
-class VisionOut(BaseModel):
-    model: str
-    installed: bool
-    pull_command: str
-
-
 class AiSetup(BaseModel):
     ai_enabled: bool
     tier: Literal["rules", "ai"]
@@ -53,7 +47,6 @@ class AiSetup(BaseModel):
     failures: int
     suggestion: str | None
     smaller_model: str | None
-    vision: VisionOut
     algo_version: str
 
 

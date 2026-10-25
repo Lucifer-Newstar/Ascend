@@ -1,1 +1,1 @@
-"""Progress photos: stored locally, metadata stripped, optional local vision feedback."""
+"""Progress photos: stored locally, metadata stripped, compared side by side by the user."""

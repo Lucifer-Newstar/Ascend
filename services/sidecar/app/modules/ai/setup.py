@@ -2,7 +2,7 @@
 
 Tier 0 (rules) is the whole app without a model: chat routing and help notes, tours,
 rule-based plans and checks, action cards, template captions. A model only adds free-form
-wording (and, with the optional vision model, photo feedback). Sizes are Ollama's
+wording. Sizes are Ollama's
 published download sizes (ollama.com/library/qwen3, read 2026-10-23).
 """
 
@@ -112,11 +112,6 @@ def setup(db: Session, settings: Settings) -> dict[str, object]:
         "failures": fails,
         "suggestion": suggestion,
         "smaller_model": smaller_than(model),
-        "vision": {
-            "model": settings.vision_model,
-            "installed": has(settings.vision_model),
-            "pull_command": f"ollama pull {settings.vision_model}",
-        },
         "algo_version": TIERS_VERSION,
     }
 
