@@ -1178,7 +1178,7 @@ export interface RestoreResult {
 
 // --- trainer (v1.1) ------------------------------------------------------------------
 
-export type TrainerId = "iskra" | "vera" | "kai" | "dario";
+export type TrainerId = "iskra" | "vera" | "kai" | "dario" | "tara" | "idris";
 export type TrainerMoodName = "neutral" | "proud" | "warning" | "hyped";
 export type FallbackReason = "ai_disabled" | "ollama_unavailable" | "timeout" | "model_error" | "guard_rejected";
 
