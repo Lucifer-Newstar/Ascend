@@ -9,6 +9,69 @@ where a number you see could change. User-facing release notes live in
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-25
+
+v1.3 is the "kinder and more useful" release: the trainer can change your plan, settings, kit
+and profile from chat (always as a card you confirm, with undo), streaks count training and
+respect rest days, reminders are calm, and Today shows goals within reach instead of stats.
+Database `0031` → `0032`; the app backs up your data before it migrates it. Release notes:
+[docs/releases/v1.3.0.md](docs/releases/v1.3.0.md).
+
+### Added
+
+- **Trainer actions from chat**: "change my goal to bulk", "add a pull-up bar", "switch to the
+  light theme", "rest 90 s on squats", "train 4 days a week", "switch me to upper lower". Each one
+  is a card you confirm, cancel or undo, also by typing "yes", "no" or "undo". Works with the AI
+  off. Specialties (Tara, Idris and the others) are labels only; one trainer answers.
+- **Chat page** with the big trainer portrait, sharing one conversation with the chat drawer;
+  **Ctrl+K** focuses it.
+- **Log lines in plain words**: "3x10 push-ups", "plank 45 s", "weighed 71.2", "2 idli and
+  sambar" become one card. Foods resolve by alias, base dish and typo; unknown foods open
+  **Add your own food** with the name filled in. Fuel searches the whole food table.
+- **Near goals on Today** ("Within reach"): lifetime sessions with the next milestone (1, 3, 5,
+  10, 25, 50, 100), E1-E3 style sub-ranks, best streak and weeks in a row at your weekly target.
+- **Welcome back**: +25 XP for the first session after a missed day, once a week, and a kind line
+  from the trainer.
+- **Exercises and kit**: burpee, jumping jack and wall sit; bench as a kit choice; rings count as
+  a bar; held slots show seconds in the planner.
+- **Two new trainers**, Tara and Idris, and redrawn portraits for Vera, Kai and Dario.
+- **docs/RULES_AND_BASELINE.md**: the design and technical rules, the measured baselines and the
+  automated checks (`make rules`, `scripts/check_rules.py`, `tests/rules/`).
+
+### Changed
+
+- **Streaks count training only** (a finished workout or a logged set); a planned rest day of
+  your program is neutral; a missed day with a reason still counts as rest.
+- **Reminders are calm**: at most two a day, none on a planned rest day, no water reminder and no
+  "your streak ends at midnight". The evening check, the monthly photo reminder and the weigh-in
+  nudge are new switches in Settings, all **off** by default.
+- **Streak unlocks became session unlocks**: Crimson Gate and Ronin at 10 sessions, Focus Charm at
+  25, Spear of Valor at 50. Anything you already earned stays.
+- **Today** puts the weekly boss right under the trainer; the five hunter stats moved to Profile.
+- **Progress** leads with training: this week, sessions all time, lifts, bands and PRs come before
+  body weight; a recovering muscle shows when it is ready instead of "0%".
+- The planner doses push-ups, pull-ups and holds from your baseline test and no longer blocks an
+  underweight user who wants to gain.
+
+### Removed
+
+- **AI photo feedback** (and its vision model in AI setup, the `photo_feedback` setting and
+  `/photos/feedback*`). Photos, side-by-side compare and backups are unchanged; asked to rate a
+  physique, the trainer says it does not rate bodies.
+
+### Fixed
+
+- "Switch me to upper lower" is a program change, not an exercise swap; locked themes stay locked
+  when asked from chat; a profile value that is already set says so instead of proposing nothing.
+- Built-in programs swap moves your kit cannot do; an empty food search lists every food with
+  everyday names first; long questions need more than one keyword before a help note answers.
+
+### Versions
+
+Chat edits parse with `actions-parse-v2`; the trainer's watcher (`watch-v1`) gains the
+welcome-back rule and the opt-in photo and weigh-in rules; the `themes-v1` unlock rule for
+Crimson Gate changed. The XP formula (`xp-v1`) is unchanged; sub-ranks are display only.
+
 ## [1.2.0] - 2026-10-23
 
 v1.2 is the "make it feel like a game, and make it simpler" release: a real start screen, app
@@ -721,7 +784,8 @@ First skeleton: Electron + React desktop shell, FastAPI sidecar with SQLite, wor
 logging with PRs, Indian food log with approximate IFCT/INDB-style values, muscle
 recovery map, XP, quests and streaks, rule-based coach with optional local AI.
 
-[Unreleased]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Lucifer-Newstar/Ascend-/compare/v0.4.0...v1.0.0

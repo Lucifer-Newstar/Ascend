@@ -37,7 +37,7 @@ that runs beside it, deterministic training and diet engines, and an MLOps pipel
 ## Download and install
 
 1. Open the [latest release](https://github.com/Lucifer-Newstar/Ascend-/releases/latest) and download **`ASCEND-Setup-<version>.exe`**
-   (for 1.2.0: `ASCEND-Setup-1.2.0.exe`). `SHA256SUMS.txt` next to it lets you check the download.
+   (for 1.3.0: `ASCEND-Setup-1.3.0.exe`). `SHA256SUMS.txt` next to it lets you check the download.
 2. Run it. The installer is **not code-signed yet**, so Windows SmartScreen shows "Windows protected
    your PC": click **More info → Run anyway**.
 3. Pick a folder (default: `%LOCALAPPDATA%\Programs\ASCEND`, no admin rights needed) and finish.
@@ -54,7 +54,7 @@ uninstall, and a reinstall picks it up again. The app also writes a daily automa
 Check a download in PowerShell (compare with the line for the file in `SHA256SUMS.txt`):
 
 ```powershell
-Get-FileHash .\ASCEND-Setup-1.2.0.exe -Algorithm SHA256
+Get-FileHash .\ASCEND-Setup-1.3.0.exe -Algorithm SHA256
 ```
 
 Release notes for each version: [GitHub Releases](https://github.com/Lucifer-Newstar/Ascend-/releases) and [docs/releases](docs/releases/);
@@ -71,11 +71,21 @@ the full history is in [CHANGELOG.md](CHANGELOG.md).
 | **Skills** | A zoomable, pannable tree canvas per family; arrow keys move along the edges; a drawer shows the criteria, the estimate (only with enough data) and "Train this skill". |
 | **Ctrl+K** | Command bar: `bench 80x5 @8`, `log 3x8 pull-up`, `plank 45s`, `weight 81.4`, `add 2 eggs`, `train front lever`, a page name, or any question for your trainer. Data-changing commands are the allowlisted actions in [`command-vectors.json`](packages/shared/src/command-vectors.json). Rule-based, no model. |
 | **Awakening** | The first run: profile, an equipment checklist (respected by quests and skill suggestions), a baseline test logged as a real session, and your trainer, then straight into a five-step app tour. |
-| **Streaks** | Freezes cover missed days, and a missed day never removes XP, levels, ranks or skills; the next quest adds a short Comeback item instead. |
+| **Streaks** | Training days keep the streak, planned rest days are neutral and a missed day with a reason counts as rest (1.3); a missed day never removes XP, levels, ranks or skills. |
 | **Accessibility and motion** | WCAG AA colours in both themes (unit-tested), labelled controls, axe-clean screens, Reduce motion honoured everywhere, optional sound off by default. |
 
 Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages (Profile has none) · **Enter** log the set shown ·
 **Space** pause rest · arrows on the skill canvas.
+
+### New in 1.3
+
+| What | How it works |
+|---|---|
+| **Trainer edits from chat** | `actions-parse-v2`: "change my goal to bulk", "add a bench", "rest 90 s on squats", "train 4 days a week" or "switch me to upper lower" become a card you confirm, cancel or undo (also by typing). Rule-based, so it works with the AI off. See [docs/ai/trainer-actions.md](docs/ai/trainer-actions.md). |
+| **Chat page** | The big trainer portrait and the same conversation as the drawer; Tara and Idris join the roster. Specialties are labels only. |
+| **Kinder streaks** | Training days keep the streak; planned rest days are neutral; a missed day with a reason counts as rest; +25 XP welcome back once a week. See [docs/architecture/streaks-and-near-goals.md](docs/architecture/streaks-and-near-goals.md). |
+| **Near goals** | Today shows lifetime sessions and the next milestone, E1-E3 style sub-ranks, best streak and weeks in a row. Streak unlocks became 10/25/50-session unlocks. |
+| **Calm reminders** | Two a day at most, none on rest days, no loss words; evening, photo and weigh-in nudges are opt-in. |
 
 ### New in 1.1
 
@@ -86,7 +96,7 @@ Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages (Profile has none) · 
 | **Personalization** | `personalize-v1` and `quest-v3`: the daily quest's sets follow your level and readiness, and its nutrition item targets your own gap. `/selector/personalization` shows the reasons. |
 | **Actions with a confirm** | `actions-v1`: the chat, Ctrl+K or the local AI can propose a log entry, a program switch or an erase; it runs after Confirm on a card (erase needs the word typed), is audited, and can be undone where possible. |
 | **Planner** | Build a training week (`plangen-v1`), a day of Indian meals (`dietgen-v1`) and check a goal (`goalcheck-v2`, ICMR-NIN 2024). Save, follow or delete. No deficit under 18; **Hide calories** hides kcal. |
-| **Profile and photos** | Hunter card, achievements and private progress photos: stripped of EXIF/GPS, blurred until revealed, compared side by side, backed up. Optional AI feedback (`photo-feedback-v1`) on a local vision model: off by default, never under 18, no body-fat or weight comments. |
+| **Profile and photos** | Hunter card, achievements and private progress photos: stripped of EXIF/GPS, blurred until revealed, compared side by side, backed up. No AI judges your photos (removed in 1.3). |
 | **Share cards** | `share-v1` text, drawn on your PC with no weight, photos or profile details: save, copy, X's own composer (an allowlisted link) or Instagram (save + copy caption). |
 | **Skills** | 17 built-in trees (five new) plus your own custom trees from library exercises; custom trees pay no XP. |
 
@@ -161,9 +171,7 @@ what the engines computed.
   cannot edit an exercise inside a saved program yet; build a new one instead.
 - **Backups are unencrypted.** They include progress photos unless you untick **Include progress
   photos** (Settings > Data & backups). Keep `%APPDATA%\ASCEND` private and copy backups to another
-  drive yourself (encryption is planned, not in 1.2.0).
-- **AI photo feedback is tested with a mocked vision model.** Real model replies are filtered by
-  the photo guard at run time; with the feature off (the default) no model sees your photos.
+  drive yourself (encryption is planned, not in 1.3.0).
 - **The trainer's own posts follow fixed rules.** The selector's thresholds were set by hand and
   checked on synthetic users only.
 - **Instagram has no desktop posting route.** The app saves the image and copies the caption.
@@ -284,8 +292,8 @@ setx OLLAMA_CONTEXT_LENGTH 2048
 
 **The AI is optional, in tiers.** Without Ollama (or on a PC that can't run a model) the whole
 app works in rule-based mode: the trainer chat answers greetings, app questions and tours from
-its own notes, plans and goal checks use rules, and only free-form wording and photo feedback
-are off. **Settings > AI setup** shows whether Ollama is installed and running, the models
+its own notes, plans, goal checks and the trainer's edit cards use rules, and only free-form
+wording is off. **Settings > AI setup** shows whether Ollama is installed and running, the models
 you have pulled, your RAM and (NVIDIA) VRAM, and recommends a model: `qwen3:4b` with 4 GB of
 VRAM, `qwen3:1.7b` with 2 GB (or 16 GB of RAM), `qwen3:0.6b` otherwise. It has a test button
 and, after three failed or timed-out answers, offers a smaller model or rule-based mode. When
@@ -338,24 +346,25 @@ Workflows in [.github/workflows](.github/workflows/):
 
 How a release is cut: [docs/operations/release-process.md](docs/operations/release-process.md).
 
-### Verified for 1.2.0
+### Verified for 1.3.0
 
-On Linux, on the `v12-test` branch before the merge:
+On Linux, on the `feat/v13-quick-wins` branch (stacked on `feat/v13-trainer-actions` and
+`feat/v13-fixes`) before the merge:
 
-- 909 sidecar tests pass (engine unit tests, Hypothesis property tests for the engines, API tests
-  with `TestClient`); ruff and mypy are clean (165 source files).
-- Alembic migrations apply to a fresh SQLite database (`0031`), downgrade to base and apply again.
-- tsc (renderer, Electron, shared), eslint (0 errors) and 531 vitest tests (74 files) pass;
-  `vite build` succeeds.
-- The contract drift check passes (137 implemented operations match 16 contracts).
-- The ML pipeline is unchanged since 1.1.0 (18 tests).
-- Every page and the main dialogs were walked in a headless browser at 1366x768 and at 1280x720 with 125%
-  scaling, in the Shadow, Dark and Light looks, as a new player and with a full test save.
+- 1101 sidecar tests pass (engine unit tests, Hypothesis property tests, API tests with
+  `TestClient`, and the rules suite in `tests/rules/`); ruff and mypy are clean (171 source files).
+- Alembic migrations apply to a fresh SQLite database (`0032`), downgrade to base and apply again.
+- tsc (renderer, Electron, shared), eslint (0 errors) and 554 vitest tests (80 files) pass;
+  `vite build` succeeds (main chunk 339 kB, 103 kB gzip).
+- The contract drift check passes (135 implemented operations match 16 contracts).
+- `scripts/check_rules.py` finds no phone numbers, secrets or credit lines; the trainer chat battery
+  (343 messages, AI off) gives 251 pass, 1 fail and 91 to read by hand.
+- The ML pipeline is unchanged since 1.1.0.
 
 The Windows installer is built by `release.yml` on `windows-latest` once the branch is merged.
 
 Not covered by automation: the installed app's screens on a real Windows PC (check by hand before tagging), real
-`qwen3:4b` and vision-model answers, and the live wger.de and Wikipedia APIs (tests use mocks; the live APIs were
+`qwen3:4b` answers, and the live wger.de and Wikipedia APIs (tests use mocks; the live APIs were
 checked by hand on 2026-10-20).
 
 ## Documentation
