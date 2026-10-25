@@ -22,7 +22,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
    ]
   },
   {
@@ -32,7 +32,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
    ]
   },
   {
@@ -62,7 +62,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
    ]
   },
   {
@@ -112,7 +112,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 3 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
    ]
   },
   {
@@ -162,7 +162,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 3 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
    ]
   },
   {
@@ -282,7 +282,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+    "Log 1 \u00d7 7 Pull-up, bodyweight, in today's session."
    ]
   },
   {
@@ -292,7 +292,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+    "Log 1 \u00d7 7 Pull-up, bodyweight, in today's session."
    ]
   },
   {
@@ -302,7 +302,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+    "Log 1 \u00d7 7 Pull-up, bodyweight, in today's session."
    ]
   },
   {
@@ -312,7 +312,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+    "Log 1 \u00d7 7 Pull-up, bodyweight, in today's session."
    ]
   },
   {
@@ -522,7 +522,7 @@
    "verdict": true,
    "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
    "proposal": [
-    "Log 1 \u00d7 25 Frog Sit-Ups, bodyweight, in today's session."
+    "Log 1 \u00d7 25 Sit-Up, bodyweight, in today's session."
    ]
   },
   {
@@ -2343,7 +2343,7 @@
    "text": "swap lateral raise for pull ups",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "Everyone starts there. Do dead hangs (20-30 s), scapular pull-ups and slow negatives (jump up, lower for 3-5 seconds) 2-3 times a week. Most people get the first rep in a few weeks.",
+   "reply": "You don't follow a program yet. Pick one first (say \u201cfollow ppl\u201d).",
    "proposal": null
   },
   {
@@ -2351,7 +2351,7 @@
    "text": "replace bench press with floor press",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "You don't follow a program yet. Pick one first (say \u201cfollow ppl\u201d).",
    "proposal": null
   },
   {
@@ -2383,7 +2383,7 @@
    "text": "remove plank from my plan",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "The planner builds the workout plan from your profile; I check it against your goal before you save it.",
+   "reply": "You don't follow a program yet. Pick one first (say \u201cfollow ppl\u201d).",
    "proposal": null
   },
   {
@@ -2391,7 +2391,7 @@
    "text": "change my push ups to 15-20 reps",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "Hands under shoulders, body straight from head to heels, lower until your chest is a fist above the floor, push back up. Too hard? Put your hands on a bed or table (incline push-ups) and lower the height over the weeks.",
+   "reply": "You don't follow a program yet. Pick one first (say \u201cfollow ppl\u201d).",
    "proposal": null
   },
   {
@@ -2407,7 +2407,7 @@
    "text": "I have rings and dumbbells",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "Your kit is already: dumbbells, rings.",
    "proposal": null
   },
   {
@@ -2423,7 +2423,7 @@
    "text": "move legs to thursday",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "You don't follow a program yet. Pick one first (say \u201cfollow ppl\u201d).",
    "proposal": null
   },
   {
@@ -2439,39 +2439,47 @@
    "text": "change theme to dark",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
-   "proposal": null
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Change theme from shadow to dark."
+   ]
   },
   {
    "cat": "settings",
    "text": "dark mode",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
-   "proposal": null
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Change theme from shadow to dark."
+   ]
   },
   {
    "cat": "settings",
    "text": "switch to light theme",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
-   "proposal": null
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Change theme from shadow to light."
+   ]
   },
   {
    "cat": "settings",
    "text": "change units to lbs",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "Yes: Settings > Units switches to imperial. Data is stored in kg and converted for display.",
-   "proposal": null
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Change units from kg and cm to lb and in."
+   ]
   },
   {
    "cat": "settings",
    "text": "use kg",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "Units is already kg and cm.",
    "proposal": null
   },
   {
@@ -2479,8 +2487,10 @@
    "text": "turn off notifications",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
-   "proposal": null
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Change reminders from on to off."
+   ]
   },
   {
    "cat": "settings",
@@ -2495,7 +2505,7 @@
    "text": "set my goal to bulk",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "Open Train, pick or search an exercise, type the weight and reps and press Enter. Each set is saved the moment you enter it; the suggestion card shows the next target.",
+   "reply": "Your goal is already bulk.",
    "proposal": null
   },
   {
@@ -2503,7 +2513,7 @@
    "text": "update my height to 170 cm",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "Your height is already 170 cm.",
    "proposal": null
   },
   {
@@ -2511,7 +2521,7 @@
    "text": "my age is 21",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "Your age is already 21.",
    "proposal": null
   },
   {
@@ -2519,8 +2529,10 @@
    "text": "change my name to Navin",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
-   "proposal": null
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Change your name from Tester to Navin."
+   ]
   },
   {
    "cat": "settings",
@@ -2557,8 +2569,10 @@
    "text": "set my target weight to 55 kg",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "Open Train, pick or search an exercise, type the weight and reps and press Enter. Each set is saved the moment you enter it; the suggestion card shows the next target.",
-   "proposal": null
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Change your target weight from not set to 55 kg."
+   ]
   },
   {
    "cat": "settings",
@@ -3095,8 +3109,7 @@
    "verdict": null,
    "reply": "Okay, cancelled. Nothing changed.",
    "proposal": [
-    "Add your own food \u201cRagi dosa\u201d: 1 serving (100 g) = 120 kcal, P 0 g, C 0 g, F 0 g.",
-    "It shows up in Fuel's search and the chat can log it."
+    "Change your target weight from not set to 55 kg."
    ]
   },
   {
@@ -3106,7 +3119,7 @@
    "verdict": null,
    "reply": "Okay, cancelled. Nothing changed.",
    "proposal": [
-    "Add your own food \u201cKozhukattai\u201d: 1 serving (100 g) = 150 kcal, P 3 g, C 0 g, F 0 g.",
+    "Add your own food \u201cRagi dosa\u201d: 1 serving (100 g) = 120 kcal, P 0 g, C 0 g, F 0 g.",
     "It shows up in Fuel's search and the chat can log it."
    ]
   },
@@ -3117,7 +3130,8 @@
    "verdict": null,
    "reply": "Okay, cancelled. Nothing changed.",
    "proposal": [
-    "Follow Push / pull / legs, 6 days. Your logged history stays as it is."
+    "Add your own food \u201cKozhukattai\u201d: 1 serving (100 g) = 150 kcal, P 3 g, C 0 g, F 0 g.",
+    "It shows up in Fuel's search and the chat can log it."
    ]
   },
   {
@@ -3159,7 +3173,7 @@
    "verdict": null,
    "reply": "Done. Say undo if that was wrong.",
    "proposal": [
-    "Follow Upper / lower, 4 days. Your logged history stays as it is."
+    "Change your name from Tester to Navin."
    ]
   },
   {
@@ -3169,7 +3183,7 @@
    "verdict": null,
    "reply": "Done. Say undo if that was wrong.",
    "proposal": [
-    "Follow Bodyweight Starter, 3 days. Your logged history stays as it is."
+    "Change reminders from on to off."
    ]
   },
   {
