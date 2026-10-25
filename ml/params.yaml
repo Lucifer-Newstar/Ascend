@@ -15,3 +15,30 @@ train:
   label_smoothing: 0.05
 export:
   version: 0.0.0-smoke   # bump per registered model (semver; -smoke = synthetic data)
+
+# Trainer-chat intent router (intent/). Text only: trains on CPU in about a minute.
+intent:
+  data:
+    seed: 42
+    per_template: 8        # variants generated per app-command template
+    val_frac: 0.1
+    clinc_per_intent: 12   # CLINC150 rows kept per in-scope intent and split
+    se_cap_per_label: 2500 # weak-labelled Stack Exchange titles kept per label
+  train:
+    word_ngrams: [1, 2]
+    char_ngrams: [2, 5]
+    max_word_features: 20000
+    max_char_features: 40000
+    min_df: 2
+    sublinear_tf: true
+    c_grid: [1.0, 4.0, 10.0]
+  export:
+    version: 1.0.0
+    prune_below: 0.02      # coefficients smaller than this are dropped from the runtime file
+    decimals: 3
+  gate:
+    min_templates_macro_f1: 0.80
+    min_se_hand_accuracy: 0.60
+    min_oos_recall: 0.85
+    min_parity_argmax: 0.995
+  threshold: 0.55          # the sidecar uses a prediction only at or above this confidence
