@@ -182,6 +182,14 @@ def planned_rest_days(db: Session, today: date) -> set[date]:
             if day.weekday() not in training:
                 out.add(day)
             day += timedelta(days=1)
+    # v1.4 (schedule-v1): from the day the user picked their own training days, those
+    # decide which weekdays are planned rest, week by week.
+    from app.modules.schedule import service as schedule
+
+    first = schedule.since(db)
+    if first is not None and first <= today:
+        own = schedule.scheduled_rest_days(db, first, today) or set()
+        out = {d for d in out if d < first} | own
     return out
 
 
@@ -617,12 +625,18 @@ def welcome_back_due(db: Session, day: date) -> bool:
     return not paid
 
 
-def week_target(db: Session) -> int:
-    """Training days a week the plan asks for: the followed program's days, else the
-    sessions-per-week setting (capped by the program when both exist)."""
+def week_target(db: Session, today: date | None = None) -> int:
+    """Training days a week the plan asks for: the days picked for this week (v1.4
+    schedule), else the followed program's days, else the sessions-per-week setting
+    (capped by the program when both exist)."""
     from app.modules.progress import service as progress
+    from app.modules.schedule import service as schedule
     from app.modules.workouts import programs_service
 
+    if today is not None:
+        own = schedule.week_target(db, today)
+        if own:
+            return own
     want = int(progress.get_setting(db, "sessions_per_week", "3") or 3)
     e = programs_service.active(db)
     p = programs_service.get_program(db, e.program_key) if e is not None else None
@@ -656,7 +670,7 @@ def streak_out(s: StreakState, db: Session | None = None, today: date | None = N
     if db is None or today is None:
         return out
     days = active_days(db)
-    target = week_target(db)
+    target = week_target(db, today)
     out.rest_today = is_rest_day(db, today)
     out.lifetime_sessions = len(days)
     out.next_milestone = next_milestone(len(days))

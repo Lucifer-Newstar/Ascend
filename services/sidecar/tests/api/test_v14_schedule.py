@@ -40,6 +40,19 @@ def test_the_program_suggests_days_until_you_pick(client: TestClient, profile) -
     assert s["source"] == "program" and len(s["days"]) == 3
 
 
+def test_your_days_decide_rest_days_for_the_streak(client: TestClient, profile, clock) -> None:
+    client.put("/schedule", json={"days": [1, 3]})  # Tue, Thu
+    _train(client)  # Tue
+    clock.now += timedelta(days=1)  # Wed: planned rest
+    s = client.get("/game/summary").json()["streak"]
+    assert s["rest_today"] is True and s["week_target"] == 2
+    clock.now += timedelta(days=1)  # Thu
+    _train(client)
+    clock.now += timedelta(days=1)  # Fri: rest, streak still 2
+    s = client.get("/game/summary").json()["streak"]
+    assert s["current"] == 2 and s["rest_today"] is True
+
+
 def test_week_view_shows_planned_vs_done_and_the_next_sessions(
     client: TestClient, profile, clock
 ) -> None:
@@ -53,6 +66,25 @@ def test_week_view_shows_planned_vs_done_and_the_next_sessions(
     assert tue["done"] and tue["today"] and tue["session"] is None
     assert thu["session"] and sat["session"] and thu["session"] != sat["session"]
     assert w["planned"] == 4 and w["done"] == 1
+
+
+def test_plan_next_week_on_sunday(client: TestClient, profile, clock) -> None:
+    client.put("/schedule", json={"days": [0, 2, 4]})
+    clock.now += timedelta(days=5)  # Sunday
+    nxt = "2026-10-26"
+    r = client.put("/schedule/week", json={"week_start": nxt, "days": [1, 3, 5, 6]})
+    assert r.status_code == 200, r.text
+    w = r.json()
+    assert w["custom"] and w["planned"] == 4 and w["week_start"] == nxt
+    # This week keeps the usual days; a past week cannot be planned.
+    assert client.get("/schedule/week").json()["planned"] == 3
+    past = client.put("/schedule/week", json={"week_start": "2026-10-12", "days": [0]})
+    assert past.status_code == 409
+    # Next week the picked days decide rest: Monday is rest.
+    clock.now += timedelta(days=1)
+    s = client.get("/game/summary").json()["streak"]
+    assert s["rest_today"] is True and s["week_target"] == 4
+    assert date.fromisoformat(nxt).weekday() == 0
 
 
 def test_short_session_is_ten_minutes_and_counts_for_the_streak(
