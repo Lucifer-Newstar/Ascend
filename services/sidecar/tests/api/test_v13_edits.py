@@ -60,6 +60,11 @@ def test_profile_edits_confirm_and_undo(me: TestClient) -> None:
         assert me.get("/profile").json()[field] == value, text
 
 
+def test_the_same_profile_value_is_not_a_change(me: TestClient) -> None:
+    r = chat(me, "my age is 21")
+    assert r["proposal"] is None and "already 21" in r["reply"]
+
+
 def test_an_impossible_profile_value_is_refused_in_words(me: TestClient) -> None:
     r = chat(me, "set my age to 9")
     assert r["proposal"] is None and "can't set your age" in r["reply"]

@@ -82,6 +82,8 @@ def _profile_in(db: Session, p: UpdateProfileP) -> tuple[Any, Any]:
 def describe_profile(db: Session, p: UpdateProfileP) -> list[str]:
     new, old = _profile_in(db, p)
     label = PROFILE_LABEL[p.field]
+    if getattr(new, p.field) == old:
+        raise EditError(f"Your {label} is already {_profile_value(p.field, old)}.")
     lines = [
         f"Change your {label} from {_profile_value(p.field, old)} to "
         f"{_profile_value(p.field, getattr(new, p.field))}."
