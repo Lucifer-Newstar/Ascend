@@ -55,8 +55,10 @@ def leak_ids_from(real_eval: Path, se_rows: list[dict]) -> set[int]:
     for r in se_rows:
         title, body = norm(r["title"]), norm(r["body_start"])
         for h in items:
-            if title == h or (len(body) >= 40 and h.startswith(body[:60])) or (
-                len(h) >= 40 and body.startswith(h[:60])
+            if (
+                title == h
+                or (len(body) >= 40 and h.startswith(body[:60]))
+                or (len(h) >= 40 and body.startswith(h[:60]))
             ):
                 out.add(int(r["id"]))
                 break
@@ -84,8 +86,12 @@ def build(params: dict, raw: Path, out: Path, real_eval: Path | None = None) -> 
             )
 
     for r in templates.generate(params["per_template"], params["seed"]):
-        row = {"text": r["text"], "label": r["label"], "source": "template",
-               "template_id": r["template_id"]}
+        row = {
+            "text": r["text"],
+            "label": r["label"],
+            "source": "template",
+            "template_id": r["template_id"],
+        }
         if r["split"] == "test":
             splits["test_templates"].append(row)
         else:
@@ -100,8 +106,9 @@ def build(params: dict, raw: Path, out: Path, real_eval: Path | None = None) -> 
         if r["id"] in hand or r["id"] in leak or not r["title"]:
             continue
         lab, rule = weak_label.label(r["title"], r["tags"])
-        se_train.append({"text": r["title"], "label": lab, "source": "se_weak",
-                         "rule": rule, "se_id": r["id"]})
+        se_train.append(
+            {"text": r["title"], "label": lab, "source": "se_weak", "rule": rule, "se_id": r["id"]}
+        )
     rng.shuffle(se_train)
     cap = params["se_cap_per_label"]
     kept: Counter[str] = Counter()
@@ -150,7 +157,8 @@ def main() -> None:
         rows = [json.loads(x) for x in (a.raw / "se_questions.jsonl").open(encoding="utf-8")]
         ids = sorted(leak_ids_from(a.real_eval, rows))
         path = ROOT / "labels" / "eval_leak_ids.txt"
-        head = [x for x in path.read_text().splitlines() if x.startswith("#")] if path.exists() else []
+        old = path.read_text().splitlines() if path.exists() else []
+        head = [x for x in old if x.startswith("#")]
         path.write_text("\n".join(head + [str(i) for i in ids]) + "\n")
     stats = build(params, a.raw, a.out, a.real_eval)
     for name, s in stats["splits"].items():

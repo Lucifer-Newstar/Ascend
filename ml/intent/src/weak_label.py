@@ -13,14 +13,42 @@ from __future__ import annotations
 import re
 
 PAIN_TAGS = {
-    "pain", "back-pain", "knee-pain", "shoulder-pain", "lower-back-pain", "tendinitis",
-    "sprain", "physical-therapy", "rehabilitation",
+    "pain",
+    "back-pain",
+    "knee-pain",
+    "shoulder-pain",
+    "lower-back-pain",
+    "tendinitis",
+    "sprain",
+    "physical-therapy",
+    "rehabilitation",
 }
 NUTRITION_TAGS = {
-    "diet", "nutrition", "calories", "protein", "supplements", "food", "carbohydrate",
-    "protein-shakes", "creatine", "ketogenic-diet", "eating-habits", "daily-caloric-intake",
-    "vitamins", "caffeine", "hydration", "water", "pre-workout", "post-workout-meal",
-    "fasting", "intermittent-fasting", "vegetarian", "vegan", "macros", "sugar", "alcohol",
+    "diet",
+    "nutrition",
+    "calories",
+    "protein",
+    "supplements",
+    "food",
+    "carbohydrate",
+    "protein-shakes",
+    "creatine",
+    "ketogenic-diet",
+    "eating-habits",
+    "daily-caloric-intake",
+    "vitamins",
+    "caffeine",
+    "hydration",
+    "water",
+    "pre-workout",
+    "post-workout-meal",
+    "fasting",
+    "intermittent-fasting",
+    "vegetarian",
+    "vegan",
+    "macros",
+    "sugar",
+    "alcohol",
 }
 HOWTO_TAGS = {"exercise-technique", "form"}
 MOTIVATION_TAGS = {"motivation", "discipline", "habits"}
@@ -76,9 +104,10 @@ def label(title: str, tags: list[str]) -> tuple[str, str]:
     # how to warm up or train around something. A pain tag or a pain word in the title is.
     if _PAIN.search(t) or tagset & PAIN_TAGS:
         return "injury_pain", "injury"
-    if _FOOD.search(t) and (tagset & NUTRITION_TAGS or not (_HOWTO.search(t) or tagset & HOWTO_TAGS)):
+    howto = bool(_HOWTO.search(t) or tagset & HOWTO_TAGS)
+    if _FOOD.search(t) and (tagset & NUTRITION_TAGS or not howto):
         return "nutrition_question", "nutrition"
-    if _HOWTO.search(t) or tagset & HOWTO_TAGS:
+    if howto:
         return "exercise_howto", "howto"
     if _MOTIVATION.search(t) or tagset & MOTIVATION_TAGS:
         return "motivation", "motivation"
