@@ -2375,7 +2375,7 @@
    "text": "add pull ups to tuesday",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "Here's what I have on that (Training at home without equipment): You can build real strength at home: push-ups and their harder variations, squats, lunges, glute bridges, planks, and pulling work with a table row or a pull-up bar. Make exercises harder by slowing the reps, pausing, moving to one-leg or one-arm versions, or adding a backpack with books.",
    "proposal": null
   },
   {
@@ -2399,7 +2399,7 @@
    "text": "make plank 60 seconds",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "reply": "Here's what I have on that (Plank and core holds): Hold a plank with elbows under shoulders and a straight line from head to heels: squeeze your glutes and do not let the hips sag or pike. Build the time gradually, for example 3 holds of 20 to 30 seconds, adding 5 to 10 seconds a week. Side planks and hollow holds train the core from other angles.",
    "proposal": null
   },
   {
@@ -3251,7 +3251,7 @@
    "text": "delete my account",
    "exp": "answer",
    "verdict": null,
-   "reply": "Everything stays on this PC: no account, no cloud, no telemetry. The only network use is the optional exercise lookup you switch on, and the share links you choose to open.",
+   "reply": "I can wipe your logs and keep the exercise library and food table. I make a backup first. Do it from Settings > Start fresh.",
    "proposal": null
   },
   {
