@@ -31,6 +31,7 @@ from app.modules.gamification.api import router as game_router
 from app.modules.intelligence import recovery_service
 from app.modules.intelligence.api import router as intelligence_router
 from app.modules.io.api import router as io_router
+from app.modules.ml.api import router as ml_router
 from app.modules.nutrition.api import router as nutrition_router
 from app.modules.photos.api import router as photos_router
 from app.modules.planner.api import router as planner_router
@@ -284,6 +285,7 @@ def create_app(
         photos_router,
         share_router,
         schedule_router,
+        ml_router,
     ):
         app.include_router(router)
     return app
