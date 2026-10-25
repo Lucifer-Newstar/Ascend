@@ -16,6 +16,7 @@ from app.core.schemas import StrictIn
 from app.modules.actions import chat_hook, service  # noqa: F401  (registers the chat hook)
 from app.modules.actions.models import ActionLog
 from app.modules.actions.registry import SPECS, ActionError
+from app.modules.planbuilder import chat_hook as _plan_hook  # noqa: F401  (v1.4 plan builder)
 
 router = APIRouter(prefix="/actions", tags=["actions"])
 

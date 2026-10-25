@@ -48,6 +48,15 @@ def register_text_reply(fn: TextReply) -> None:
     _text_reply[:] = [fn]
 
 
+# v1.4: the plan builder (free-chat facts and the "Build my plan" interview).
+PlanBuilder = Callable[[Session, Settings, datetime, str], ChatOut | None]
+_plan_builder: list[PlanBuilder] = []
+
+
+def register_plan_builder(fn: PlanBuilder) -> None:
+    _plan_builder[:] = [fn]
+
+
 def _name(db: Session) -> str:
     p = progress.get_profile(db)
     return p.name if p is not None and p.name else ""
@@ -153,6 +162,12 @@ def respond(
 ) -> ChatOut:
     if _text_reply and bus is not None:
         out = _text_reply[0](db, now, text, bus)
+        if out is not None:
+            return out
+    # v1.4: "I have an 8 kg dumbbell and two 5 kg", "I want to train muay thai", or an
+    # answer inside the "Build my plan" interview: a plan-update card before anything else.
+    if _plan_builder:
+        out = _plan_builder[0](db, settings, now, text)
         if out is not None:
             return out
     # v1.3: "change my goal to bulk", "I have a bench", "swap bench press for push-ups":
