@@ -23,7 +23,7 @@ class ProfileIn(BaseModel):
     target_weight_kg: float | None = Field(default=None, ge=30, le=300)
     # Onboarding answers. Equipment: an empty list means "not stated" (nothing filtered).
     focus: Literal["strength", "muscle", "skills", "fat_loss"] | None = None
-    equipment: list[Literal["none", "pullup_bar", "rings", "dumbbells", "gym"]] = Field(
+    equipment: list[Literal["none", "pullup_bar", "rings", "dumbbells", "bench", "gym"]] = Field(
         default_factory=list, max_length=5
     )
     # v1.1: training age (the planner sizes volume and the goal check its limits by it).

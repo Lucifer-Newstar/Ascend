@@ -9,7 +9,7 @@ from app.core.schemas import StrictIn
 
 Focus = Literal["strength", "muscle", "fat_loss", "skills", "general"]
 Experience = Literal["beginner", "intermediate", "advanced"]
-EquipmentChoice = Literal["none", "pullup_bar", "rings", "dumbbells", "gym"]
+EquipmentChoice = Literal["none", "pullup_bar", "rings", "dumbbells", "bench", "gym"]
 Diet = Literal["veg", "egg", "nonveg"]
 Section = Literal["gym", "calisthenics", "cardio", "martial_arts", "flexibility", "meditation"]
 Phrased = Literal["rules", "ollama"]
