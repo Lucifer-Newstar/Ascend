@@ -17,21 +17,16 @@ Status: built in v1.1. Owner: Jegatheesan (sidecar), Dhanush (renderer).
 - **Backups.** `.ascendbak` backups carry the photos under `photos/`, each with its checksum in the manifest. Restore puts
   them back; a photo with a bad name or checksum is skipped instead of failing the restore.
 - **Erase.** "Start fresh" and Settings > Erase my data delete the rows and the folder.
-- **Reminder.** The trainer reminds you once a month (the watcher's `photo_reminder` rule, through the content selector).
+- **Reminder.** Off by default (v1.3). With **Settings > Privacy & photos > Monthly photo reminder** on, the trainer
+  suggests a photo once a month (the watcher's `photo_reminder` rule, through the content selector).
 
-## Optional AI feedback on photos
+## No AI judging photos (v1.3)
 
-Off by default. It runs only when all of these hold:
-
-1. the user turned on **Progress photo feedback** in Settings;
-2. the profile age is 18 or over (under 18 the switch reads as off and the API refuses);
-3. the local vision model (`qwen3-vl:2b` by default, `ASCEND_VISION_MODEL` to change) answers on localhost.
-
-The prompt asks for visible changes in posture, definition and symmetry and one training focus, and forbids numbers,
-body-fat or weight estimates, comments on looks, skin, face or private areas, and medical claims. The reply then passes
-a guard (`vision.guard`) that drops every sentence with a digit, a percent sign or a word about fat, weight, calories,
-diet or attractiveness, keeps at most three sentences, and falls back to a neutral line when nothing is left. The answer
-is labelled as AI in the UI.
+v1.1 had an optional local AI comparison of two photos. v1.3 removed it (review decision 4):
+judging a body from a photo does not help training and can hurt. `photos/vision.py`,
+`POST /photos/feedback`, `GET /photos/feedback/status`, the `photo_feedback` setting and the
+vision model entry in AI setup are gone. Compare two photos side by side on Profile; asked to
+rate a physique, the trainer says it does not rate bodies or photos.
 
 ## Share cards
 

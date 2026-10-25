@@ -77,8 +77,8 @@ process has its own allowlist: X's post composer only (§3).
    exercise". It runs from the sidecar and sends only the exercise name (ADR-0013). A CI test runs the packaged app's E2E journey with outbound
    network blocked except `127.0.0.1` and fails on any other connection attempt.
 3. **EXIF stripped** from every photo on import (location, device): built in v1.1, see
-   [photos-and-sharing.md](photos-and-sharing.md). Optional AI photo feedback is off by default,
-   never runs for under-18s and never estimates body fat or weight.
+   [photos-and-sharing.md](photos-and-sharing.md). No model looks at progress photos
+   (the v1.1 AI photo feedback was removed in v1.3).
 4. **Delete everything:** typed confirmation, then the database, photos, backups and
    logs are wiped.
 5. **Export everything:** CSV/JSON/`.ascendbak` at any time ([ADR-0010](adr/0010-import-export-formats.md)).
