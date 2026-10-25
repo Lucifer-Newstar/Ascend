@@ -43,7 +43,9 @@ def streak_reason(
     """v1.2: say why a day was missed. Given by the end of the next day, it keeps the
     streak; two missed days in a row still reset it."""
     try:
-        return service.streak_out(service.give_reason(db, body.day, body.reason, now))
+        return service.streak_out(
+            service.give_reason(db, body.day, body.reason, now), db, now.date()
+        )
     except ValueError as e:
         raise HTTPException(422, str(e)) from e
 

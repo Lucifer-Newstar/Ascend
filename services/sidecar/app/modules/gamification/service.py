@@ -44,7 +44,13 @@ from app.modules.gamification.schemas import (
     StreakOut,
     XpOut,
 )
-from app.modules.gamification.streaks import StreakState, compute_streak
+from app.modules.gamification.streaks import (
+    StreakState,
+    compute_streak,
+    next_milestone,
+    week_start,
+    weeks_in_a_row,
+)
 
 
 class QuestNotFound(Exception):
@@ -590,14 +596,52 @@ def add_skill_items(
 # --- summary ---------------------------------------------------------------------
 
 
-def streak_out(s: StreakState) -> StreakOut:
-    return StreakOut(
+def week_target(db: Session) -> int:
+    """Training days a week the plan asks for: the followed program's days, else the
+    sessions-per-week setting (capped by the program when both exist)."""
+    from app.modules.progress import service as progress
+    from app.modules.workouts import programs_service
+
+    want = int(progress.get_setting(db, "sessions_per_week", "3") or 3)
+    e = programs_service.active(db)
+    p = programs_service.get_program(db, e.program_key) if e is not None else None
+    if p is not None and p.days:
+        return max(1, min(want, len({d.weekday % 7 for d in p.days})))
+    return max(1, min(want, 7))
+
+
+def met_weeks(db: Session, days: set[date], target: int) -> set[date]:
+    """Weeks (Monday) with the plan met: `target` training days, or the weekly boss beaten."""
+    from app.modules.gamification.models import BossRaid
+
+    count: dict[date, int] = {}
+    for d in days:
+        count[week_start(d)] = count.get(week_start(d), 0) + 1
+    met = {w for w, n in count.items() if n >= target}
+    met |= set(
+        db.scalars(select(BossRaid.week_start).where(BossRaid.defeated_at.is_not(None))).all()
+    )
+    return met
+
+
+def streak_out(s: StreakState, db: Session | None = None, today: date | None = None) -> StreakOut:
+    out = StreakOut(
         current=s.current,
         best=s.best,
         excused=s.excused,
         active_today=s.active_today,
         reason_due=s.reason_due,
     )
+    if db is None or today is None:
+        return out
+    days = active_days(db)
+    target = week_target(db)
+    out.rest_today = is_rest_day(db, today)
+    out.lifetime_sessions = len(days)
+    out.next_milestone = next_milestone(len(days))
+    out.week_target = target
+    out.weeks_in_a_row = weeks_in_a_row(met_weeks(db, days, target), today)
+    return out
 
 
 def give_reason(db: Session, day: date, reason: str, now: datetime) -> StreakState:
@@ -629,6 +673,7 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
     total = total_xp(db)
     info = f.level_from_total(total)
     letter, title = f.rank_for_level(info.level)
+    sub, next_sub, next_sub_level = f.sub_rank_for_level(info.level)
     s = streak(db, now.date())
     c = calm_streak(db, now.date())
     return GameSummary(
@@ -642,8 +687,11 @@ def summary(db: Session, bus: EventBus, now: datetime) -> GameSummary:
             rank_title=title,
             daily_cap=f.DAILY_CAP,
             formula_version=f.FORMULA_VERSION,
+            sub_rank=sub,
+            next_sub_rank=next_sub,
+            next_sub_rank_level=next_sub_level,
         ),
-        streak=streak_out(s),
+        streak=streak_out(s, db, now.date()),
         calm=CalmStreakOut(current=c.current, best=c.best, active_today=c.active_today),
         quest=[QuestItemOut.model_validate(q) for q in ensure_quest(db, now)],
     )

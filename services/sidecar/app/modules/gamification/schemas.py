@@ -28,6 +28,12 @@ class StreakOut(BaseModel):
     excused: int = 0
     active_today: bool
     reason_due: date | None = None
+    # v1.3 (review S5, S6, 1.3, 1.6): numbers that never reset and today's plan.
+    rest_today: bool = False
+    lifetime_sessions: int = 0
+    next_milestone: int | None = 1
+    weeks_in_a_row: int = 0
+    week_target: int = 3
 
 
 class StreakReasonIn(BaseModel):
@@ -45,6 +51,10 @@ class XpOut(BaseModel):
     rank_title: str
     daily_cap: int
     formula_version: str
+    # v1.3 near goals: E1-E3 style sub-ranks (display only; the XP formula is unchanged).
+    sub_rank: str = "E1"
+    next_sub_rank: str | None = None
+    next_sub_rank_level: int | None = None
 
 
 class CalmStreakOut(BaseModel):
