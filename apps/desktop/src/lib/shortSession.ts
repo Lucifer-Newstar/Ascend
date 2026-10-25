@@ -5,10 +5,11 @@
  */
 import type { ShortSession } from "@ascend/shared";
 
-const KEY = "ascend.shortSession";
+import { localDay } from "./localDate";
 
-export const localDay = (d: Date = new Date()): string =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+export { localDay };
+
+const KEY = "ascend.shortSession";
 
 export function rememberShort(s: ShortSession, now: Date = new Date(), store: Pick<Storage, "setItem"> = window.sessionStorage): void {
   try {

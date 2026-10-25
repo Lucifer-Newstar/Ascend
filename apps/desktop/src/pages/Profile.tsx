@@ -19,11 +19,12 @@ import { TrainerPortrait, useTrainer } from "../components/Trainer";
 import { useToast } from "../components/Toast";
 import { Wardrobe, progressFrom } from "../components/Wardrobe";
 import { hunterClass } from "../lib/loadout";
+import { localDay } from "../lib/localDate";
 import { useOptionalPrefs } from "../lib/prefs";
 import { reencodePhoto, saveImage } from "../lib/share";
 import { useApi } from "../lib/useApi";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDay();
 const POSES: PhotoPose[] = ["front", "side", "back", "other"];
 
 export function ProfilePage({ refreshKey }: { refreshKey: number }) {

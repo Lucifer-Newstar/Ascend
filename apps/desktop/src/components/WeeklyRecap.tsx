@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { api } from "../api/client";
+import { localDaysAgo } from "../lib/localDate";
 import { useReducedMotion } from "../lib/motion";
 import { canRecord, drawFrame, readPalette, recapLength, recapSlides, recordRecap, saveVideo, weekLabel, RECAP_H, RECAP_W } from "../lib/recap";
 import { useApi } from "../lib/useApi";
@@ -16,10 +17,8 @@ import { Segmented } from "./Segmented";
 import { useToast } from "./Toast";
 import { useTrainer } from "./Trainer";
 
-const DAY_MS = 86_400_000;
-
 function lastWeekIso(): string {
-  return new Date(Date.now() - 7 * DAY_MS).toISOString().slice(0, 10);
+  return localDaysAgo(7);
 }
 
 export function WeeklyRecapPanel({ refreshKey = 0, index = 4 }: { refreshKey?: number; index?: number }) {

@@ -12,14 +12,13 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api/client";
 import type { Page } from "../components/Layout";
+import { localDay } from "./localDate";
 import { pendingReminders, toNotify } from "./reminders";
 import { useApi } from "./useApi";
 
 const EVERY_MS = 30 * 60 * 1000;
 
-export function localDay(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+export { localDay };
 
 export function useReminderNotifications({ game, enabled, evening = false, trainerName, refreshKey, onNavigate }: {
   game: GameSummary | null | undefined;
