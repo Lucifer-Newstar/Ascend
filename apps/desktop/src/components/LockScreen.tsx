@@ -3,12 +3,18 @@
  * a desktop sign-in screen. Click the tile or press Enter to go in; it zooms and fades into
  * Today (instant with reduced motion). ASCEND has no PIN or password, so none is asked here.
  * The words sit on solid panels, so every theme stays readable.
+ *
+ * v1.4 (review 2.4, M14): the lock screen is the workout door. It says what today is
+ * ("Today: Push A · 4 moves" or "Rest day ✓"), and on a training day Enter starts today's
+ * session on Train; the tile still goes to Today. A short day gets the 10-minute version.
+ * Settings > Trainer can switch the lock screen off.
  */
-import type { GameSummary } from "@ascend/shared";
+import type { GameSummary, Plan } from "@ascend/shared";
 import { useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import { useReducedMotion } from "../lib/motion";
+import { localDay, rememberShort } from "../lib/shortSession";
 import { usePrefs } from "../lib/prefs";
 import { useApi } from "../lib/useApi";
 import { Avatar } from "./Avatar";
@@ -18,48 +24,84 @@ import { RankBadge } from "./XpBar";
 /** How long the zoom-and-fade into the app takes (ms). */
 export const LOCK_LEAVE_MS = 380;
 
-export function LockScreen({ game, onEnter, now = () => new Date() }: {
+export type TodayDoor =
+  | { kind: "session"; name: string; moves: number }
+  | { kind: "done"; name: string }
+  | { kind: "rest" }
+  | { kind: "none" };
+
+/** What the door says about today: rest day, today's session, or already trained. */
+export function todayDoor(game: GameSummary | null | undefined, plan: Plan | null | undefined, today: string): TodayDoor {
+  if (game?.streak?.rest_today) return { kind: "rest" };
+  if (!plan) return { kind: "none" };
+  if (plan.last_trained === today) return { kind: "done", name: plan.next.name };
+  return { kind: "session", name: plan.next.name, moves: plan.next.items.length };
+}
+
+export function LockScreen({ game, onEnter, onStart, now = () => new Date() }: {
   game: GameSummary | null | undefined;
   onEnter: () => void;
+  /** v1.4: start today's session on Train (Enter on a training day). */
+  onStart?: () => void;
   now?: () => Date;
 }) {
   const { settings } = usePrefs();
   const reduce = useReducedMotion();
   const profile = useApi(api.profile, []);
+  const plan = useApi(api.currentPlan, [], { cacheKey: "plan" });
   const [leaving, setLeaving] = useState(false);
   const tile = useRef<HTMLButtonElement>(null);
   const left = useRef(false);
+  const at = now();
+  const door = todayDoor(game, plan.data, localDay(at));
+  const canStart = door.kind === "session" && onStart !== undefined;
 
-  const enter = () => {
+  const go = (then: () => void) => {
     if (left.current) return;
     left.current = true;
     if (reduce) {
-      onEnter();
+      then();
       return;
     }
     setLeaving(true);
-    window.setTimeout(onEnter, LOCK_LEAVE_MS);
+    window.setTimeout(then, LOCK_LEAVE_MS);
   };
+  const enter = () => go(onEnter);
+  const start = () => go(onStart ?? onEnter);
+  const startShort = async () => {
+    try {
+      const s = await api.shortSession(10);
+      if (s) rememberShort(s, at);
+    } catch {
+      // the full session opens instead; Train still works
+    }
+    start();
+  };
+  // Enter on a training day starts today's session (one key from launch to the first set).
+  const enterKey = useRef(enter);
+  useEffect(() => {
+    enterKey.current = canStart ? start : enter;
+  });
 
-  useEffect(() => tile.current?.focus(), []);
+  // Focus the tile, or "Start today's session" on a training day, so Enter does the right thing.
+  const startBtn = useRef<HTMLButtonElement>(null);
+  useEffect(() => (canStart ? startBtn.current : tile.current)?.focus(), [canStart]);
   // Enter goes in even when focus wandered off the tile (a click on the background).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && document.activeElement !== tile.current) {
+      const el = document.activeElement;
+      if (e.key === "Enter" && el !== tile.current && !(el instanceof HTMLButtonElement)) {
         e.preventDefault();
-        enter();
+        enterKey.current();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // enter only reads refs and stable props
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const name = profile.data?.name?.trim() || "Hunter";
   const rank = game?.xp.rank ?? "E";
   const level = game?.xp.level ?? 1;
-  const at = now();
   const time = at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   const date = at.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
@@ -80,7 +122,20 @@ export function LockScreen({ game, onEnter, now = () => new Date() }: {
           <RankBadge rank={rank} size={26} /> Level {level} · Rank {rank}
         </span>
       </button>
-      <p className="relative z-[1] rounded-md bg-panel px-3 py-1.5 text-sm text-muted">Click your hunter or press Enter</p>
+      <section className="relative z-[1] flex flex-col items-center gap-2 rounded-xl bg-panel/95 px-5 py-3 text-center shadow-lg" data-testid="lock-door" aria-label="Today">
+        {door.kind === "rest" && <p className="text-sm text-ink">Rest day ✓ Recovery is part of the plan.</p>}
+        {door.kind === "done" && <p className="text-sm text-ink">Today&apos;s session is done ✓ Next: {door.name}</p>}
+        {door.kind === "session" && (
+          <p className="text-sm text-ink">Today: <span className="font-semibold">{door.name}</span> · {door.moves} {door.moves === 1 ? "move" : "moves"}</p>
+        )}
+        {canStart ? (
+          <div className="flex flex-wrap justify-center gap-2">
+            <button ref={startBtn} type="button" className="btn-primary" onClick={start} data-testid="lock-start">Start today&apos;s session</button>
+            <button type="button" className="btn-ghost" onClick={() => void startShort()} data-testid="lock-short">Short on time? 10-minute version</button>
+          </div>
+        ) : null}
+        <p className="text-xs text-muted">{canStart ? "Press Enter to start, or click your hunter for Today" : "Click your hunter or press Enter"}</p>
+      </section>
     </main>
   );
 }

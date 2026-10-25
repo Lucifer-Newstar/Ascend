@@ -128,7 +128,8 @@ export default function App() {
             <Onboarding onDone={() => { setFreshStart(true); setLocked(false); setHasProfile(true); bump(); }} />
           </Suspense>
         ) : locked ? (
-          <LockScreen game={game} onEnter={() => { setLocked(false); navigate("dashboard"); }} />
+          <LockScreen game={game} onEnter={() => { setLocked(false); navigate("dashboard"); }}
+            onStart={() => { setLocked(false); navigate("workout"); }} />
         ) : (
           <Shell page={page} navigate={navigate} refreshKey={refreshKey} bump={bump} freshStart={freshStart}
             onErased={() => { setFreshStart(false); setHasProfile(false); bump(); }} />
