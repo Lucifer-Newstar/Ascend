@@ -26,6 +26,7 @@ from app.modules.actions.errors import ActionError
 from app.modules.nutrition import service as nutrition
 from app.modules.nutrition.models import Food
 from app.modules.nutrition.schemas import FoodIn, MealIn, MealItemIn
+from app.modules.planbuilder import action as planbuilder
 from app.modules.progress import body
 from app.modules.progress.schemas import BodyMetricIn
 from app.modules.workouts import programs_service
@@ -518,6 +519,15 @@ SPECS: dict[str, Spec] = {
             edits.describe_plan,
             edits.exec_plan,
             edits.undo_plan,
+        ),
+        Spec(
+            "build_plan",
+            "Update your plan",
+            "normal",
+            planbuilder.BuildPlanP,
+            planbuilder.describe,
+            planbuilder.execute,
+            planbuilder.undo,
         ),
         Spec(
             "erase_data",

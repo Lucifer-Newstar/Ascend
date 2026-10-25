@@ -21,7 +21,7 @@ router = APIRouter(prefix="/actions", tags=["actions"])
 
 Kind = Literal[
     "log_set", "log_hold", "log_weight", "log_meal", "add_food", "follow_program",
-    "update_profile", "set_equipment", "update_setting", "edit_plan", "erase_data",
+    "update_profile", "set_equipment", "update_setting", "edit_plan", "build_plan", "erase_data",
 ]  # fmt: skip
 
 

@@ -355,6 +355,7 @@ components:
           - set_equipment
           - update_setting
           - edit_plan
+          - build_plan
           - erase_data
           title: Kind
         params:
@@ -422,6 +423,7 @@ components:
           - set_equipment
           - update_setting
           - edit_plan
+          - build_plan
           - erase_data
           title: Kind
         allow:
