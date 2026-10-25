@@ -96,8 +96,10 @@ ENTRIES: tuple[Entry, ...] = (
         "streak",
         "How do streaks work?",
         ("streak", "streaks", "freeze", "freezes", "missed", "skip"),
-        "Any day you train or log counts toward your streak. Missed a day? Tell me why by the "
-        "next day and the streak is kept. Two missed days in a row, or no reason, reset it.",
+        "A day you train (one logged set or a finished workout) adds to your streak. Planned "
+        "rest days in your program never break it. Missed a training day? Tell me why by the "
+        "next day and it is kept. Two missed days in a row, or no reason, reset it. Meals and "
+        "weigh-ins earn XP but don't keep the streak.",
         "dashboard",
     ),
     Entry(
@@ -253,7 +255,16 @@ ENTRIES: tuple[Entry, ...] = (
     Entry(
         "import",
         "Can I import my old data?",
-        ("import", "strong", "hevy", "csv", "old data", "existing data", "transfer"),
+        (
+            "import",
+            "strong app",
+            "from strong",
+            "hevy",
+            "csv",
+            "old data",
+            "existing data",
+            "transfer",
+        ),
         "Yes. Import & export reads Strong and Hevy CSV exports and ASCEND backups. You get a "
         "dry-run report before anything is written.",
         "data",
@@ -261,7 +272,15 @@ ENTRIES: tuple[Entry, ...] = (
     Entry(
         "backup",
         "How do backups work?",
-        ("backup", "backups", "restore", "safe", "lose"),
+        (
+            "backup",
+            "backups",
+            "restore",
+            "lose my data",
+            "lose data",
+            "data safe",
+            "safe to update",
+        ),
         "ASCEND keeps a daily backup automatically (two weeks). You can make one any time and "
         "restore from Settings; a restore backs up the current data first.",
         "data",
@@ -399,7 +418,17 @@ ENTRIES: tuple[Entry, ...] = (
     Entry(
         "pushup_form",
         "How do I do a push-up properly?",
-        ("push up form", "pushup form", "proper push", "knee push", "can't do push", "push-up"),
+        (
+            "push up form",
+            "pushup form",
+            "proper push",
+            "knee push",
+            "can't do push",
+            "push-up",
+            "pushup",
+            "push ups properly",
+            "pushups properly",
+        ),
         "Hands under shoulders, body straight from head to heels, lower until your chest is a "
         "fist above the floor, push back up. Too hard? Put your hands on a bed or table "
         "(incline push-ups) and lower the height over the weeks.",
@@ -498,6 +527,108 @@ ENTRIES: tuple[Entry, ...] = (
         "they count toward streaks and quests.",
         "workout",
     ),
+    Entry(
+        "custom_food",
+        "How do I add my own food?",
+        (
+            "custom food",
+            "own food",
+            "add food",
+            "add a food",
+            "new food",
+            "my own food",
+            "food not found",
+            "not in the food",
+            "missing food",
+        ),
+        "On Fuel, tap Add your own food: name, serving, grams, calories and protein, carbs and "
+        "fat. Or tell me: add food kozhukattai 120 kcal 3g protein 22g carbs 2g fat per piece. "
+        "It then shows up in search and I can log it.",
+        "diet",
+    ),
+    Entry(
+        "best_time",
+        "Best time of day to train?",
+        (
+            "best time to work",
+            "best time to train",
+            "best time to exercise",
+            "morning or evening",
+            "time to work out",
+            "time to workout",
+            "time to train",
+        ),
+        "Whenever you can do it most days. Morning or evening both work; consistency matters far "
+        "more than the clock. Leave 1-2 hours after a big meal and an hour or two before sleep.",
+    ),
+    Entry(
+        "pain",
+        "Something hurts. What should I do?",
+        (
+            "hurts",
+            "hurt",
+            "pain",
+            "injury",
+            "injured",
+            "sprain",
+            "shoulder pain",
+            "knee pain",
+            "back pain",
+            "wrist pain",
+        ),
+        "Sharp pain, swelling or pain that stays: stop that exercise and rest it, and see a "
+        "doctor or physio if it isn't better in a few days. Mild muscle soreness a day or two "
+        "after training is normal. Train the parts that don't hurt meanwhile.",
+    ),
+    Entry(
+        "sets_per_muscle",
+        "How many sets per muscle?",
+        (
+            "how many sets",
+            "sets per muscle",
+            "sets for chest",
+            "sets for back",
+            "sets for legs",
+            "sets a week",
+            "weekly sets",
+        ),
+        "About 10-20 hard sets per muscle a week, spread over 2-3 days, is a good range. "
+        "Beginners grow well on the low end (about 10). The muscle map on Progress counts them.",
+        "progress",
+    ),
+    Entry(
+        "veg_protein",
+        "High-protein vegetarian food ideas?",
+        (
+            "veg protein",
+            "vegetarian protein",
+            "high protein veg",
+            "protein veg",
+            "veg breakfast",
+            "protein breakfast",
+            "protein for vegetarians",
+        ),
+        "Paneer, curd or hung curd, milk, soya chunks, dal, chana or rajma, sprouts, peanuts "
+        "and pesarattu. A breakfast idea: paneer bhurji with 2 chapati, or pesarattu with curd. "
+        "Fuel shows the protein in each.",
+        "diet",
+    ),
+    Entry(
+        "creatine",
+        "Is creatine safe?",
+        ("creatine",),
+        "Creatine monohydrate is one of the most studied supplements; 3-5 g a day is the usual "
+        "dose for healthy adults. It isn't needed to make progress. If you're under 18 or have "
+        "a kidney condition, ask a doctor first.",
+    ),
+    Entry(
+        "rice_bulk",
+        "Is rice good for gaining weight?",
+        ("rice good", "rice for bulking", "rice bulk", "rice weight gain", "eat rice"),
+        "Yes. Rice is an easy, cheap way to add calories for a bulk. Pair it with a protein "
+        "(dal, curd, egg, chicken, paneer) so the extra weight is more muscle.",
+        "diet",
+    ),
 )
 
 ENTRY_BY_ID: dict[str, Entry] = {e.id: e for e in ENTRIES}
@@ -531,14 +662,27 @@ def score(entry: Entry, text: str) -> float:
     return s
 
 
-def match(text: str, threshold: float = 1.0) -> Entry | None:
+def threshold_for(text: str) -> float:
+    """v1.3: one keyword decides a short question, not a long one. A long message needs
+    more of an entry's words, so "how do I build strong glutes?" no longer gets the import
+    note and a long post doesn't land on a note because one word matched."""
+    n = len(words(text))
+    if n <= 6:
+        return 1.0
+    if n <= 12:
+        return 1.5
+    return 2.0
+
+
+def match(text: str, threshold: float | None = None) -> Entry | None:
     """The best entry for a question, or None when nothing fits well enough."""
+    need = threshold_for(text) if threshold is None else threshold
     best: tuple[float, Entry] | None = None
     for e in ENTRIES:
         s = score(e, text)
         if s > 0 and (best is None or s > best[0]):
             best = (s, e)
-    return best[1] if best and best[0] >= threshold else None
+    return best[1] if best and best[0] >= need else None
 
 
 def section_in(text: str) -> str | None:
