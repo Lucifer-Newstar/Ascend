@@ -92,7 +92,9 @@ def check_weight_goal(
     flags: list[Flag] = []
     if height_cm:
         bmi = target_kg / (height_cm / 100) ** 2
-        if bmi < MIN_BMI:
+        # v1.3: an underweight user gaining toward a healthy BMI is the goal, not a risk;
+        # only a target BELOW the current weight (a loss) is blocked here.
+        if bmi < MIN_BMI and target_kg < weight_kg:
             flags.append(
                 Flag(
                     "underweight_target",
