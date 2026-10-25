@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.core.schemas import StrictIn
 
 
 class QuestItemOut(BaseModel):
@@ -155,3 +158,37 @@ class TitleOut(BaseModel):
     boss: str
     week_start: date
     earned_at: datetime
+
+
+UnlockKind = Literal["skill", "boss", "rank", "cosmetic"]
+
+
+class UnlockIn(StrictIn):
+    """v1.4: one thing the desktop sees as unlocked right now."""
+
+    key: str = Field(min_length=3, max_length=80, pattern=r"^[a-z]+:[A-Za-z0-9_\- .']+$")
+    kind: UnlockKind
+    title: str = Field(min_length=1, max_length=80)
+    detail: str = Field(default="", max_length=160)
+
+
+class UnlocksSyncIn(StrictIn):
+    items: list[UnlockIn] = Field(max_length=500)
+
+
+class UnlockOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    key: str
+    kind: UnlockKind
+    title: str
+    detail: str
+    at: datetime
+    seeded: bool
+
+
+class UnlocksSyncOut(BaseModel):
+    """`new`: unlocks first seen now, to play as a reveal. The very first sync records
+    everything as `seeded` and returns none."""
+
+    new: list[UnlockOut]
+    total: int

@@ -273,6 +273,55 @@ paths:
       x-status: implemented
       tags:
       - gamification
+  /game/unlocks:
+    get:
+      summary: Your unlocks, newest first
+      description: 'v1.4: every skill step, boss clear, rank and cosmetic you have unlocked, with the
+
+        date it first appeared (for the Unlocks page and its replays).'
+      operationId: list_unlocks_game_unlocks_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UnlockOut'
+                type: array
+                title: Response List Unlocks Game Unlocks Get
+      x-status: implemented
+      tags:
+      - gamification
+  /game/unlocks/sync:
+    post:
+      summary: Record what is unlocked now
+      description: 'The desktop reports what is unlocked; the ones not seen before come back as `new`
+
+        (to play as a reveal). The very first sync records everything quietly.'
+      operationId: sync_unlocks_game_unlocks_sync_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlocksSyncIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlocksSyncOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-status: implemented
+      tags:
+      - gamification
 components:
   securitySchemes:
     launchToken:
@@ -882,3 +931,103 @@ components:
       - beaten
       title: BossLadderOut
       description: 'GET /game/bosses: every boss, by tier and category, and how often you beat it.'
+    UnlockOut:
+      properties:
+        key:
+          type: string
+          title: Key
+        kind:
+          type: string
+          enum:
+          - skill
+          - boss
+          - rank
+          - cosmetic
+          title: Kind
+        title:
+          type: string
+          title: Title
+        detail:
+          type: string
+          title: Detail
+        at:
+          type: string
+          format: date-time
+          title: At
+        seeded:
+          type: boolean
+          title: Seeded
+      type: object
+      required:
+      - key
+      - kind
+      - title
+      - detail
+      - at
+      - seeded
+      title: UnlockOut
+    UnlockIn:
+      properties:
+        key:
+          type: string
+          maxLength: 80
+          minLength: 3
+          pattern: ^[a-z]+:[A-Za-z0-9_\- .']+$
+          title: Key
+        kind:
+          type: string
+          enum:
+          - skill
+          - boss
+          - rank
+          - cosmetic
+          title: Kind
+        title:
+          type: string
+          maxLength: 80
+          minLength: 1
+          title: Title
+        detail:
+          type: string
+          maxLength: 160
+          title: Detail
+          default: ''
+      additionalProperties: false
+      type: object
+      required:
+      - key
+      - kind
+      - title
+      title: UnlockIn
+      description: 'v1.4: one thing the desktop sees as unlocked right now.'
+    UnlocksSyncIn:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/UnlockIn'
+          type: array
+          maxItems: 500
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: UnlocksSyncIn
+    UnlocksSyncOut:
+      properties:
+        new:
+          items:
+            $ref: '#/components/schemas/UnlockOut'
+          type: array
+          title: New
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - new
+      - total
+      title: UnlocksSyncOut
+      description: '`new`: unlocks first seen now, to play as a reveal. The very first sync records
+
+        everything as `seeded` and returns none.'

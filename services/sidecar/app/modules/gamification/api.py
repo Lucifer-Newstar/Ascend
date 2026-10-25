@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
 from app.core.events import EventBus
-from app.modules.gamification import boss, boss_service, service, stats, themes
+from app.modules.gamification import boss, boss_service, service, stats, themes, unlocks
 from app.modules.gamification.schemas import (
     BossLadderOut,
     BossOut,
@@ -20,6 +20,9 @@ from app.modules.gamification.schemas import (
     StreakReasonIn,
     ThemeOut,
     TitleOut,
+    UnlockOut,
+    UnlocksSyncIn,
+    UnlocksSyncOut,
 )
 
 router = APIRouter(prefix="/game", tags=["gamification"])
@@ -195,3 +198,20 @@ def titles(db: Session = Depends(get_db)) -> list[TitleOut]:
         for r in boss_service.titles(db)
         if r.defeated_at is not None
     ]
+
+
+@router.get("/unlocks", response_model=list[UnlockOut], summary="Your unlocks, newest first")
+def list_unlocks(db: Session = Depends(get_db)) -> list[UnlockOut]:
+    """v1.4: every skill step, boss clear, rank and cosmetic you have unlocked, with the
+    date it first appeared (for the Unlocks page and its replays)."""
+    return [UnlockOut.model_validate(r) for r in unlocks.list_unlocks(db)]
+
+
+@router.post("/unlocks/sync", response_model=UnlocksSyncOut, summary="Record what is unlocked now")
+def sync_unlocks(
+    body: UnlocksSyncIn, db: Session = Depends(get_db), now: datetime = Depends(get_now)
+) -> UnlocksSyncOut:
+    """The desktop reports what is unlocked; the ones not seen before come back as `new`
+    (to play as a reveal). The very first sync records everything quietly."""
+    new, total = unlocks.sync(db, now, body.items)
+    return UnlocksSyncOut(new=[UnlockOut.model_validate(r) for r in new], total=total)

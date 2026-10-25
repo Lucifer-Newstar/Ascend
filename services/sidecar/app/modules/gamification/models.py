@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -77,3 +77,20 @@ class StreakReason(Base):
     reason: Mapped[str] = mapped_column(String(120))
     given_on: Mapped[date] = mapped_column(Date)
     given_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class UnlockEvent(Base):
+    """v1.4: one unlock you have seen (a skill step, a boss clear, a rank, a cosmetic), with
+    the date it first appeared, so the Unlocks page can list and replay it. The desktop
+    reports what is unlocked; the first report fills the log quietly (`seeded`), so updating
+    the app does not replay a year of unlocks at once."""
+
+    __tablename__ = "unlock_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    key: Mapped[str] = mapped_column(String(80), unique=True)  # "cosmetic:pet_frost_cub"
+    kind: Mapped[str] = mapped_column(String(16))  # skill | boss | rank | cosmetic
+    title: Mapped[str] = mapped_column(String(80))
+    detail: Mapped[str] = mapped_column(String(160), default="")
+    at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    seeded: Mapped[bool] = mapped_column(Boolean, default=False)
