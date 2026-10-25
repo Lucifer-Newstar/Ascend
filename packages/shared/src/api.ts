@@ -1233,17 +1233,56 @@ export interface ChatAction {
   label: string;
 }
 
+/** Where a knowledge-base answer came from (ml/knowledge/SOURCES.md). */
+export interface ChatCitation {
+  passage_id: string;
+  title: string;
+  source: string;
+  licence: string;
+  url: string;
+  ref: string;
+}
+
 export interface ChatReply {
   reply: string;
   mood: TrainerMoodName;
   intent: string;
-  source: "rules" | "faq" | "ollama";
+  source: "rules" | "faq" | "ollama" | "knowledge";
   fallback_reason: FallbackReason | null;
   actions: ChatAction[];
   suggestions: string[];
   faq_id: string | null;
   /** An action the chat proposes (actions-v1); it runs only after Confirm on its card. */
   proposal: ActionProposal | null;
+  /** Sources behind a knowledge-base answer (ml-v1); empty or absent otherwise. */
+  citations?: ChatCitation[];
+}
+
+/** On-device models (GET /ml/status). The UI hides "Scan meal" unless food_photo.available. */
+export interface MlStatus {
+  intent: { available: boolean; version: string | null; threshold: number; labels: string[]; reason: string | null };
+  knowledge: { available: boolean; passages: number; sources: string[] };
+  food_photo: {
+    available: boolean;
+    reason: "missing" | "not_gated" | "checksum" | "runtime_missing" | "disabled" | "error" | null;
+    version: string | null;
+    classes: number;
+  };
+}
+
+export interface FoodSuggestion {
+  label: string;
+  food_id: number | null;
+  name: string;
+  confidence: number;
+}
+
+/** POST /ml/food-photo: suggestions only; nothing is logged until the user confirms. */
+export interface FoodPhotoResult {
+  suggestions: FoodSuggestion[];
+  result: "food" | "not_food" | "unsure";
+  model_version: string;
+  must_confirm: true;
 }
 
 export interface FeedMessage {

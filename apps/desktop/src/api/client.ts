@@ -82,6 +82,8 @@ import type {
   FinishedWorkout,
   Food,
   FoodIn,
+  FoodPhotoResult,
+  MlStatus,
   BossLadderEntry,
   UnlockEntry,
   UnlockItem,
@@ -275,6 +277,8 @@ export const api = {
   coachWarm: () => call<CoachWarm>("POST", "/coach/warm"),
 
   trainerChat: (text: string) => call<ChatReply>("POST", "/trainer/chat", { text }),
+  mlStatus: () => call<MlStatus>("GET", "/ml/status"),
+  foodPhoto: (data_url: string) => call<FoodPhotoResult>("POST", "/ml/food-photo", { data_url }),
   confirmAction: (id: number, typed: string | null = null) => call<ActionProposal>("POST", `/actions/${id}/confirm`, { typed }),
   cancelAction: (id: number) => call<ActionProposal>("POST", `/actions/${id}/cancel`),
   undoAction: (id: number) => call<ActionProposal>("POST", `/actions/${id}/undo`),
