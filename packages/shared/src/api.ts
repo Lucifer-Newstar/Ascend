@@ -26,7 +26,7 @@ export interface ProfileIn {
 }
 
 export type Focus = "strength" | "muscle" | "skills" | "fat_loss";
-export type EquipmentChoice = "none" | "pullup_bar" | "rings" | "dumbbells" | "gym";
+export type EquipmentChoice = "none" | "pullup_bar" | "rings" | "dumbbells" | "bench" | "gym";
 
 /** POST /profile/baseline: the Awakening baseline test. 0 or null = not done. */
 export interface BaselineIn {
@@ -1270,7 +1270,7 @@ export interface ActionProposal {
 
 export type PlanFocus = "strength" | "muscle" | "fat_loss" | "skills" | "general";
 export type PlanExperience = "beginner" | "intermediate" | "advanced";
-export type PlanEquipment = "none" | "pullup_bar" | "rings" | "dumbbells" | "gym";
+export type PlanEquipment = "none" | "pullup_bar" | "rings" | "dumbbells" | "bench" | "gym";
 export type DietKind = "veg" | "egg" | "nonveg";
 
 export interface PlanFlag {
@@ -1301,8 +1301,10 @@ export interface PlanSlot {
   exercise: string;
   exercise_id?: number | null;
   sets: number;
+  /** Reps, or seconds when `measure` is "hold" (v1.3). */
   rep_low: number;
   rep_high: number;
+  measure?: "reps" | "hold";
   target_rpe?: number;
   rest_s?: number;
 }
