@@ -1,9 +1,13 @@
 # ML pipeline checks (owner: Navin, workflow: Gokul).
 #
-#   lint-test -> ruff + pytest for ml/ (preprocessing contract, prepare rules, metrics,
-#                ONNX parity) and the labels.json check against the food table
-#   smoke     -> the whole pipeline on the synthetic set: prepare -> train -> export ->
-#                evaluate, then uploads metrics.json and the model manifest
+#   lint-test   -> ruff + pytest for ml/ (preprocessing contract, prepare rules, metrics,
+#                  ONNX parity, intent data rules, coco converter, food gate) and the
+#                  labels.json check against the food table
+#   smoke       -> the food pipeline on the synthetic set: prepare -> train -> export ->
+#                  evaluate -> gate (from scratch, so no weights download), then uploads
+#                  metrics.json, the model manifest and the gate result
+#   text-models -> nightly / by hand: rebuild the intent model and the knowledge base from
+#                  their public sources and check both gates (needs the downloads)
 #
 # Only runs when ml/ or the food table changes (and nightly / by hand), because the
 # torch install is the slowest thing in CI.
@@ -12,10 +16,20 @@ name: ML
 on:
   push:
     branches: ["**"]
-    paths: ["ml/**", "services/sidecar/app/modules/nutrition/seed.py", ".github/workflows/ml.yml"]
+    paths:
+      - "ml/**"
+      - "services/sidecar/app/modules/nutrition/seed.py"
+      - "services/sidecar/app/modules/nutrition/seed_v12.py"
+      - "services/sidecar/app/modules/ml/**"
+      - ".github/workflows/ml.yml"
   pull_request:
     branches: [main]
-    paths: ["ml/**", "services/sidecar/app/modules/nutrition/seed.py", ".github/workflows/ml.yml"]
+    paths:
+      - "ml/**"
+      - "services/sidecar/app/modules/nutrition/seed.py"
+      - "services/sidecar/app/modules/nutrition/seed_v12.py"
+      - "services/sidecar/app/modules/ml/**"
+      - ".github/workflows/ml.yml"
   workflow_dispatch:
   schedule:
     - cron: "30 20 * * *"
@@ -75,8 +89,21 @@ jobs:
       - run: uv pip install --python .venv/bin/python -r requirements.txt
       - name: Generate synthetic data
         run: .venv/bin/python src/make_smoke_data.py --classes 4 --per-class 30 --own 5
-      - name: dvc repro
-        run: PATH="$PWD/.venv/bin:$PATH" dvc repro
+      - name: Smoke recipe (no pretrained download, smoke version)
+        # params.yaml holds the real recipe; the smoke run trains from scratch and is
+        # labelled so the food gate can never pass it.
+        run: |
+          .venv/bin/python - <<'EOF'
+          import yaml
+          p = yaml.safe_load(open("params.yaml"))
+          p["train"]["pretrained"] = False
+          p["train"]["epochs"] = 15
+          p["train"]["batch_size"] = 32
+          p["export"]["version"] = "0.0.0-smoke"
+          yaml.safe_dump(p, open("params.yaml", "w"), sort_keys=False)
+          EOF
+      - name: dvc repro (food stages)
+        run: PATH="$PWD/.venv/bin:$PATH" dvc repro gate
       - name: Gate (smoke)
         # The synthetic classes are easy; anything under this means the pipeline broke.
         run: |
@@ -86,6 +113,8 @@ jobs:
           top1 = m["test"]["top1"]
           print(f"smoke top-1 {top1}")
           assert top1 >= 0.8, f"smoke top-1 {top1} < 0.8"
+          gate = json.load(open("models/food-gate.json"))
+          assert gate["passed"] is False, "a smoke model must never pass the food gate"
           EOF
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -93,4 +122,33 @@ jobs:
           path: |
             ml/metrics.json
             ml/models/models-manifest.json
+            ml/models/food-gate.json
             ml/reports/
+
+  text-models:
+    name: Intent model + knowledge base rebuild
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: lint-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MLFLOW_DISABLE_AGENT_HINT: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: ml/requirements.txt
+      - run: uv venv --python 3.12 .venv
+      - run: uv pip install --python .venv/bin/python -r requirements.txt
+      - name: dvc repro (intent + knowledge)
+        # Downloads the Stack Exchange dump, CLINC150, PAG 2018 and SR Legacy (about 60 MB),
+        # trains the intent model (about a minute on CPU) and checks both gates.
+        run: PATH="$PWD/.venv/bin:$PATH" dvc repro intent_evaluate kb_evaluate
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ml-text-models-${{ github.sha }}
+          path: |
+            ml/reports/intent_metrics.json
+            ml/reports/kb_metrics.json
+            ml/models/intent-manifest.json
