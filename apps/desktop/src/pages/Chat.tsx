@@ -2,8 +2,13 @@
  * Chat (v1.3): the trainer full size. A large portrait of the trainer you picked (it
  * follows the mood of the latest reply) beside the same conversation the Ctrl+K drawer
  * shows. Everything the drawer can do works here: ask, log, and confirm or undo cards.
+ *
+ * v1.4: "Build my plan" starts the trainer's optional plan interview (goal, weight, kit,
+ * sport, days, appetite) with tap-to-answer chips. It is optional: telling the trainer
+ * things in normal chat ("I have a punching bag") offers a plan update on its own.
  */
 import type { ChatAction } from "@ascend/shared";
+import { useState } from "react";
 
 import { TrainerChat } from "../components/TrainerChat";
 import { useTrainer } from "../components/Trainer";
@@ -16,6 +21,7 @@ export function ChatPage({ onAction, onActionDone, onPickTrainer }: {
   onPickTrainer: () => void;
 }) {
   const t = useTrainer();
+  const [question, setQuestion] = useState<string | null>(null);
   const mood = latestMood(useChatMessages());
   // The portrait is the big neutral picture; a reply with feeling swaps in that mood's art.
   const src = mood === "neutral" ? t.portrait : t.art[mood];
@@ -31,11 +37,16 @@ export function ChatPage({ onAction, onActionDone, onPickTrainer }: {
           <p className="text-[11px] uppercase tracking-wider text-accent">{t.style}</p>
           <p className="text-sm text-muted">{t.blurb}</p>
           <p className="text-xs text-ink">Best at: {t.specialty}</p>
-          <button type="button" className="btn-ghost mt-2 px-2 py-1 text-xs" onClick={onPickTrainer}>Change trainer</button>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" className="btn-primary px-3 py-1 text-xs" onClick={() => setQuestion("Build my plan")} data-testid="build-plan"
+              title="A few quick questions, then a plan you can confirm or undo">Build my plan</button>
+            <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={onPickTrainer}>Change trainer</button>
+          </div>
         </div>
       </section>
       <div className="col-span-12 min-h-0 md:col-span-7 xl:col-span-8">
         <TrainerChat variant="page" open onClose={() => undefined} onAction={onAction} onActionDone={onActionDone}
+          question={question} onAsked={() => setQuestion(null)}
           supports={["navigate", "tour", "trainer_picker", "planner"]} />
       </div>
     </div>

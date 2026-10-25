@@ -1,5 +1,5 @@
 import type { ChatReply } from "@ascend/shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -92,5 +92,20 @@ describe("Chat page (v1.3)", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Undo" }));
     expect(await screen.findByText("Undone.")).toBeInTheDocument();
     expect(onActionDone).toHaveBeenCalledTimes(2);
+  });
+
+  it("Build my plan starts the trainer's plan interview and its chips answer it (v1.4)", async () => {
+    vi.mocked(api.trainerChat)
+      .mockResolvedValueOnce(reply({ reply: "Let's build your week. What's the main goal?", intent: "plan_builder", mood: "hyped",
+        suggestions: ["Gain weight", "Build muscle", "Lose fat", "Get stronger", "Stop"] }))
+      .mockResolvedValueOnce(reply({ reply: "Your weight now and where you'd like to be?", intent: "plan_builder", suggestions: ["Skip", "Stop"] }));
+    renderChat("iskra");
+    await userEvent.click(screen.getByTestId("build-plan"));
+    expect(api.trainerChat).toHaveBeenCalledWith("Build my plan");
+    expect(await screen.findByText("Let's build your week. What's the main goal?")).toBeInTheDocument();
+    const chips = screen.getByLabelText("Suggestions");
+    await userEvent.click(within(chips).getByRole("button", { name: "Gain weight" }));
+    expect(api.trainerChat).toHaveBeenLastCalledWith("Gain weight");
+    expect(await screen.findByText("Your weight now and where you'd like to be?")).toBeInTheDocument();
   });
 });

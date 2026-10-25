@@ -16,7 +16,7 @@ import { useOptionalPrefs } from "../lib/prefs";
 import { ActionCard } from "./ActionCard";
 import { TrainerPortrait, useTrainer } from "./Trainer";
 
-export const START_SUGGESTIONS = ["What should I train today?", "10 pushups", "I missed a day", "Give me a tour"];
+export const START_SUGGESTIONS = ["What should I train today?", "10 pushups", "Build my plan", "I missed a day", "Give me a tour"];
 
 /** Wait this long before saying the model may be loading (cold start). */
 export const SLOW_AFTER_MS = 4000;
