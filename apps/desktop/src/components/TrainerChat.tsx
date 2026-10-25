@@ -14,6 +14,7 @@ import { chatStore, latestMood, useChatMessages } from "../lib/chatStore";
 import { fallbackLabel } from "../lib/fallback";
 import { useOptionalPrefs } from "../lib/prefs";
 import { ActionCard } from "./ActionCard";
+import { Citations } from "./Citations";
 import { TrainerPortrait, useTrainer } from "./Trainer";
 
 export const START_SUGGESTIONS = ["What should I train today?", "10 pushups", "Build my plan", "I missed a day", "Give me a tour"];
@@ -158,6 +159,7 @@ export function TrainerChat({
               <p className="whitespace-pre-wrap">{m.text}</p>
               {m.reply?.fallback_reason && <p className="mt-1 text-[11px] text-muted">{fallbackLabel(m.reply.fallback_reason)}</p>}
               {m.reply?.source === "ollama" && <p className="mt-1 text-[11px] text-muted">Worded by the local AI · numbers checked</p>}
+              <Citations items={m.reply?.citations} />
               {m.reply?.proposal && <ActionCard initial={m.reply.proposal} onDone={() => onActionDone?.()} />}
               {(m.reply?.actions ?? []).filter((a) => supports.includes(a.kind)).length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
