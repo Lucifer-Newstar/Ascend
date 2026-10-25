@@ -1,0 +1,3272 @@
+{
+ "tally": {
+  "pass": 251,
+  "fail": 1,
+  "judge": 91
+ },
+ "rows": [
+  {
+   "cat": "set",
+   "text": "10 pushups",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 push ups",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 push-ups",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "did 10 pushups",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "pushups 10",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "push ups x 10",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "pushup 10 reps",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 pushup",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "did 3x10 pushups",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x10 pushups",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3 x 10 push ups",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3 sets of 10 pushups",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3*10 pushups",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "pushups 3x10",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3 sets 10 reps pushups",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "i did 3 sets of 10 push-ups",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-Ups With Feet Elevated, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "bench 20kg 8 reps",
+   "exp": "set:bench|reps=8|kg=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 8 Dumbbell Bench Press, 20 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "bench 20kg x 8",
+   "exp": "set:bench|reps=8|kg=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 8 Dumbbell Bench Press, 20 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "bench 20 x 8",
+   "exp": "set:bench|reps=8|kg=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 8 Dumbbell Bench Press, 20 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "bench press 20kg for 8 reps",
+   "exp": "set:bench|reps=8|kg=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 8 Dumbbell Bench Press, 20 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "8 reps bench 20kg",
+   "exp": "set:bench|reps=8|kg=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 8 Dumbbell Bench Press, 20 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3 sets of 12 squats",
+   "exp": "set:squat|reps=12|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 12 Bodyweight Squat, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x12 squats",
+   "exp": "set:squat|reps=12|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 12 Bodyweight Squat, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "squats 3x12",
+   "exp": "set:squat|reps=12|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 12 Bodyweight Squat, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3 x 12 squat",
+   "exp": "set:squat|reps=12|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 12 Bodyweight Squat, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "pullups 7",
+   "exp": "set:pull|reps=7",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 7 Pull-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "7 pullups",
+   "exp": "set:pull|reps=7",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 7 Pull-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "7 pull ups",
+   "exp": "set:pull|reps=7",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "pull-ups x7",
+   "exp": "set:pull|reps=7",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "did 7 pull-ups",
+   "exp": "set:pull|reps=7",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "pull ups 7 reps",
+   "exp": "set:pull|reps=7",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 7 Weighted Pull Ups, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "12 dips",
+   "exp": "set:dip|reps=12",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 12 Ring Dip, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "dips 12",
+   "exp": "set:dip|reps=12",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 12 Ring Dip, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "dumbbell curl 10kg x 10",
+   "exp": "set:dumbbell|reps=10|kg=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Dumbbell Curl, 10 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10kg db curl 10 reps",
+   "exp": "set:dumbbell|reps=10|kg=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Dumbbell Curl, 10 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x10 dumbbell curl at 10kg",
+   "exp": "set:dumbbell|reps=10|kg=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Dumbbell Curl, 10 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "db bench press 12.5 kg x 8",
+   "exp": "set:dumbbell|reps=10|kg=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 8 Dumbbell Bench Press, 12.5 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "one arm dumbbell row 15kg x 10",
+   "exp": "set:row|reps=10|kg=15",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 One-arm Dumbbell Row, 15 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x10 one-arm dumbbell row at 15 kg",
+   "exp": "set:row|reps=10|kg=15",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 One-arm Dumbbell Row, 15 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "lateral raise 5kg x 12",
+   "exp": "set:lateral|reps=12|kg=5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 12 Lateral Raise, 5 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x12 lateral raises at 5kg",
+   "exp": "set:lateral|reps=12|kg=5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 12 Lateral Raise, 5 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 walking lunges",
+   "exp": "set:lunge|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Walking Lunge, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x10 lunges",
+   "exp": "set:lunge|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Walking Lunge, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "dumbbell floor press 10kg x 10",
+   "exp": "set:floor press|reps=10|kg=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Dumbbell Floor Press, 10 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "goblet squat 10kg x 12",
+   "exp": "set:goblet|reps=12|kg=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 12 Goblet Squat, 10 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "20 calf raises",
+   "exp": "set:calf|reps=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 20 Calf Raise On A Dumbbell, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "15 burpees",
+   "exp": "set:burpee|reps=15",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 15 Burpee, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "20 crunches",
+   "exp": "set:crunch|reps=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 20 Crunches, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "crunches 20",
+   "exp": "set:crunch|reps=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 20 Crunches, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "30 jumping jacks",
+   "exp": "set:jumping|reps=30",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 30 Jumping Jack, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "25 situps",
+   "exp": "set:sit|reps=25",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 25 Sit-Up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "25 sit ups",
+   "exp": "set:sit|reps=25",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 25 Frog Sit-Ups, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "pushpus 15",
+   "exp": "set:push-up|reps=15",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 15 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "15 pushpus",
+   "exp": "set:push-up|reps=15",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 15 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "15 pusups",
+   "exp": "set:push-up|reps=15",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 15 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "15 pushup s",
+   "exp": "set:push-up|reps=15",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 15 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3 set 10 rep pushup",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x10 PUSHUPS",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3X10 Pushups.",
+   "exp": "set:push-up|reps=10|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "machan 10 pushups pannen",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "bro did 10 pushups da",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 pushups done",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "today 10 pushups",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 pushups today",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "just did 10 pushups \ud83d\udcaa",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "aaj 10 pushups kiye",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 pushups adichen",
+   "exp": "set:push-up|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "twenty pushups",
+   "exp": "set:push-up|reps=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 20 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "ten pushups",
+   "exp": "set:push-up|reps=10|sets=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x10 pushups @8",
+   "exp": "set:push-up|reps=10|kg=0|rpe=8",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight at RPE 8, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x10 pushups rpe 8",
+   "exp": "set:push-up|reps=10|kg=0|rpe=8",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 10 Push-up, bodyweight at RPE 8, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "bench 135lb x 5",
+   "exp": "set:bench|reps=5|kg=60|lb",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 5 Dumbbell Bench Press, 61.23 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "bench 135 lbs x 5",
+   "exp": "set:bench|reps=5|kg=60|lb",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 5 Dumbbell Bench Press, 61.23 kg, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "ring pull ups 5",
+   "exp": "set:pull|reps=5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 5 Pull-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "5 ring pullups",
+   "exp": "set:pull|reps=5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 5 Pull-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "3x5 ring pull-ups",
+   "exp": "set:pull|reps=5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 5 Pull-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "5 ring rows",
+   "exp": "set:pull|reps=5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 5 Inverted Row, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 diamond pushups",
+   "exp": "set:diamond|reps=10",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Diamond Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "8 pike pushups",
+   "exp": "set:pike|reps=8",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 8 Pike Push-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 pushups and 10 squats",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session.",
+    "Log 1 \u00d7 10 Bodyweight Squat, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "set",
+   "text": "10 pushups, 5 pullups",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 10 Push-up, bodyweight, in today's session.",
+    "Log 1 \u00d7 5 Pull-up, bodyweight, in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 1 min",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 60 sec",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 60s",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 60 seconds",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "held plank for 60 seconds",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "1 min plank",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank for a minute",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 1 minute",
+   "exp": "hold:plank|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 1:30",
+   "exp": "hold:plank|s=90",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1:30 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 90s",
+   "exp": "hold:plank|s=90",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1:30 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 1 min 30 sec",
+   "exp": "hold:plank|s=90",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1:30 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 1.5 min",
+   "exp": "hold:plank|s=90",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1:30 min Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "dead hang 60 sec",
+   "exp": "hold:dead hang|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Dead Hang hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "dead hang 1 min",
+   "exp": "hold:dead hang|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Dead Hang hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "60 sec dead hang",
+   "exp": "hold:dead hang|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Dead Hang hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "hang 60s",
+   "exp": "hold:dead hang|s=60",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 1 min Dead Hang hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "wall sit 45s",
+   "exp": "hold:wall sit|s=45",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 45 s Wall Sit hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "45 sec wall sit",
+   "exp": "hold:wall sit|s=45",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 45 s Wall Sit hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "l sit 20s",
+   "exp": "hold:l-sit|s=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 20 s L-sit hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "l-sit 20 sec",
+   "exp": "hold:l-sit|s=20",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 20 s L-sit hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "side plank 30s",
+   "exp": "hold:side plank|s=30",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 30 s Side Plank hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "hollow hold 30 sec",
+   "exp": "hold:hollow|s=30",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log a 30 s Hollow Body Hold hold in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "3x30s plank",
+   "exp": "hold:plank|s=30|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 30 s Plank holds in today's session."
+   ]
+  },
+  {
+   "cat": "hold",
+   "text": "plank 3 x 30 sec",
+   "exp": "hold:plank|s=30|sets=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 30 s Plank holds in today's session."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "weight 42kg",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "weight 42",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "my weight is 42 kg",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "I weigh 42",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "bw 42",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "i'm 42 kg",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "weighed 42kg today",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "42kg",
+   "exp": "weight:42",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "I'm 42.5 kg today",
+   "exp": "weight:42.5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42.5 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "weight 42.5",
+   "exp": "weight:42.5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42.5 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "weight 42,5 kg",
+   "exp": "weight:42.5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42.5 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "weight: 42.5kg",
+   "exp": "weight:42.5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42.5 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "body weight 42.5kg",
+   "exp": "weight:42.5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42.5 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "log weight 42.5",
+   "exp": "weight:42.5",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 42.5 kg for now."
+   ]
+  },
+  {
+   "cat": "weight",
+   "text": "weight 205 lbs",
+   "exp": "weight:93.0|lb",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add a weigh-in of 93 kg for now."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 idli",
+   "exp": "meal:idli|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Idli as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 idlis",
+   "exp": "meal:idli|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Idli as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had 2 idli",
+   "exp": "meal:idli|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Idli as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "ate 2 idli for breakfast",
+   "exp": "meal:idli|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Idli as breakfast."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 idli for breakfast",
+   "exp": "meal:idli|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Idli as breakfast."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "breakfast: 2 idli",
+   "exp": "meal:idli|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Idli as breakfast."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 ven pongal",
+   "exp": "meal:ven pongal|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Ven pongal as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "ven pongal",
+   "exp": "meal:ven pongal|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Ven pongal as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had ven pongal",
+   "exp": "meal:ven pongal|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Ven pongal as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 ven pongal for breakfast",
+   "exp": "meal:ven pongal|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Ven pongal as breakfast."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "pongal for breakfast",
+   "exp": "meal:ven pongal|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Ven pongal as breakfast."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had pongal",
+   "exp": "meal:ven pongal|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Ven pongal as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 pongal",
+   "exp": "meal:ven pongal|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Ven pongal as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 coconut chutney for breakfast",
+   "exp": "meal:coconut chutney|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Coconut chutney as breakfast."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had coconut chutney",
+   "exp": "meal:coconut chutney|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Coconut chutney as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "chutney",
+   "exp": "meal:coconut chutney|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Coconut chutney as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "3 chapati",
+   "exp": "meal:chapati|p=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 Chapati as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "3 chapathi",
+   "exp": "meal:chapati|p=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 Chapati as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "3 chapatis",
+   "exp": "meal:chapati|p=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 Chapati as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "3 roti",
+   "exp": "meal:chapati|p=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 Chapati as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had 3 chappathi for dinner",
+   "exp": "meal:chapati|p=3",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 3 \u00d7 Chapati as dinner."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "curd rice for lunch",
+   "exp": "meal:curd rice|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Curd rice as lunch."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had curd rice",
+   "exp": "meal:curd rice|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Curd rice as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 curd rice",
+   "exp": "meal:curd rice|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Curd rice as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 parotta",
+   "exp": "meal:parotta|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Parotta as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 porotta",
+   "exp": "meal:parotta|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Parotta as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 barotta",
+   "exp": "meal:parotta|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Parotta as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 paratha",
+   "exp": "meal:paratha|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Plain paratha as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "chicken biryani for lunch",
+   "exp": "meal:biryani|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Chicken biryani as lunch."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 biryani",
+   "exp": "ask",
+   "verdict": true,
+   "reply": "Which biryani do you mean: Chicken biryani, Veg biryani, Egg biryani or Mutton biryani?",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "had biryani",
+   "exp": "ask",
+   "verdict": true,
+   "reply": "Which biryani do you mean: Chicken biryani, Veg biryani, Egg biryani or Mutton biryani?",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "1 plate biryani",
+   "exp": "ask",
+   "verdict": true,
+   "reply": "Which biryani do you mean: Chicken biryani, Veg biryani, Egg biryani or Mutton biryani?",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "2 eggs",
+   "exp": "meal:egg|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Boiled egg as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 boiled eggs",
+   "exp": "meal:egg|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Boiled egg as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had 2 boiled egg",
+   "exp": "meal:egg|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Boiled egg as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 egg",
+   "exp": "meal:egg|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Boiled egg as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 omelette",
+   "exp": "meal:egg|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Omelette (2 eggs) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 glass milk",
+   "exp": "meal:milk|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Milk (toned) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had milk",
+   "exp": "meal:milk|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Milk (toned) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "milk 250ml",
+   "exp": "meal:milk",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1.25 \u00d7 Milk (toned) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 cup milk",
+   "exp": "meal:milk|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Milk (toned) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 banana",
+   "exp": "meal:banana|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Banana as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 bananas",
+   "exp": "meal:banana|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Banana as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "ate 2 bananas",
+   "exp": "meal:banana|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Banana as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "oats for breakfast",
+   "exp": "meal:oats|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Oats (cooked in water) as breakfast."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had oats with milk",
+   "exp": "meal:oats|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one snack with 2 items (about 266 kcal):",
+    "1 \u00d7 Oats (cooked in water) (1 katori (40 g dry))",
+    "1 \u00d7 Milk (toned) (1 glass)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 bowl oats",
+   "exp": "meal:oats|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Oats (cooked in water) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "paneer 100g",
+   "exp": "meal:paneer",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Paneer (plain) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "paneer butter masala for dinner",
+   "exp": "meal:paneer|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Paneer butter masala as dinner."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had paneer",
+   "exp": "meal:paneer|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Paneer (plain) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 maggi",
+   "exp": "meal:maggi|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Maggi noodles (masala) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had maggi",
+   "exp": "meal:maggi|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Maggi noodles (masala) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "maggi for snack",
+   "exp": "meal:maggi|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Maggi noodles (masala) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 maggi",
+   "exp": "meal:maggi|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Maggi noodles (masala) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "chicken 200g",
+   "exp": "meal:chicken breast|g=200",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Chicken breast (grilled) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "chicken breast 200g",
+   "exp": "meal:chicken breast|g=200",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Chicken breast (grilled) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "200g chicken breast",
+   "exp": "meal:chicken breast|g=200",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Chicken breast (grilled) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "ate 200 grams chicken",
+   "exp": "meal:chicken breast|g=200",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Chicken breast (grilled) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "rice 150g",
+   "exp": "meal:rice",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Steamed rice as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 katori dal rice for lunch",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one lunch with 2 items (about 360 kcal):",
+    "1 \u00d7 Toor dal (1 katori)",
+    "1 \u00d7 Steamed rice (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "dal rice for lunch",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one lunch with 2 items (about 360 kcal):",
+    "1 \u00d7 Toor dal (1 katori)",
+    "1 \u00d7 Steamed rice (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 cup rice and dal",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one snack with 2 items (about 360 kcal):",
+    "1 \u00d7 Steamed rice (1 katori)",
+    "1 \u00d7 Toor dal (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 watermelon",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Watermelon as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had tomato rice",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Tomato rice as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 vada pav",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Vada pav as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 uttapam",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Uttapam as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "whey protein in milk",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Whey protein (in milk) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "tender coconut water",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Tender coconut water as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 veg pulao",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Veg pulao as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "sambar",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Sambar as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "rasam",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Rasam as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 sweet potato",
+   "exp": "meal:late-alpha",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Sweet potato (boiled) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 dosa",
+   "exp": "meal:dosa|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Plain dosa as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 masala dosa",
+   "exp": "meal:dosa|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Masala dosa as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 dosai",
+   "exp": "meal:dosa|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Plain dosa as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had dosa",
+   "exp": "meal:dosa|p=1",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Plain dosa as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 vada",
+   "exp": "meal:vada|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Medu vada as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 medu vada",
+   "exp": "meal:vada|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Medu vada as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 tea",
+   "exp": "meal:tea",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Masala chai (milk, sugar) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had chai",
+   "exp": "meal:tea",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Masala chai (milk, sugar) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 coffee",
+   "exp": "meal:coffee",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Filter coffee (with milk, sugar) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "filter coffee",
+   "exp": "meal:coffee",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Filter coffee (with milk, sugar) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 kozhukattai",
+   "exp": "meal:notintable",
+   "verdict": true,
+   "reply": "\u201ckozhukattai\u201d isn't in the food table yet. You can add it as your own food (Fuel > Add your own food, or tell me: add food <name> <kcal> kcal).",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "2 bread jam",
+   "exp": "meal:notintable",
+   "verdict": true,
+   "reply": "\u201cbread jam\u201d isn't in the food table yet. You can add it as your own food (Fuel > Add your own food, or tell me: add food <name> <kcal> kcal).",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "1 pizza",
+   "exp": "meal:pizza",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Veg pizza as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had kfc",
+   "exp": "meal:notintable",
+   "verdict": true,
+   "reply": "\u201ckfc\u201d isn't in the food table yet. You can add it as your own food (Fuel > Add your own food, or tell me: add food <name> <kcal> kcal).",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "1 shawarma",
+   "exp": "meal:shawarma",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Chicken shawarma roll as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 puttu",
+   "exp": "meal:puttu|p=2",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 2 \u00d7 Puttu as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 sundal",
+   "exp": "meal:sundal",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Sundal (chickpea) as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had kuzhi paniyaram",
+   "exp": "meal:notintable",
+   "verdict": true,
+   "reply": "\u201ckuzhi paniyaram\u201d isn't in the food table yet. You can add it as your own food (Fuel > Add your own food, or tell me: add food <name> <kcal> kcal).",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "1 bowl kichadi",
+   "exp": "meal:khichdi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1 \u00d7 Khichdi as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 sabudana khichdi",
+   "exp": "meal:notintable",
+   "verdict": true,
+   "reply": "\u201csabudana khichdi\u201d isn't in the food table yet. You can add it as your own food (Fuel > Add your own food, or tell me: add food <name> <kcal> kcal).",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "2 idli and sambar for breakfast",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one breakfast with 2 items (about 226 kcal):",
+    "2 \u00d7 Idli (1 piece)",
+    "1 \u00d7 Sambar (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "ven pongal, coconut chutney",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one snack with 2 items (about 275 kcal):",
+    "1 \u00d7 Ven pongal (1 katori)",
+    "1 \u00d7 Coconut chutney (1 tbsp)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "1 ven pongal and 1 coconut chutney for breakfast",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one breakfast with 2 items (about 275 kcal):",
+    "1 \u00d7 Ven pongal (1 katori)",
+    "1 \u00d7 Coconut chutney (1 tbsp)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "ven pongal and coconut chutney for breakfast",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one breakfast with 2 items (about 275 kcal):",
+    "1 \u00d7 Ven pongal (1 katori)",
+    "1 \u00d7 Coconut chutney (1 tbsp)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "3 chapati with dal",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one snack with 2 items (about 495 kcal):",
+    "3 \u00d7 Chapati (1 piece)",
+    "1 \u00d7 Toor dal (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "dosa with chutney and sambar",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one snack with 3 items (about 323 kcal):",
+    "1 \u00d7 Plain dosa (1 piece)",
+    "1 \u00d7 Coconut chutney (1 tbsp)",
+    "1 \u00d7 Sambar (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 idli, 1 vada, sambar",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one snack with 3 items (about 361 kcal):",
+    "2 \u00d7 Idli (1 piece)",
+    "1 \u00d7 Medu vada (1 piece)",
+    "1 \u00d7 Sambar (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "had rice, sambar, poriyal for lunch",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one lunch with 3 items (about 400 kcal):",
+    "1 \u00d7 Steamed rice (1 katori)",
+    "1 \u00d7 Sambar (1 katori)",
+    "1 \u00d7 Mixed veg poriyal (1 katori)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "2 eggs and 1 banana",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one snack with 2 items (about 249 kcal):",
+    "2 \u00d7 Boiled egg (1 piece)",
+    "1 \u00d7 Banana (1 medium)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "breakfast: 2 idli + coconut chutney",
+   "exp": "multi",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log one breakfast with 2 items (about 161 kcal):",
+    "2 \u00d7 Idli (1 piece)",
+    "1 \u00d7 Coconut chutney (1 tbsp)"
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "half plate biryani",
+   "exp": "ask",
+   "verdict": true,
+   "reply": "Which biryani do you mean: Chicken biryani, Veg biryani, Egg biryani or Mutton biryani?",
+   "proposal": null
+  },
+  {
+   "cat": "meal",
+   "text": "1.5 cup curd rice",
+   "exp": "meal:halfp",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 1.5 \u00d7 Curd rice as snack."
+   ]
+  },
+  {
+   "cat": "meal",
+   "text": "ate half katori dal",
+   "exp": "meal:halfp",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Log 0.5 \u00d7 Toor dal as snack."
+   ]
+  },
+  {
+   "cat": "program",
+   "text": "follow ppl",
+   "exp": "follow",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Follow Push / pull / legs, 6 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "program",
+   "text": "switch to push pull legs",
+   "exp": "follow",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Follow Push / pull / legs, 6 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "program",
+   "text": "start the beginner program",
+   "exp": "follow",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Follow Bodyweight Starter, 3 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "program",
+   "text": "put me on starter",
+   "exp": "follow",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Follow Bodyweight Starter, 3 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "program",
+   "text": "switch me to upper lower",
+   "exp": "follow",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Follow Upper / lower, 4 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "program",
+   "text": "follow the 5 day split",
+   "exp": "follow",
+   "verdict": false,
+   "reply": "I don't know a program called \u201c5 day\u201d.",
+   "proposal": null
+  },
+  {
+   "cat": "program",
+   "text": "switch to ppl plan",
+   "exp": "follow",
+   "verdict": true,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Follow Push / pull / legs, 6 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "plan_edit",
+   "text": "swap lateral raise for pull ups",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Everyone starts there. Do dead hangs (20-30 s), scapular pull-ups and slow negatives (jump up, lower for 3-5 seconds) 2-3 times a week. Most people get the first rep in a few weeks.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "replace bench press with floor press",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "make my plan 4 days",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "The planner builds the workout plan from your profile; I check it against your goal before you save it.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "I have no bench",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "add pull ups to tuesday",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "remove plank from my plan",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "The planner builds the workout plan from your profile; I check it against your goal before you save it.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "change my push ups to 15-20 reps",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Hands under shoulders, body straight from head to heels, lower until your chest is a fist above the floor, push back up. Too hard? Put your hands on a bed or table (incline push-ups) and lower the height over the weeks.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "make plank 60 seconds",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "I have rings and dumbbells",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "regenerate my plan",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "The planner builds the workout plan from your profile; I check it against your goal before you save it.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "move legs to thursday",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "plan_edit",
+   "text": "give me a home workout plan with dumbbells only",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "The planner builds the workout plan from your profile; I check it against your goal before you save it.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "change theme to dark",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "dark mode",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "switch to light theme",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "change units to lbs",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Yes: Settings > Units switches to imperial. Data is stored in kg and converted for display.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "use kg",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "turn off notifications",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "change my trainer to the female one",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Pick whoever you like. We all read the same numbers; only the voice changes.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "set my goal to bulk",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Open Train, pick or search an exercise, type the weight and reps and press Enter. Each set is saved the moment you enter it; the suggestion card shows the next target.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "update my height to 170 cm",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "my age is 21",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "change my name to Navin",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "set my equipment to dumbbells and rings",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Open Train, pick or search an exercise, type the weight and reps and press Enter. Each set is saved the moment you enter it; the suggestion card shows the next target.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "add custom food: kozhukattai 150 kcal 3g protein",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add your own food \u201cKozhukattai\u201d: 1 serving (100 g) = 150 kcal, P 3 g, C 0 g, F 0 g.",
+    "It shows up in Fuel's search and the chat can log it."
+   ]
+  },
+  {
+   "cat": "settings",
+   "text": "add a food called ragi dosa 120 kcal",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Here's what I'll do. Confirm and it's done; you can undo it after.",
+   "proposal": [
+    "Add your own food \u201cRagi dosa\u201d: 1 serving (100 g) = 120 kcal, P 0 g, C 0 g, F 0 g.",
+    "It shows up in Fuel's search and the chat can log it."
+   ]
+  },
+  {
+   "cat": "settings",
+   "text": "set my target weight to 55 kg",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Open Train, pick or search an exercise, type the weight and reps and press Enter. Each set is saved the moment you enter it; the suggestion card shows the next target.",
+   "proposal": null
+  },
+  {
+   "cat": "settings",
+   "text": "change my calorie goal to 2800",
+   "exp": "unsupported_v13",
+   "verdict": null,
+   "reply": "Your calorie target starts from the Mifflin-St Jeor equation and your activity level, then adapts to your real weigh-ins and logged meals over a few weeks.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what should I eat to gain weight",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Eat a little more than you burn, every day: 3 meals plus 2 snacks (milk, banana, peanuts, eggs or paneer are easy wins), protein in each meal, and train 3 days a week. About 0.25-0.5 kg a week is a healthy pace.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how many calories today",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Today so far: 0 kcal of your 2443 kcal target (protein 0 g).",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how much protein did i eat today",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Today so far: 0 g protein of your 67 g target.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what's my streak",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Your streak is 0 days (best 0). Train today to keep it going. Training days count; planned rest days never break it.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what's my workout today",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "You don't follow a program yet. With your kit, start with Bodyweight Starter, 3 days (beginner, 3 days a week). Also fits your kit: Bar + Floor Starter, 3 days, Walk to Run, 3 days. Pick one on Train and I'll follow it with you.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what should i train today",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "You don't follow a program yet. With your kit, start with Bodyweight Starter, 3 days (beginner, 3 days a week). Also fits your kit: Bar + Floor Starter, 3 days, Walk to Run, 3 days. Pick one on Train and I'll follow it with you.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how do I do a pull up",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Everyone starts there. Do dead hangs (20-30 s), scapular pull-ups and slow negatives (jump up, lower for 3-5 seconds) 2-3 times a week. Most people get the first rep in a few weeks.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how to do pushups properly",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Hands under shoulders, body straight from head to heels, lower until your chest is a fist above the floor, push back up. Too hard? Put your hands on a bed or table (incline push-ups) and lower the height over the weeks.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "am I making progress",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "No training logged in the last 4 weeks yet. One session is a start.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how much protein should I eat",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "ASCEND targets 1.6-2.2 g per kg of body weight depending on your goal, within the 1.4-2.0 g/kg range sports nutrition research recommends for people who train.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what is my bmi",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Your BMI is 14.5 (42 kg, 170 cm): below the healthy range (18.5-24.9). BMI ignores muscle, so treat it as a rough guide.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how many calories should I eat",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Your calorie target starts from the Mifflin-St Jeor equation and your activity level, then adapts to your real weigh-ins and logged meals over a few weeks.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "is rice good for bulking",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Yes. Rice is an easy, cheap way to add calories for a bulk. Pair it with a protein (dal, curd, egg, chicken, paneer) so the extra weight is more muscle.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "can I gain 5 kg in 2 months",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "0.58 kg a week is a healthy pace for you. About 12 weeks at a steady pace; eat regular meals with protein in each and train 3 days a week.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "can I lose 5 kg in 2 months",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "A target of 37.0 kg at 170 cm is a BMI of 12.8, below 18.5. I won't plan for an underweight target. Losing 5.0 kg in 8.7 weeks is 0.58 kg a week (1.37% of your body weight). Above about 1% a week you lose muscle with the fat. A pace you can hold gets you there in about 16 weeks.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what's my max pushups",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "No Push-up logged yet. Log one like \u201c10 push-up\u201d.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "when should i rest",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "About 1-2 minutes for most exercises, up to 3 for heavy ones. The rest timer on Train counts it for you.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "my shoulder hurts",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Sharp pain, swelling or pain that stays: stop that exercise and rest it, and see a doctor or physio if it isn't better in a few days. Mild muscle soreness a day or two after training is normal. Train the parts that don't hurt meanwhile.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "I missed yesterday",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "No stress. One missed day changes nothing; just pick up where you left off, no doubling up. Today, any short session gets you moving again.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "I feel tired today",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "That's okay, it happens to everyone. Let's make today small. Just do 10 squats or a 10-minute walk and call it a win. Small days still count toward your streak.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "why did you say that",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "I haven't flagged anything yet. When I do, ask me why and I'll show the rule.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what can you do",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "I answer questions about the app, give a tour of any section, watch your log (PRs, missed sessions, overtraining, weigh-in trends) and tell you when a goal is unrealistic. The planner builds workout and meal plans. I can also log a set, a meal or a weigh-in, or switch your program; you confirm first and can undo.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "give me a tour",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Let's go. I'll highlight each part; Next to continue, Esc to stop.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "show me the diet page",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Opening Fuel.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "open settings",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Opening Settings.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "make me a workout plan",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "The planner builds the workout plan from your profile; I check it against your goal before you save it.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "make me a diet plan",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "The planner builds the diet plan from your profile; I check it against your goal before you save it.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "who are you",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "I'm your trainer in ASCEND: I watch your log and guide you, and the planner does the planning. I'm software running on this PC, not a person.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "are you ai",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "I'm your trainer in ASCEND: I watch your log and guide you, and the planner does the planning. I'm software running on this PC, not a person.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "which program should i pick",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "With your kit, start with Bodyweight Starter, 3 days (beginner, 3 days a week). Also fits your kit: Bar + Floor Starter, 3 days, Walk to Run, 3 days. Pick one on Train and I'll follow it with you.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how do i log food",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "On Fuel, search a food and pick the portion (pieces, katori, tbsp). Indian portions are built in; totals update straight away.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how do I add custom food",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "On Fuel, tap Add your own food: name, serving, grams, calories and protein, carbs and fat. Or tell me: add food kozhukattai 120 kcal 3g protein 22g carbs 2g fat per piece. It then shows up in search and I can log it.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "what is a deload",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "A deload is a lighter week (about half the sets at RPE 7) when the engine sees your performance and recovery slipping. It lets fatigue drop so progress resumes.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how much water should i drink",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Roughly 2-3 litres a day, more on hot days and training days. Pale yellow urine is a good sign you're drinking enough.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "best time to work out",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Whenever you can do it most days. Morning or evening both work; consistency matters far more than the clock. Leave 1-2 hours after a big meal and an hour or two before sleep.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "creatine safe?",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Creatine monohydrate is one of the most studied supplements; 3-5 g a day is the usual dose for healthy adults. It isn't needed to make progress. If you're under 18 or have a kidney condition, ask a doctor first.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "suggest a high protein veg breakfast",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Paneer, curd or hung curd, milk, soya chunks, dal, chana or rajma, sprouts, peanuts and pesarattu. A breakfast idea: paneer bhurji with 2 chapati, or pesarattu with curd. Fuel shows the protein in each.",
+   "proposal": null
+  },
+  {
+   "cat": "question",
+   "text": "how many sets for chest",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "About 10-20 hard sets per muscle a week, spread over 2-3 days, is a good range. Beginners grow well on the low end (about 10). The muscle map on Progress counts them.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "hi",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Hey, Tester. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask for a plan.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "hello",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Hey, Tester. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask for a plan.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "hey trainer",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Hey, Tester. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask for a plan.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "vanakkam",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Hey, Tester. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask for a plan.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "good morning",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Hey, Tester. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask for a plan.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "yo",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Hey, Tester. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask for a plan.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "sup bro",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Hey, Tester. Ask me anything about ASCEND, say \"tour\" for a walkthrough, or ask for a plan.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "thanks",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Any time. Keep logging; I'm watching.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "thank you da",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "Any time. Keep logging; I'm watching.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "ok",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "\ud83d\udc4d Anything else? Log a set, a meal, or ask me something.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "\ud83d\udc4d",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "\ud83d\udc4d Anything else? Log a set, a meal, or ask me something.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "\ud83d\udcaa\ud83d\udd25",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "That's the energy. Log it and keep the streak going.",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "lol",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "\ud83d\ude04",
+   "proposal": null
+  },
+  {
+   "cat": "chat",
+   "text": "bye",
+   "exp": "greeting",
+   "verdict": null,
+   "reply": "See you. Log your next session and I'll be here.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I answer questions about the app, give a tour of any section, watch your log (PRs, missed sessions, overtraining, weigh-in trends) and tell you when a goal is unrealistic. The planner builds workout and meal plans. I can also log a set, a meal or a weigh-in, or switch your program; you confirm first and can undo.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "   ",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I answer questions about the app, give a tour of any section, watch your log (PRs, missed sessions, overtraining, weigh-in trends) and tell you when a goal is unrealistic. The planner builds workout and meal plans. I can also log a set, a meal or a weigh-in, or switch your program; you confirm first and can undo.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "asdfghjkl",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "???",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "123",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "..",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": null,
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "I did a lot of stuff today, went to college, came back, did some pushups maybe like 10 or 12, then ate idli and had some tea and then slept I did a lot of stuff today, went to college, came back, did some pushups maybe like 10 or 12, then ate idli and had some tea and then slept I did a lot of stuff today, went to college, came back, did some pushups maybe like 10 or 12, then ate idli and had some tea and then slept I did a lot of stuff today, went to college, came back, did some pushups maybe like 10 or 12, then ate idli and had some tea and then slept I did a lot of stuff today, went to college, came back, did some pushups maybe like 10 or 12, then ate idli and had some tea and then slept I did a lot of stuff today, went to college, came back, did some pushups maybe like 10 or 12, then ate idli and had some tea and then slept ",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "<script>alert(1)</script>",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "DROP TABLE foods;",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "On Fuel, search a food and pick the portion (pieces, katori, tbsp). Indian portions are built in; totals update straight away.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "10",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "junk",
+   "text": "kg",
+   "exp": "no_action",
+   "verdict": true,
+   "reply": "I don't have a note on that one yet. Try one of these, or ask it another way.",
+   "proposal": null
+  },
+  {
+   "cat": "undo",
+   "text": "undo",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "There's nothing from the last day I can undo here. To fix an older entry, open Train or Fuel and edit it there.",
+   "proposal": null
+  },
+  {
+   "cat": "undo",
+   "text": "cancel",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "Okay, cancelled. Nothing changed.",
+   "proposal": [
+    "Add your own food \u201cRagi dosa\u201d: 1 serving (100 g) = 120 kcal, P 0 g, C 0 g, F 0 g.",
+    "It shows up in Fuel's search and the chat can log it."
+   ]
+  },
+  {
+   "cat": "undo",
+   "text": "no",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "Okay, cancelled. Nothing changed.",
+   "proposal": [
+    "Add your own food \u201cKozhukattai\u201d: 1 serving (100 g) = 150 kcal, P 3 g, C 0 g, F 0 g.",
+    "It shows up in Fuel's search and the chat can log it."
+   ]
+  },
+  {
+   "cat": "undo",
+   "text": "nope",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "Okay, cancelled. Nothing changed.",
+   "proposal": [
+    "Follow Push / pull / legs, 6 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "undo",
+   "text": "undo last",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "There's nothing from the last day I can undo here. To fix an older entry, open Train or Fuel and edit it there.",
+   "proposal": null
+  },
+  {
+   "cat": "undo",
+   "text": "delete the last set",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "There's nothing from the last day I can undo here. To fix an older entry, open Train or Fuel and edit it there.",
+   "proposal": null
+  },
+  {
+   "cat": "undo",
+   "text": "remove that meal",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "There's nothing from the last day I can undo here. To fix an older entry, open Train or Fuel and edit it there.",
+   "proposal": null
+  },
+  {
+   "cat": "undo",
+   "text": "that was wrong",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "There's nothing from the last day I can undo here. To fix an older entry, open Train or Fuel and edit it there.",
+   "proposal": null
+  },
+  {
+   "cat": "undo",
+   "text": "yes",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "Done. Say undo if that was wrong.",
+   "proposal": [
+    "Follow Upper / lower, 4 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "undo",
+   "text": "confirm",
+   "exp": "cancel_text",
+   "verdict": null,
+   "reply": "Done. Say undo if that was wrong.",
+   "proposal": [
+    "Follow Bodyweight Starter, 3 days. Your logged history stays as it is."
+   ]
+  },
+  {
+   "cat": "destructive",
+   "text": "delete everything",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I can wipe your logs and start you fresh. I back everything up first and keep the exercise library and food table. Check the card and type ERASE to confirm.",
+   "proposal": [
+    "Erase your profile, 0 workouts, meals, weigh-ins, XP and photos.",
+    "A backup is made first; restore it from Settings > Backups.",
+    "The exercise library and food table stay. Your preferences are kept."
+   ]
+  },
+  {
+   "cat": "destructive",
+   "text": "reset my data",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I can wipe your logs and start you fresh. I back everything up first and keep the exercise library and food table. Check the card and type ERASE to confirm.",
+   "proposal": [
+    "Erase your profile, 0 workouts, meals, weigh-ins, XP and photos.",
+    "A backup is made first; restore it from Settings > Backups.",
+    "The exercise library and food table stay. Your preferences are kept."
+   ]
+  },
+  {
+   "cat": "destructive",
+   "text": "wipe all my logs",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I can wipe your logs and start you fresh. I back everything up first and keep the exercise library and food table. Check the card and type ERASE to confirm.",
+   "proposal": [
+    "Erase your profile, 0 workouts, meals, weigh-ins, XP and photos.",
+    "A backup is made first; restore it from Settings > Backups.",
+    "The exercise library and food table stay. Your preferences are kept."
+   ]
+  },
+  {
+   "cat": "destructive",
+   "text": "start fresh",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I can wipe your logs and start you fresh. I back everything up first and keep the exercise library and food table. Check the card and type ERASE to confirm.",
+   "proposal": [
+    "Erase your profile, 0 workouts, meals, weigh-ins, XP and photos.",
+    "A backup is made first; restore it from Settings > Backups.",
+    "The exercise library and food table stay. Your preferences are kept."
+   ]
+  },
+  {
+   "cat": "destructive",
+   "text": "clear my history",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I can wipe your logs and start you fresh. I back everything up first and keep the exercise library and food table. Check the card and type ERASE to confirm.",
+   "proposal": [
+    "Erase your profile, 0 workouts, meals, weigh-ins, XP and photos.",
+    "A backup is made first; restore it from Settings > Backups.",
+    "The exercise library and food table stay. Your preferences are kept."
+   ]
+  },
+  {
+   "cat": "destructive",
+   "text": "delete my account",
+   "exp": "answer",
+   "verdict": null,
+   "reply": "Everything stays on this PC: no account, no cloud, no telemetry. The only network use is the optional exercise lookup you switch on, and the share links you choose to open.",
+   "proposal": null
+  },
+  {
+   "cat": "destructive",
+   "text": "erase all data now ERASE",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I can wipe your logs and start you fresh. I back everything up first and keep the exercise library and food table. Check the card and type ERASE to confirm.",
+   "proposal": [
+    "Erase your profile, 0 workouts, meals, weigh-ins, XP and photos.",
+    "A backup is made first; restore it from Settings > Backups.",
+    "The exercise library and food table stay. Your preferences are kept."
+   ]
+  },
+  {
+   "cat": "destructive",
+   "text": "remove all meals",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I won't wipe everything for that. To remove one meal or workout, open it on Fuel or Train and delete it there; say undo to take back the last thing I logged. Erasing all your data is a separate step (\u201cstart fresh\u201d).",
+   "proposal": null
+  },
+  {
+   "cat": "destructive",
+   "text": "delete all workouts",
+   "exp": "erase",
+   "verdict": true,
+   "reply": "I won't wipe everything for that. To remove one meal or workout, open it on Fuel or Train and delete it there; say undo to take back the last thing I logged. Erasing all your data is a separate step (\u201cstart fresh\u201d).",
+   "proposal": null
+  }
+ ]
+}
