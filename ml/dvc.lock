@@ -145,8 +145,8 @@ stages:
       size: 3123
     - path: intent/src/evaluate_intent.py
       hash: md5
-      md5: e8f49590043c7107b1dc0876d0c2b7f6
-      size: 5275
+      md5: 570504dae8a65f73c015d579b8d8ef11
+      size: 5506
     - path: models/intent_model.json.gz
       hash: md5
       md5: bfc25705ee32506e0d2e5e9faa283efd
@@ -164,3 +164,89 @@ stages:
       hash: md5
       md5: 9347f8038ee9df4ce65ca0524066bbfe
       size: 1936
+  kb_fetch:
+    cmd: python knowledge/src/fetch_sources.py
+    deps:
+    - path: knowledge/src/fetch_sources.py
+      hash: md5
+      md5: 655ea02978ea4e513e38207ca7f68cd8
+      size: 1779
+    outs:
+    - path: knowledge/raw
+      hash: md5
+      md5: de06808eb69837d4868d2b0149c0246e.dir
+      size: 21435303
+      nfiles: 2
+  kb_build:
+    cmd: python knowledge/src/build_corpus.py
+    deps:
+    - path: ../services/sidecar/app/modules/nutrition/seed.py
+      hash: md5
+      md5: 7c5d11e0546f557fbf1ce72f0ffe38d3
+      size: 2477
+    - path: ../services/sidecar/app/modules/nutrition/seed_v12.py
+      hash: md5
+      md5: 079f28ab7a6f862fd8d5b67c872153ee
+      size: 10371
+    - path: 
+        ../services/sidecar/app/modules/workouts/library_data/free_exercise_db.json
+      hash: md5
+      md5: fb94ef7eaf11cdc9571cd6226a7663a6
+      size: 827277
+    - path: knowledge/notes
+      hash: md5
+      md5: fb973c169e31bd2cc62a4631c499499f.dir
+      size: 15617
+      nfiles: 4
+    - path: knowledge/raw
+      hash: md5
+      md5: de06808eb69837d4868d2b0149c0246e.dir
+      size: 21435303
+      nfiles: 2
+    - path: knowledge/sources.yaml
+      hash: md5
+      md5: 20cc4ad1e63ef19ff2b1169003e17bad
+      size: 2167
+    - path: knowledge/src/build_corpus.py
+      hash: md5
+      md5: 80baafb14a6b65e97d479177a2c04d55
+      size: 10600
+    - path: knowledge/usda_foods.yaml
+      hash: md5
+      md5: 401ea45887b992346a58adef7b8c67ee
+      size: 4335
+    outs:
+    - path: knowledge/build
+      hash: md5
+      md5: d4f584c8b2baf411a311f2dcdf565f06.dir
+      size: 237848
+      nfiles: 3
+  kb_evaluate:
+    cmd: python knowledge/src/evaluate_kb.py
+    deps:
+    - path: ../services/sidecar/app/modules/ml/knowledge.py
+      hash: md5
+      md5: 9df6fa4a3e1950c7d6cb1ddb4db9b275
+      size: 9045
+    - path: knowledge/app_questions.yaml
+      hash: md5
+      md5: dd5851607834ce7f8b35acc340d4c2a4
+      size: 1849
+    - path: knowledge/build
+      hash: md5
+      md5: d4f584c8b2baf411a311f2dcdf565f06.dir
+      size: 237848
+      nfiles: 3
+    - path: knowledge/src/evaluate_kb.py
+      hash: md5
+      md5: a45e2cec8cfd5b5af46c917e29a82af3
+      size: 3596
+    params:
+      params.yaml:
+        knowledge.gate:
+          min_hit_at_3: 0.9
+    outs:
+    - path: reports/kb_metrics.json
+      hash: md5
+      md5: b2632c51bd6fb90be646d3f87567222b
+      size: 161
