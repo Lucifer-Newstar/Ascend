@@ -1204,11 +1204,6 @@ components:
           - type: boolean
           - type: 'null'
           title: Hide Calories
-        photo_feedback:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Photo Feedback
         background_art:
           anyOf:
           - type: string
@@ -1323,10 +1318,6 @@ components:
         hide_calories:
           type: boolean
           title: Hide Calories
-          default: false
-        photo_feedback:
-          type: boolean
-          title: Photo Feedback
           default: false
         background_art:
           type: string

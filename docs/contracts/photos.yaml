@@ -134,52 +134,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       x-status: implemented
-  /photos/feedback/status:
-    get:
-      tags:
-      - photos
-      summary: Feedback Status
-      description: 'Whether AI photo feedback can run: the user''s switch, the age rule, the model.'
-      operationId: feedback_status_photos_feedback_status_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackStatus'
-      x-status: implemented
-  /photos/feedback:
-    post:
-      tags:
-      - photos
-      summary: Photo Feedback
-      description: 'Compare two photos with the local vision model. Never estimates body fat or weight,
-
-        never comments on looks; the reply passes a guard before you see it.'
-      operationId: photo_feedback_photos_feedback_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FeedbackIn'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackOut'
-        '409':
-          description: Feedback is off or the model is missing
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      x-status: implemented
   /photos/{photo_id}/data:
     get:
       tags:
@@ -226,52 +180,6 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    FeedbackStatus:
-      properties:
-        enabled:
-          type: boolean
-          title: Enabled
-        available:
-          type: boolean
-          title: Available
-        model:
-          type: string
-          title: Model
-        reason:
-          type: string
-          title: Reason
-      type: object
-      required:
-      - enabled
-      - available
-      - model
-      - reason
-      title: FeedbackStatus
-    FeedbackOut:
-      properties:
-        text:
-          type: string
-          title: Text
-        guarded:
-          type: boolean
-          title: Guarded
-        model:
-          type: string
-          title: Model
-        version:
-          type: string
-          title: Version
-        is_ai:
-          type: boolean
-          title: Is Ai
-          default: true
-      type: object
-      required:
-      - text
-      - guarded
-      - model
-      - version
-      title: FeedbackOut
     ValidationError:
       properties:
         loc:
@@ -363,20 +271,6 @@ components:
       - bytes
       - created_at
       title: PhotoOut
-    FeedbackIn:
-      properties:
-        older_id:
-          type: integer
-          title: Older Id
-        newer_id:
-          type: integer
-          title: Newer Id
-      additionalProperties: false
-      type: object
-      required:
-      - older_id
-      - newer_id
-      title: FeedbackIn
     PhotoData:
       properties:
         id:

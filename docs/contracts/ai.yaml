@@ -139,8 +139,6 @@ components:
           - type: string
           - type: 'null'
           title: Smaller Model
-        vision:
-          $ref: '#/components/schemas/VisionOut'
         algo_version:
           type: string
           title: Algo Version
@@ -159,7 +157,6 @@ components:
       - failures
       - suggestion
       - smaller_model
-      - vision
       - algo_version
       title: AiSetup
     HTTPValidationError:
@@ -299,20 +296,3 @@ components:
       - msg
       - type
       title: ValidationError
-    VisionOut:
-      properties:
-        model:
-          type: string
-          title: Model
-        installed:
-          type: boolean
-          title: Installed
-        pull_command:
-          type: string
-          title: Pull Command
-      type: object
-      required:
-      - model
-      - installed
-      - pull_command
-      title: VisionOut
