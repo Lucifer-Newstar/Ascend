@@ -184,3 +184,43 @@ before it was added. None of it references an existing franchise, character or a
   and 4 weapons. Faith-flavoured looks carry neutral names and are optional.
 - **Seasonal bosses** (`assets/bosses`): Harvest Colossus, Winter Wraith, Monsoon Serpent
   and Shadow Sovereign. Iron Golem and Grave Warden were redrawn; Bone Titan is unchanged.
+
+## v1.3 trainers v2 (25 October 2026)
+
+Approved by the project lead on 25 October 2026 before it was added. Iskra Vey
+(`trainer-*.webp`) is unchanged and was the style reference. Vera, Kai and Dario were
+redrawn so every face is clearly different (skin tone, face shape, hair, eyes, accessories,
+accent colour, silhouette), and two new trainers join: Tara and Idris. The v1.1 and v1.2
+notes above describe the art these files replace.
+
+| id | look | accent | specialty label |
+|---|---|---|---|
+| `vera` | light freckled skin, copper curls with bangs, green eyes, gold hoops; coral high-neck crop top, open white track jacket, shaker bottle | coral | nutrition |
+| `tara` | Indian, deep brown skin, black top-knot bun, almond eyes, small nose stud; lavender crew-neck top, yoga mat | lavender | flexibility, mobility, meditation, recovery |
+| `kai` | Thai, golden tan, spiky black hair, red headband, nose bandage, eyebrow slit, light stubble; open sleeveless hoodie, red hand wraps | red | cardio and martial arts |
+| `dario` | Mediterranean, olive skin, long wavy chestnut half-up hair, cleft chin, steel-grey eyes; black tank, wooden gym rings, chalk | emerald | calisthenics and skills |
+| `idris` | Black, dark skin, shaved head, full beard, gold earring, hazel eyes; black tank, lifting belt, amber wraps, dumbbell | amber | gym and strength |
+
+Method: the same commercial image model and image-edit endpoint as v1.1 and v1.2 (1024 x 1024,
+transparent, high quality, 2 candidates). Each main portrait is an edit that uses Iskra's
+v1.2 neutral art only as the style, line, shading and framing reference, with a written
+brief for a new person. Follow-up edits on the chosen main: Vera's and Tara's tops changed
+to high necklines, Kai made visibly older, Idris's muscle size reduced. Proud, warning and
+hyped are edits of the chosen main that change only the expression and arm pose (proud:
+thumbs-up; warning: open palm; hyped: raised fist with accent-colour sparks). No franchise,
+character or artist names were used in prompts; there is no text or watermark.
+
+Post-processing (Pillow and NumPy): alpha >= 250 set to 255 and <= 8 to 0; one crop window
+per character (taken from its neutral and reused for every mood) so the head sits like
+Iskra's; premultiplied-alpha Lanczos to 512 x 512 on the app's flat navy (10, 17, 30);
+unsharp mask (radius 1, 45 %); WebP quality 88, method 6. Icon: head crop of the 1024
+neutral to 128 x 128. Portrait: a 1024 window of the neutral on navy, not upscaled.
+
+Files here, per id: `<id>-neutral.webp`, `-proud`, `-warning`, `-hyped` (512 px RGB),
+`<id>-icon.webp` (128 px RGB) and `<id>-portrait.webp` (1024 px RGB, the Chat page's large
+portrait; Iskra's Chat portrait is her 512 px neutral). Kai and Dario move from the old
+256 px RGBA format to this one. The 1024 px transparent PNG masters are kept outside the
+repository to keep it small.
+
+The specialty is a label in the trainer picker and on the Chat page. Every trainer answers
+everything; there is no routing of questions to a specialist.
