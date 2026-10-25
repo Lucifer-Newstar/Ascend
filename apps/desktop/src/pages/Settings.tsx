@@ -13,6 +13,7 @@ import { BackupsPanel } from "../components/BackupsPanel";
 import { EraseDataPanel } from "../components/EraseData";
 import { PageGrid } from "../components/Page";
 import { PhotoSafety } from "../components/PhotoSafety";
+import { ScheduleEditor } from "../components/ScheduleEditor";
 import { Segmented } from "../components/Segmented";
 import { ThemePicker } from "../components/ThemePicker";
 import { TodaysNumbers } from "../components/TodaysNumbers";
@@ -187,6 +188,10 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
             </label>
             <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
             <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />
+          </section>
+          <section className="card rise-in space-y-4 p-5" style={stagger(2)} aria-labelledby="schedule-title" id="schedule">
+            <h2 id="schedule-title" className="card-title">Your training week</h2>
+            <ScheduleEditor onSaved={() => onChanged()} />
           </section>
           <AiSetupPanel aiEnabled={Boolean(aiEnabled)} onToggleAi={onToggleAi} onChanged={onChanged} />
         </>

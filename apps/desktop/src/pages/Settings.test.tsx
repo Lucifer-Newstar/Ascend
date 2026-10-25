@@ -22,11 +22,13 @@ vi.mock("../api/client", () => ({
     clearOnlineLog: vi.fn().mockResolvedValue(undefined),
     tdee: vi.fn().mockResolvedValue({ algo_version: "tdee-v1", target_source: "adaptive", target_kcal: 2790 }),
     aiSetup: vi.fn().mockRejectedValue(new Error("engine offline")),
+    schedule: vi.fn().mockResolvedValue({ days: [0, 2, 4], time: null, source: "program", label: "Mon, Wed, Fri", algo_version: "schedule-v1" }),
+    saveSchedule: vi.fn().mockResolvedValue({ days: [1, 3, 5], time: "18:30", source: "you", label: "Tue, Thu, Sat", algo_version: "schedule-v1" }),
     themes: vi.fn().mockResolvedValue([
       { key: "shadow", name: "Shadow", tagline: "Night dungeon", free: true, unlocked: true, requirement: "Free", progress: "" },
       { key: "dark", name: "Dark", tagline: "The original look, dark", free: true, unlocked: true, requirement: "Free", progress: "" },
       { key: "light", name: "Light", tagline: "The original look, light", free: true, unlocked: true, requirement: "Free", progress: "" },
-      { key: "crimson", name: "Crimson Gate", tagline: "A red battlefield", free: false, unlocked: false, requirement: "Reach a 7-day streak", progress: "Best streak 2 of 7 days" },
+      { key: "crimson", name: "Crimson Gate", tagline: "A red battlefield", free: false, unlocked: false, requirement: "Finish 10 training sessions", progress: "2 of 10 sessions" },
     ]),
   },
 }));
@@ -77,8 +79,8 @@ describe("SettingsPage", () => {
     await openSection("Appearance & sound");
     const crimson = await screen.findByTestId("theme-crimson");
     expect(crimson).toBeDisabled();
-    expect(crimson).toHaveTextContent("Reach a 7-day streak");
-    expect(crimson).toHaveTextContent("Best streak 2 of 7 days");
+    expect(crimson).toHaveTextContent("Finish 10 training sessions");
+    expect(crimson).toHaveTextContent("2 of 10 sessions");
     expect(document.documentElement.dataset.theme).toBe("shadow");
     await userEvent.click(screen.getByTestId("theme-light"));
     expect(save).toHaveBeenCalledWith({ theme: "light" });
@@ -180,6 +182,21 @@ describe("SettingsPage", () => {
     await openSection("Profile");
     expect(await screen.findByTestId("photo-reminder-toggle")).not.toBeChecked();
     expect(screen.queryByText(/photo feedback/i)).toBeNull();
+  });
+
+  it("picks training days and a time in the Trainer section (v1.4)", async () => {
+    setup(vi.fn());
+    await openSection("Trainer");
+    const editor = await screen.findByTestId("schedule-editor");
+    expect(await within(editor).findByText(/Suggested by your program/)).toBeInTheDocument();
+    await waitFor(() => expect(within(editor).getByRole("button", { name: "Monday" })).toHaveAttribute("aria-pressed", "true"));
+    for (const d of ["Monday", "Wednesday", "Friday", "Tuesday", "Thursday", "Saturday"]) {
+      await userEvent.click(within(editor).getByRole("button", { name: d }));
+    }
+    await userEvent.type(within(editor).getByLabelText("Usual training time"), "18:30");
+    await userEvent.click(within(editor).getByRole("button", { name: "Save 3 days a week" }));
+    expect(api.saveSchedule).toHaveBeenCalledWith([1, 3, 5], "18:30");
+    expect(await screen.findByText("Training days: Tue, Thu, Sat at 18:30")).toBeInTheDocument();
   });
 
   it("keeps the formula numbers behind Details", async () => {
