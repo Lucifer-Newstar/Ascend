@@ -58,16 +58,45 @@ def delete_food(db: Session, food_id: int) -> None:
     db.delete(food)
 
 
-def search_foods(db: Session, q: str = "", limit: int = 50) -> list[Food]:
+# An empty search lists the whole table (v1.3: it used to stop at the first 50 names, so
+# the Diet page never showed "Ven pongal" or anything after "Curd (plain)").
+MAX_RESULTS = 500
+
+
+def search_foods(db: Session, q: str = "", limit: int = MAX_RESULTS) -> list[Food]:
     """Foods whose name contains every word typed (so "chicken breast" finds "Chicken
-    breast (grilled)"); names that start with the query come first."""
-    words = [w for w in q.lower().split() if w]
+    breast (grilled)"), plus the dish an everyday name stands for ("chapathi" -> Chapati,
+    "tea" -> Masala chai). Ranked: the alias, the exact name, names starting with the
+    query, names with a word starting with it, then the rest alphabetically."""
+    from app.modules.actions.resolve import FOOD_ALIASES, norm
+
+    query = q.lower().strip()
+    words = [w for w in query.split() if w]
     stmt = select(Food).order_by(Food.name)
     for w in words:
         stmt = stmt.where(Food.name.ilike(f"%{w}%"))
     rows = list(db.scalars(stmt).all())
-    if words:
-        rows.sort(key=lambda f: (not f.name.lower().startswith(q.lower().strip()), f.name))
+    if not words:
+        return rows[:limit]
+    alias = FOOD_ALIASES.get(norm(query)) or FOOD_ALIASES.get(norm(query).rstrip("s"))
+    wanted = [alias] if isinstance(alias, str) else list(alias or ())
+    if wanted:
+        extra = db.scalars(select(Food).where(Food.name.in_(wanted))).all()
+        rows += [f for f in extra if f not in rows]
+
+    def rank(f: Food) -> tuple[int, str]:
+        name = f.name.lower()
+        if f.name in wanted:
+            return 0, name
+        if norm(name) == norm(query):
+            return 1, name
+        if name.startswith(query):
+            return 2, name
+        if any(w.startswith(query) for w in norm(name).split()):
+            return 3, name
+        return 4, name
+
+    rows.sort(key=rank)
     return rows[:limit]
 
 

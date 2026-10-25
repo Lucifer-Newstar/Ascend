@@ -104,7 +104,8 @@ def test_goal_check_for_an_underweight_gain(client: TestClient) -> None:
 
 
 def test_the_food_list_has_the_staples_and_takes_your_own(client: TestClient) -> None:
-    assert len(client.get("/foods", params={"q": ""}).json()) == 50  # capped page
+    everything = client.get("/foods", params={"q": ""}).json()  # v1.3: no 50-food cap
+    assert len(everything) > 150 and "Ven pongal" in {f["name"] for f in everything}
     for q in ("milk", "oats", "paneer", "maggi", "chicken breast", "omelette"):
         assert client.get("/foods", params={"q": q}).json(), q
     mine = client.post(

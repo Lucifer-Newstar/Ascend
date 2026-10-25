@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_bus, get_db, get_now
@@ -26,8 +26,13 @@ router = APIRouter(tags=["nutrition"])
 
 
 @router.get("/foods", response_model=list[FoodOut])
-def search_foods(q: str = "", db: Session = Depends(get_db)) -> list[FoodOut]:
-    return [FoodOut.model_validate(f) for f in service.search_foods(db, q)]
+def search_foods(
+    q: str = Query("", max_length=80),
+    limit: int = Query(service.MAX_RESULTS, ge=1, le=service.MAX_RESULTS),
+    db: Session = Depends(get_db),
+) -> list[FoodOut]:
+    """Search the food table; an empty query lists every food (v1.3: no 50-food cap)."""
+    return [FoodOut.model_validate(f) for f in service.search_foods(db, q, limit)]
 
 
 @router.post("/foods", response_model=FoodOut, status_code=201)
