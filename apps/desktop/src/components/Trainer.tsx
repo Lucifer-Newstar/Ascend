@@ -98,6 +98,7 @@ export function TrainerPicker({ onPicked }: { onPicked?: (t: TrainerProfile) => 
             <span className="text-sm font-semibold text-ink">{t.name}</span>
             <span className="text-[11px] uppercase tracking-wider text-accent">{t.style}</span>
             <span className="text-xs text-muted">{t.blurb}</span>
+            <span className="text-[11px] text-ink">Best at: {t.specialty}</span>
           </button>
         );
       })}

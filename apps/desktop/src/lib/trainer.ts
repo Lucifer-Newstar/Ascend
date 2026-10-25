@@ -1,7 +1,7 @@
 /**
  * The trainers: Instructor Iskra Vey (the default) and, from v1.1, Vera Kestrine, Kai
- * Hoshimura and Dario Halvorn. All original characters (art provenance in
- * assets/trainer/ART_PROVENANCE.md). One trainer speaks at a time; they all read the same
+ * Hoshimura and Dario Halvorn; Tara and Idris join in v1.3, when Vera, Kai and Dario were
+ * redrawn. All original characters (art provenance in assets/trainer/ART_PROVENANCE.md). One trainer speaks at a time; they all read the same
  * numbers, only the voice and the portrait change. The original notes on Iskra follow.
  * Voice rules (docs/research/v8-trainer-persona.md §2.2): second person, calls the user
  * "Hunter", fact first, stern but encouraging, never shames, no medical claims.
@@ -16,13 +16,27 @@ import type { TrainerId } from "@ascend/shared";
 import darioHyped from "../assets/trainer/dario-hyped.webp";
 import darioIcon from "../assets/trainer/dario-icon.webp";
 import darioNeutral from "../assets/trainer/dario-neutral.webp";
+import darioPortrait from "../assets/trainer/dario-portrait.webp";
 import darioProud from "../assets/trainer/dario-proud.webp";
 import darioWarning from "../assets/trainer/dario-warning.webp";
+import idrisHyped from "../assets/trainer/idris-hyped.webp";
+import idrisIcon from "../assets/trainer/idris-icon.webp";
+import idrisNeutral from "../assets/trainer/idris-neutral.webp";
+import idrisPortrait from "../assets/trainer/idris-portrait.webp";
+import idrisProud from "../assets/trainer/idris-proud.webp";
+import idrisWarning from "../assets/trainer/idris-warning.webp";
 import kaiHyped from "../assets/trainer/kai-hyped.webp";
 import kaiIcon from "../assets/trainer/kai-icon.webp";
 import kaiNeutral from "../assets/trainer/kai-neutral.webp";
+import kaiPortrait from "../assets/trainer/kai-portrait.webp";
 import kaiProud from "../assets/trainer/kai-proud.webp";
 import kaiWarning from "../assets/trainer/kai-warning.webp";
+import taraHyped from "../assets/trainer/tara-hyped.webp";
+import taraIcon from "../assets/trainer/tara-icon.webp";
+import taraNeutral from "../assets/trainer/tara-neutral.webp";
+import taraPortrait from "../assets/trainer/tara-portrait.webp";
+import taraProud from "../assets/trainer/tara-proud.webp";
+import taraWarning from "../assets/trainer/tara-warning.webp";
 import hyped from "../assets/trainer/trainer-hyped.webp";
 import icon from "../assets/trainer/trainer-icon.webp";
 import neutral from "../assets/trainer/trainer-neutral.webp";
@@ -31,6 +45,7 @@ import warning from "../assets/trainer/trainer-warning.webp";
 import veraHyped from "../assets/trainer/vera-hyped.webp";
 import veraIcon from "../assets/trainer/vera-icon.webp";
 import veraNeutral from "../assets/trainer/vera-neutral.webp";
+import veraPortrait from "../assets/trainer/vera-portrait.webp";
 import veraProud from "../assets/trainer/vera-proud.webp";
 import veraWarning from "../assets/trainer/vera-warning.webp";
 
@@ -56,23 +71,35 @@ export interface TrainerProfile {
   short: string;
   style: string;
   blurb: string;
+  /** v1.3: what this trainer knows best. A label only: every trainer answers everything. */
+  specialty: string;
   icon: string;
   art: Record<TrainerMood, string>;
+  /** v1.3: the large portrait for the Chat page (Iskra uses her 512 px neutral art). */
+  portrait: string;
 }
 
 /** The roster, in picker order. Same numbers and rules for all; only voice and art differ. */
 export const ROSTER: TrainerProfile[] = [
   { id: "iskra", name: TRAINER_NAME, short: TRAINER_SHORT, style: "Stern drill instructor",
-    blurb: "Fact first, stern but fair. Celebrates hard when you earn it.", icon, art: TRAINER_ART },
+    blurb: "Fact first, stern but fair. Celebrates hard when you earn it.",
+    specialty: "Habits, streaks and the weekly boss", icon, art: TRAINER_ART, portrait: neutral },
   { id: "vera", name: "Vera Kestrine", short: "Vera", style: "Playful hype coach",
-    blurb: "Teasing but kind. Keeps it light and keeps you moving.", icon: veraIcon,
-    art: { neutral: veraNeutral, proud: veraProud, warning: veraWarning, hyped: veraHyped } },
+    blurb: "Teasing but kind. Keeps it light and keeps you moving.", specialty: "Nutrition",
+    icon: veraIcon, art: { neutral: veraNeutral, proud: veraProud, warning: veraWarning, hyped: veraHyped }, portrait: veraPortrait },
+  { id: "tara", name: "Tara", short: "Tara", style: "Calm mobility coach",
+    blurb: "Unhurried and warm. Breath, range and recovery come first.",
+    specialty: "Flexibility, mobility, meditation and recovery",
+    icon: taraIcon, art: { neutral: taraNeutral, proud: taraProud, warning: taraWarning, hyped: taraHyped }, portrait: taraPortrait },
   { id: "kai", name: "Kai Hoshimura", short: "Kai", style: "High-energy hype-man",
-    blurb: "Big energy, loud cheers, straight talk when it matters.", icon: kaiIcon,
-    art: { neutral: kaiNeutral, proud: kaiProud, warning: kaiWarning, hyped: kaiHyped } },
+    blurb: "Big energy, loud cheers, straight talk when it matters.", specialty: "Cardio and martial arts",
+    icon: kaiIcon, art: { neutral: kaiNeutral, proud: kaiProud, warning: kaiWarning, hyped: kaiHyped }, portrait: kaiPortrait },
   { id: "dario", name: "Dario Halvorn", short: "Dario", style: "Calm strategist",
-    blurb: "Quiet, tactical, long-game. Explains the why behind the plan.", icon: darioIcon,
-    art: { neutral: darioNeutral, proud: darioProud, warning: darioWarning, hyped: darioHyped } },
+    blurb: "Quiet, tactical, long-game. Explains the why behind the plan.", specialty: "Calisthenics and skills",
+    icon: darioIcon, art: { neutral: darioNeutral, proud: darioProud, warning: darioWarning, hyped: darioHyped }, portrait: darioPortrait },
+  { id: "idris", name: "Idris", short: "Idris", style: "Steady strength coach",
+    blurb: "Patient and exact. Heavy days done right, light days respected.", specialty: "Gym and strength",
+    icon: idrisIcon, art: { neutral: idrisNeutral, proud: idrisProud, warning: idrisWarning, hyped: idrisHyped }, portrait: idrisPortrait },
 ];
 
 export function trainerById(id: string | null | undefined): TrainerProfile {

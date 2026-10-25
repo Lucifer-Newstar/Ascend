@@ -76,7 +76,7 @@ describe("trainer voice", () => {
 });
 
 describe("trainer roster (v1.1)", () => {
-  it("lists four trainers and saves the pick", async () => {
+  it("lists six trainers and saves the pick", async () => {
     const save = vi.fn(async (p) => ({ ...DEFAULT_SETTINGS, ...p }));
     const { container } = render(
       <PrefsProvider initial={{ ...DEFAULT_SETTINGS, trainer_id: "iskra" }} save={save}>
@@ -85,7 +85,8 @@ describe("trainer roster (v1.1)", () => {
       </PrefsProvider>,
     );
     const radios = screen.getAllByRole("radio");
-    expect(radios.map((r) => r.getAttribute("data-trainer"))).toEqual(["iskra", "vera", "kai", "dario"]);
+    expect(radios.map((r) => r.getAttribute("data-trainer"))).toEqual(["iskra", "vera", "tara", "kai", "dario", "idris"]);
+    expect(screen.getByRole("radio", { name: /Idris/ })).toHaveTextContent("Best at: Gym and strength");
     expect(screen.getByRole("radio", { name: /Instructor Iskra Vey/ })).toHaveAttribute("aria-checked", "true");
     await userEvent.click(screen.getByRole("radio", { name: /Vera Kestrine/ }));
     await waitFor(() => expect(save).toHaveBeenCalledWith({ trainer_id: "vera" }));
