@@ -36,6 +36,8 @@ export default {
         "planner", "selector", "actions", "skills", "photos", "share", "profile",
         // Dependabot's ML requirement bumps
         "ml-deps",
+        // 1.4 feature areas
+        "schedule", "settings", "planbuilder", "eval",
       ],
     ],
     "header-max-length": [2, "always", 120],
