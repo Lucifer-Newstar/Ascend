@@ -35,6 +35,7 @@ GOALS = {
 }  # fmt: skip
 THEMES = ("dark", "light", "system", "shadow", "crimson", "frost", "emerald", "solar")
 TRAINERS = ("iskra", "vera", "kai", "dario", "tara", "idris")
+NUMBER_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 
 
 def _clean(text: str) -> str:
@@ -205,9 +206,16 @@ def _setting(t: str) -> Hit | None:
     )  # fmt: skip
     if m:
         return "update_setting", {"key": "trainer_id", "value": m.group(1) or m.group(2)}
-    m = re.fullmatch(r"set (?:my )?sessions(?: per week)? to (\d)", t)
+    m = re.fullmatch(
+        r"set (?:my )?(?:sessions|training days|days)(?: per week| a week)? to (\d)"
+        r"|(?:i (?:can|want to|wanna|will|'ll) )?train (\d|one|two|three|four|five|six|seven) (?:days|times) (?:a|per) week"
+        r"|(\d) (?:days|sessions|workouts) (?:a|per) week(?: please| from now)?",
+        t,
+    )  # fmt: skip
     if m:
-        return "update_setting", {"key": "sessions_per_week", "value": int(m.group(1))}
+        n = m.group(1) or m.group(2) or m.group(3)
+        n = str(NUMBER_WORDS.get(n, n))
+        return "update_setting", {"key": "sessions_per_week", "value": int(n)}
     return None
 
 
@@ -244,8 +252,29 @@ def _equipment(t: str) -> Hit | None:
 _PLAN = r"(?: (?:in|from|to) my (?:plan|program|programme|workouts?|routine|split))"
 
 
+def _seconds(amount: str, unit: str) -> int:
+    n = float(amount)
+    return round(n * 60) if unit.startswith("m") else round(n)
+
+
 def _plan(t: str) -> Hit | None:
     on = rf"(?: on {_DAY})?"
+    rest = r"(\d{1,3}(?:\.5)?) ?(s|secs?|seconds?|m|mins?|minutes?)"
+    m = re.fullmatch(
+        rf"(?:set|make|change) (?:the )?rest (?:for|on) (.+?) (?:to )?{rest}{_PLAN}?"
+        rf"|rest {rest} (?:on|for|between(?: sets of)?) (.+?)(?: sets)?{_PLAN}?"
+        rf"|(?:make|set|change) (.+?) rest (?:to )?{rest}{_PLAN}?",
+        t,
+    )  # fmt: skip
+    if m:
+        g = m.groups()
+        if g[0]:
+            name, amount, unit = g[0], g[1], g[2]
+        elif g[5]:
+            name, amount, unit = g[5], g[3], g[4]
+        else:
+            name, amount, unit = g[6], g[7], g[8]
+        return "edit_plan", {"op": "rest", "exercise": name, "rest_s": _seconds(amount, unit)}
     m = re.fullmatch(rf"(?:make|set|change) (.+?) (?:to )?(\d{{1,2}}) sets{_PLAN}?", t)
     if m:
         return "edit_plan", {"op": "sets", "exercise": m.group(1), "sets": int(m.group(2))}

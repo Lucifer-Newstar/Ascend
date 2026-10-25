@@ -137,6 +137,32 @@ def test_editing_your_own_plan_changes_it_in_place(me: TestClient) -> None:
     assert "Plank" in _plan_moves(me)
 
 
+def _rests(client: TestClient, move: str) -> list[int]:
+    days = client.get("/plans/current").json()["days"]
+    return [i["rest_s"] for d in days for i in d["items"] if i["exercise"] == move]
+
+
+def test_rest_between_sets(me: TestClient) -> None:
+    _follow(me, "ppl_6")
+    confirm(me, card(me, "swap dumbbell floor press for push-ups"))
+    before = _rests(me, "Push-up")
+    p = card(me, "rest 75 seconds between sets of push-ups")
+    assert p["kind"] == "edit_plan" and "rest 75 s between sets" in p["summary"][0]
+    confirm(me, p)
+    assert set(_rests(me, "Push-up")) == {75}
+    undo(me, p)
+    assert _rests(me, "Push-up") == before
+
+
+def test_days_per_week(me: TestClient) -> None:
+    p = card(me, "I can train 4 days a week")
+    assert p["kind"] == "update_setting" and "from 3 to 4" in p["summary"][0]
+    confirm(me, p)
+    assert me.get("/settings").json()["sessions_per_week"] == 4
+    undo(me, p)
+    assert me.get("/settings").json()["sessions_per_week"] == 3
+
+
 def test_moving_a_day(me: TestClient) -> None:
     _follow(me, "bodyweight_starter_3")
     days = {d["weekday"] for d in me.get("/plans/current").json()["days"]}

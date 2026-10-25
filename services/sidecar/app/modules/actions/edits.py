@@ -219,7 +219,13 @@ def describe_setting(db: Session, p: UpdateSettingP) -> list[str]:
     old = getattr(progress.read_settings(db), p.key)
     if new == old:
         raise EditError(f"{SETTING_LABEL[p.key].capitalize()} is already {_show(p.key, old)}.")
-    return [f"Change {SETTING_LABEL[p.key]} from {_show(p.key, old)} to {_show(p.key, new)}."]
+    lines = [f"Change {SETTING_LABEL[p.key]} from {_show(p.key, old)} to {_show(p.key, new)}."]
+    if p.key == "sessions_per_week":
+        lines.append(
+            "Your weekly goal and the planner use this; the program you follow keeps its own "
+            "days until you move or add one."
+        )
+    return lines
 
 
 def exec_setting(
@@ -240,7 +246,7 @@ def undo_setting(db: Session, bus: EventBus, now: datetime, u: dict[str, Any]) -
 
 # --- the followed plan ----------------------------------------------------------------
 
-PlanOp = Literal["swap", "remove", "add", "sets", "reps", "move_day"]
+PlanOp = Literal["swap", "remove", "add", "sets", "reps", "rest", "move_day"]
 
 
 class EditPlanP(BaseModel):
@@ -254,6 +260,15 @@ class EditPlanP(BaseModel):
     sets: int | None = Field(default=None, ge=1, le=10)
     rep_low: int | None = Field(default=None, ge=1, le=300)
     rep_high: int | None = Field(default=None, ge=1, le=300)
+    rest_s: int | None = Field(default=None, ge=10, le=600)
+
+
+def _rest(seconds: int) -> str:
+    """90 -> "90 s", 120 -> "2 min", 150 -> "2 min 30 s"."""
+    if seconds < 120:
+        return f"{seconds} s"
+    mins, secs = divmod(seconds, 60)
+    return f"{mins} min" if not secs else f"{mins} min {secs} s"
 
 
 def _current(db: Session) -> tuple[Any, Any]:
@@ -319,7 +334,7 @@ def _apply(db: Session, program: Any, p: EditPlanP) -> tuple[list[dict[str, Any]
     """The plan's days after the edit, and what changed in words."""
     days = _days(program)
     on = [d for d in days if p.weekday is None or d["weekday"] == p.weekday]
-    if p.op in ("swap", "remove", "sets", "reps"):
+    if p.op in ("swap", "remove", "sets", "reps", "rest"):
         hits = [(d, s) for d, s in _find(days, p.exercise or "") if d in on]
         if not hits:
             where = f" on {WEEKDAYS[p.weekday]}" if p.weekday is not None else ""
@@ -341,6 +356,13 @@ def _apply(db: Session, program: Any, p: EditPlanP) -> tuple[list[dict[str, Any]
             for _, s in hits:
                 s["sets"] = p.sets
             return days, [f"{name}: {p.sets} sets instead of {was}."]
+        if p.op == "rest":
+            if p.rest_s is None:
+                raise EditError(f"How long a rest do you want between sets of {name}?")
+            was_s = hits[0][1]["rest_s"]
+            for _, s in hits:
+                s["rest_s"] = p.rest_s
+            return days, [f"{name}: rest {_rest(p.rest_s)} between sets instead of {_rest(was_s)}."]
         lo, hi = p.rep_low or 1, p.rep_high or p.rep_low or 1
         old = f"{hits[0][1]['rep_low']}\u2013{hits[0][1]['rep_high']}"
         for _, s in hits:

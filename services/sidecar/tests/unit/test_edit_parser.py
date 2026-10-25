@@ -41,6 +41,13 @@ from app.modules.actions.edit_parser import parse_edit, weekday
         ("change push-ups to 8-12 reps", "edit_plan", {"op": "reps", "rep_low": 8, "rep_high": 12}),
         ("move leg day to saturday", "edit_plan",
          {"op": "move_day", "day": "leg", "to_weekday": 5}),
+        ("rest 90s on squats", "edit_plan", {"op": "rest", "exercise": "squats", "rest_s": 90}),
+        ("set rest for bench press to 2 min", "edit_plan",
+         {"op": "rest", "exercise": "bench press", "rest_s": 120}),
+        ("make squats rest 45 seconds", "edit_plan", {"op": "rest", "rest_s": 45}),
+        ("train 4 days a week", "update_setting", {"key": "sessions_per_week", "value": 4}),
+        ("i can train five days a week", "update_setting", {"value": 5}),
+        ("set days per week to 3", "update_setting", {"key": "sessions_per_week", "value": 3}),
         ("move monday to tue", "edit_plan", {"op": "move_day", "weekday": 0, "to_weekday": 1}),
     ],
 )  # fmt: skip
@@ -63,6 +70,8 @@ def test_edit_lines(text: str, kind: str, params: dict[str, object]) -> None:
         "switch to ppl",
         "I have a punching bag",
         "delete everything",
+        "rest day",
+        "how long should i rest between squats?",
     ],
 )
 def test_not_edits(text: str) -> None:
