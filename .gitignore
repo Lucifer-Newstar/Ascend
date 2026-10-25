@@ -34,6 +34,9 @@ ml/data/processed/
 ml/models/*.onnx
 ml/models/*.pt
 ml/models/models-manifest.json
+ml/models/*.joblib
+ml/models/intent_model.json.gz
+ml/models/intent-manifest.json
 ml/reports/
 ml/metrics.json
 mlruns/
