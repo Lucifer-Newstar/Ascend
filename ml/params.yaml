@@ -6,15 +6,22 @@ prepare:
   test_split: 0.15  # plus every team photo (test-own), which is always test
   seed: 42
 train:
+  # food-photo v0 recipe, sized for a laptop RTX 3050 (4 GB): MobileNetV3-Small at 224 px
+  # uses about 1.5 GB at batch 64. Lower batch_size to 32 if CUDA runs out of memory.
   backbone: mobilenet_v3_small
-  pretrained: false   # true downloads ImageNet weights (use it for real data runs)
-  epochs: 15
-  batch_size: 32
-  lr: 0.002
+  pretrained: true    # ImageNet weights (a 10 MB download); the CI smoke run sets false
+  epochs: 20
+  batch_size: 64
+  lr: 0.001
   weight_decay: 0.01
   label_smoothing: 0.05
 export:
-  version: 0.0.0-smoke   # bump per registered model (semver; -smoke = synthetic data)
+  version: 0.1.0   # food-photo v0. A version containing "smoke" can never pass the gate
+food_gate:
+  # Judged on the team's own photos only (data/raw/_test-own, see food/README.md).
+  min_own_per_class: 10   # own test photos per food class (shoot 30-50, split by meal)
+  min_own_top1: 0.70
+  min_own_top3: 0.90
 
 # Trainer-chat intent router (intent/). Text only: trains on CPU in about a minute.
 intent:
