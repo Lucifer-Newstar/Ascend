@@ -42,3 +42,8 @@ intent:
     min_oos_recall: 0.85
     min_parity_argmax: 0.995
   threshold: 0.55          # the sidecar uses a prediction only at or above this confidence
+
+# Knowledge base for the trainer's answers (knowledge/). BM25 lives in the sidecar.
+knowledge:
+  gate:
+    min_hit_at_3: 0.9      # team-written app questions (app_questions.yaml)

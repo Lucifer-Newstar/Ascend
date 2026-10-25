@@ -1,0 +1,36 @@
+# Regression set for the knowledge base: app-style questions and the passages of which at
+# least one must be in the top 3. Written by the team, so it guards against breaking
+# retrieval; it does not measure quality on real users (see KB_CARD.md for that).
+questions:
+  - q: "how much water should i drink"
+    expect: ["note:nutrition_basics:water-and-hydration"]
+  - q: "creatine safe?"
+    expect: ["note:nutrition_basics:creatine"]
+  - q: "protein in idli"
+    expect: ["food:idli"]
+  - q: "how many calories in 2 dosa"
+    expect: ["food:plain dosa", "food:masala dosa"]
+  - q: "is curd good after workout"
+    expect: ["note:nutrition_basics:eating-after-a-workout"]
+  - q: "how to do a plank"
+    expect: ["note:training_basics:plank-and-core-holds", "fedb:Plank"]
+  - q: "how do I do a pull up"
+    expect: ["note:training_basics:pull-up-progression"]
+  - q: "Importance of rest days"
+    expect: ["note:training_basics:why-rest-days-matter"]
+  - q: "Should I stretch after exercise?"
+    expect: ["note:training_basics:stretching-before-or-after-exercise"]
+  - q: "what is a deload"
+    expect: ["note:training_basics:deload-weeks"]
+  - q: "how much sleep do i need"
+    expect: ["note:training_basics:sleep-and-recovery"]
+  - q: "can I lose 5 kg in 2 months"
+    expect: ["note:nutrition_basics:how-fast-to-lose-or-gain-weight-a-safe-rate"]
+  - q: "How to get enough protein as a vegetarian?"
+    expect: ["note:nutrition_basics:protein-in-a-vegetarian-indian-diet"]
+  - q: "Prevent or treat delayed onset muscle soreness"
+    expect: ["note:training_basics:muscle-soreness-after-training-doms"]
+  - q: "my shoulder hurts"
+    expect: ["note:safety:pain-during-exercise", "note:safety:training-around-a-minor-injury"]
+  - q: "what are the benefits of hypertrophy training?"
+    expect: ["note:training_basics:building-muscle-hypertrophy"]
