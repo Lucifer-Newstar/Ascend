@@ -8,7 +8,8 @@
 #   rules:<k>  -> the existing rule answer of kind <k> (greeting, help, train_today, ...)
 #   knowledge  -> a cited passage from the local knowledge base (and the local AI, if on)
 #   navigate:<section> -> open a section of the app
-#   decline    -> say politely that this is outside what the trainer knows
+#   decline    -> never answered from the knowledge base: the rules' usual reply ("no note
+#                 on that", with suggestions) or the local AI when it is on
 version: intent-v1
 intents:
   greeting:
