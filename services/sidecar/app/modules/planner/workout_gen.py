@@ -189,6 +189,8 @@ class SlotOut:
     rep_high: int
     target_rpe: float
     rest_s: int
+    # v1.3: "hold" when rep_low / rep_high are seconds, so the planner shows "30-45 s"
+    measure: str = "reps"
 
 
 @dataclass(frozen=True)
@@ -384,9 +386,11 @@ def generate(
                 continue
             ex, lo, hi = fitted
             used.add(ex)
+            measure = "reps"
             if is_hold(ex):
                 lo, hi = hold_dose(ex, experience, cap)
-            out.append(SlotOut(ex, sets, lo, hi, rpe, rest))
+                measure = "hold"
+            out.append(SlotOut(ex, sets, lo, hi, rpe, rest, measure))
         suffix = f" {repeat + 1}" if SPLITS[days_per_week].count(dtype) > 1 else ""
         days.append(
             DayOut(

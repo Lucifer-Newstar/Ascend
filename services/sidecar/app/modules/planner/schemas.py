@@ -62,8 +62,10 @@ class WorkoutPlanIn(StrictIn):
 class SlotIO(BaseModel):
     exercise: str = Field(min_length=1, max_length=120)
     sets: int = Field(ge=1, le=10)
-    rep_low: int = Field(ge=1, le=100)
-    rep_high: int = Field(ge=1, le=100)
+    # Reps, or seconds when measure is "hold" (v1.3: up to a 5-minute hold).
+    rep_low: int = Field(ge=1, le=300)
+    rep_high: int = Field(ge=1, le=300)
+    measure: Literal["reps", "hold"] = "reps"
     target_rpe: float = Field(default=8.0, ge=5, le=10)
     rest_s: int = Field(default=120, ge=0, le=900)
     exercise_id: int | None = None

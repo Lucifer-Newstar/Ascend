@@ -68,7 +68,7 @@ def test_push_ups_are_dosed_from_the_baseline() -> None:
 def test_holds_are_dosed_in_seconds_from_the_baseline() -> None:
     p = _plan(["none"], LIB - {"Hollow Body Hold"}, capacity={"plank_s": 60}, days_per_week=3)
     plank = next(s for d in p.days for s in d.slots if s.exercise == "Plank")
-    assert (plank.rep_low, plank.rep_high) == (35, 50)
+    assert (plank.rep_low, plank.rep_high) == (35, 50) and plank.measure == "hold"
     assert wg.hold_dose("Hollow Body Hold", "beginner", {"plank_s": 60}) == (20, 30)
 
 
