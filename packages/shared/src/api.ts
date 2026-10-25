@@ -521,6 +521,10 @@ export interface XpInfo {
   rank_title: string;
   daily_cap: number;
   formula_version: string;
+  /** v1.3: E1-E3 style sub-ranks, display only (the XP formula is unchanged). */
+  sub_rank?: string;
+  next_sub_rank?: string | null;
+  next_sub_rank_level?: number | null;
 }
 
 /** v1.2: a missed day is kept with a reason given by the next day (no more freezes). */
@@ -532,6 +536,16 @@ export interface StreakInfo {
   active_today: boolean;
   /** Yesterday was missed and can still get its reason today (ISO date), else null. */
   reason_due: string | null;
+  /** v1.3: today is a planned rest day (no reminders, the streak is safe). */
+  rest_today?: boolean;
+  /** v1.3: numbers that never go down. */
+  lifetime_sessions?: number;
+  /** The next lifetime-session milestone (10, 25, 50, ...), null past the last one. */
+  next_milestone?: number | null;
+  /** Weeks in a row that met the weekly target (or beat the weekly boss). */
+  weeks_in_a_row?: number;
+  /** Training days a week the plan asks for. */
+  week_target?: number;
 }
 
 export interface CalmStreak {
