@@ -1,8 +1,10 @@
 /**
- * Progress (12-column grid, spec §8.4): a KPI strip, then body weight with its trend and the
- * goal-weight ETA, this week's diet insights (insights-v1), estimated 1RM / best hold per key movement, weekly sets per muscle against
- * its band, the 8-week totals, a PR timeline and tape measurements. Every card owns its
- * loading, error and empty state through <Panel>.
+ * Progress (12-column grid, spec §8.4). v1.3 (review 1.10): training leads. A KPI strip
+ * (this week, lifetime sessions, PRs, trend weight), the weekly recap, estimated 1RM / best
+ * hold per key movement, weekly sets per muscle against its band, the 8-week totals and the
+ * PR timeline, muscle recovery; then body weight with its trend and the goal-weight ETA,
+ * diet insights (insights-v1) and tape measurements. Every card owns its loading, error and
+ * empty state through <Panel>.
  */
 import type { BodyMetric, Eta, Measurement, MeasurementSite, MuscleState, PersonalRecord, Profile, Units, WeekSummary } from "@ascend/shared";
 import { useState } from "react";
@@ -39,6 +41,7 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
   const profile = useApi(api.profile, [refreshKey, tick]);
   const weeks = useApi(() => api.weekly(8), [refreshKey, tick]);
   const prs = useApi(api.prs, [refreshKey]);
+  const game = useApi(api.game, [refreshKey], { cacheKey: "game" });
 
   const series = metrics.data ?? [];
   const latest = series.at(-1);
@@ -49,21 +52,29 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
   return (
     <PageGrid label="Progress">
       <KpiStrip>
-        <KpiTile index={0} label="Trend weight" loading={metrics.loading && !metrics.data}
-          value={latest ? formatWeight(latest.trend_kg, units) : "–"}
-          sub={latest && first && series.length > 1 ? `${signed(toDisplayWeight(latest.trend_kg - first.trend_kg, units))} ${weightUnit(units)} over ${count(series.length, "weigh-in")}` : "Log a weigh-in to start the trend"} />
-        <KpiTile index={1} label="Goal ETA (estimate)" loading={eta.loading && !eta.data} tone={eta.data?.eta_from ? "accent" : "ink"}
-          value={eta.data?.eta_from && eta.data.eta_to ? dateRange(eta.data.eta_from, eta.data.eta_to) : "–"}
-          sub={eta.data?.goal_kg ? `to ${formatWeight(eta.data.goal_kg, units)}` : "No goal weight set"} />
-        <KpiTile index={2} label="This week" loading={weeks.loading && !weeks.data}
+        <KpiTile index={0} label="This week" loading={weeks.loading && !weeks.data}
           value={thisWeek ? count(thisWeek.sessions, "session") : "–"}
           sub={thisWeek ? `${count(thisWeek.sets, "set")} · ${thisWeek.active_minutes} min` : undefined} />
-        <KpiTile index={3} label="PRs · 30 days" loading={prs.loading && !prs.data} tone={recentPrs.length ? "warn" : "ink"}
+        <KpiTile index={1} label="Sessions, all time" loading={game.loading && !game.data} tone="accent"
+          value={game.data ? String(game.data.streak.lifetime_sessions ?? 0) : "–"}
+          sub={game.data ? `best streak ${count(game.data.streak.best, "day")}` : undefined} />
+        <KpiTile index={2} label="PRs · 30 days" loading={prs.loading && !prs.data} tone={recentPrs.length ? "warn" : "ink"}
           value={prs.data ? String(recentPrs.length) : "–"}
           sub={recentPrs[0] ? `latest: ${recentPrs[0].exercise}` : "Weighted sets of 1–10 reps count"} />
+        <KpiTile index={3} label="Trend weight" loading={metrics.loading && !metrics.data}
+          value={latest ? formatWeight(latest.trend_kg, units) : "–"}
+          sub={latest && first && series.length > 1 ? `${signed(toDisplayWeight(latest.trend_kg - first.trend_kg, units))} ${weightUnit(units)} over ${count(series.length, "weigh-in")}` : "Log a weigh-in to start the trend"} />
       </KpiStrip>
 
       <WeeklyRecapPanel refreshKey={refreshKey + tick} index={4} />
+
+      <KeyLiftsPanel prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} refreshKey={refreshKey} />
+      <MuscleBandPanel refreshKey={refreshKey + tick} />
+
+      <WeeklyPanel weeks={weeks.data ?? null} loading={weeks.loading && !weeks.data} error={!weeks.data ? weeks.error ?? null : null} onRetry={weeks.reload} units={units} />
+      <PrTimeline prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} />
+
+      <RecoveryPanel refreshKey={refreshKey + tick} />
 
       <Panel id="weight" index={4} className="col-span-12 xl:col-span-8" title="Body weight · 90 days"
         action={<span className="text-[11px] text-muted">dots = weigh-ins · line = trend</span>}
@@ -78,14 +89,6 @@ export function ProgressPage({ refreshKey, onChanged }: { refreshKey: number; on
       </Panel>
 
       <InsightsPanel refreshKey={refreshKey + tick} index={6} />
-
-      <RecoveryPanel refreshKey={refreshKey + tick} />
-
-      <KeyLiftsPanel prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} refreshKey={refreshKey} />
-      <MuscleBandPanel refreshKey={refreshKey + tick} />
-
-      <WeeklyPanel weeks={weeks.data ?? null} loading={weeks.loading && !weeks.data} error={!weeks.data ? weeks.error ?? null : null} onRetry={weeks.reload} units={units} />
-      <PrTimeline prs={prs.data ?? null} loading={prs.loading && !prs.data} error={!prs.data ? prs.error ?? null : null} onRetry={prs.reload} units={units} />
 
       <MeasurementsCard refreshKey={refreshKey} units={units} />
 

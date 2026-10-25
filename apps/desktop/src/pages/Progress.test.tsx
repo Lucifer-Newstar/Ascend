@@ -11,6 +11,7 @@ import { ProgressPage } from "./Progress";
 vi.mock("../api/client", () => ({
   api: {
     recap: vi.fn(),
+    game: vi.fn(),
     bodyMetrics: vi.fn(),
     eta: vi.fn(),
     profile: vi.fn(),
@@ -65,6 +66,7 @@ describe("ProgressPage", () => {
       { id: 2, measured_at: "2026-10-19T07:00:00", weight_kg: 73.8, trend_kg: 74.3, waist_cm: null, resting_hr: null },
     ]);
     vi.mocked(api.eta).mockResolvedValue(noGoal);
+    vi.mocked(api.game).mockResolvedValue({ xp: { rank: "E" }, streak: { current: 2, best: 6, lifetime_sessions: 31 }, quest: [] } as never);
     vi.mocked(api.profile).mockResolvedValue(profile);
     vi.mocked(api.weekly).mockResolvedValue([]);
     vi.mocked(api.prs).mockResolvedValue([
@@ -113,6 +115,18 @@ describe("ProgressPage", () => {
     const lifts = await screen.findByRole("region", { name: "Key movements" });
     await waitFor(() => expect(lifts).toHaveTextContent("80 kg"));
     expect(api.progression).toHaveBeenCalledWith(1);
+  });
+
+  it("leads with training: sessions first, lifetime count, body weight after the lifts (v1.3)", async () => {
+    renderPage();
+    const strip = screen.getByRole("region", { name: "Headline numbers" });
+    const text = strip.textContent ?? "";
+    expect(text.indexOf("This week")).toBeLessThan(text.indexOf("Trend weight"));
+    await waitFor(() => expect(strip).toHaveTextContent("Sessions, all time31"));
+    expect(strip).toHaveTextContent("best streak 6 days");
+    const lifts = await screen.findByRole("region", { name: "Key movements" });
+    const weight = await screen.findByRole("region", { name: "Body weight · 90 days" });
+    expect(lifts.compareDocumentPosition(weight) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("draws weekly sets against each muscle's band", async () => {

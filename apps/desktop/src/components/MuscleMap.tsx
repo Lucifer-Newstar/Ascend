@@ -276,7 +276,7 @@ function RegionRow({ m, onOpen }: { m: MuscleState; onOpen: (code: string) => vo
         {m.deep && <span className="chip px-1 py-0 text-[9px]" title="Deep muscle: shown in the Deep layer">deep</span>}
       </span>
       <span className="shrink-0 text-right text-muted" title="Effective sets in the last 7 days vs the weekly target band (estimate)">
-        {Math.round(m.es_7d * 10) / 10}{band} sets · {Math.round(m.readiness * 100)}%{m.status === "recovering" ? ` · ${readyAtLabel(m.ready_at)}` : ""}
+        {Math.round(m.es_7d * 10) / 10}{band} sets · {m.status === "recovering" ? readyAtLabel(m.ready_at) : `${Math.round(m.readiness * 100)}% ready`}
       </span>
       <span className="sr-only">, {STATUS_LABELS[m.status]}. Open details</span>
     </button>
