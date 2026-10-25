@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from app.core.schemas import StrictIn
 
 Mood = Literal["neutral", "proud", "warning", "hyped"]
-TrainerId = Literal["iskra", "vera", "kai", "dario"]
+TrainerId = Literal["iskra", "vera", "kai", "dario", "tara", "idris"]
 
 
 class ChatIn(StrictIn):

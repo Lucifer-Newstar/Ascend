@@ -25,7 +25,7 @@ from app.modules.workouts import programs_service
 from app.modules.workouts import service as workouts
 from app.modules.workouts.models import Workout
 
-TRAINERS = ("iskra", "vera", "kai", "dario")
+TRAINERS = ("iskra", "vera", "kai", "dario", "tara", "idris")
 FEED_LIMIT = 30
 
 

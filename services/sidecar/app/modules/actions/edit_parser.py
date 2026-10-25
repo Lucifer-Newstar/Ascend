@@ -34,7 +34,7 @@ GOALS = {
     "stay the same": "maintain",
 }  # fmt: skip
 THEMES = ("dark", "light", "system", "shadow", "crimson", "frost", "emerald", "solar")
-TRAINERS = ("iskra", "vera", "kai", "dario")
+TRAINERS = ("iskra", "vera", "kai", "dario", "tara", "idris")
 
 
 def _clean(text: str) -> str:

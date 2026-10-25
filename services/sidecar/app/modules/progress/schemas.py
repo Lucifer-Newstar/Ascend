@@ -101,7 +101,7 @@ class MuscleStateOut(BaseModel):
 
 
 Units = Literal["metric", "imperial"]
-TrainerId = Literal["iskra", "vera", "kai", "dario"]
+TrainerId = Literal["iskra", "vera", "kai", "dario", "tara", "idris"]
 # v1.2: "dark" / "light" / "system" are the v1.1 looks (kept as free themes); the rest are
 # the v1.2 themes (gamification/themes.py says which are unlocked).
 Theme = Literal["dark", "light", "system", "shadow", "crimson", "frost", "emerald", "solar"]
@@ -123,7 +123,7 @@ class SettingsOut(BaseModel):
     online_lookup: bool = False
     # v8: insights spoken by the trainer character (Instructor Iskra Vey); off = plain mode.
     trainer: bool = True
-    # v1.1: which trainer speaks (iskra, vera, kai, dario).
+    # v1.1: which trainer speaks (iskra, vera, kai, dario; tara and idris from v1.3).
     trainer_id: TrainerId = "iskra"
     # v1.1: hide calorie numbers across the app (targets still work underneath).
     hide_calories: bool = False

@@ -164,7 +164,7 @@ def _minor(db: Session) -> bool:
 
 
 def _trainer_id(value: str) -> str:
-    return value if value in ("iskra", "vera", "kai", "dario") else "iskra"
+    return value if value in ("iskra", "vera", "kai", "dario", "tara", "idris") else "iskra"
 
 
 def update_settings(db: Session, data: SettingsIn) -> SettingsOut:
