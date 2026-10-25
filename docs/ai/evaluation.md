@@ -297,3 +297,19 @@ On the build machine the three runs took about 3, 2 and 1 minutes.
 - **The trend insight is a hint.** Precision 0.397, recall 0.408 against the true weight: 14 days of weigh-ins cannot separate small rate differences from water weight.
 - **Latency is from one machine** (the 4-CPU build machine, Linux), not the target Windows laptop.
 - **Reproducibility checked.** On 2026-10-21 the recovery and progression commands below were rerun on the current main and produced JSON identical to `eval/results/recovery.json` and `eval/results/progression.json`. On 2026-10-22 the recovery command was rerun for taxonomy v2 (v8) and its JSON replaced; the progression JSON was not affected. The diet evaluation, rerun the same day, reproduced the `tdee` and `insights` sections of `eval/results/diet.json` exactly. Its latency numbers change from run to run.
+
+## 9. Trainer chat battery (v1.3, rules only)
+
+`eval/trainer_chat.py` sends 343 everyday messages (log lines, Indian food names, holds, weigh-ins, multi-item meals, program choices, deletes, questions, small talk) through the real app with the local AI off. Rows with a structured expectation (`set:push-up|reps=10|sets=1`, `meal:idli|p=2`, `hold:plank|s=60`, ...) are checked automatically; answers, greetings and out-of-scope asks are listed for a person to read and are never counted as passes.
+
+| Build | Pass | Fail | Read by hand |
+|---|---:|---:|---:|
+| v1.2.0 (`e8b19fb`) | 140 | 112 | 91 |
+| v1.3 `feat/v13-fixes` | 251 | 1 | 91 |
+
+The remaining fail is "follow the 5 day split": there is no 5-day program, and the trainer says so. The 91 judgement rows were read by hand during the build; most answer correctly, and the open ones (long free-form questions with no matching note) need the optional local AI. The messages were written by the team, so this measures the rules on phrasings we thought of, not on real users.
+
+```bash
+cd services/sidecar
+uv run python -m eval.trainer_chat --show-fails   # writes eval/results/trainer_chat.json
+```
