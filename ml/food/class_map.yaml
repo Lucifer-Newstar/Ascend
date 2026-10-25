@@ -1,0 +1,63 @@
+# Detection-dataset class name -> ASCEND label (ml/labels.json). Names are matched after
+# lower-casing and turning spaces, dashes and dots into underscores, so "Medu Vada",
+# "medu-vada" and "medu_vada" are one key.
+#
+# NOT VERIFIED against the exports: Roboflow Universe pages render their class lists with
+# JavaScript, so the names below are the common spellings, not copied from each dataset.
+# Before the first conversion run
+#     python food/src/coco_to_cls.py --list-classes <export folder>
+# and add any real name you want to keep. Classes not listed here are skipped and counted
+# in the report; nothing is guessed. Map a class to `skip` to drop it on purpose.
+#
+# Datasets (licences are on each Universe page; record the one you downloaded in
+# ml/SOURCES.md before training):
+#   bharani      universe.roboflow.com/bharani-1ucid/south-indian-food-detection
+#   txofy        universe.roboflow.com/microplastics-vypxl/indian-food-txofy
+#   indianfoodnet universe.roboflow.com/indianfoodnet/indianfoodnet (optional)
+
+aliases:
+  idli: idli
+  idly: idli
+  idli_sambar: skip          # two foods in one box: ambiguous for a classifier
+  dosa: dosa
+  plain_dosa: dosa
+  dosai: dosa
+  masala_dosa: masala_dosa
+  sambar: sambar
+  sambhar: sambar
+  chapati: chapati
+  chapathi: chapati
+  roti: chapati
+  rice: rice
+  white_rice: rice
+  steamed_rice: rice
+  plain_rice: rice
+  dal: dal
+  dhal: dal
+  toor_dal: dal
+  medu_vada: medu_vada
+  vada: medu_vada
+  uzhunnu_vada: medu_vada
+  pongal: ven_pongal
+  ven_pongal: ven_pongal
+  upma: upma
+  rava_upma: upma
+  poori: poori
+  puri: poori
+  parotta: parotta
+  porotta: parotta
+  biryani: chicken_biryani   # most dataset biryani boxes are chicken; check a sample
+  chicken_biryani: chicken_biryani
+  curd_rice: curd_rice
+  thayir_sadam: curd_rice
+  boiled_egg: boiled_egg
+  egg: boiled_egg
+  chicken_curry: chicken_curry
+  coconut_chutney: coconut_chutney
+  chutney: coconut_chutney   # check a sample: some datasets mix chutneys
+  banana: banana
+  # Common in these datasets but not food rows the app can log yet:
+  salad: skip
+  yogurt: skip
+  curd: skip
+  plate: skip
