@@ -1,0 +1,297 @@
+"""Templated ASCEND app commands: the phrasings no public dataset has.
+
+Public question sets never say "3x10 pushups da" or "change theme to light". These
+templates do, for every app intent, with:
+* slot values from small hand-written lists (exercises, holds, foods, numbers);
+* Tanglish / Hinglish fillers ("da", "bro", "machan", "pannen", "kiye", "yaar");
+* keyboard typos (a dropped, doubled or swapped letter) on some words;
+* lower case, no punctuation, and the odd ALL CAPS, like real chat.
+
+Every template has a stable id. `split_of` puts about one template in four per intent in
+the TEST split only, so the reported template score is on phrasings the model never saw,
+not on new slot values in a phrasing it already knows. It is still synthetic text: the
+data card says so, and it is never reported as real-user accuracy.
+"""
+
+from __future__ import annotations
+
+import random
+import zlib
+
+EXERCISES = [
+    "pushups", "push ups", "push-ups", "pullups", "pull ups", "chin ups", "squats",
+    "bodyweight squats", "lunges", "dips", "bench press", "bench", "deadlift", "deadlifts",
+    "dumbbell curl", "bicep curls", "db rows", "dumbbell rows", "shoulder press", "ohp",
+    "lateral raise", "crunches", "sit ups", "burpees", "jumping jacks", "pike pushups",
+    "diamond pushups", "ring rows", "ring dips", "inverted rows", "glute bridges",
+    "calf raises", "leg raises", "goblet squats", "rdl", "hip thrusts", "mountain climbers",
+    "tricep extensions", "hammer curls", "chest fly", "lat pulldown", "leg press",
+    "skull crushers", "face pulls", "muscle ups", "australian pullups", "knee pushups",
+]
+HOLDS = [
+    "plank", "side plank", "dead hang", "hang", "l sit", "l-sit", "hollow hold",
+    "wall sit", "superman hold", "handstand hold", "glute bridge hold", "bar hang",
+]
+FOODS = [
+    "idli", "dosa", "masala dosa", "pongal", "ven pongal", "upma", "chapati", "chapathi",
+    "roti", "parotta", "poori", "sambar", "rasam", "curd rice", "lemon rice", "biryani",
+    "chicken biryani", "dal", "rajma", "chana", "paneer", "egg", "boiled eggs", "omelette",
+    "banana", "apple", "milk", "tea", "coffee", "filter coffee", "oats", "peanut butter",
+    "chicken breast", "fish curry", "rice", "curd", "buttermilk", "vada", "medu vada",
+    "coconut chutney", "maggi", "bread", "poha", "sundal", "whey", "protein shake",
+    "almonds", "dates", "chicken curry", "mutton", "kothu parotta", "sweet pongal",
+]
+FILLERS_END = ["da", "bro", "machan", "macha", "pa", "yaar", "bhai", "ji", "dude", "man", "ma"]
+FILLERS_START = ["bro", "da", "ok", "hey", "yo", "machan", "bhai", "so", "umm", "trainer"]
+TANGLISH_DONE = ["pannen", "panniten", "senjen", "mudichen", "adichen", "kiye", "kar liya",
+                 "done", "finished", "completed", "did"]
+MEALS = ["breakfast", "lunch", "dinner", "snack", "tiffin", "evening snack"]
+SECTIONS = ["progress", "settings", "fuel", "diet", "skills", "history", "library",
+            "train", "profile", "planner", "today"]
+
+T: dict[str, list[str]] = {
+    "log_set": [
+        "{n} {ex}", "did {n} {ex}", "{ex} {n}", "{ex} {n} reps", "{s}x{n} {ex}",
+        "{s} x {n} {ex}", "{s} sets of {n} {ex}", "i did {s} sets of {n} {ex}",
+        "{ex} {kg}kg x {n}", "{ex} {kg} kg for {n} reps", "log {n} {ex}", "add {s}x{n} {ex}",
+        "{n} {ex} {done}", "{ex} {n} {done}", "{n} {ex} today", "just did {n} {ex}",
+        "finished {s} sets {ex} {n} each", "{ex} {s}*{n}", "record {ex} {s} sets {n} reps",
+        "{ex} {n} reps at {kg} kg", "{n} reps {ex}", "{ex} set {n}", "{s}x{n} {ex} @{rpe}",
+        "{ex} {kg} {n}", "done {n} {ex}", "{n} {ex} completed", "{ex} - {s}x{n}",
+        "got {n} {ex} today", "{ex} {s} sets", "track {ex} {s}x{n}",
+    ],
+    "log_hold": [
+        "{hold} {sec}s", "{hold} {sec} seconds", "{hold} {sec} sec", "{hold} for {min} min",
+        "{hold} {min} minute", "{hold} {min}:30", "held {hold} for {sec} seconds",
+        "{sec}s {hold}", "{sec} second {hold}", "{hold} {min} mins {done}",
+        "log {hold} {sec}s", "did a {sec} sec {hold}", "{hold} hold {sec}s",
+        "{hold} for a minute", "{hold} 1 min 20 sec", "{min} min {hold}",
+        "{hold} {sec} secs today", "add {hold} {sec} seconds", "{hold} x {s} {sec}s",
+        "{hold} {s} rounds of {sec} sec",
+    ],
+    "log_weight": [
+        "weight {w}kg", "weight {w}", "i weigh {w}", "i weigh {w} kg", "weighed {w}kg today",
+        "body weight {w}", "my weight is {w}", "my weight is {w} kg today", "im {w} kg today",
+        "i'm {w}kg", "{w}kg this morning", "log weight {w}", "weigh in {w}",
+        "scale says {w}", "today weight {w} kg", "bw {w}", "{w} kg on the scale",
+        "update my weight {w}", "weighed in at {w}", "morning weight {w}",
+        "en weight {w} kg", "weight check {w}",
+    ],
+    "log_meal": [
+        "{q} {food}", "ate {q} {food}", "had {food}", "had {q} {food} for {meal}",
+        "{food} for {meal}", "{q} {food} for {meal}", "i ate {food}", "{food} {sap}",
+        "{q} {food} {sap}", "{meal} {food}", "{meal}: {q} {food} and {food2}",
+        "{food} and {food2}", "{q} {food} with {food2}", "{food}, {food2}",
+        "log {food}", "add {q} {food} to {meal}", "{food} {grams}g", "{grams} grams {food}",
+        "just had {food}", "{meal} was {food} and {food2}", "drank {food}",
+        "{q} plate {food}", "half plate {food}", "{food} kudichen", "{food} khaya",
+        "{meal} la {food}", "eaten {q} {food}", "track {food} {grams}g",
+    ],
+    "add_food": [
+        "add food {newfood}", "add a new food {newfood}", "create food {newfood}",
+        "add {newfood} to my foods", "add {newfood} to the food list",
+        "{newfood} is not in the list add it", "new food: {newfood} {kcal} kcal",
+        "add custom food {newfood} {kcal} kcal {pro}g protein",
+        "can you add {newfood} to food table", "save {newfood} as a food",
+        "make a food called {newfood}", "add my own food {newfood}",
+        "{newfood} not found, add it", "add {newfood} with {kcal} calories",
+    ],
+    "ask_workout_today": [
+        "what should i train today", "what's my workout today", "whats my workout today",
+        "my workout today", "today workout", "what do i do today", "what to train today",
+        "which workout today", "what's today's session", "what is today's plan",
+        "today enna workout", "aaj kya workout hai", "what should i do in the gym today",
+        "today's workout?", "what am i training today", "which muscles today",
+        "show today's workout", "what exercises today", "is today a rest day",
+        "do i train today", "next workout", "what's next in my program",
+    ],
+    "ask_progress": [
+        "what's my streak", "how many calories today", "how much protein did i eat today",
+        "how am i doing", "show my progress", "what is my bmi", "my prs",
+        "what's my best bench", "how many workouts this week", "calories left today",
+        "did i hit my protein", "how much did i lift this week", "my weekly summary",
+        "how many days streak", "what level am i", "how much xp do i have",
+        "weight trend", "am i losing weight", "how close am i to my goal",
+        "my streak enna", "total sets this week", "how many sessions so far",
+    ],
+    "plan_request": [
+        "make me a workout plan", "give me a diet plan", "create a meal plan",
+        "make a plan for me", "which program should i follow", "suggest a routine",
+        "build me a gym plan", "i need a home workout plan", "plan my week",
+        "give me a {days} day split", "make a bulking diet plan", "best program for me",
+        "workout plan for beginners", "suggest a program for muscle gain",
+        "i want a plan to gain weight", "make me a calisthenics routine",
+        "design a plan with dumbbells", "enaku oru workout plan venum",
+        "mujhe diet plan chahiye", "recommend a program",
+    ],
+    "plan_edit": [
+        "make my plan {days} days", "change my plan to {days} days a week",
+        "remove {ex} from my plan", "swap {ex} with {ex2}", "replace {ex} with {ex2}",
+        "add {ex} to my plan", "add {ex} to {day}", "move {day} workout to {day2}",
+        "change sets of {ex} to {s}", "make {ex} {s}x{n}", "less rest between sets",
+        "rest {sec} seconds between sets", "follow ppl", "switch to ppl plan",
+        "put me on starter", "follow the beginner program", "drop {ex} from {day}",
+        "add one more set of {ex}", "change {day} to rest day", "skip {ex} in my plan",
+        "edit my plan", "{ex} venda, {ex2} podu",
+    ],
+    "settings_change": [
+        "switch to light theme", "change theme to dark", "dark mode", "turn on dark mode",
+        "turn off notifications", "turn off reminders", "set reminder at {hour} pm",
+        "remind me at {hour} am", "change units to lbs", "use kg", "switch to pounds",
+        "mute sounds", "turn off sound", "change the theme", "stop the reminders",
+        "enable evening reminder", "change language", "disable the tray icon",
+        "start with windows off", "theme change pannu",
+    ],
+    "profile_change": [
+        "update my height to {h} cm", "my height is {h}", "set my target weight to {w} kg",
+        "change my goal to bulk", "change my goal to lose fat", "my goal is muscle gain",
+        "i have rings and dumbbells", "set my equipment to dumbbells and rings",
+        "i got a pull up bar", "i don't have a bench", "change my name to {name}",
+        "call me {name}", "i'm {age} years old", "update my age to {age}",
+        "i am a beginner", "i train {days} days a week", "set equipment to bodyweight only",
+        "i bought dumbbells", "my name is {name}", "change my target to {w}kg",
+    ],
+    "undo_cancel": [
+        "undo", "undo that", "cancel", "cancel that", "nope", "no wait", "remove that meal",
+        "delete the last set", "that was wrong", "undo last log", "remove the last entry",
+        "wrong one undo", "don't log that", "never mind", "oops undo", "revert that",
+        "take that back", "delete what i just added", "cancel pannu", "galti se, undo",
+    ],
+    "erase_data": [
+        "wipe all my logs", "delete all my data", "start fresh", "reset everything",
+        "erase my data", "clear all history", "start over from scratch", "delete my account",
+        "remove all my workouts and meals", "none of this data is mine", "fresh start please",
+        "wipe everything", "factory reset the app", "delete everything i logged",
+    ],
+    "motivation": [
+        "i feel lazy today", "no motivation", "i don't feel like working out",
+        "i missed yesterday", "skipped the gym today", "i'm demotivated", "feeling low",
+        "i want to give up", "too tired to train", "i'm so tired", "i'm stressed",
+        "i couldn't train yesterday", "motivate me", "i keep skipping workouts",
+        "romba tired da", "aaj mann nahi hai", "i'm burned out", "i feel overwhelmed",
+        "missed 3 days", "bunked gym", "help me stay consistent",
+    ],
+    "greeting": [
+        "hi", "hello", "hey", "hey trainer", "yo", "good morning", "good evening",
+        "vanakkam", "namaste", "hii", "helloo", "sup", "hi there", "hey coach", "hola",
+        "good afternoon", "hey {name}", "hi da", "hello bro",
+    ],
+    "thanks": [
+        "thanks", "thank you", "thank you da", "thx", "ty", "cheers", "nice thanks",
+        "ok thanks", "cool", "got it", "awesome thanks", "super da", "nandri",
+        "thanks bro", "appreciate it", "great, thank you", "dhanyavaad", "ok cool",
+    ],
+    "help": [
+        "what can you do", "help", "how do i use this", "what are you", "who are you",
+        "are you ai", "are you a bot", "what can i ask you", "commands", "give me a tour",
+        "how does this app work", "show me around", "what is ascend", "how do i log a set",
+        "how do i add custom food", "where is settings", "guide me", "what's your name",
+        "how do streaks work", "how do i earn xp",
+    ],
+}
+
+
+def stable_id(intent: str, template: str) -> int:
+    return zlib.crc32(f"{intent}|{template}".encode())
+
+
+def split_of(intent: str, template: str) -> str:
+    """'test' for ~1 template in 4 (by a stable hash), else 'train'."""
+    return "test" if stable_id(intent, template) % 4 == 0 else "train"
+
+
+_KEYS = "qwertyuiopasdfghjklzxcvbnm"
+
+
+def typo(word: str, rng: random.Random) -> str:
+    if len(word) < 4 or not word.isalpha():
+        return word
+    i = rng.randrange(1, len(word) - 1)
+    kind = rng.randrange(3)
+    if kind == 0:
+        return word[:i] + word[i + 1 :]  # dropped letter
+    if kind == 1:
+        return word[:i] + word[i] + word[i:]  # doubled letter
+    return word[: i - 1] + word[i] + word[i - 1] + word[i + 1 :]  # swapped pair
+
+
+def fill(template: str, rng: random.Random) -> str:
+    food, food2 = rng.sample(FOODS, 2)
+    ex, ex2 = rng.sample(EXERCISES, 2)
+    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    d1, d2 = rng.sample(days, 2)
+    values = {
+        "n": str(rng.choice([5, 6, 7, 8, 10, 12, 15, 20, 25, 30])),
+        "s": str(rng.choice([2, 3, 4, 5])),
+        "kg": rng.choice(["5", "10", "12.5", "20", "40", "60", "80", "100"]),
+        "rpe": str(rng.choice([7, 8, 9])),
+        "ex": ex,
+        "ex2": ex2,
+        "hold": rng.choice(HOLDS),
+        "sec": str(rng.choice([20, 30, 45, 60, 90, 120])),
+        "min": str(rng.choice([1, 2, 3])),
+        "w": rng.choice(["42", "42.5", "45", "55", "61.2", "70", "81.4"]),
+        "food": food,
+        "food2": food2,
+        "q": rng.choice(["1", "2", "3", "one", "two", "a", "1 bowl", "2 cups", "a plate"]),
+        "meal": rng.choice(MEALS),
+        "sap": rng.choice(["saptan", "sapten", "sapitten", "khaya", "kha liya", "ate"]),
+        "grams": str(rng.choice([50, 100, 150, 200, 250])),
+        "newfood": rng.choice(["ragi dosa", "kambu koozh", "pesarattu", "appam", "idiyappam",
+                               "mushroom curry", "sprouts salad", "aval upma", "kozhukattai",
+                               "soya chunks curry", "protein bar", "paneer tikka"]),
+        "kcal": str(rng.choice([120, 180, 250, 320, 410])),
+        "pro": str(rng.choice([4, 8, 12, 20])),
+        "days": str(rng.choice([3, 4, 5, 6])),
+        "day": d1,
+        "day2": d2,
+        "hour": str(rng.choice([6, 7, 8, 9])),
+        "h": str(rng.choice([160, 165, 170, 175, 180])),
+        "age": str(rng.choice([17, 19, 21, 24, 30])),
+        "name": rng.choice(["Navin", "Gokul", "Dhanush", "Priya", "Arun", "Kavya"]),
+        "done": rng.choice(TANGLISH_DONE),
+    }
+    return template.format(**values)
+
+
+def augment(text: str, rng: random.Random) -> str:
+    words = text.split()
+    if rng.random() < 0.3:
+        k = rng.randrange(len(words))
+        words[k] = typo(words[k], rng)
+    out = " ".join(words)
+    r = rng.random()
+    if r < 0.15:
+        out = f"{out} {rng.choice(FILLERS_END)}"
+    elif r < 0.25:
+        out = f"{rng.choice(FILLERS_START)} {out}"
+    r = rng.random()
+    if r < 0.15:
+        out = out.capitalize() + rng.choice(["", ".", "!", "?"])
+    elif r < 0.18:
+        out = out.upper()
+    return out
+
+
+def generate(per_template: int = 6, seed: int = 42) -> list[dict[str, str]]:
+    """[{text, label, split, template_id}] with `per_template` variants per template."""
+    rng = random.Random(seed)
+    rows: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for intent, templates in T.items():
+        for tpl in templates:
+            n = per_template if "{" in tpl else 2
+            for _ in range(n):
+                text = augment(fill(tpl, rng), rng)
+                if text.lower() in seen:
+                    continue
+                seen.add(text.lower())
+                rows.append(
+                    {
+                        "text": text,
+                        "label": intent,
+                        "split": split_of(intent, tpl),
+                        "template_id": str(stable_id(intent, tpl)),
+                    }
+                )
+    return rows
