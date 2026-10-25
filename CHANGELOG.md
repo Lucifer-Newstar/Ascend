@@ -25,11 +25,27 @@ where a number you see could change. User-facing release notes live in
   protein and shake targets (no oats). A too-fast weight goal gets plain words and realistic
   targets. **Build my plan** on the Chat page is an optional six-question version. Every
   change is a card with undo; works with the AI off.
+- **Trophy shelf** on Profile: the bosses you have beaten, and the next one as a "???" until you
+  face it (the full boss ladder is gone: no spoilers).
+- **Six new cosmetics** for weekly, monthly, yearly and seasonal clears. Every timed reward
+  also opens from a total at your own pace, so a missed week never locks one away.
+- **Unlock scenes and an Unlocks page**: a full-screen reveal when you clear a boss, rank up or
+  earn a cosmetic (still with Reduce motion), and Profile > Achievements > All unlocks lists
+  every unlock with its date and a Replay button.
 - **Tray and start with Windows**, both off by default. With the tray on, closing the window
   keeps ASCEND by the clock and reminders still arrive.
 
+### Fixed
+
+- Dates use the PC's local clock everywhere: a progress photo added before 05:30 in India no
+  longer lands on yesterday, and the weekly recap looks back the right week.
+- The Hunter card shows your own avatar (look and outfit) even before your rank has loaded.
+- The avatar wears only what you equipped and have earned.
+- The Harvest Colossus now drops the Harvest Festival set.
+
 ### Changed
 
+- Locked cosmetics in the Wardrobe are silhouettes with how to unlock them.
 - Today's workout reminder waits for your usual training time (from an hour before) and names
   it; the evening check waits until an hour after it.
 

@@ -46,8 +46,10 @@ person checks it in review until a test exists.
 | R11 | No accuracy is claimed for a model that has not passed its gate on the team's own test set. | Manual (model cards, release notes) |
 | R12 | Under 18: calories hidden everywhere; no body or body-fat comments anywhere. | `tests/api/test_profile.py`, coach guard tests; copy is manual |
 | R13 | Offline: only "online lookup" contacts the internet, off by default. | `tests/api/test_online_research.py` |
-| R14 | Dates and times use the local system clock and time zone (streaks, weekly and monthly resets, seasons, recap). | Manual until the rewards branch adds mocked-date tests |
-| R15 | Cosmetics show on the avatar only when equipped. | Manual until the rewards branch adds its test |
+| R14 | Dates and times use the local system clock and time zone (streaks, weekly and monthly resets, seasons, recap). | `tests/api/test_v14_local_dates.py` (fake local clock over midnight), `lib/localDate.test.ts` (Asia/Kolkata, and no `toISOString()` dates in the app's code) |
+| R15 | Cosmetics show on the avatar only when equipped (and earned). | `equippedGear()` in `lib/cosmetics.ts`; `pages/Profile.test.tsx` ("wears only what is equipped and unlocked") |
+| R18 | No spoilers: Profile shows cleared bosses only, the next one as "???"; locked cosmetics are silhouettes; no unlock rule names a seasonal boss. | `pages/Profile.test.tsx` (trophy shelf, Wardrobe), `lib/cosmetics.test.ts` ("no spoilers") |
+| R19 | Every time-bound reward (seasonal drop, monthly or yearly clear) has a catch-up total. | `lib/cosmetics.test.ts` ("gives every time-bound unlock a catch-up total") |
 | R16 | Reduce motion is honoured by every animation. | `lib/motion.test.tsx` and the component tests that switch it on |
 | R17 | History is real: linear, no merge, empty or backdated commits; each commit under its owner; headers ≤ 120 characters. | commitlint in CI; review |
 
