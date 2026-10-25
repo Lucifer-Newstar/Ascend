@@ -331,8 +331,9 @@ EXERCISE_ALIASES: dict[str, tuple[str, ...]] = {
 
 
 def compact(s: str) -> str:
-    """'Push-ups' / 'push ups' / 'pushup' -> 'pushup' (words singular, no spaces)."""
-    return "".join(_words(s))
+    """'Push-ups' / 'push ups' / 'pushup' -> 'pushup' (words singular, no spaces). The
+    joined form is made singular too: "ups" is too short for the word rule."""
+    return _singular("".join(_words(s)))
 
 
 def pick_exercise(
