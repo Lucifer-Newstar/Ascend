@@ -232,6 +232,19 @@
         "implemented": 1,
         "planned": 0
       }
+    },
+    {
+      "id": "schedule",
+      "package": "app.modules.schedule",
+      "contract": "schedule.yaml",
+      "path_prefixes": [
+        "/schedule"
+      ],
+      "owner": "jegatheesan-backend",
+      "operations": {
+        "implemented": 5,
+        "planned": 0
+      }
     }
   ]
 }
