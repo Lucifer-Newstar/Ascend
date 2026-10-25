@@ -12,6 +12,8 @@ import { applyBackgroundArt, applyMotionPreference, applyTheme, resolveTheme, sy
 interface PrefsValue {
   settings: Settings;
   update: (patch: Partial<Settings>) => Promise<Settings>;
+  /** Read the settings again (v1.3: the trainer can change them from a confirmed card). */
+  reload: () => Promise<void>;
 }
 
 const PrefsContext = createContext<PrefsValue | null>(null);
@@ -22,10 +24,12 @@ export function PrefsProvider({
   initial,
   children,
   save = api.updateSettings,
+  load = api.settings,
 }: {
   initial: Settings;
   children: ReactNode;
   save?: (patch: Partial<Settings>) => Promise<Settings>;
+  load?: () => Promise<Settings>;
 }) {
   const [settings, setSettings] = useState<Settings>(initial);
 
@@ -37,6 +41,13 @@ export function PrefsProvider({
     },
     [save],
   );
+  const reload = useCallback(async () => {
+    try {
+      setSettings(await load());
+    } catch {
+      // keep the settings we have; the next change or launch reads them again
+    }
+  }, [load]);
 
   // Apply the theme now and whenever the OS switches while "system" is chosen.
   useEffect(() => {
@@ -51,7 +62,7 @@ export function PrefsProvider({
   useEffect(() => applyMotionPreference(Boolean(settings.reduce_motion)), [settings.reduce_motion]);
   useEffect(() => applyBackgroundArt(settings.background_art ?? "on"), [settings.background_art]);
 
-  const value = useMemo(() => ({ settings, update }), [settings, update]);
+  const value = useMemo(() => ({ settings, update, reload }), [settings, update, reload]);
   return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>;
 }
 
