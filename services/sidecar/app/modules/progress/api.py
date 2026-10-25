@@ -62,6 +62,7 @@ def _profile_out(db: Session) -> ProfileOut:
         "target_weight_kg",
         "focus",
         "equipment",
+        "experience",
         "baseline",
     )
     data = {k: getattr(p, k) for k in fields}
