@@ -1,0 +1,5 @@
+# Downloads and generated sets are rebuilt by `dvc repro` (never committed: the Stack
+# Exchange text is CC BY-SA and CLINC150 is CC BY; see DATA_CARD.md).
+raw/
+dataset/
+build/

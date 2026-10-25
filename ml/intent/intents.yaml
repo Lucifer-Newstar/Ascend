@@ -1,0 +1,79 @@
+# ASCEND trainer-chat intents (intent-v1).
+#
+# The intent model is a router: it decides WHAT a chat message is. It never extracts
+# numbers or food names; the rule parser in services/sidecar/app/modules/actions does that.
+# `route` says what the sidecar does with a confident prediction (see
+# services/sidecar/app/modules/trainer/ml_route.py):
+#   action     -> the action parser (log, edit, undo); propose -> confirm -> undo as before
+#   rules:<k>  -> the existing rule answer of kind <k> (greeting, help, train_today, ...)
+#   knowledge  -> a cited passage from the local knowledge base (and the local AI, if on)
+#   navigate:<section> -> open a section of the app
+#   decline    -> say politely that this is outside what the trainer knows
+version: intent-v1
+intents:
+  greeting:
+    route: rules:greeting
+    description: Hello / hi / vanakkam with nothing else asked.
+  thanks:
+    route: rules:thanks
+    description: Thanks, cool, nice, got it.
+  help:
+    route: rules:help
+    description: What can you do, who are you, how do I use this.
+  log_set:
+    route: action
+    description: Log reps or sets of an exercise (with or without weight).
+  log_hold:
+    route: action
+    description: Log a timed hold (plank, dead hang, L-sit, wall sit...).
+  log_weight:
+    route: action
+    description: Log today's body weight.
+  log_meal:
+    route: action
+    description: Log something eaten or drunk.
+  add_food:
+    route: action
+    description: Add a new food to the food table (custom food).
+  ask_workout_today:
+    route: rules:train_today
+    description: What should I train / what's my workout today.
+  ask_progress:
+    route: navigate:progress
+    description: My streak, calories today, PRs, how am I doing, my BMI.
+  plan_request:
+    route: rules:plan
+    description: Make me a workout or diet plan, which program should I follow.
+  plan_edit:
+    route: action
+    description: Change the followed plan or program (swap, add, remove, days, follow X).
+  settings_change:
+    route: navigate:settings
+    description: Theme, units, reminders, notifications, sounds.
+  profile_change:
+    route: navigate:profile
+    description: Name, height, goal, target weight, equipment, age.
+  undo_cancel:
+    route: action
+    description: Undo / cancel / remove the last thing logged.
+  erase_data:
+    route: rules:erase
+    description: Wipe all data or start fresh (always the rule flow with typed confirm).
+  motivation:
+    route: rules:feeling
+    description: Feeling low, lazy, unmotivated, missed a day.
+  exercise_howto:
+    route: knowledge
+    description: How to do an exercise, form, muscles worked, alternatives.
+  training_question:
+    route: knowledge
+    description: General training knowledge (rest, reps, cardio, fat loss, programming).
+  nutrition_question:
+    route: knowledge
+    description: Food, protein, calories, supplements, diet knowledge.
+  injury_pain:
+    route: knowledge
+    description: Pain or injury; the answer always adds "see a doctor or physio".
+  out_of_scope:
+    route: decline
+    description: Not about fitness or the app (banking, travel, weather, gibberish).
