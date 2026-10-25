@@ -145,6 +145,11 @@ class SettingsOut(BaseModel):
     evening_reminder: bool = False
     photo_reminder: bool = False
     weigh_in_reminder: bool = False
+    # v1.4 (review 2.2, 2.4): the lock screen is the workout door and can be skipped;
+    # the tray icon and start-with-Windows are opt-in (decision 2).
+    lock_screen: bool = True
+    tray: bool = False
+    start_with_windows: bool = False
 
 
 class SettingsIn(StrictIn):
@@ -170,6 +175,9 @@ class SettingsIn(StrictIn):
     evening_reminder: bool | None = None
     photo_reminder: bool | None = None
     weigh_in_reminder: bool | None = None
+    lock_screen: bool | None = None
+    tray: bool | None = None
+    start_with_windows: bool | None = None
 
 
 class BodyMetricIn(StrictIn):

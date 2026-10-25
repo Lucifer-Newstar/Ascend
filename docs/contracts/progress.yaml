@@ -1274,6 +1274,21 @@ components:
           - type: boolean
           - type: 'null'
           title: Weigh In Reminder
+        lock_screen:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Lock Screen
+        tray:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Tray
+        start_with_windows:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Start With Windows
       additionalProperties: false
       type: object
       title: SettingsIn
@@ -1384,6 +1399,18 @@ components:
         weigh_in_reminder:
           type: boolean
           title: Weigh In Reminder
+          default: false
+        lock_screen:
+          type: boolean
+          title: Lock Screen
+          default: true
+        tray:
+          type: boolean
+          title: Tray
+          default: false
+        start_with_windows:
+          type: boolean
+          title: Start With Windows
           default: false
       type: object
       required:

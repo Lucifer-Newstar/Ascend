@@ -145,6 +145,9 @@ def read_settings(db: Session) -> SettingsOut:
         evening_reminder=get_setting(db, "evening_reminder", "false") == "true",
         photo_reminder=get_setting(db, "photo_reminder", "false") == "true",
         weigh_in_reminder=get_setting(db, "weigh_in_reminder", "false") == "true",
+        lock_screen=get_setting(db, "lock_screen", "true") == "true",
+        tray=get_setting(db, "tray", "false") == "true",
+        start_with_windows=get_setting(db, "start_with_windows", "false") == "true",
     )
 
 

@@ -58,6 +58,9 @@ def test_ai_toggle_round_trip(client):
         "evening_reminder": False,
         "photo_reminder": False,
         "weigh_in_reminder": False,
+        "lock_screen": True,
+        "tray": False,
+        "start_with_windows": False,
     }
     assert client.get("/settings").json() == defaults
     assert client.put("/settings", json={"ai_enabled": True}).json() == {
@@ -92,7 +95,20 @@ def test_settings_partial_update_keeps_other_values(client):
         "evening_reminder": False,
         "photo_reminder": False,
         "weigh_in_reminder": False,
+        "lock_screen": True,
+        "tray": False,
+        "start_with_windows": False,
     }
+
+
+def test_desktop_habit_switches_round_trip(client):
+    # v1.4: skip the lock screen, keep ASCEND in the tray, start with Windows (opt-in).
+    body = {"lock_screen": False, "tray": True, "start_with_windows": True}
+    r = client.put("/settings", json=body).json()
+    assert (r["lock_screen"], r["tray"], r["start_with_windows"]) == (False, True, True)
+    assert client.get("/settings").json()["tray"] is True
+    r = client.put("/settings", json={"tray": False}).json()
+    assert (r["lock_screen"], r["tray"], r["start_with_windows"]) == (False, False, True)
 
 
 def test_reduce_motion_round_trip(client):
