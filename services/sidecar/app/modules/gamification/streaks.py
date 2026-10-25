@@ -81,3 +81,30 @@ def compute_streak(
         current += 1
         best = max(best, current)
     return StreakState(current, best, excused, active_today, due)
+
+
+# v1.3 (review S5, S6, 1.6): numbers beside the streak that never reset.
+SESSION_MILESTONES = (1, 3, 5, 10, 25, 50, 100)
+
+
+def next_milestone(sessions: int) -> int | None:
+    """The next lifetime-session milestone, or None past the last one."""
+    return next((m for m in SESSION_MILESTONES if m > sessions), None)
+
+
+def week_start(day: date) -> date:
+    return day - timedelta(days=day.weekday())
+
+
+def weeks_in_a_row(met_weeks: Iterable[date], today: date) -> int:
+    """Weeks (Monday starts) in a row whose plan was met. The current week counts once it
+    is met, and does not break the run while it is still going."""
+    met = set(met_weeks)
+    week = week_start(today)
+    if week not in met:
+        week -= timedelta(days=7)
+    n = 0
+    while week in met:
+        n += 1
+        week -= timedelta(days=7)
+    return n

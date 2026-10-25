@@ -166,3 +166,30 @@ def rank_for_level(level: int) -> tuple[str, str]:
         if level >= min_level:
             letter, title = r_letter, r_title
     return letter, title
+
+
+# v1.3 (review M5, near goals): each rank shows three steps, E1 -> E2 -> E3 -> D1. Display
+# only: levels and ranks are unchanged. S has no next rank, so its steps are 10 levels each.
+SUB_STEPS = 3
+S_STEP_LEVELS = 10
+
+
+def _sub_starts(i: int) -> list[int]:
+    start = RANKS[i][2]
+    if i + 1 < len(RANKS):
+        span = RANKS[i + 1][2] - start
+        return [start + (span * k) // SUB_STEPS for k in range(SUB_STEPS)]
+    return [start + S_STEP_LEVELS * k for k in range(SUB_STEPS)]
+
+
+def sub_rank_for_level(level: int) -> tuple[str, str | None, int | None]:
+    """(this sub-rank, the next one, the level it starts at); the last has no next."""
+    steps = [
+        (f"{r[0]}{k + 1}", start)
+        for i, r in enumerate(RANKS)
+        for k, start in enumerate(_sub_starts(i))
+    ]
+    idx = max((n for n, (_, start) in enumerate(steps) if level >= start), default=0)
+    if idx + 1 < len(steps):
+        return steps[idx][0], steps[idx + 1][0], steps[idx + 1][1]
+    return steps[idx][0], None, None
