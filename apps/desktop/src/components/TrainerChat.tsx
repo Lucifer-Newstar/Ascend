@@ -3,29 +3,20 @@
  * questions, "start fresh", goal checks), so it works with the AI off. When a reply is
  * rule-based because the model could not be used, the reason is shown under it.
  *
- * The drawer stays mounted while closed, so the conversation survives closing it.
+ * The drawer stays mounted while closed, so the conversation survives closing it. v1.3:
+ * the conversation lives in lib/chatStore, shared with the Chat page (variant "page").
  */
-import type { ChatAction, ChatReply, FeedMessage } from "@ascend/shared";
+import type { ChatAction } from "@ascend/shared";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
+import { chatStore, latestMood, useChatMessages } from "../lib/chatStore";
 import { fallbackLabel } from "../lib/fallback";
 import { useOptionalPrefs } from "../lib/prefs";
-import { type TrainerMood } from "../lib/trainer";
 import { ActionCard } from "./ActionCard";
 import { TrainerPortrait, useTrainer } from "./Trainer";
 
 export const START_SUGGESTIONS = ["What should I train today?", "10 pushups", "I missed a day", "Give me a tour"];
-
-interface Msg {
-  id: number;
-  role: "user" | "trainer";
-  text: string;
-  mood?: TrainerMood;
-  reply?: ChatReply;
-  notice?: FeedMessage;
-  failed?: string;
-}
 
 /** Wait this long before saying the model may be loading (cold start). */
 export const SLOW_AFTER_MS = 4000;
@@ -39,6 +30,7 @@ export function TrainerChat({
   question,
   onAsked,
   onActionDone,
+  variant = "drawer",
 }: {
   open: boolean;
   onClose: () => void;
@@ -54,32 +46,30 @@ export function TrainerChat({
   onAsked?: () => void;
   /** An action card was confirmed, cancelled or undone (refresh the page behind). */
   onActionDone?: () => void;
+  /** v1.3: "page" fills its container on the Chat page (no close button, no Escape). */
+  variant?: "drawer" | "page";
 }) {
   const prefs = useOptionalPrefs();
   const trainer = useTrainer();
   const aiOn = prefs?.settings.ai_enabled !== false;
-  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const msgs = useChatMessages();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [slow, setSlow] = useState(false);
-  const seq = useRef(0);
   const input = useRef<HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
-  const opened = useRef(false);
-
-  const push = (m: Omit<Msg, "id">) => setMsgs((list) => [...list, { ...m, id: ++seq.current }]);
+  const push = chatStore.push;
 
   useEffect(() => {
     if (!open) return;
     input.current?.focus();
     if (aiOn) void api.coachWarm().catch(() => undefined);
-    if (opened.current) return;
-    opened.current = true;
+    if (!chatStore.start()) return;
     push({ role: "trainer", mood: "neutral", text: greeting ?? "I'm here. Ask me anything, ask what to train today, or just tell me what you did (\"10 pushups\", \"2 idli for breakfast\") and I'll log it." });
     api.trainerFeed().then((feed) => {
       const unread = feed.messages.filter((m) => !m.read).reverse();
       if (!unread.length) return;
-      setMsgs((list) => [...list, ...unread.map((n) => ({ id: ++seq.current, role: "trainer" as const, mood: n.mood, text: n.text, notice: n }))]);
+      push(...unread.map((n) => ({ role: "trainer" as const, mood: n.mood, text: n.text, notice: n })));
       void api.trainerFeedRead(unread.map((m) => m.id)).catch(() => undefined);
     }).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,13 +87,13 @@ export function TrainerChat({
   }, [open, question]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || variant === "page") return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, variant]);
 
   async function ask(q: string) {
     const question = q.trim();
@@ -131,27 +121,33 @@ export function TrainerChat({
   }
 
   const last = msgs[msgs.length - 1];
+  // On the Chat page the box sits inside the page, so its top bar is not a page banner.
+  const Head = variant === "page" ? "div" : "header";
   const chips = last?.reply?.suggestions.length ? last.reply.suggestions : msgs.length <= 1 ? START_SUGGESTIONS : [];
 
   return (
     <div
-      role="dialog"
-      aria-modal="false"
+      role={variant === "page" ? "region" : "dialog"}
+      aria-modal={variant === "page" ? undefined : "false"}
       aria-label="Trainer chat"
       hidden={!open}
-      data-testid="trainer-chat"
-      className="fixed bottom-4 right-4 top-[84px] z-40 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col rounded-xl border border-line-2 bg-panel shadow-2xl"
+      data-testid={variant === "page" ? "trainer-chat-page" : "trainer-chat"}
+      className={variant === "page"
+        ? "flex h-full min-h-[420px] flex-col rounded-xl border border-line-2 bg-panel"
+        : "fixed bottom-4 right-4 top-[84px] z-40 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col rounded-xl border border-line-2 bg-panel shadow-2xl"}
     >
-      <header className="flex items-center gap-3 border-b border-line px-4 py-3">
-        <TrainerPortrait mood={(last?.role === "trainer" && last.mood) || "neutral"} size={40} />
+      <Head className="flex items-center gap-3 border-b border-line px-4 py-3">
+        {variant === "drawer" && <TrainerPortrait mood={latestMood(msgs)} size={40} />}
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold text-ink">{trainer.name}</h2>
           <p className="text-[11px] text-muted">{aiOn ? "Local AI on · works offline" : "Works offline · Ctrl+K opens me anywhere"}</p>
         </div>
-        <button type="button" onClick={onClose} className="rounded-md px-2 py-1 text-muted hover:bg-panel-2 hover:text-ink" aria-label="Close chat">
-          ✕
-        </button>
-      </header>
+        {variant === "drawer" && (
+          <button type="button" onClick={onClose} className="rounded-md px-2 py-1 text-muted hover:bg-panel-2 hover:text-ink" aria-label="Close chat">
+            ✕
+          </button>
+        )}
+      </Head>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       <ol className="space-y-3" aria-live="polite" aria-label="Messages">
         {msgs.map((m) => (
@@ -206,8 +202,8 @@ export function TrainerChat({
         </div>
       )}
       <form onSubmit={submit} className="flex gap-2 border-t border-line p-3">
-        <label className="sr-only" htmlFor="trainer-chat-input">Message the trainer</label>
-        <input id="trainer-chat-input" ref={input} className="input min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)}
+        <label className="sr-only" htmlFor={variant === "page" ? "trainer-chat-page-input" : "trainer-chat-input"}>Message the trainer</label>
+        <input id={variant === "page" ? "trainer-chat-page-input" : "trainer-chat-input"} ref={input} className="input min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)}
           placeholder="Ask anything, or log it: “10 pushups”" maxLength={1000} autoComplete="off" />
         <button type="submit" className="btn-primary px-3" disabled={busy || !text.trim()}>Send</button>
       </form>
