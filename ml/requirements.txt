@@ -18,3 +18,8 @@ sqlalchemy>=2.1.5       # MLflow's SQLite store (the file store is deprecated)
 alembic>=1.20.0
 dvc>=3.50
 pytest>=9.1.1
+# Trainer-chat intent model (intent/) and data fetchers.
+scikit-learn>=1.9.1
+joblib>=1.6.0
+py7zr>=1.1.4       # the Stack Exchange dump is a .7z archive
+requests>=2.34.2
