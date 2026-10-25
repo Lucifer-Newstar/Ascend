@@ -40,6 +40,8 @@ export const IPC = {
   shareOpen: "share:open",
   keepAwake: "power:keep-awake",
   videoSave: "video:save",
+  desktopHabits: "desktop:habits",  // v1.4
+  trayAction: "tray:action",        // v1.4, main → renderer
 } as const;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -74,6 +76,8 @@ export interface AscendBridge {
 | `openShareLink` | `share:open` | invoke | a URL; only `https://x.com` or `https://twitter.com` `/intent/tweet` or `/intent/post` with a single `text` query passes (`validateShareUrl`) | `true` | implemented (v1.1) |
 | `keepAwake` | `power:keep-awake` | invoke | `true` keeps the display awake for the full-screen timer, `false` lets it sleep again | `boolean` (kept awake now) | implemented (v1.2) |
 | `saveVideo` | `video:save` | invoke | `VideoSaveRequest`: a plain file name ending in `.webm` and a WebM data URL (≤ 64 MB, EBML magic bytes checked); native save dialog. Used for the weekly recap video | `ExportSaveResult` | implemented (v1.2) |
+| `setDesktopHabits` | `desktop:habits` | invoke | `DesktopHabits`: `{ tray, openAtLogin }`, two strict booleans. Shows or removes the tray icon; registers the installed app as a login item | `DesktopHabits` (what main applied) | implemented (v1.4) |
+| `onTrayAction` | `tray:action` | main → renderer | `"open"` or `"start-workout"` from the tray menu; anything else is dropped in preload. Returns the function that stops listening | — | implemented (v1.4) |
 
 ## 3. Planned for v1.0 (additive)
 

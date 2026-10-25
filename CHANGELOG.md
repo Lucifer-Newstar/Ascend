@@ -9,6 +9,23 @@ where a number you see could change. User-facing release notes live in
 
 ## [Unreleased]
 
+### Added
+
+- **Your training week** (Settings > Trainer): pick the days and a usual time. The other days
+  are planned rest, and the weekly target follows your days. The Planner shows this week
+  planned vs done, and on Sunday you can plan next week.
+- **10-minute version** of today's session on Today and the lock screen: the first moves at two
+  sets each. It counts for your streak like any session.
+- **The lock screen is the workout door**: "Today: Push A · 4 moves" with Enter to start, or
+  "Rest day ✓". It can be switched off.
+- **Tray and start with Windows**, both off by default. With the tray on, closing the window
+  keeps ASCEND by the clock and reminders still arrive.
+
+### Changed
+
+- Today's workout reminder waits for your usual training time (from an hour before) and names
+  it; the evening check waits until an hour after it.
+
 ## [1.3.0] - 2026-10-25
 
 v1.3 is the "kinder and more useful" release: the trainer can change your plan, settings, kit

@@ -134,6 +134,7 @@ These describe plans, not the shipped app, and each one opens with a "Design rec
 | How the app is built (processes, modules) | [architecture/system-architecture.md](architecture/system-architecture.md) |
 | Database tables and migrations | [architecture/data-model.md](architecture/data-model.md) |
 | Streaks, rest days, near goals and welcome back | [architecture/streaks-and-near-goals.md](architecture/streaks-and-near-goals.md) |
+| The habit engine: training week, 10-minute version, lock screen door, tray (v1.4) | [architecture/habit-engine.md](architecture/habit-engine.md) |
 | Food classifier + MLOps | [architecture/ml-pipeline.md](architecture/ml-pipeline.md) · walkthrough: [ai/mlops-lifecycle.md](ai/mlops-lifecycle.md) |
 | **The AI part: what it does, which model, where the code is** | [ai/README.md](ai/README.md) |
 | Coach prompts, validation and safety | [ai/coach-llm.md](ai/coach-llm.md) · [ai/prompt-library.md](ai/prompt-library.md) |
