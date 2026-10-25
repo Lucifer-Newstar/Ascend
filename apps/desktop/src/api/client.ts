@@ -239,7 +239,8 @@ export const api = {
   startDeload: () => call<DeloadAdvice>("POST", "/deload/start"),
   finishWorkout: (workoutId: number) => call<FinishedWorkout>("POST", `/workouts/${workoutId}/finish`),
 
-  foods: (q = "") => call<Food[]>("GET", `/foods?q=${encodeURIComponent(q)}`),
+  /** v1.3: an empty query lists every food; a query is matched and ranked by the sidecar. */
+  foods: (q = "", limit?: number) => call<Food[]>("GET", `/foods?q=${encodeURIComponent(q)}${limit ? `&limit=${limit}` : ""}`),
   addFood: (body: FoodIn) => call<Food>("POST", "/foods", body),
   deleteFood: (id: number) => call<null>("DELETE", `/foods/${id}`),
   dayLog: () => call<DayLog>("GET", "/meals/day"),

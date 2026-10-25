@@ -4,9 +4,10 @@
  * plate side by side, then the meal planner (moved here from Planner in v1.2). Every card owns its loading, error and empty state through <Panel>.
  */
 import type { Food, MealType } from "@ascend/shared";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
+import { AddFoodForm } from "../components/AddFoodForm";
 import { IconMinus, IconPlus, IconSearch, IconTrash } from "../components/Icons";
 import { TdeePanel } from "../components/DietCards";
 import { FoodGuidePanel } from "../components/FoodGuide";
@@ -19,25 +20,76 @@ import { useApi } from "../lib/useApi";
 
 const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 
+/** "#diet/add-food/<name>" (from the trainer chat) -> the name to prefill, "" for a bare form. */
+export function addFoodFromHash(hash: string): string | null {
+  const [, what, name] = hash.replace("#", "").split("/");
+  if (what !== "add-food") return null;
+  try {
+    return decodeURIComponent(name ?? "");
+  } catch {
+    return name ?? "";
+  }
+}
+
+/** The value after it has stopped changing for `ms` (search as you type without a request per key). */
+export function useDebounced<T>(value: T, ms: number): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const id = window.setTimeout(() => setV(value), ms);
+    return () => window.clearTimeout(id);
+  }, [value, ms]);
+  return v;
+}
+
+const SEARCH_DEBOUNCE_MS = 250;
+
+/** Back to plain "#diet" once the add-food form opened from the chat is done with. */
+function leaveAddFoodHash(): void {
+  if (window.location.hash.includes("add-food")) window.location.hash = "diet";
+}
+
 function defaultMealType(): MealType {
   const h = new Date().getHours();
   return h < 11 ? "breakfast" : h < 16 ? "lunch" : h < 19 ? "snack" : "dinner";
 }
 
 export function DietPage({ onChanged }: { onChanged: () => void }) {
-  const foods = useApi(() => api.foods(), []);
+  const [query, setQuery] = useState("");
+  const search = useDebounced(query.trim(), SEARCH_DEBOUNCE_MS);
+  // v1.3: the sidecar searches the whole table (aliases like "chapathi" included); an empty
+  // search lists every food, not just the first 50.
+  const foods = useApi(() => api.foods(search), [search]);
   const day = useApi(api.dayLog, []);
   const [tick, setTick] = useState(0);
-  const [query, setQuery] = useState("");
+  const [adding, setAdding] = useState<string | null>(() => addFoodFromHash(window.location.hash));
+  useEffect(() => {
+    const onHash = () => {
+      const name = addFoodFromHash(window.location.hash);
+      if (name !== null) setAdding(name);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
   const [mealType, setMealType] = useState<MealType>(defaultMealType());
   const [plate, setPlate] = useState<{ food: Food; portions: number }[]>([]);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
 
+  // While the next search is on its way, narrow the current list so typing feels instant.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (foods.data ?? []).filter((f) => !q || f.name.toLowerCase().includes(q));
-  }, [foods.data, query]);
+    const list = foods.data ?? [];
+    if (q === search.toLowerCase()) return list;
+    const words = q.split(/\s+/).filter(Boolean);
+    return list.filter((f) => words.every((w) => f.name.toLowerCase().includes(w)));
+  }, [foods.data, query, search]);
+  const added = (food: Food) => {
+    setAdding(null);
+    leaveAddFoodHash();
+    setQuery(food.name);
+    add(food);
+    foods.reload();
+  };
 
   const add = (food: Food) =>
     setPlate((p) => (p.some((x) => x.food.id === food.id) ? p.map((x) => (x.food.id === food.id ? { ...x, portions: x.portions + 1 } : x)) : [...p, { food, portions: 1 }]));
@@ -144,18 +196,31 @@ export function DietPage({ onChanged }: { onChanged: () => void }) {
         <div className="grid grid-cols-12 gap-5">
           <div className="col-span-12 flex flex-col rounded-lg border border-line lg:col-span-5">
             <div className="border-b border-line p-3">
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">Indian food table</h3>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h3 className="text-xs font-medium uppercase tracking-wider text-muted">Indian food table</h3>
+                {adding === null && (
+                  <button type="button" className="text-xs text-accent hover:underline" onClick={() => setAdding(query.trim())}>+ Add your own food</button>
+                )}
+              </div>
               <div className="relative">
                 <IconSearch className="absolute left-3 top-2.5 text-faint" width={16} height={16} />
                 <input className="input pl-9" aria-label="Search foods" placeholder="idli, sambar, dal…" value={query} onChange={(e) => setQuery(e.target.value)} />
               </div>
             </div>
+            {adding !== null && (
+              <AddFoodForm key={adding} initialName={adding} onAdded={added}
+                onCancel={() => { setAdding(null); leaveAddFoodHash(); }} />
+            )}
             <ul className="max-h-80 overflow-y-auto p-2">
               {filtered.length === 0 && (
                 <li className="p-4 text-sm text-muted">
                   No food matches “{query}”.{" "}
                   <button type="button" className="text-accent hover:underline" onClick={() => setQuery("")}>Clear search</button>
-                  <p className="mt-1 text-xs text-muted">The table has about 30 common dishes; more arrive with the full INDB import.</p>
+                  {query.trim() && adding === null && (
+                    <p className="mt-1 text-xs">
+                      <button type="button" className="text-accent hover:underline" onClick={() => setAdding(query.trim())}>Add “{query.trim()}” as your own food</button>
+                    </p>
+                  )}
                 </li>
               )}
               {filtered.map((f) => (
