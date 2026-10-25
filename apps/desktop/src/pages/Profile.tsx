@@ -28,12 +28,12 @@ import { useApi } from "../lib/useApi";
 const today = () => localDay();
 const POSES: PhotoPose[] = ["front", "side", "back", "other"];
 
-export function ProfilePage({ refreshKey }: { refreshKey: number }) {
+export function ProfilePage({ refreshKey, onNavigate }: { refreshKey: number; onNavigate?: (page: "unlocks") => void }) {
   const [share, setShare] = useState<Record<string, unknown> | null>(null);
   return (
     <PageGrid label="Profile">
       <HunterCard refreshKey={refreshKey} />
-      <Achievements refreshKey={refreshKey} onShare={setShare} />
+      <Achievements refreshKey={refreshKey} onShare={setShare} onAll={onNavigate && (() => onNavigate("unlocks"))} />
       <WardrobePanel refreshKey={refreshKey} />
       <TrophyShelfPanel refreshKey={refreshKey} />
       <Gallery />
@@ -117,12 +117,13 @@ function WardrobePanel({ refreshKey }: { refreshKey: number }) {
   );
 }
 
-function Achievements({ refreshKey, onShare }: { refreshKey: number; onShare: (p: Record<string, unknown>) => void }) {
+function Achievements({ refreshKey, onShare, onAll }: { refreshKey: number; onShare: (p: Record<string, unknown>) => void; onAll?: () => void }) {
   const feed = useApi(api.trainerFeed, [refreshKey]);
   const items: FeedMessage[] = (feed.data?.messages ?? []).filter((m) => m.share);
   return (
     <Panel id="achievements" index={1} className="col-span-12 xl:col-span-7" title="Achievements"
       hint="PRs, skill steps, streaks, boss wins and finished blocks. Share one as a card."
+      action={onAll && <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={onAll}>All unlocks</button>}
       loading={feed.loading && !feed.data} error={!feed.data ? feed.error ?? null : null} onRetry={feed.reload}>
       {items.length === 0 ? (
         <p className="text-sm text-muted">Nothing to share yet. Your first PR or skill step shows up here.</p>

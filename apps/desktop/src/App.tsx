@@ -32,6 +32,7 @@ const LibraryPage = lazy(() => import("./pages/Library").then((m) => ({ default:
 const HistoryPage = lazy(() => import("./pages/History").then((m) => ({ default: m.HistoryPage })));
 const PlannerPage = lazy(() => import("./pages/Planner").then((m) => ({ default: m.PlannerPage })));
 const ProfilePage = lazy(() => import("./pages/Profile").then((m) => ({ default: m.ProfilePage })));
+const UnlocksPage = lazy(() => import("./pages/Unlocks").then((m) => ({ default: m.UnlocksPage })));
 const ProgressPage = lazy(() => import("./pages/Progress").then((m) => ({ default: m.ProgressPage })));
 const Onboarding = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.Onboarding })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
@@ -49,6 +50,7 @@ const TITLES: Record<Page, string> = {
   profile: "Profile",
   history: "History",
   settings: "Settings",
+  unlocks: "Unlocks",
 };
 
 /**
@@ -262,7 +264,8 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
       {page === "progress" && <ProgressPage refreshKey={refreshKey} onChanged={bump} />}
       {page === "diet" && <DietPage onChanged={bump} />}
       {page === "planner" && <PlannerPage onChanged={bump} />}
-      {page === "profile" && <ProfilePage refreshKey={refreshKey} />}
+      {page === "profile" && <ProfilePage refreshKey={refreshKey} onNavigate={navigate} />}
+      {page === "unlocks" && <UnlocksPage refreshKey={refreshKey} onBack={() => navigate("profile")} />}
       {page === "history" && <HistoryPage refreshKey={refreshKey} onNavigate={navigate} />}
       {page === "settings" && <SettingsPage onToggleAi={toggleAi} onChanged={bump} onOpenHistory={() => navigate("history")} onErased={erased} />}
       </Suspense>

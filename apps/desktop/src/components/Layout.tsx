@@ -5,7 +5,8 @@ import { PAGE_KEYS } from "../lib/shortcuts";
 import { ThemeAmbience } from "./ThemeAmbience";
 import { TrainerToggle } from "./Trainer";
 
-export type Page = "dashboard" | "chat" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "settings";
+// v1.4: "unlocks" is opened from Profile and has no nav entry (its nav highlight is Profile).
+export type Page = "dashboard" | "chat" | "workout" | "library" | "skills" | "progress" | "diet" | "planner" | "profile" | "history" | "settings" | "unlocks";
 
 const NAV: { id: Page; label: string; icon: (p: { width?: number }) => JSX.Element }[] = [
   { id: "dashboard", label: "Today", icon: IconDashboard },
@@ -72,7 +73,7 @@ export function Layout({ page, onNavigate, children, title, subtitle, status, on
         <nav className="flex-1 px-3" aria-label="Main">
           <ul className="space-y-0.5">
           {NAV.map(({ id, label, icon: Icon }) => {
-            const active = page === id;
+            const active = page === id || (page === "unlocks" && id === "profile");
             // Ctrl+1…0 follow PAGE_KEYS (Profile has no shortcut, so the others keep theirs).
             const at = PAGE_KEYS.indexOf(id);
             const key = at < 0 ? null : at === 9 ? 0 : at + 1;
