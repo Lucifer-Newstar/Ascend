@@ -596,6 +596,27 @@ def add_skill_items(
 # --- summary ---------------------------------------------------------------------
 
 
+def welcome_back_due(db: Session, day: date) -> bool:
+    """review M8: today's session comes after at least one unplanned missed day since the
+    last training day, and no welcome-back bonus was paid this week yet."""
+    earlier = [d for d in active_days(db) if d < day]
+    if not earlier:
+        return False  # the very first session is not a comeback
+    last = max(earlier)
+    rest = planned_rest_days(db, day)
+    gap = [last + timedelta(days=k) for k in range(1, (day - last).days)]
+    if not any(d not in rest for d in gap):
+        return False
+    paid = db.scalar(
+        select(func.count(XpEvent.id)).where(
+            XpEvent.source == "welcome_back",
+            XpEvent.day >= week_start(day),
+            XpEvent.amount > 0,
+        )
+    )
+    return not paid
+
+
 def week_target(db: Session) -> int:
     """Training days a week the plan asks for: the followed program's days, else the
     sessions-per-week setting (capped by the program when both exist)."""
@@ -860,6 +881,7 @@ def make_handlers(bus: EventBus) -> None:
             sets, timed = _session_work(remaining)
             if not (sets >= f.SESSION_MIN_SETS or timed >= f.SESSION_MIN_TIMED_MINUTES):
                 reverse(db, now, ("session",), workout.id, note="session too short after a delete")
+                reverse(db, now, ("welcome_back",), workout.id, note="session too short")
         refresh_quest(db, bus, now)
 
     def on_workout_logged(db: Session, e: WorkoutLogged) -> None:
@@ -882,6 +904,8 @@ def make_handlers(bus: EventBus) -> None:
             bonus = f.session_completion_xp(minutes, already)
             mult = f.streak_multiplier(streak(db, at.date()).current)
             award(db, at, "session", e.workout_id, round(bonus * mult), note="session complete")
+            if welcome_back_due(db, at.date()):
+                award(db, at, "welcome_back", e.workout_id, f.WELCOME_BACK_XP, note="welcome back")
         refresh_quest(db, bus, at)
 
     def on_meal_logged(db: Session, e: MealLogged) -> None:

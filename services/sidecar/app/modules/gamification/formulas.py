@@ -147,6 +147,11 @@ def level_from_total(total_xp: int) -> LevelInfo:
     return LevelInfo(level, remaining, xp_to_next(level), max(0, total_xp))
 
 
+# v1.3 (review M8): the first session after an unplanned miss earns a welcome-back bonus,
+# at most once per calendar week, so coming back is rewarded instead of shamed.
+WELCOME_BACK_XP = 25
+
+
 # --- Ranks ----------------------------------------------------------------
 
 # (letter, title, first level of the rank)

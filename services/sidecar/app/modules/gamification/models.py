@@ -18,7 +18,7 @@ class XpEvent(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     day: Mapped[date] = mapped_column(Date, index=True)
     at: Mapped[datetime] = mapped_column(DateTime)
-    source: Mapped[str] = mapped_column(String(16))  # set | session | meal | pr | quest | skill
+    source: Mapped[str] = mapped_column(String(16))  # set | session | meal | pr | quest | skill | welcome_back
     ref_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     amount: Mapped[int] = mapped_column(Integer)
     formula_version: Mapped[str] = mapped_column(String(16))
