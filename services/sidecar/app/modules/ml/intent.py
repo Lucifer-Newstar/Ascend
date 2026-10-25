@@ -46,10 +46,16 @@ def _manifest() -> dict[str, Any]:
         return {}
 
 
-@lru_cache(maxsize=1)
 def _load() -> tuple[IntentModel | None, str | None]:
+    # The switch is read on every call so it works without restarting the sidecar; the
+    # file is read once.
     if os.environ.get("ASCEND_INTENT_MODEL", "").lower() in ("0", "off", "false"):
         return None, "disabled"
+    return _load_file()
+
+
+@lru_cache(maxsize=1)
+def _load_file() -> tuple[IntentModel | None, str | None]:
     if not MODEL_FILE.exists():
         return None, "missing"
     expected = _manifest().get("sha256")
