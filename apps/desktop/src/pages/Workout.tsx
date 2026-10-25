@@ -6,6 +6,7 @@ import { ExerciseArt, formTips } from "../components/ExerciseArt";
 import { ProgramCard } from "../components/ProgramCard";
 import { RunThrough } from "../components/RunThrough";
 import { WorkoutFinish, type FinishSummary } from "../components/WorkoutFinish";
+import { forgetShort, readShort, shortTarget } from "../lib/shortSession";
 import { play } from "../lib/sound";
 import { Transient } from "../components/Celebrate";
 import { IconCheck, IconSearch, IconTrophy } from "../components/Icons";
@@ -60,6 +61,8 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
   const [finished, setFinished] = useState<FinishSummary | null>(null);
   const [fullTimer, setFullTimer] = useState(false);
   const plan = useApi(api.currentPlan, [], { cacheKey: "plan" });
+  // v1.4: the 10-minute version picked on Today, for today only.
+  const [short, setShort] = useState(() => readShort());
   // v1.2: the loadout drives Train. Without gym kit it opens on Calisthenics, and the
   // library lists the moves that fit; "Explore all" shows the rest greyed out.
   const loadout = useLoadout();
@@ -307,6 +310,22 @@ export function WorkoutPage({ onChanged }: { onChanged: () => void }) {
         onClose={() => setAcquired([])}
         onView={(key) => { setAcquired([]); window.location.hash = `skills/${key}`; }}
       />
+    )}
+    {short && (
+      <section className="card flex flex-wrap items-center gap-3 p-4" aria-labelledby="short-title" data-testid="short-banner">
+        <h2 id="short-title" className="card-title">{short.minutes}-minute session</h2>
+        <ul className="flex flex-wrap gap-2 text-sm">
+          {short.items.map((i) => (
+            <li key={i.exercise}>
+              <button type="button" className="chip" disabled={i.exercise_id === null}
+                onClick={() => { if (i.exercise_id !== null) setPickId(i.exercise_id); }}>
+                {i.exercise} · {shortTarget(i)}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <button type="button" className="btn-ghost ml-auto px-2 py-1 text-xs" onClick={() => { forgetShort(); setShort(null); }}>Back to the full session</button>
+      </section>
     )}
     <SectionTabs value={section} onChange={changeSection} />
     {/* Three panes on the 12-column grid: session + library (3) | active exercise (6) | context (3). */}
