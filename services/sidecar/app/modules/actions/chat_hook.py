@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from urllib.parse import quote
 
 from sqlalchemy.orm import Session
 
@@ -65,7 +66,14 @@ def from_chat(
             mood="neutral",
             intent="action",
             source="rules",
-            actions=[ChatAction(kind="navigate", target="diet", label="Add your own food")],
+            # "diet/add-food/<name>" opens Fuel with the add-food form filled in (v1.3)
+            actions=[
+                ChatAction(
+                    kind="navigate",
+                    target=f"diet/add-food/{quote(e.query.strip()[:60])}",
+                    label="Add your own food",
+                )
+            ],
         )
     except ActionError as e:
         if kind == "rules":

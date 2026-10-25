@@ -63,6 +63,7 @@ def test_two_different_dishes_get_a_question(kit: TestClient) -> None:
 def test_a_food_not_in_the_table_offers_to_add_it(kit: TestClient) -> None:
     r = chat(kit, "1 kozhukattai")
     assert r["proposal"] is None and "add it as your own food" in r["reply"]
+    assert r["actions"][0]["target"] == "diet/add-food/kozhukattai"
 
 
 def test_a_multi_item_meal_is_one_card(kit: TestClient) -> None:
