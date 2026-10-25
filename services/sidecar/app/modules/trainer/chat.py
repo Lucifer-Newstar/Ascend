@@ -19,7 +19,7 @@ from app.core.config import Settings
 from app.modules.coach import service as coach
 from app.modules.planner import validate as goalcheck
 from app.modules.progress import service as progress
-from app.modules.trainer import kb, my_data
+from app.modules.trainer import kb, ml_route, my_data
 from app.modules.trainer.intents import Intent, classify
 from app.modules.trainer.schemas import ChatAction, ChatOut
 
@@ -138,6 +138,11 @@ def _why(db: Session) -> ChatOut:
 
 
 def _ai_or_fallback(db: Session, settings: Settings, now: datetime, text: str) -> ChatOut:
+    # A confident passage from the knowledge base beats "I don't have a note on that".
+    if not ml_route.model_says_out_of_scope(text):
+        cited = ml_route.knowledge_answer(db, settings, now, text, None)
+        if cited is not None:
+            return cited
     r = coach.answer(db, settings, now, text)
     if r.source == "ollama":
         return ChatOut(reply=r.text, mood="neutral", intent="unknown", source="ollama")
@@ -188,10 +193,23 @@ def respond(
             return out
     # A bare log line the router read as a question ("weight 81.4" matched the weigh-in
     # note): the command bar's grammar is the same, so it is a proposal, not a help note.
+    # A line the grammar parses is a sure rule, so this runs before the learned router.
     if k not in ("why", "goal_check", "erase", "action") and _action_parser:
         out = _action_parser[0](db, settings, now, text, "rules")
         if out is not None:
             return out
+    if k == "faq" and _action_parser:  # "tender coconut water" is a food, not the water note
+        out = _action_parser[0](db, settings, now, text, "bare_exact")
+        if out is not None:
+            return out
+    # The learned router decides only where the rules are unsure (trainer/ml_route.py).
+    routed = ml_route.route(
+        db, settings, now, text, intent, _action_parser[0] if _action_parser else None
+    )
+    if isinstance(routed, ChatOut):
+        return routed
+    intent = routed
+    k = intent.kind
     if k == "greeting":
         name = _name(db)
         return ChatOut(
@@ -289,10 +307,6 @@ def respond(
         return pick.model_copy(
             update={"reply": "You don't follow a program yet. " + pick.reply, "intent": k}
         )
-    if k == "faq" and _action_parser:  # "tender coconut water" is a food, not the water note
-        out = _action_parser[0](db, settings, now, text, "bare_exact")
-        if out is not None:
-            return out
     if k == "faq":
         return _faq(intent)
     if k == "why":

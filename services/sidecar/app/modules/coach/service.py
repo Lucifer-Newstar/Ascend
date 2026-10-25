@@ -141,12 +141,17 @@ def register_router(fn: Callable[[Session, Settings, datetime, str], CoachReply 
     _routers[:] = [fn]
 
 
-def answer(db: Session, settings: Settings, now: datetime, question: str) -> CoachReply:
+def answer(
+    db: Session, settings: Settings, now: datetime, question: str, context: str | None = None
+) -> CoachReply:
     """A free-form question for the model, with no rule tip standing in: on any failure the
-    reply is empty and fallback_reason says why (the caller words the fallback)."""
+    reply is empty and fallback_reason says why (the caller words the fallback). `context`
+    adds knowledge-base passages to the facts, so the guard also accepts their numbers."""
     ctx = build_context(db, now)
     tip = rule_tip(ctx)
     facts = facts_text(ctx, tip)
+    if context:
+        facts += "\nReference passages (answer from these, do not invent numbers):\n" + context
     text, reason, model, checks = _ask_checked(db, settings, facts, question, question)
     if text is None:
         return CoachReply("rules", "", tip.code, model, reason, checks)

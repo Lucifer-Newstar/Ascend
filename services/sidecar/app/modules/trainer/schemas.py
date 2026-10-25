@@ -24,11 +24,22 @@ class ChatAction(BaseModel):
     label: str
 
 
+class ChatCitation(BaseModel):
+    """Where a knowledge-base answer came from (ml/knowledge/SOURCES.md)."""
+
+    passage_id: str
+    title: str
+    source: str
+    licence: str
+    url: str
+    ref: str
+
+
 class ChatOut(BaseModel):
     reply: str
     mood: Mood
     intent: str
-    source: Literal["rules", "faq", "ollama"]
+    source: Literal["rules", "faq", "ollama", "knowledge"]
     # Why a rule-based answer stands in for the model's: ai_disabled | ollama_unavailable |
     # timeout | model_error | guard_rejected. None when the rules were the right answer.
     fallback_reason: str | None = None
@@ -36,6 +47,8 @@ class ChatOut(BaseModel):
     suggestions: list[str] = []
     faq_id: str | None = None
     proposal: dict[str, Any] | None = None
+    # Sources behind a knowledge-base answer (empty for every other reply).
+    citations: list[ChatCitation] = []
 
 
 class FeedMessage(BaseModel):
