@@ -32,6 +32,8 @@ paths:
       tags:
       - nutrition
       summary: Search Foods
+      description: 'Search the food table; an empty query lists every food (v1.3: no 50-food
+        cap).'
       operationId: search_foods_foods_get
       parameters:
       - name: q
@@ -39,8 +41,18 @@ paths:
         required: false
         schema:
           type: string
+          maxLength: 80
           default: ''
           title: Q
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 500
+          title: Limit
       responses:
         '200':
           description: Successful Response
