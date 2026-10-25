@@ -20,6 +20,9 @@ After hard cardio, slowing down for a few minutes (easy walking or cycling) lets
 ## Progressive overload
 To keep getting stronger you have to ask a little more of your muscles over time: one more rep, one more set, a little more weight, a harder variation (knee push-up to push-up), or slower, cleaner reps. Change one thing at a time and keep good form. ASCEND's progression suggestions follow this idea from your logged sets.
 
+## Building muscle (hypertrophy)
+Muscle grows from three things together: training each muscle hard enough (sets taken close to failure, about 10 or more hard sets per muscle a week), progressive overload over months, and eating enough protein and total calories, with sleep for recovery. Skinny beginners ("hardgainers", ectomorphs) can build plenty of muscle; they mostly need to eat more than feels natural and stay consistent.
+
 ## Sets and reps for strength or muscle size
 Lower reps with heavier loads (about 3 to 6 reps) lean towards strength; moderate reps (about 6 to 15) work well for muscle growth; higher reps build endurance. For most beginners, 2 to 4 sets of 8 to 15 controlled reps per exercise, stopping one or two reps before failure, gives steady progress in both strength and size.
 

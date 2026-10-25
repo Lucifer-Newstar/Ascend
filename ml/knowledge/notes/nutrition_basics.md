@@ -5,7 +5,7 @@ title: Nutrition basics (ASCEND team notes)
 ## Gaining weight when you are underweight
 To gain weight you need to eat more energy than you use, every day, for weeks. Add a snack or two (milk, curd, banana, peanuts, eggs, sundal), bigger portions of rice or chapati at main meals, and some healthy fat (a spoon of ghee, nuts). Strength training makes sure much of the gain is muscle. Aim for slow, steady gain and weigh yourself weekly. If you are very underweight or cannot gain, see a doctor first.
 
-## How fast to lose or gain weight
+## How fast to lose or gain weight (a safe rate)
 Slow changes are easier to keep and preserve more muscle. Many guidelines suggest losing about 0.5 to 1 kg a week at most, and lean gaining at roughly 0.25 to 0.5 kg a week. ASCEND's goal check warns you when a goal needs a faster pace than that.
 
 ## How much protein you need
@@ -40,3 +40,6 @@ Good snacks give protein or fibre: sundal, roasted chana, peanuts, a boiled egg,
 
 ## Reading calories and macros
 Protein and carbohydrate give about 4 kcal per gram and fat about 9 kcal per gram (alcohol about 7). Label and table values are estimates: home recipes differ a lot with oil and portion size, so treat any number as approximate.
+
+## Intermittent fasting
+Intermittent fasting (for example eating only within an 8-hour window) is a way of timing meals, not a special fat burner. For fat loss or muscle gain, the total calories and protein you eat across the day matter most. If a fasting window helps you eat sensibly, it is fine; if you are underweight, a teenager, or struggling to eat enough, more frequent meals make gaining easier.

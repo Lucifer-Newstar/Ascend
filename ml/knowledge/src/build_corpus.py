@@ -227,11 +227,12 @@ def note_passages() -> list[Passage]:
         raw = md.read_text(encoding="utf-8")
         _, front, body = raw.split("---", 2)
         meta = yaml.safe_load(front)
-        for k, sec in enumerate(re.split(r"^## ", body, flags=re.M)[1:]):
+        for sec in re.split(r"^## ", body, flags=re.M)[1:]:
             title, _, text = sec.partition("\n")
+            slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
             out.append(
                 {
-                    "id": f"note:{md.stem}:{k}",
+                    "id": f"note:{md.stem}:{slug}",
                     "source": meta["source"],
                     "title": title.strip(),
                     "text": " ".join(text.split()),
