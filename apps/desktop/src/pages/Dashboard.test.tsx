@@ -32,8 +32,8 @@ const dashboard: Dashboard = {
   rings: { tasks: ring(1, 3), kcal_in: ring(1200, 2600), kcal_out: ring(100, 350) },
   nutrition: { kcal: 1200, protein_g: 60, carbs_g: 150, fat_g: 40 },
   game: {
-    xp: { total: 900, today: 30, level: 7, xp_into_level: 300, xp_for_next: 1000, rank: "D", rank_title: "Initiate", daily_cap: 600, formula_version: "xp-v1" },
-    streak: { current: 4, best: 9, excused: 0, reason_due: null, active_today: true },
+    xp: { total: 900, today: 30, level: 7, xp_into_level: 300, xp_for_next: 1000, rank: "D", rank_title: "Initiate", daily_cap: 600, formula_version: "xp-v1", sub_rank: "D2", next_sub_rank: "D3", next_sub_rank_level: 8 },
+    streak: { current: 4, best: 9, excused: 0, reason_due: null, active_today: true, lifetime_sessions: 23, next_milestone: 25, weeks_in_a_row: 3, week_target: 3 },
     calm: { current: 0, best: 0, active_today: false },
     quest: [item({}), item({ id: 2, kind: "recovery", title: "Take a 10-minute walk", detail: "Easy pace", metric: "manual", target: 1, progress: 0, xp: 15 })],
   },
@@ -93,18 +93,20 @@ describe("Today (Hunter HQ)", () => {
     expect(nav).toHaveBeenCalledWith("workout");
     const status = screen.getByTestId("status-panel");
     expect(within(status).getByRole("img", { name: "Rank D, Initiate" })).toBeInTheDocument();
-    expect(within(status).getAllByRole("button", { name: /^Why is/ })).toHaveLength(5);
     expect(await axeViolations(container)).toEqual([]);
   });
 
-  it("explains every stat with its formula and inputs", async () => {
+  it("shows near goals instead of the hunter stats (v1.3)", async () => {
     renderPage();
-    const why = await screen.findByRole("button", { name: "Why is Strength 41?" });
-    await userEvent.click(why);
-    expect(why).toHaveAttribute("aria-expanded", "true");
-    const panel = document.getElementById(why.getAttribute("aria-controls")!)!;
-    expect(panel).toHaveTextContent("Strength: Better of: strength skill-tree steps unlocked");
-    expect(panel).toHaveTextContent("Body weight (kg)70");
+    const goals = await screen.findByTestId("near-goals");
+    expect(within(goals).getByTestId("lifetime-sessions")).toHaveTextContent("23 sessions done");
+    expect(goals).toHaveTextContent("next: 25");
+    expect(within(goals).getByRole("progressbar", { name: "Sessions toward 25" })).toHaveAttribute("aria-valuenow", "23");
+    expect(within(goals).getByTestId("sub-rank")).toHaveTextContent("Rank D2 · D3 at level 8");
+    expect(within(goals).getByTestId("best-streak")).toHaveTextContent("9 days");
+    expect(within(goals).getByTestId("weeks-in-a-row")).toHaveTextContent("3 at 3/week");
+    expect(screen.queryByRole("button", { name: /^Why is/ })).toBeNull();
+    expect(api.stats).not.toHaveBeenCalled();
   });
 
   it("shows the morning check-in after the quest and status, not first", async () => {

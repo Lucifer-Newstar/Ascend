@@ -2,6 +2,9 @@
  * The Hunter profile on Today (v8; was the Status panel): name, rank, level, XP, the
  * newest boss title and the five computed hunter stats.
  *
+ * v1.3 (review cut "stats off Today"): Today passes showStats={false} and shows the near
+ * goals instead; the stats stay available where a caller asks for them.
+ *
  * It is a normal card (the System window is kept for System events). Each stat has a
  * "Why?" button that lists the formula and the exact numbers it used (stats-v1), so no
  * number on this panel is unexplained.
@@ -11,6 +14,7 @@ import { useId, useState } from "react";
 
 import { num } from "../lib/format";
 import { CountUp } from "../lib/motion";
+import { NearGoals } from "./NearGoals";
 import { XpSegments } from "./XpChip";
 import { RankBadge } from "./XpBar";
 
@@ -67,9 +71,11 @@ function StatRow({ stat }: { stat: Stat }) {
   );
 }
 
-export function StatusPanel({ game, stats, title = null, name = null, titlesEarned = 0 }: {
+export function StatusPanel({ game, stats = null, title = null, name = null, titlesEarned = 0, showStats = true }: {
   game: GameSummary;
-  stats: Stats | null;
+  stats?: Stats | null;
+  /** v1.3: false on Today, where the near goals take the stats' place. */
+  showStats?: boolean;
   /** The newest title from a beaten weekly boss (the only title source). */
   title?: string | null;
   name?: string | null;
@@ -81,7 +87,7 @@ export function StatusPanel({ game, stats, title = null, name = null, titlesEarn
     <section className={`card hunter-card rank-${xp.rank.toLowerCase()} h-full p-5`} aria-labelledby="status-title" data-testid="status-panel">
       <div className="flex items-baseline justify-between gap-2">
         <h2 id="status-title" className="card-title">Hunter profile</h2>
-        {game.streak.current > 0 && <span className="text-xs text-muted" title="Days in a row with something logged">🔥 {game.streak.current}-day streak</span>}
+        {game.streak.current > 0 && <span className="text-xs text-muted" title="Training days in a row; planned rest days and days with a reason do not break it">🔥 {game.streak.current}-day streak</span>}
       </div>
       {name && <p className="mt-1 truncate font-display text-lg font-bold uppercase tracking-[0.06em] text-ink">{name}</p>}
       <div className="mt-3 flex items-center gap-4">
@@ -106,10 +112,16 @@ export function StatusPanel({ game, stats, title = null, name = null, titlesEarn
           <span>{num(xp.xp_for_next - xp.xp_into_level)} to level {xp.level + 1}</span>
         </div>
       </div>
-      <ul className="mt-4 space-y-2.5" aria-label="Stats">
-        {stats ? stats.stats.map((s) => <StatRow key={s.key} stat={s} />) : <li className="text-xs text-muted">Stats load with your logs.</li>}
-      </ul>
-      {stats && <p className="mt-3 text-[11px] text-faint">Computed from your last {stats.window_days} days of logs</p>}
+      {showStats ? (
+        <>
+          <ul className="mt-4 space-y-2.5" aria-label="Stats">
+            {stats ? stats.stats.map((s) => <StatRow key={s.key} stat={s} />) : <li className="text-xs text-muted">Stats load with your logs.</li>}
+          </ul>
+          {stats && <p className="mt-3 text-[11px] text-faint">Computed from your last {stats.window_days} days of logs</p>}
+        </>
+      ) : (
+        <NearGoals game={game} />
+      )}
     </section>
   );
 }
