@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import json
 
-from check_labels import check, seed_foods
+from check_labels import all_seed_foods, check
 from common import ML_DIR
 
 
 def test_repo_labels_resolve_to_food_rows() -> None:
     labels = json.loads((ML_DIR / "labels.json").read_text(encoding="utf-8"))
-    assert check(labels, seed_foods()) == []
+    assert check(labels, all_seed_foods()) == []
 
 
 def test_reports_unknown_food_wrong_portion_and_missing_class() -> None:
@@ -23,3 +23,10 @@ def test_reports_unknown_food_wrong_portion_and_missing_class() -> None:
     assert any("Pizza" in e for e in errors)
     assert any("missing display name 'ta'" in e for e in errors)
     assert any(e.startswith("poha") for e in errors)
+
+
+def test_not_food_needs_no_food_row_but_must_not_name_one() -> None:
+    ok = {"classes": {"not_food": {"food_name": None, "en": "Not food", "ta": "x"}}}
+    assert check(ok, {}) == []
+    bad = {"classes": {"not_food": {"food_name": "Idli", "en": "Not food", "ta": "x"}}}
+    assert check(bad, {"Idli": "1 piece"}) == ["not_food: a non-food class must have food_name null"]

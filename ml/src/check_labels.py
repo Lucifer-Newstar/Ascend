@@ -17,25 +17,48 @@ from pathlib import Path
 
 from common import ML_DIR
 
-SEED = ML_DIR.parent / "services" / "sidecar" / "app" / "modules" / "nutrition" / "seed.py"
+NUTRITION = ML_DIR.parent / "services" / "sidecar" / "app" / "modules" / "nutrition"
+SEED = NUTRITION / "seed.py"
+SEEDS = (SEED, NUTRITION / "seed_v12.py")
+# Classifier classes with no food row: the model may answer them, the app never logs them.
+NON_FOOD = {"not_food"}
 
 
 def seed_foods(path: Path = SEED) -> dict[str, str]:
-    """name -> portion label, read from the seed module's FOODS literal (no sidecar import)."""
+    """name -> portion label from a seed module's FOODS* literals (no sidecar import)."""
     tree = ast.parse(path.read_text(encoding="utf-8"))
+    out: dict[str, str] = {}
     for node in tree.body:
         target = node.target if isinstance(node, ast.AnnAssign) else None
         if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name):
             target = node.targets[0]
-        if isinstance(target, ast.Name) and target.id == "FOODS" and node.value is not None:
-            return {row[0]: row[1] for row in ast.literal_eval(node.value)}
-    raise ValueError(f"FOODS not found in {path}")
+        if (
+            isinstance(target, ast.Name)
+            and target.id.startswith("FOODS")
+            and getattr(node, "value", None) is not None
+        ):
+            out.update({row[0]: row[1] for row in ast.literal_eval(node.value)})  # type: ignore[arg-type]
+    if not out:
+        raise ValueError(f"FOODS not found in {path}")
+    return out
+
+
+def all_seed_foods() -> dict[str, str]:
+    foods: dict[str, str] = {}
+    for path in SEEDS:
+        if path.exists():
+            foods.update(seed_foods(path))
+    return foods
 
 
 def check(labels: dict, foods: dict[str, str], classes: list[str] | None = None) -> list[str]:
     errors: list[str] = []
     entries = labels["classes"]
     for cls, e in sorted(entries.items()):
+        if cls in NON_FOOD:
+            if e.get("food_name") is not None:
+                errors.append(f"{cls}: a non-food class must have food_name null")
+            continue
         if e["food_name"] not in foods:
             errors.append(f"{cls}: food '{e['food_name']}' is not in the food table")
         elif foods[e["food_name"]] != e["default_portion"]:
@@ -58,7 +81,7 @@ def main() -> int:
     args = ap.parse_args()
     labels = json.loads(args.labels.read_text(encoding="utf-8"))
     classes = json.loads(args.classes.read_text()) if args.classes else None
-    errors = check(labels, seed_foods(), classes)
+    errors = check(labels, all_seed_foods(), classes)
     for e in errors:
         print(f"ERROR {e}")
     if not errors:

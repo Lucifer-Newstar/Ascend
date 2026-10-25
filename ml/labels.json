@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "note": "Maps classifier classes to the sidecar food table. food_name must match a row in services/sidecar/app/modules/nutrition/seed.py (checked by src/check_labels.py). indb_id is filled from the full INDB import once its licence is recorded in SOURCES.md. Tamil names are pending review by a native speaker (ta_reviewed).",
+  "version": 2,
+  "note": "Maps classifier classes to the sidecar food table. food_name must match a row in services/sidecar/app/modules/nutrition/seed.py or seed_v12.py (checked by src/check_labels.py). indb_id is filled from the full INDB import once its licence is recorded in SOURCES.md. Tamil names are pending review by a native speaker (ta_reviewed). not_food is the reject class (Open Images photos with no food); it has no food row and is never logged.",
   "classes": {
     "idli": {
       "food_name": "Idli",
@@ -48,6 +48,110 @@
       "ta": "துவரம் பருப்பு",
       "ta_reviewed": false,
       "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "masala_dosa": {
+      "food_name": "Masala dosa",
+      "en": "Masala dosa",
+      "ta": "மசாலா தோசை",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "medu_vada": {
+      "food_name": "Medu vada",
+      "en": "Medu vada",
+      "ta": "மெது வடை",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "ven_pongal": {
+      "food_name": "Ven pongal",
+      "en": "Ven pongal",
+      "ta": "வெண் பொங்கல்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "upma": {
+      "food_name": "Rava upma",
+      "en": "Rava upma",
+      "ta": "ரவா உப்புமா",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "poori": {
+      "food_name": "Puri",
+      "en": "Poori",
+      "ta": "பூரி",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "parotta": {
+      "food_name": "Parotta",
+      "en": "Parotta",
+      "ta": "பரோட்டா",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "chicken_biryani": {
+      "food_name": "Chicken biryani",
+      "en": "Chicken biryani",
+      "ta": "சிக்கன் பிரியாணி",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "curd_rice": {
+      "food_name": "Curd rice",
+      "en": "Curd rice",
+      "ta": "தயிர் சாதம்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "boiled_egg": {
+      "food_name": "Boiled egg",
+      "en": "Boiled egg",
+      "ta": "அவித்த முட்டை",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "chicken_curry": {
+      "food_name": "Chicken curry",
+      "en": "Chicken curry",
+      "ta": "கோழி கறி",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "coconut_chutney": {
+      "food_name": "Coconut chutney",
+      "en": "Coconut chutney",
+      "ta": "தேங்காய் சட்னி",
+      "ta_reviewed": false,
+      "default_portion": "1 tbsp",
+      "indb_id": null
+    },
+    "banana": {
+      "food_name": "Banana",
+      "en": "Banana",
+      "ta": "வாழைப்பழம்",
+      "ta_reviewed": false,
+      "default_portion": "1 medium",
+      "indb_id": null
+    },
+    "not_food": {
+      "food_name": null,
+      "en": "Not food",
+      "ta": "உணவு இல்லை",
+      "ta_reviewed": false,
+      "default_portion": null,
       "indb_id": null
     }
   }
