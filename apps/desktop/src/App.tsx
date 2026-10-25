@@ -216,7 +216,7 @@ function Shell({ page, navigate, refreshKey, bump, onErased, freshStart = false 
   };
   // Level, rank, streak and quest state: the top bar and the System notices share one fetch.
   const game = useApi(api.game, [refreshKey]);
-  useReminderNotifications({ game: game.data, enabled: settings.reminders !== false, trainerName: trainerById(settings.trainer_id).name, refreshKey, onNavigate: navigate });
+  useReminderNotifications({ game: game.data, enabled: settings.reminders !== false, evening: Boolean(settings.evening_reminder), trainerName: trainerById(settings.trainer_id).name, refreshKey, onNavigate: navigate });
   return (
     <Layout page={page} onNavigate={navigate} title={TITLES[page]}
       onlineResearch={Boolean(settings.online_lookup)} status={<XpStatus game={game.data ?? undefined} />}

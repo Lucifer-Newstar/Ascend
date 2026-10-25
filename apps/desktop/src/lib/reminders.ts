@@ -1,18 +1,23 @@
 /**
- * The trainer's reminders (v1.2): what is still pending today, in priority order. Pure,
- * so Today's trainer bubble and the desktop notifications say the same thing.
+ * The trainer's reminders: what is still pending today, in priority order. Pure, so
+ * Today's trainer bubble and the desktop notifications say the same thing.
  *
- * - a missed day's reason (yesterday was missed and the streak waits for it)
- * - streak at risk (a running streak, nothing logged today, from 6 pm)
+ * v1.3 (review 1.4, design rules D2/D3 in docs/RULES_AND_BASELINE.md): kind, never about
+ * losing something, nothing on a planned rest day, no water nagging, at most two a day.
+ *
+ * - a missed day's reason (yesterday was missed; a reason keeps it as a rest day)
  * - today's workout (a program is followed and nothing is logged yet today)
- * - water (today's quest has a water item that is not done)
+ * - evening check, opt-in (Settings > Trainer), from 6 pm on a training day
  * - check-in (before noon, no morning check-in yet)
  */
 import type { GameSummary } from "@ascend/shared";
 
 import type { Page } from "../components/Layout";
 
-export type ReminderKey = "reason" | "streak" | "workout" | "water" | "checkin";
+export type ReminderKey = "reason" | "workout" | "evening" | "checkin";
+
+/** Never more than this many reminders in a day, on Today or as notifications. */
+export const MAX_PER_DAY = 2;
 
 export interface Reminder {
   key: ReminderKey;
@@ -30,32 +35,32 @@ export interface ReminderInput {
   /** Whether this morning's check-in is done (undefined while unknown). */
   checkedIn: boolean | undefined;
   now: Date;
+  /** Settings > Trainer > Evening check (off by default). */
+  evening?: boolean;
 }
 
 const dayName = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" });
 
-export function pendingReminders({ game, nextSession, checkedIn, now }: ReminderInput): Reminder[] {
+export function pendingReminders({ game, nextSession, checkedIn, now, evening = false }: ReminderInput): Reminder[] {
   if (!game) return [];
-  const out: Reminder[] = [];
   const s = game.streak;
+  // A planned rest day is part of the plan: nothing to remind about.
+  if (s.rest_today) return [];
+  const out: Reminder[] = [];
   const hour = now.getHours();
   if (s.reason_due) {
-    out.push({ key: "reason", text: `You missed ${dayName(s.reason_due)}. Tell me why today and your streak stays.`, page: "dashboard", action: "Give a reason", urgent: true });
-  }
-  if (s.current > 0 && !s.active_today && hour >= 18) {
-    out.push({ key: "streak", text: `Your ${s.current}-day streak ends at midnight. Log anything to keep it.`, page: "workout", action: "Log something", urgent: true });
+    out.push({ key: "reason", text: `How did ${dayName(s.reason_due)} go? If something came up, tell me and I'll count it as rest.`, page: "dashboard", action: "Add a note", urgent: false });
   }
   if (nextSession && !s.active_today) {
-    out.push({ key: "workout", text: `Today's workout is waiting: ${nextSession}.`, page: "workout", action: "Start workout", urgent: false });
+    out.push({ key: "workout", text: `Today's workout is ready when you are: ${nextSession}.`, page: "workout", action: "Start workout", urgent: false });
   }
-  const water = game.quest.find((q) => q.code.startsWith("water") && !q.completed_at);
-  if (water) {
-    out.push({ key: "water", text: `Water: ${water.progress} of ${water.target} glasses so far.`, page: "dashboard", action: "Open quests", urgent: false });
+  if (evening && !s.active_today && hour >= 18) {
+    out.push({ key: "evening", text: "Still time for a short session if you feel like it. Ten minutes counts.", page: "workout", action: "Start something short", urgent: false });
   }
   if (checkedIn === false && hour < 12) {
     out.push({ key: "checkin", text: "Morning check-in: 20 seconds, and I tune today's plan to how you feel.", page: "dashboard", action: "Check in", urgent: false });
   }
-  return out;
+  return out.slice(0, MAX_PER_DAY);
 }
 
 /**
@@ -71,7 +76,7 @@ export function quietLine(game: GameSummary | null | undefined): string {
   return `Nothing urgent. ${items} ${left === 1 ? "is" : "are"} open for when you're ready.`;
 }
 
-/** The trainer's mood for the bubble: a warning when something is at stake, else hyped, else proud. */
+/** The trainer's mood for the bubble: hyped when something is waiting, else proud (no warning faces for reminders). */
 export function reminderMood(items: Reminder[]): "warning" | "hyped" | "proud" {
   if (items.some((r) => r.urgent)) return "warning";
   return items.length ? "hyped" : "proud";
@@ -80,8 +85,9 @@ export function reminderMood(items: Reminder[]): "warning" | "hyped" | "proud" {
 const SENT_KEY = "ascend.reminders.sent";
 
 /**
- * Which reminders still need a desktop notification today: each kind at most once a day.
- * `store` is localStorage in the app (injected for tests).
+ * Which reminders still need a desktop notification today: each kind at most once a day,
+ * and never more than MAX_PER_DAY in total. `store` is localStorage in the app (injected
+ * for tests).
  */
 export function toNotify(items: Reminder[], today: string, store: Pick<Storage, "getItem" | "setItem">): Reminder[] {
   let sent: Record<string, string> = {};
@@ -90,7 +96,8 @@ export function toNotify(items: Reminder[], today: string, store: Pick<Storage, 
   } catch {
     sent = {};
   }
-  const fresh = items.filter((r) => sent[r.key] !== today);
+  const already = Object.values(sent).filter((d) => d === today).length;
+  const fresh = items.filter((r) => sent[r.key] !== today).slice(0, Math.max(0, MAX_PER_DAY - already));
   if (fresh.length) {
     for (const r of fresh) sent[r.key] = today;
     store.setItem(SENT_KEY, JSON.stringify(sent));

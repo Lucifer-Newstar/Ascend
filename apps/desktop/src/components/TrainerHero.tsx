@@ -7,12 +7,13 @@
 import type { GameSummary } from "@ascend/shared";
 
 import { api } from "../api/client";
+import { useOptionalPrefs } from "../lib/prefs";
 import { pendingReminders, quietLine, reminderMood, type Reminder } from "../lib/reminders";
 import { useApi } from "../lib/useApi";
 import type { Page } from "./Layout";
 import { TrainerPortrait, useTrainer, useTrainerOn } from "./Trainer";
 
-const SCROLL_TO: Partial<Record<Reminder["key"], string>> = { reason: "reason-title", water: "quest-window", checkin: "checkin-title" };
+const SCROLL_TO: Partial<Record<Reminder["key"], string>> = { reason: "reason-title", checkin: "checkin-title" };
 
 export function greeting(now: Date, name: string | null | undefined): string {
   const h = now.getHours();
@@ -32,12 +33,14 @@ export function TrainerHero({ game, name, refreshKey = 0, onNavigate, onOpenChat
   const t = useTrainer();
   const plan = useApi(api.currentPlan, [refreshKey], { cacheKey: "plan" });
   const checkin = useApi(api.checkinToday, [refreshKey]);
+  const prefs = useOptionalPrefs();
   const at = now();
   const items = pendingReminders({
     game,
     nextSession: plan.data?.next.name ?? null,
     checkedIn: checkin.loading ? undefined : Boolean(checkin.data),
     now: at,
+    evening: Boolean(prefs?.settings.evening_reminder),
   });
   if (!trainerOn && items.length === 0) return null;
 

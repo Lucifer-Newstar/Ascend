@@ -18,9 +18,11 @@ export function localDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function useReminderNotifications({ game, enabled, trainerName, refreshKey, onNavigate }: {
+export function useReminderNotifications({ game, enabled, evening = false, trainerName, refreshKey, onNavigate }: {
   game: GameSummary | null | undefined;
   enabled: boolean;
+  /** Settings > Trainer > Evening check (off by default). */
+  evening?: boolean;
   trainerName: string;
   refreshKey: number;
   onNavigate: (p: Page) => void;
@@ -35,7 +37,7 @@ export function useReminderNotifications({ game, enabled, trainerName, refreshKe
   useEffect(() => {
     if (!enabled || !game || plan.loading || checkin.loading || typeof window === "undefined" || !("Notification" in window)) return;
     const now = new Date();
-    const items = pendingReminders({ game, nextSession: plan.data?.next.name ?? null, checkedIn: Boolean(checkin.data), now });
+    const items = pendingReminders({ game, nextSession: plan.data?.next.name ?? null, checkedIn: Boolean(checkin.data), now, evening });
     if (items.length === 0) return;
     const send = () => {
       for (const r of toNotify(items, localDay(now), window.localStorage)) {
@@ -48,5 +50,5 @@ export function useReminderNotifications({ game, enabled, trainerName, refreshKe
     };
     if (Notification.permission === "granted") send();
     else if (Notification.permission === "default") void Notification.requestPermission().then((p) => { if (p === "granted") send(); });
-  }, [enabled, game, plan.loading, plan.data, checkin.loading, checkin.data, trainerName, onNavigate, tick]);
+  }, [enabled, evening, game, plan.loading, plan.data, checkin.loading, checkin.data, trainerName, onNavigate, tick]);
 }
