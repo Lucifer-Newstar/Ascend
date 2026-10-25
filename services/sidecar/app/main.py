@@ -36,6 +36,7 @@ from app.modules.photos.api import router as photos_router
 from app.modules.planner.api import router as planner_router
 from app.modules.progress import service as progress_service
 from app.modules.progress.api import router as progress_router
+from app.modules.schedule.api import router as schedule_router
 from app.modules.selector.api import router as selector_router
 from app.modules.share.api import router as share_router
 from app.modules.skills import service as skills_service
@@ -282,6 +283,7 @@ def create_app(
         actions_router,
         photos_router,
         share_router,
+        schedule_router,
     ):
         app.include_router(router)
     return app
