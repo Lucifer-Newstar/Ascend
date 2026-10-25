@@ -57,6 +57,9 @@ hiddenimports = (
     # uvicorn picks these at runtime by name, so PyInstaller can't see them.
     + collect_submodules("uvicorn")
     + ["alembic.runtime.migration", "alembic.ddl.sqlite", "logging.config"]
+    # Imported lazily by app.modules.ml.food_photo, so the analysis cannot see them
+    # (onnxruntime's own PyInstaller hook then brings its native libraries).
+    + ["onnxruntime", "PIL.Image", "PIL.ImageOps", "numpy"]
 )
 
 a = Analysis(
@@ -75,6 +78,12 @@ a = Analysis(
         (
             str(ROOT / "app" / "modules" / "workouts" / "prompts"),
             "app/modules/workouts/prompts",
+        ),
+        # On-device ML (ml/): intent model, knowledge base and their manifests. The food
+        # photo model is not bundled; it lives in the data folder once downloaded.
+        (
+            str(ROOT / "app" / "modules" / "ml" / "assets"),
+            "app/modules/ml/assets",
         ),
     ],
     hiddenimports=hiddenimports,
