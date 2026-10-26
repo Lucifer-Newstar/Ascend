@@ -140,6 +140,7 @@ These describe plans, not the shipped app, and each one opens with a "Design rec
 | Coach prompts, validation and safety | [ai/coach-llm.md](ai/coach-llm.md) · [ai/prompt-library.md](ai/prompt-library.md) |
 | Trophy shelf, cosmetics, unlock scenes (v1.4) | [architecture/rewards.md](architecture/rewards.md) |
 | The trainer builds your plan from chat (v1.4) | [ai/plan-builder.md](ai/plan-builder.md) · actions: [ai/trainer-actions.md](ai/trainer-actions.md) |
+| The coaching team: main trainer + specialists | [ai/coaching-team.md](ai/coaching-team.md) |
 | Tamil / Tanglish (beta) | [ai/multilingual-tamil.md](ai/multilingual-tamil.md) |
 | Meal photo recognition | [ai/food-recognition.md](ai/food-recognition.md) |
 | Local models, VRAM, downloads | [ai/model-manager.md](ai/model-manager.md) |

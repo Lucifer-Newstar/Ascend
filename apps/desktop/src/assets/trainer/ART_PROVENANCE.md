@@ -222,5 +222,6 @@ portrait; Iskra's Chat portrait is her 512 px neutral). Kai and Dario move from 
 256 px RGBA format to this one. The 1024 px transparent PNG masters are kept outside the
 repository to keep it small.
 
-The specialty is a label in the trainer picker and on the Chat page. Every trainer answers
-everything; there is no routing of questions to a specialist.
+The specialty is a label in the trainer picker and on the Chat page. Since the coaching team
+(docs/ai/coaching-team.md), the main trainer hands a coaching question to the specialist
+for its area, whose icon and name appear on that reply.
