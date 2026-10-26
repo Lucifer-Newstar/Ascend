@@ -11,6 +11,13 @@ where a number you see could change. User-facing release notes live in
 
 ### Added
 
+- **The coaching team.** Your trainer is now your main trainer and runs the chat; a question
+  in another trainer's area goes to them with a short handoff line: Idris for gym, strength
+  and PRs, Dario for calisthenics, Kai for cardio and martial arts, Tara for mobility and
+  recovery, Vera for nutrition. The specialist answers under their own name and portrait,
+  and the Chat page shows your team. Pick any main trainer; switch the team off in Settings >
+  Trainer to have one trainer answer everything. App help and every card stay with your main
+  trainer.
 - **Your training week** (Settings > Trainer): pick the days and a usual time. The other days
   are planned rest, and the weekly target follows your days. The Planner shows this week
   planned vs done, and on Sunday you can plan next week.
