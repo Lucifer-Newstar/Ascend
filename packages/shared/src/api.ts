@@ -728,8 +728,10 @@ export interface Settings {
   online_lookup?: boolean;
   /** v8: insights spoken by the trainer character; false = plain System mode. Default true. */
   trainer?: boolean;
-  /** v1.1: which trainer speaks. */
+  /** v1.1: which trainer speaks; with the coaching team, the main trainer who runs the chat. */
   trainer_id?: TrainerId;
+  /** Coaching team: specialists answer questions in their area. Default true. */
+  team_handoff?: boolean;
   /** v1.1: hide calorie numbers across the app (targets still work underneath). */
   hide_calories?: boolean;
   /** v1.2: the theme's background art behind the pages. Default "on". */
@@ -1256,6 +1258,10 @@ export interface ChatReply {
   proposal: ActionProposal | null;
   /** Sources behind a knowledge-base answer (ml-v1); empty or absent otherwise. */
   citations?: ChatCitation[];
+  /** Coaching team: who gives this reply (the main trainer or the specialist for the topic). */
+  speaker?: TrainerId | null;
+  /** The main trainer's handoff line when a specialist answers; null otherwise. */
+  handoff?: string | null;
 }
 
 /** On-device models (GET /ml/status). The UI hides "Scan meal" unless food_photo.available. */
