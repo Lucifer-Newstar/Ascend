@@ -19,7 +19,7 @@ from app.core.config import Settings
 from app.modules.coach import service as coach
 from app.modules.planner import validate as goalcheck
 from app.modules.progress import service as progress
-from app.modules.trainer import kb, ml_route, my_data
+from app.modules.trainer import kb, ml_route, my_data, team
 from app.modules.trainer.intents import Intent, classify
 from app.modules.trainer.schemas import ChatAction, ChatOut
 
@@ -163,6 +163,14 @@ def _ai_or_fallback(db: Session, settings: Settings, now: datetime, text: str) -
 
 
 def respond(
+    db: Session, settings: Settings, now: datetime, text: str, bus: object | None = None
+) -> ChatOut:
+    """One chat turn, stamped with who speaks: the main trainer, or the specialist whose
+    area a coaching answer is in (trainer/team.py). The words are decided first."""
+    return team.assign(db, text, _respond(db, settings, now, text, bus))
+
+
+def _respond(
     db: Session, settings: Settings, now: datetime, text: str, bus: object | None = None
 ) -> ChatOut:
     if _text_reply and bus is not None:

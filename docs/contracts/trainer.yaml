@@ -280,6 +280,23 @@ components:
           type: array
           title: Citations
           default: []
+        speaker:
+          anyOf:
+          - type: string
+            enum:
+            - iskra
+            - vera
+            - kai
+            - dario
+            - tara
+            - idris
+          - type: 'null'
+          title: Speaker
+        handoff:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Handoff
       type: object
       required:
       - reply

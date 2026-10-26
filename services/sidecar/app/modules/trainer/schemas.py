@@ -49,6 +49,10 @@ class ChatOut(BaseModel):
     proposal: dict[str, Any] | None = None
     # Sources behind a knowledge-base answer (empty for every other reply).
     citations: list[ChatCitation] = []
+    # Coaching team (item 13): who gives this reply (the main trainer, or the specialist
+    # whose area it is), and the main trainer's handoff line when a specialist answers.
+    speaker: TrainerId | None = None
+    handoff: str | None = None
 
 
 class FeedMessage(BaseModel):
