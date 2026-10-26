@@ -182,13 +182,13 @@ def undo_equipment(db: Session, bus: EventBus, now: datetime, u: dict[str, Any])
 
 SettingKey = Literal[
     "units", "theme", "reminders", "hide_calories", "reduce_motion", "ai_enabled",
-    "trainer_id", "sessions_per_week", "background_art",
+    "trainer_id", "sessions_per_week", "background_art", "team_handoff",
 ]  # fmt: skip
 SETTING_LABEL = {
     "units": "units", "theme": "theme", "reminders": "reminders", "hide_calories":
     "hide calories", "reduce_motion": "reduce motion", "ai_enabled": "local AI",
-    "trainer_id": "trainer", "sessions_per_week": "sessions per week",
-    "background_art": "background art",
+    "trainer_id": "main trainer", "sessions_per_week": "sessions per week",
+    "background_art": "background art", "team_handoff": "coaching team",
 }  # fmt: skip
 
 

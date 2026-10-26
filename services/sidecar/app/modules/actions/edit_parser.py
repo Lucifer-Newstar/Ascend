@@ -179,6 +179,7 @@ def _setting(t: str) -> Hit | None:
         "(?:the )?(?:local )?ai|the coach model|ollama": "ai_enabled",
         "animations?|motion": "reduce_motion",
         "background(?: art)?": "background_art",
+        "(?:the )?(?:coaching )?team|specialists?|(?:the )?handoffs?": "team_handoff",
     }
     for words, key in toggles.items():
         m = re.fullmatch(
@@ -200,8 +201,8 @@ def _setting(t: str) -> Hit | None:
     if m:
         return "update_setting", {"key": "hide_calories", "value": m.group(1) == "hide"}
     m = re.fullmatch(
-        r"(?:switch|change) (?:my )?trainer to (" + "|".join(TRAINERS) + r")|(?:i want |make )?("
-        + "|".join(TRAINERS) + r") (?:as|to be) my trainer",
+        r"(?:switch|change) (?:my )?(?:main )?trainer to (" + "|".join(TRAINERS) + r")|(?:i want |make )?("
+        + "|".join(TRAINERS) + r") (?:as |to be )?my (?:main )?trainer",
         t,
     )  # fmt: skip
     if m:
