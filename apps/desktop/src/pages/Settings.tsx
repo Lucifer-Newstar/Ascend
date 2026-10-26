@@ -213,8 +213,18 @@ export function SettingsPage({ onToggleAi, onChanged, onOpenHistory, onErased }:
               <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.lock_screen !== false} data-testid="lock-screen-toggle"
                 onChange={(e) => save({ lock_screen: e.target.checked }, e.target.checked ? "Lock screen: on" : "Lock screen: off")} />
             </label>
-            <p className="text-xs text-muted">One trainer speaks at a time. They all read the same numbers; only the voice and the portrait change.</p>
-            <TrainerPicker onPicked={(t) => { toast(`${t.name} is your trainer now`, "info"); onChanged(); }} />
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink">
+                Coaching team
+                <br />
+                <span className="text-xs text-muted">Your main trainer runs the chat and hands a question to the specialist for it: Idris (gym and strength), Dario (calisthenics), Kai (cardio and martial arts), Tara (mobility and recovery), Vera (nutrition). Off: your main trainer answers everything.</span>
+              </span>
+              <input type="checkbox" className="h-5 w-5 shrink-0 accent-accent" checked={settings.team_handoff !== false} data-testid="team-handoff-toggle"
+                onChange={(e) => save({ team_handoff: e.target.checked }, e.target.checked ? "Coaching team: on" : "Coaching team: off")} />
+            </label>
+            <h3 className="text-sm font-semibold text-ink" id="main-trainer-title">Main trainer</h3>
+            <p className="text-xs text-muted">Your main trainer runs the chat, your reminders and your cards. Everyone reads the same numbers; only the voice and the portrait change.</p>
+            <TrainerPicker label="Choose your main trainer" onPicked={(t) => { toast(`${t.name} is your main trainer now`, "info"); onChanged(); }} />
           </section>
           <section className="card rise-in space-y-4 p-5" style={stagger(2)} aria-labelledby="schedule-title" id="schedule">
             <h2 id="schedule-title" className="card-title">Your training week</h2>

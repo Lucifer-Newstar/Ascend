@@ -83,11 +83,11 @@ export function TrainerToggle() {
 }
 
 /** Pick who speaks. Saved at once; the chat and every card switch voice and portrait. */
-export function TrainerPicker({ onPicked }: { onPicked?: (t: TrainerProfile) => void }) {
+export function TrainerPicker({ onPicked, label = "Choose your trainer" }: { onPicked?: (t: TrainerProfile) => void; label?: string }) {
   const prefs = useOptionalPrefs();
   const current = useTrainer();
   return (
-    <div role="radiogroup" aria-label="Choose your trainer" className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3" data-testid="trainer-picker">
+    <div role="radiogroup" aria-label={label} className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3" data-testid="trainer-picker">
       {ROSTER.map((t) => {
         const on = t.id === current.id;
         return (

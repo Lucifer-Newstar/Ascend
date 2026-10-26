@@ -197,6 +197,19 @@ describe("SettingsPage", () => {
     expect(save).toHaveBeenCalledWith({ lock_screen: false });
   });
 
+  it("picks the main trainer and keeps the coaching team on until turned off (item 13)", async () => {
+    const save = vi.fn(async (p: Partial<Settings>) => ({ ...DEFAULT_SETTINGS, ...p }));
+    setup(save);
+    await openSection("Trainer");
+    const team = await screen.findByTestId("team-handoff-toggle");
+    expect(team).toBeChecked();
+    expect(screen.getByRole("radiogroup", { name: "Choose your main trainer" })).toBeInTheDocument();
+    await userEvent.click(team);
+    expect(save).toHaveBeenCalledWith({ team_handoff: false });
+    await userEvent.click(screen.getByRole("radio", { name: /Dario Halvorn/ }));
+    expect(save).toHaveBeenCalledWith({ trainer_id: "dario" });
+  });
+
   it("picks training days and a time in the Trainer section (v1.4)", async () => {
     setup(vi.fn());
     await openSection("Trainer");
