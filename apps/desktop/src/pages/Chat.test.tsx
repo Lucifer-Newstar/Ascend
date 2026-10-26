@@ -44,7 +44,7 @@ describe("Chat page (v1.3)", () => {
     expect(portrait).toHaveAttribute("data-trainer", "tara");
     expect(portrait.getAttribute("src")).toContain("tara-portrait");
     expect(screen.getByText("Best at: Flexibility, mobility, meditation and recovery")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Change trainer" }));
+    await userEvent.click(screen.getByRole("button", { name: "Change main trainer" }));
     expect(onPickTrainer).toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: "Close chat" })).toBeNull();
     await expectNoAxeViolations(container);
