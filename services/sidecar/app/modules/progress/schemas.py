@@ -125,6 +125,9 @@ class SettingsOut(BaseModel):
     trainer: bool = True
     # v1.1: which trainer speaks (iskra, vera, kai, dario; tara and idris from v1.3).
     trainer_id: TrainerId = "iskra"
+    # Coaching team (item 13): the trainer above is the main one; when this is on, a
+    # specialist answers questions in their area (Idris, Dario, Kai, Tara, Vera).
+    team_handoff: bool = True
     # v1.1: hide calorie numbers across the app (targets still work underneath).
     hide_calories: bool = False
     # v1.2: the theme's background art behind the pages: on, dimmed, or off (plain colour).
@@ -163,6 +166,7 @@ class SettingsIn(StrictIn):
     online_lookup: bool | None = None
     trainer: bool | None = None
     trainer_id: TrainerId | None = None
+    team_handoff: bool | None = None
     hide_calories: bool | None = None
     background_art: BackgroundArt | None = None
     avatar: AvatarLook | None = None

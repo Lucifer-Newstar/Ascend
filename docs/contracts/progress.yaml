@@ -1199,6 +1199,11 @@ components:
             - idris
           - type: 'null'
           title: Trainer Id
+        team_handoff:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Team Handoff
         hide_calories:
           anyOf:
           - type: boolean
@@ -1345,6 +1350,10 @@ components:
           - idris
           title: Trainer Id
           default: iskra
+        team_handoff:
+          type: boolean
+          title: Team Handoff
+          default: true
         hide_calories:
           type: boolean
           title: Hide Calories

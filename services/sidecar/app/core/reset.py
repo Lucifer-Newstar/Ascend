@@ -31,6 +31,7 @@ PREFERENCE_KEYS = frozenset(
         "online_lookup",
         "trainer",
         "trainer_id",
+        "team_handoff",
         "coach_model",
         "hide_calories",
     }

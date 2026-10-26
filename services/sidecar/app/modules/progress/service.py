@@ -133,6 +133,7 @@ def read_settings(db: Session) -> SettingsOut:
         online_lookup=online_lookup(db),
         trainer=get_setting(db, "trainer", "true") == "true",
         trainer_id=cast(TrainerId, _trainer_id(get_setting(db, "trainer_id", "iskra"))),
+        team_handoff=get_setting(db, "team_handoff", "true") == "true",
         hide_calories=get_setting(db, "hide_calories", "false") == "true",
         background_art=cast(BackgroundArt, _art(get_setting(db, "background_art", "on"))),
         avatar=cast(AvatarLook, _avatar(db, get_setting(db, "avatar", ""))),
