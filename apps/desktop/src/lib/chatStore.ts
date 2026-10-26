@@ -2,7 +2,7 @@
  * The trainer conversation, shared by the chat drawer and the Chat page (v1.3), so moving
  * between them keeps the thread. It lives for the app session, like the drawer did.
  */
-import type { ChatReply, FeedMessage } from "@ascend/shared";
+import type { ChatReply, FeedMessage, TrainerId } from "@ascend/shared";
 import { useSyncExternalStore } from "react";
 
 import type { TrainerMood } from "./trainer";
@@ -57,4 +57,13 @@ export function useChatMessages(): ChatMsg[] {
 export function latestMood(list: ChatMsg[]): TrainerMood {
   const last = list[list.length - 1];
   return (last?.role === "trainer" && last.mood) || "neutral";
+}
+
+/**
+ * Coaching team: the specialist answering in the latest trainer line, or null when the
+ * main trainer has the floor (the big portrait and the drawer header follow it).
+ */
+export function latestSpeaker(list: ChatMsg[]): TrainerId | null {
+  const last = list[list.length - 1];
+  return (last?.role === "trainer" && last.reply?.handoff && last.reply.speaker) || null;
 }

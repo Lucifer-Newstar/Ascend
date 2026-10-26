@@ -5,14 +5,18 @@
  *
  * The drawer stays mounted while closed, so the conversation survives closing it. v1.3:
  * the conversation lives in lib/chatStore, shared with the Chat page (variant "page").
+ *
+ * Coaching team: when a specialist answers (reply.handoff is set), the main trainer's
+ * handoff line shows first, then the reply under the specialist's own icon and name.
  */
 import type { ChatAction } from "@ascend/shared";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
-import { chatStore, latestMood, useChatMessages } from "../lib/chatStore";
+import { chatStore, latestMood, latestSpeaker, useChatMessages } from "../lib/chatStore";
 import { fallbackLabel } from "../lib/fallback";
 import { useOptionalPrefs } from "../lib/prefs";
+import { trainerById } from "../lib/trainer";
 import { ActionCard } from "./ActionCard";
 import { Citations } from "./Citations";
 import { TrainerPortrait, useTrainer } from "./Trainer";
@@ -122,6 +126,8 @@ export function TrainerChat({
   }
 
   const last = msgs[msgs.length - 1];
+  const speakerId = latestSpeaker(msgs);
+  const speaking = speakerId ? trainerById(speakerId) : trainer;
   // On the Chat page the box sits inside the page, so its top bar is not a page banner.
   const Head = variant === "page" ? "div" : "header";
   const chips = last?.reply?.suggestions.length ? last.reply.suggestions : msgs.length <= 1 ? START_SUGGESTIONS : [];
@@ -138,9 +144,9 @@ export function TrainerChat({
         : "fixed bottom-4 right-4 top-[84px] z-40 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col rounded-xl border border-line-2 bg-panel shadow-2xl"}
     >
       <Head className="flex items-center gap-3 border-b border-line px-4 py-3">
-        {variant === "drawer" && <TrainerPortrait mood={latestMood(msgs)} size={40} />}
+        {variant === "drawer" && <TrainerPortrait mood={latestMood(msgs)} size={40} trainer={speaking} />}
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-semibold text-ink">{trainer.name}</h2>
+          <h2 className="truncate text-sm font-semibold text-ink">{speaking.name}{speaking.id !== trainer.id && <span className="ml-1 text-[11px] font-normal text-muted">· with {trainer.short}</span>}</h2>
           <p className="text-[11px] text-muted">{aiOn ? "Local AI on · works offline" : "Works offline · Ctrl+K opens me anywhere"}</p>
         </div>
         {variant === "drawer" && (
@@ -152,9 +158,21 @@ export function TrainerChat({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       <ol className="space-y-3" aria-live="polite" aria-label="Messages">
         {msgs.map((m) => (
-          <li key={m.id} className={m.role === "user" ? "flex justify-end" : "flex"}>
+          <li key={m.id} className={m.role === "user" ? "flex justify-end" : "flex flex-col items-start gap-1.5"}>
+            {m.reply?.handoff && (
+              <p className="flex items-center gap-2 text-[11px] text-muted" data-testid="handoff-line">
+                <img src={trainer.icon} alt="" width={18} height={18} className="rounded-full" />
+                <span><span className="font-semibold text-ink">{trainer.short}:</span> {m.reply.handoff}</span>
+              </p>
+            )}
             <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${m.role === "user" ? "bg-accent/15 text-ink" : "border border-line-2 bg-panel-2/80 text-ink"}`}>
-              {m.role === "trainer" && <span className="sr-only">{trainer.name}: </span>}
+              {m.role === "trainer" && m.reply?.handoff && m.reply.speaker ? (
+                <span className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-accent" data-testid="speaker-label" data-trainer={m.reply.speaker}>
+                  <img src={trainerById(m.reply.speaker).icon} alt="" width={18} height={18} className="rounded-full" />
+                  {trainerById(m.reply.speaker).name}
+                  <span className="sr-only">: </span>
+                </span>
+              ) : m.role === "trainer" && <span className="sr-only">{trainer.name}: </span>}
               {m.notice && <span className="mb-1 block text-[10px] uppercase tracking-wider text-accent">Noticed</span>}
               <p className="whitespace-pre-wrap">{m.text}</p>
               {m.reply?.fallback_reason && <p className="mt-1 text-[11px] text-muted">{fallbackLabel(m.reply.fallback_reason)}</p>}

@@ -1,7 +1,7 @@
 /**
  * The trainers: Instructor Iskra Vey (the default) and, from v1.1, Vera Kestrine, Kai
  * Hoshimura and Dario Halvorn; Tara and Idris join in v1.3, when Vera, Kai and Dario were
- * redrawn. All original characters (art provenance in assets/trainer/ART_PROVENANCE.md). One trainer speaks at a time; they all read the same
+ * redrawn. All original characters (art provenance in assets/trainer/ART_PROVENANCE.md). The trainer you pick is the main one; with the coaching team on, a specialist answers questions in their area (lib/trainer.ts TEAM_AREAS). They all read the same
  * numbers, only the voice and the portrait change. The original notes on Iskra follow.
  * Voice rules (docs/research/v8-trainer-persona.md §2.2): second person, calls the user
  * "Hunter", fact first, stern but encouraging, never shames, no medical claims.
@@ -159,3 +159,21 @@ export function trainerLine(key: string, text: string, mood: TrainerMood, positi
 
 /** Digits in a string, for tests and the guard: the trainer never adds or changes one. */
 export const numbersIn = (s: string): string[] => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
+
+/**
+ * The coaching team (item 13): the main trainer runs the chat and hands a topic to the
+ * specialist who covers it. The sidecar decides who speaks (trainer/team.py); this is
+ * the same split for the screens. Iskra has no specialist area: she is the default main.
+ */
+export const TEAM_AREAS: Partial<Record<TrainerId, string>> = {
+  idris: "Gym, strength and PRs",
+  dario: "Calisthenics",
+  kai: "Cardio and martial arts",
+  tara: "Mobility and recovery",
+  vera: "Nutrition and shakes",
+};
+
+/** The specialists who answer for a main trainer (everyone with an area, except the main). */
+export function teamFor(mainId: TrainerId): { trainer: TrainerProfile; area: string }[] {
+  return ROSTER.filter((t) => t.id !== mainId && TEAM_AREAS[t.id]).map((t) => ({ trainer: t, area: TEAM_AREAS[t.id]! }));
+}
