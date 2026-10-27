@@ -77,6 +77,22 @@ the full history is in [CHANGELOG.md](CHANGELOG.md).
 Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages (Profile has none) · **Enter** log the set shown ·
 **Space** pause rest · arrows on the skill canvas.
 
+### On main, not released yet (after 1.3.0)
+
+Merged after the 1.3.0 tag (plus the knowledge gap fill on `feat/kb-gap-fill`). Not in an
+installer yet; [CHANGELOG.md](CHANGELOG.md) lists them under Unreleased.
+
+| What | How it works |
+|---|---|
+| **Your training week** (`schedule-v1`) | Pick your training days and a usual time in Settings > Trainer; the other days are planned rest. The Planner shows this week planned vs done, Today offers a **10-minute version** of the session, the lock screen opens on today's workout, and a tray icon and start with Windows are opt-in. See [docs/architecture/habit-engine.md](docs/architecture/habit-engine.md). |
+| **The trainer builds your plan from chat** | Kit, goals and limits said in chat ("I have an 8kg dumbbell", "I want to train muay thai") become a card that rebuilds your week and food targets, with undo; **Build my plan** on the Chat page asks six questions. Rule-based. See [docs/ai/plan-builder.md](docs/ai/plan-builder.md). |
+| **Coaching team** | Your main trainer runs the chat and hands a question to the specialist for its area (Idris gym, Dario calisthenics, Kai cardio and martial arts, Tara mobility and recovery, Vera nutrition), who answers under their own name. Switch it off in Settings > Trainer. See [docs/ai/coaching-team.md](docs/ai/coaching-team.md). |
+| **Rewards** | A trophy shelf on Profile, six cosmetics for weekly to seasonal clears, a full-screen unlock scene and an Unlocks page with replay. Cosmetic only. See [docs/architecture/rewards.md](docs/architecture/rewards.md). |
+| **Intent router** (`ascend-intent` 1.1.0) | TF-IDF n-grams + logistic regression, shipped as a small weights file and run by a standard-library runtime in the sidecar. It only decides messages the chat rules are unsure about; out-of-scope messages keep the rules' answer. 0.738 accuracy on 160 real questions (hand-labelled). See [ml/intent/MODEL_CARD.md](ml/intent/MODEL_CARD.md). |
+| **Cited knowledge answers** (`kb-v1.4`) | 1,779 passages (exercise steps, the 2018 Physical Activity Guidelines, the app's food table, team notes, library steps, USDA values) searched by BM25 in the sidecar; the source is shown under the answer, and "no note" when nothing passes the gate. See [ml/knowledge/KB_CARD.md](ml/knowledge/KB_CARD.md). |
+| **Scan meal (hidden)** | The code is in: an ONNX Runtime food model on the CPU suggests three foods for you to confirm and never logs by itself. Fuel shows **Scan meal** only when a model that passed the gate on the team's own photos is in the data folder. **No food model is trained yet**, so it stays hidden. See [ml/food/README.md](ml/food/README.md). |
+| **Knowledge gap fill** (`feat/kb-gap-fill`) | 63 new library moves (strikes and defence drills, yoga poses, breathing and meditation, intervals, knee push-ups...) and steps for 20 entries that had none; 15 South Indian dishes in the food table; `ml/labels.json` lists 50 dishes + `not_food`, and all 59 class names of the team's Roboflow export are mapped. See [ml/knowledge/GAP_ANALYSIS.md](ml/knowledge/GAP_ANALYSIS.md). |
+
 ### New in 1.3
 
 | What | How it works |
@@ -133,8 +149,8 @@ what the engines computed.
 | **Detailed muscle map** | 54 muscles and heads, front, back and a deep layer, in ASCEND's own artwork. Every exercise is mapped to heads by `muscle-map-v1`. [ADR-0021](docs/architecture/adr/0021-detailed-muscle-taxonomy.md) |
 | **Quick log and honest numbers** | Log a set, meal or weigh-in from Today; "rough · based on N" badges on numbers with too little data; Settings → Today's numbers lists the engine, version and data behind every number. |
 | **Backups, import and export** | One automatic `.ascendbak` snapshot per day (newest 14 kept), backups before updates and restores, restore with a database check; export to JSON or CSV and re-import. |
-| **Exercise library** | 873 free-exercise-db exercises plus calisthenics progressions and timed holds, each with a photo or a designed tile; add your own exercise with rules, the local AI or an optional online lookup (wger.de, Wikipedia), each field with its source. |
-| **Indian food log** | Approximate Indian foods (idli, dosa, sambar, chapati, dal, curd...) with katori and piece portions, daily totals and the adaptive calorie target. Food is logged by search; photo recognition is not in the app (see [ml/](ml/README.md)). |
+| **Exercise library** | 1,024 exercises on a fresh database at migration `0035`: 814 from free-exercise-db and 210 of ASCEND's own (calisthenics progressions, timed holds, everyday and gap-fill moves), each with a photo or a designed tile; add your own exercise with rules, the local AI or an optional online lookup (wger.de, Wikipedia), each field with its source. |
+| **Indian food log** | 203 approximate Indian foods on a fresh database (idli, dosa, sambar, chapati, dal, curd, poriyal, kozhukattai, biryanis...) with katori and piece portions, daily totals and the adaptive calorie target. Food is logged by search; **Scan meal** stays hidden until a trained food model is installed, and none is trained yet (see [ml/food/README.md](ml/food/README.md)). |
 
 ### What was in the MVP (v0.1.0)
 
@@ -175,9 +191,16 @@ what the engines computed.
 - **The trainer's own posts follow fixed rules.** The selector's thresholds were set by hand and
   checked on synthetic users only.
 - **Instagram has no desktop posting route.** The app saves the image and copies the caption.
-- **The food classifier is not in the app.** The ML pipeline in [ml/](ml/README.md) runs end to end,
-  but only on synthetic smoke data (generated shapes, not food photos); its metrics say nothing
-  about real food recognition.
+- **No food model is trained yet.** The Scan meal code ships but stays hidden until a model
+  passes the gate on the team's own photos (at least 10 per dish). The food pipeline in
+  [ml/](ml/README.md) has only run on synthetic smoke data (generated shapes, not food photos);
+  the export's licence still has to be recorded in [ml/SOURCES.md](ml/SOURCES.md).
+- **The intent router and knowledge base are checked on small hand-judged sets.** 160 real
+  questions for the intent router and 80 for retrieval, each judged by one person; the v1.4
+  retrieval numbers are not double-checked. About a third of real forum questions get a
+  relevant first passage. The team notes are not reviewed by a medical professional.
+- **Tamil food names are unreviewed.** Every Tamil name in `ml/labels.json` has
+  `ta_reviewed: false`.
 - **The local-model path is tested with a mocked Ollama.** Real `qwen3:4b` phrasing is not covered
   by tests; anything it writes is shown only if the coach's number guard passes. Without a model the
   app shows template text and is fully functional.
@@ -198,7 +221,7 @@ what the engines computed.
                          │ HTTP 127.0.0.1:<random port>, Bearer <per-launch token>
 ┌────────────────────────▼──────── Sidecar (services/sidecar) ─┐
 │ FastAPI modular monolith                                      │
-│  workouts · nutrition · gamification · progress · coach       │
+│  workouts · nutrition · trainer · actions · ml · 13 more      │
 │  in-process event bus: SetLogged → muscle load + XP + quests  │
 │ SQLite (WAL) + Alembic migrations    optional ─► Ollama :11434│
 └───────────────────────────────────────────────────────────────┘
@@ -209,6 +232,10 @@ what the engines computed.
   and restarts it with backoff if it crashes.
 - The renderer never sees the token and has no Node access.
 - Engines are pure functions; the coach only explains their output.
+- The sidecar's 18 modules (`services/sidecar/app/modules/`): `actions`, `ai`, `coach`,
+  `gamification`, `intelligence`, `io`, `ml`, `nutrition`, `photos`, `planbuilder`, `planner`,
+  `progress`, `schedule`, `selector`, `share`, `skills`, `trainer`, `workouts`. `ml` loads the
+  bundled intent model and knowledge base and, when one is installed, the food model.
 
 Details: [services/sidecar/README.md](services/sidecar/README.md),
 [apps/desktop/README.md](apps/desktop/README.md), and the full project docs in [docs/](docs/README.md).
@@ -222,7 +249,7 @@ Details: [services/sidecar/README.md](services/sidecar/README.md),
 | Local AI (optional) | Ollama on `127.0.0.1:11434` with `qwen3:4b`; output passes a number guard |
 | Packaging | PyInstaller (sidecar exe) + electron-builder NSIS installer, built on GitHub Actions |
 | Tests and quality | pytest + Hypothesis, Vitest + Testing Library + jsdom, axe-core, ruff, mypy, ESLint, commitlint |
-| ML pipeline | PyTorch (MobileNetV3-Small), ONNX export with a parity gate, DVC, MLflow |
+| ML pipeline | Intent router: scikit-learn (TF-IDF + logistic regression), exported to a standard-library runtime. Knowledge base: BM25 over cited passages. Food photo: PyTorch (MobileNetV3-Small), ONNX export with a parity gate, ONNX Runtime in the sidecar. DVC, MLflow |
 | DevOps | GitHub Actions (CI on Ubuntu and Windows, ML, Windows installer + release), Docker for sidecar tests |
 
 Versions and the reasons for each choice: [docs/development/tech-stack.md](docs/development/tech-stack.md).
@@ -233,7 +260,7 @@ Versions and the reasons for each choice: [docs/development/tech-stack.md](docs/
 apps/desktop/        Electron + React app
 services/sidecar/    FastAPI engine, SQLite, Alembic, tests, PyInstaller spec
 packages/shared/     TypeScript types: API + typed IPC contract
-ml/                  food-classifier pipeline (DVC + MLflow, synthetic smoke data)
+ml/                  intent router, knowledge base and food-photo pipelines (DVC + MLflow)
 docker/              Dockerfile + compose for sidecar dev/tests
 docs/                project docs: architecture, ADRs, contracts, team plan, releases
 scripts/             PowerShell setup helper, contract drift and link checks, map generator
@@ -300,6 +327,26 @@ and, after three failed or timed-out answers, offers a smaller model or rule-bas
 a rule-based answer stands in for the model's, the reply says why (switched off, not running,
 timed out, model error, or the reply failed the safety check).
 
+### Optional: the ML pipelines
+
+Only needed to rebuild a model; the app runs without any of this. The intent model and the
+knowledge base already ship in `services/sidecar/app/modules/ml/assets/`.
+
+```powershell
+cd ml
+uv venv --python 3.12 .venv
+.\.venv\Scripts\Activate.ps1
+uv pip install --index-strategy unsafe-best-match -r requirements.txt
+python -m pytest                     # ML tests, CPU only
+# food model on an NVIDIA GPU: torch 2.14.1 has no cu128 wheel, use the cu126 build
+uv pip install --reinstall torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu126
+python -c "import torch; print('CUDA', torch.cuda.is_available())"
+```
+
+The intent router and knowledge base rebuild on a CPU (`dvc repro intent_evaluate kb_evaluate`).
+The food model's data, own-photo rules and the full Windows GPU run are in
+[ml/food/README.md](ml/food/README.md); the overview is [ml/README.md](ml/README.md).
+
 ### Other ways to run
 
 ```powershell
@@ -338,7 +385,9 @@ Workflows in [.github/workflows](.github/workflows/):
   ruff, mypy, pytest with coverage, Alembic on a fresh database and the contract drift check on
   Ubuntu and Windows; eslint, tsc, vitest and the Vite build on Ubuntu and Windows; the PyInstaller
   sidecar build with a smoke test; the Docker test image.
-- **`ml.yml`**: ML lint and tests, and a smoke `dvc repro` of the pipeline on synthetic data.
+- **`ml.yml`**: ML lint and tests, the `labels.json` → food table check, and a smoke `dvc repro gate`
+  of the food pipeline on synthetic data that asserts the smoke model never passes the gate; nightly
+  (and on demand) it rebuilds the intent model and the knowledge base.
 - **`release.yml`** (pushes to `main` that touch the app, version tags `v*`, or manual): on
   `windows-latest`, builds and smoke-tests the sidecar exe, builds the NSIS installer and checks that
   all Electron fuses are set. On a version tag it publishes the installer, `SHA256SUMS.txt` and the
@@ -373,7 +422,9 @@ checked by hand on 2026-10-20).
 - [System architecture](docs/architecture/system-architecture.md) and the
   [ADRs](docs/architecture/adr/) (22 decisions)
 - [API contracts](docs/contracts/README.md) and the [IPC contract](docs/contracts/ipc-contract.md)
-- [AI and ML docs](docs/ai/README.md), including the [evaluation](docs/ai/evaluation.md)
+- [AI and ML docs](docs/ai/README.md), including the [evaluation](docs/ai/evaluation.md), and the
+  model cards: [intent router](ml/intent/MODEL_CARD.md), [knowledge base](ml/knowledge/KB_CARD.md),
+  [food photo](ml/food/MODEL_CARD.md)
 - [Security and privacy](docs/architecture/security-privacy.md) and [SECURITY.md](SECURITY.md)
 - [Project proposal](docs/project/proposal.md) and [roadmap](docs/project/roadmap.md)
 - Per-folder guides: [desktop](apps/desktop/README.md), [sidecar](services/sidecar/README.md),
@@ -411,6 +462,11 @@ October 2026 security review.
 - Skill-tree progressions follow the r/bodyweightfitness Recommended Routine and wiki, Steven Low's
   *Overcoming Gravity* (2nd ed.) and GMB Fitness tutorials. The thresholds are ASCEND's own choices
   (see `docs/architecture/skill-trees.md`).
+- ML data: the knowledge base quotes free-exercise-db (Unlicense), the Physical Activity
+  Guidelines for Americans 2018 (US public domain) and USDA FoodData Central (CC0), plus team
+  notes; the WHO material is our own summary. The intent router learned from Fitness Stack
+  Exchange titles (CC BY-SA 4.0) and CLINC150 (CC BY 3.0); only weights ship. Every source and
+  licence, and what still has to be recorded, is in [ml/SOURCES.md](ml/SOURCES.md).
 - Optional online research: [wger](https://wger.de) exercise data (CC-BY-SA 4.0) and
   [Wikipedia](https://en.wikipedia.org) summaries (CC BY-SA 4.0), only when you turn it on or allow a
   single lookup; results are credited on the exercise with a link and licence.
