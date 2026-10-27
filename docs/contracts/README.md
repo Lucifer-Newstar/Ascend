@@ -11,22 +11,35 @@
 
 | Contract | Version | Package | Paths | Implemented ops | Planned ops |
 |---|---|---|---|---|---|
-| [system.yaml](system.yaml) | 0.1.0 | `app.core` | `/events`, `/health`, `/jobs`, `/models`, `/shutdown` | 2 | 5 |
-| [workouts.yaml](workouts.yaml) | 0.1.0 | `app.modules.workouts` | `/exercises`, `/plans`, `/prs`, `/workouts` | 6 | 5 |
-| [nutrition.yaml](nutrition.yaml) | 0.1.0 | `app.modules.nutrition` | `/foods`, `/meals`, `/scans` | 4 | 6 |
-| [gamification.yaml](gamification.yaml) | 0.1.0 | `app.modules.gamification` | `/game` | 2 | 4 |
-| [coach.yaml](coach.yaml) | 0.1.0 | `app.modules.coach` | `/coach` | 3 | 8 |
-| [progress.yaml](progress.yaml) | 0.1.0 | `app.modules.progress` | `/body-metrics`, `/checkins`, `/dashboard`, `/history`, `/muscles`, `/profile`, `/progress`, `/settings` | 7 | 5 |
-| [import-export.yaml](import-export.yaml) | 0.1.0 | `app.modules.io` | `/backup`, `/export`, `/import`, `/restore` | 2 | 5 |
-| [skills.yaml](skills.yaml) | 0.1.0 | `app.modules.skills` | `/skills` | 4 | 0 |
-| [intelligence.yaml](intelligence.yaml) | 0.1.0 | `app.modules.intelligence` | `/intelligence` | 7 | 0 |
+| [system.yaml](system.yaml) | 0.1.0 | `app.core` | `/events`, `/health`, `/jobs`, `/models`, `/shutdown` | 3 | 4 |
+| [workouts.yaml](workouts.yaml) | 0.1.0 | `app.modules.workouts` | `/deload`, `/exercises`, `/plans`, `/prs`, `/workouts` | 23 | 0 |
+| [nutrition.yaml](nutrition.yaml) | 0.1.0 | `app.modules.nutrition` | `/foods`, `/meals`, `/scans` | 7 | 6 |
+| [gamification.yaml](gamification.yaml) | 0.1.0 | `app.modules.gamification` | `/game` | 10 | 4 |
+| [coach.yaml](coach.yaml) | 0.1.0 | `app.modules.coach` | `/coach` | 5 | 7 |
+| [progress.yaml](progress.yaml) | 0.1.0 | `app.modules.progress` | `/body-metrics`, `/checkins`, `/dashboard`, `/history`, `/measurements`, `/muscles`, `/profile`, `/progress`, `/settings` | 21 | 0 |
+| [import-export.yaml](import-export.yaml) | 0.1.0 | `app.modules.io` | `/backup`, `/data`, `/export`, `/import`, `/restore` | 8 | 1 |
+| [skills.yaml](skills.yaml) | 0.1.0 | `app.modules.skills` | `/skills` | 9 | 0 |
+| [intelligence.yaml](intelligence.yaml) | 0.1.0 | `app.modules.intelligence` | `/intelligence` | 11 | 0 |
+| [planner.yaml](planner.yaml) | 0.1.0 | `app.modules.planner` | `/planner` | 11 | 0 |
+| [trainer.yaml](trainer.yaml) | 0.1.0 | `app.modules.trainer` | `/trainer` | 6 | 0 |
+| [ai.yaml](ai.yaml) | 0.1.0 | `app.modules.ai` | `/ai` | 3 | 0 |
+| [selector.yaml](selector.yaml) | 0.1.0 | `app.modules.selector` | `/selector` | 5 | 0 |
+| [actions.yaml](actions.yaml) | 0.1.0 | `app.modules.actions` | `/actions` | 8 | 0 |
+| [photos.yaml](photos.yaml) | 0.1.0 | `app.modules.photos` | `/photos` | 6 | 0 |
+| [share.yaml](share.yaml) | 0.1.0 | `app.modules.share` | `/share` | 1 | 0 |
+| [schedule.yaml](schedule.yaml) | 0.1.0 | `app.modules.schedule` | `/schedule` | 5 | 0 |
+| [ml.yaml](ml.yaml) | 0.1.0 | `app.modules.ml` | `/ml` | 4 | 0 |
 | [ipc-contract.md](ipc-contract.md) | 1 | `apps/desktop` preload ↔ main | `window.ascend.*` | — | — |
 | [manifest.json](manifest.json) | — | module → contract map for the drift check | — | — | — |
 
+Totals (2026-10-27, from the files and `manifest.json`): **146 implemented operations in 18
+contracts**, which `make contracts` confirms against the sidecar's OpenAPI, plus 22 planned.
+
 **Status of each operation** is the `x-status` field:
 
-- `implemented` — matches the v0.1 code skeleton in `services/sidecar/` exactly (generated from
-  its FastAPI OpenAPI on 2026-10-20, then re-tagged per module).
+- `implemented` — matches the sidecar's FastAPI OpenAPI exactly; `make contracts`
+  (`scripts/check_contract_drift.py`) checks it in CI. The first files were generated from the
+  v0.1 skeleton on 2026-10-20; later modules added their own file and a `manifest.json` row.
 - `planned` — the agreed v1.0 design. Prism mocks it; the sidecar adds it in the phase
   shown in [features.md](../planning/features.md). Implementing a planned op must not change its shape
   without a contract PR.
