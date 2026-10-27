@@ -1,9 +1,11 @@
 """trainer-answers-v1: coach-style answers, honest "not sure" replies, one clarifying
-question, and every safety rule kept (Ollama is off in tests)."""
+question, trainer voices, and every safety rule kept (Ollama is off in tests)."""
 
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+
+from app.modules.trainer import voice
 
 
 def chat(client: TestClient, text: str) -> dict:
@@ -75,6 +77,25 @@ def test_pain_keeps_the_doctor_line_on_every_path(client: TestClient, profile: d
     ):
         r = chat(client, q)
         assert "doctor" in r["reply"] or "physio" in r["reply"], (q, r["reply"])
+        assert not any(r["reply"].startswith(o) for v in voice.OPENERS.values() for o in v)
+
+
+def test_a_specialist_answers_in_their_own_voice(client: TestClient, profile: dict) -> None:
+    r = chat(client, "What is tabata? How effective is it?")
+    assert r["speaker"] == "kai"
+    assert any(r["reply"].startswith(o) for o in voice.OPENERS["kai"])
+    off = chat(client, "how do backups work")
+    assert off["speaker"] == "iskra"
+    assert not any(off["reply"].startswith(o) for v in voice.OPENERS.values() for o in v)
+
+
+def test_voice_follows_the_main_trainer_with_the_team_off(
+    client: TestClient, profile: dict
+) -> None:
+    client.put("/settings", json={"team_handoff": False, "trainer_id": "tara"})
+    r = chat(client, "What is tabata? How effective is it?")
+    assert r["speaker"] == "tara" and r["handoff"] is None
+    assert any(r["reply"].startswith(o) for o in voice.OPENERS["tara"])
 
 
 def test_answers_use_the_profile_and_never_log_anything(client: TestClient, profile: dict) -> None:

@@ -6,10 +6,12 @@ specialist who covers it.
     Vera   nutrition and shakes
 
 Iskra is the main trainer by default (Settings "trainer_id" picks another main). Who
-speaks is decided after the reply is built, so routing never changes WHAT is said: the
+speaks is decided after the reply is built, so routing never changes the facts: the
 numbers, the safety line and the citations stay exactly as the rules, the knowledge base
-or the local AI produced them. Only coaching answers move (a knowledge passage, a
-coaching help note, a free answer from the local AI). App questions, tours, greetings,
+or the local AI produced them. Since trainer-answers-v1 the speaker's voice adds an
+opener and a sign-off to coaching answers (trainer/voice.py; none on warnings).
+Only coaching answers move (a knowledge passage, a coaching help note, a free answer
+from the local AI). App questions, tours, greetings,
 goal checks and every action card (propose, confirm, undo) stay with the main trainer.
 
 The topic comes from the learned intent label (nutrition_question -> Vera, injury_pain ->
@@ -25,7 +27,9 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
+from app.modules.ml import knowledge
 from app.modules.progress import service as progress
+from app.modules.trainer import voice
 from app.modules.trainer.schemas import ChatOut, TrainerId
 
 TRAINERS: tuple[TrainerId, ...] = ("iskra", "vera", "kai", "dario", "tara", "idris")
@@ -181,14 +185,30 @@ def topic(text: str, label: str | None = None) -> str | None:
     return winners[0] if len(winners) == 1 else None
 
 
+_FEDB_GYM = re.compile(r"equipment: (barbell|dumbbell|cable|machine|kettlebells|e-z curl bar)")
+
+
 def passage_area(passage_id: str) -> str | None:
-    """The specialist whose area a knowledge passage is in, from its id, or None."""
+    """The specialist whose area a knowledge passage is in, from its id, or None.
+    An exercise from free-exercise-db goes by what it is (trainer-answers-v1): a stretch
+    to Tara, a weights exercise to Idris, a bodyweight one to Dario."""
     kind, _, rest = passage_id.partition(":")
     head = rest.split(":", 1)[0]
     if kind == "lib":
         return head if head in AREAS else None
     if kind == "note":
         return NOTE_AREA.get(head)
+    if kind in ("food", "usda"):
+        return "vera"
+    if kind == "fedb":
+        p = knowledge.passage(passage_id)
+        text = (p or {}).get("text", "").lower()
+        if "stretch" in passage_id.lower() or "smr" in passage_id.lower():
+            return "tara"
+        if _FEDB_GYM.search(text):
+            return "idris"
+        if "equipment: body only" in text:
+            return "dario"
     return None
 
 
@@ -220,13 +240,28 @@ def handoff_line(main: str, who: str) -> str:
     return f"That's {NAMES[who]}'s area ({AREAS[who]}). Over to {pronoun}."
 
 
+def _voiced(out: ChatOut) -> bool:
+    """Replies that get the speaker's voice: coaching answers and clarifying questions.
+    App answers, tours, action cards and the "why?" panel stay plain."""
+    if out.proposal is not None or out.source == "ollama":
+        return False  # the local AI's own words are shown as checked, unchanged
+    return _topical(out) or out.intent == "clarify"
+
+
 def assign(db: Session, text: str, out: ChatOut) -> ChatOut:
     """Stamp who speaks on a finished reply; a specialist's reply carries the main
-    trainer's handoff line. The reply's own words are never changed."""
+    trainer's handoff line. The facts are never changed; a coaching answer gets the
+    speaker's voice (trainer/voice.py: an opener and a sign-off, no numbers)."""
     main = main_trainer(db)
     who = specialist_for(text, out) if team_on(db) else None
-    if who is None or who == main:
-        return out.model_copy(update={"speaker": main, "handoff": None})
+    speaker = main if who is None or who == main else who
+    words = voice.speak(speaker, text, out.reply, out.mood) if _voiced(out) else out.reply
+    if speaker == main:
+        return out.model_copy(update={"speaker": main, "handoff": None, "reply": words})
     return out.model_copy(
-        update={"speaker": cast(TrainerId, who), "handoff": handoff_line(main, who)}
+        update={
+            "speaker": cast(TrainerId, speaker),
+            "handoff": handoff_line(main, speaker),
+            "reply": words,
+        }
     )

@@ -1,4 +1,4 @@
-"""trainer/compose.py without the app (trainer-answers-v1)."""
+"""trainer/compose.py and trainer/voice.py without the app (trainer-answers-v1)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,9 @@ import re
 
 from app.modules.coach import validate
 from app.modules.ml import knowledge
-from app.modules.trainer import compose
+from app.modules.trainer import compose, team, voice
+
+BANNED = re.compile(r"\b(streak ends|lose your|last chance|hurry|fat|skinny|ugly)\b", re.I)
 
 
 def _hit(passage_id: str) -> knowledge.Passage:
@@ -46,6 +48,24 @@ def test_vague_needs_no_topic_word() -> None:
     assert not compose.vague("which workout is best for boxing?")
 
 
+def test_voice_lines_pass_the_coach_guard_and_the_tone_rules() -> None:
+    lines = [x for v in voice.OPENERS.values() for x in v]
+    lines += [x for v in voice.CLOSERS.values() for x in v]
+    for line in lines:
+        assert not re.search(r"\d", line), line
+        assert not BANNED.search(line), line
+        assert validate.check_reply(line, "", None).ok, line
+
+
+def test_voice_skips_warnings_pain_and_unsure_replies() -> None:
+    assert voice.speak("kai", "q", "x", "warning") == "x"
+    assert voice.speak("vera", "my knee hurts", "x", "neutral") == "x"
+    assert voice.speak("tara", "q", "I'm not sure I have exactly that.", "neutral").startswith(
+        "I'm not sure"
+    )
+    assert voice.speak("idris", "q", "Answer.", "neutral") != "Answer."
+
+
 def test_composed_numbers_come_from_the_passage_or_the_profile() -> None:
     me = compose.Personal(goal="bulk", protein_target_g=112, baseline_pullups=3)
     for pid in (
@@ -59,3 +79,9 @@ def test_composed_numbers_come_from_the_passage_or_the_profile() -> None:
         facts = f"{hit.title} {hit.text} protein target 112 g, baseline 3 pull-ups"
         words = re.sub(r"(?m)^\d+\. ", "", reply)  # step markers are not facts
         assert validate.check_numbers(words, facts).ok, (pid, reply)
+
+
+def test_exercise_passages_go_to_the_right_specialist() -> None:
+    assert team.passage_area("fedb:Barbell_Squat") == "idris"
+    assert team.passage_area("fedb:Standing_Soleus_And_Achilles_Stretch") == "tara"
+    assert team.passage_area("food:idli") == "vera"
