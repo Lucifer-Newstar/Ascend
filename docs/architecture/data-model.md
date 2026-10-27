@@ -3,6 +3,20 @@
 > The SQLite schema of ASCEND: tables by module, key columns, derived data and
 > migration rules. Owner: Jegatheesan (backend); formulas reviewed by Navin.
 > Class view: [uml/class-diagram.md](uml/class-diagram.md). Decision: [ADR-0003](adr/0003-sqlite-local-only.md).
+>
+> **As built (checked 2026-10-27, fresh database at migration `0035`).** This page is the
+> original design; the tables that exist are: `profile`, `settings`, `body_metrics`,
+> `measurements`, `checkins`, `exercises`, `exercise_muscles`, `exercise_muscles_v7`,
+> `workouts`, `workout_sets`, `muscle_load_events`, `recovery_params`, `progression_decisions`,
+> `plan_enrollments`, `custom_programs`, `custom_skills`, `skill_unlocks`, `foods`, `meals`,
+> `meal_items`, `diet_plans`, `xp_events`, `quest_items`, `boss_raids`, `streak_reasons`,
+> `unlock_events`, `trainer_messages`, `selector_picks`, `action_log`, `progress_photos`,
+> `online_lookup_log`, `events_outbox`, `processed_events` (plus `alembic_version`). Tables
+> named below that are not in this list (for example `chat_threads`, `proposals`, `jobs`,
+> `models_installed`, `scans`, `corrections`) are not built. A fresh database seeds 1,024 exercises
+> (814 from free-exercise-db, 210 of ASCEND's own) and 203 foods. Migrations live in
+> `services/sidecar/alembic/versions/` (`0034` adds the gap-fill moves, `0035` the 15 South
+> Indian dishes).
 
 ---
 

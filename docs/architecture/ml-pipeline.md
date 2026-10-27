@@ -5,6 +5,14 @@
 > integration in the sidecar: Jegatheesan. Decisions: [ADR-0006](adr/0006-own-food-classifier-indb-ifct.md),
 > [ADR-0012](adr/0012-classifier-first-meal-scan.md) (classifier first, VLM optional).
 >
+> **As built (2026-10-27):** the food pipeline (prepare → train → export → evaluate → gate on
+> the team's own photos) is implemented and has run only on synthetic smoke data; no food
+> model is trained, so the app hides Scan meal. Two text models ship instead: the intent
+> router (`ml/intent/`, 1.1.0) and the knowledge base (`ml/knowledge/`, 1,779 passages). The
+> training sources are the team's Roboflow export and Roboflow Universe sets, not the Kaggle set
+> drawn below. What is built: [ml/README.md](../../ml/README.md); the diagrams below are the
+> original plan.
+>
 > **The full AI section is [docs/ai/](../ai/README.md).** This page is the architecture summary;
 > the step-by-step walkthrough is [ai/mlops-lifecycle.md](../ai/mlops-lifecycle.md), the
 > classifier design is [ai/food-recognition.md](../ai/food-recognition.md) and the metrics are
@@ -40,10 +48,10 @@ flowchart LR
 
 | Tool | Use | Where |
 |---|---|---|
-| **DVC** | Version datasets and pipeline stages (`dvc.yaml`: prepare → train → export → evaluate, as in the v0.1 stub) | `ml/`; remote on a local/external drive (no cloud) |
+| **DVC** | Version datasets and pipeline stages (`dvc.yaml`: prepare → train → export → evaluate → gate, plus the intent and knowledge-base stages) | `ml/`; remote on a local/external drive (no cloud) |
 | **MLflow** | Experiment tracking + model registry | Docker Compose (`infra/compose/mlflow.yml`), `127.0.0.1:5000` |
 | **PyTorch + timm** | Training (EfficientNet-B0 / MobileNetV3 class backbones; final choice by benchmark) | `infra/docker/ml-train` image, CUDA on WSL2 |
-| **ONNX + ONNX Runtime** | Export and CPU inference in the app | `ml/src/export_onnx.py` (stub exists); sidecar `ai/onnx_runtime.py` |
+| **ONNX + ONNX Runtime** | Export and CPU inference in the app | `ml/src/export_onnx.py`; sidecar `app/modules/ml/food_photo.py` |
 | **GitHub Actions** | `ml-eval.yml`: data checks + eval gate on tagged models (CPU, small test set) | `.github/workflows/` |
 
 PyTorch never ships in the app; the sidecar depends only on ONNX Runtime.

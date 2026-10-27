@@ -11,6 +11,17 @@ implementation must follow; deviations are recorded as ADRs ([adr/](adr/adr-temp
 > `safeStorage`, the job queue (`core/jobs.py`), the model manager and the `ai/` package, and
 > the meal-scan pipeline. The sidecar sends no CORS headers at all; in browser dev mode the Vite
 > server proxies `/api` to it. Items marked with a phase below are the original plan.
+>
+> **Since 1.0.0 (checked against the code on 2026-10-27).** The sidecar now has 18 modules:
+> `actions`, `ai`, `coach`, `gamification`, `intelligence`, `io`, `ml`, `nutrition`, `photos`,
+> `planbuilder`, `planner`, `progress`, `schedule`, `selector`, `share`, `skills`, `trainer`,
+> `workouts` (146 operations in 18 contracts, [contracts/](../contracts/README.md)). `modules/ai`
+> holds AI setup (hardware read and model tiers), not the model manager drawn in §10. `modules/ml`
+> loads the bundled intent model and knowledge base and, when a gated one is installed, an ONNX
+> food model (`POST /ml/food-photo`, top 3 to confirm); this replaces the meal-scan pipeline in §11,
+> which is not built (no quality checks, VLM or crops). The outbox is in `core/outbox.py`; the job
+> queue is still not built. An opt-in tray icon and start with Windows arrived after 1.3.0
+> ([habit-engine.md](habit-engine.md)). Migrations run to `0035`.
 
 ---
 
