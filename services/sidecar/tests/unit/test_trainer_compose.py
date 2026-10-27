@@ -23,7 +23,7 @@ def test_sentences_drop_fragments_and_alias_labels() -> None:
     ]
 
 
-def test_direct_answer_is_the_passage_s_best_sentence() -> None:
+def test_direct_answer_is_the_passage_s_opening() -> None:
     hit = _hit("note:cardio_running:tabata-workouts")
     top = compose.direct("how long is a tabata", hit.text)
     assert top and top[0].startswith("A Tabata is 8 rounds")

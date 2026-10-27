@@ -97,19 +97,16 @@ def _clean(text: str) -> str:
     return text.strip()
 
 
-def direct(question: str, text: str, n: int = 2) -> list[str]:
-    """The passage's best one or two sentences for this question, in passage order."""
+def direct(question: str, text: str, n: int = 2, ranked: bool = False) -> list[str]:
+    """The passage's opening answer, in passage order: team notes are written answer-first
+    (a ranked pick of "the best sentence" chose caveats over the advice in testing). A
+    chunk of a long public-domain document (ranked=True) is not, so there the sentences
+    that cover the question best are taken, still in passage order."""
     sents = sentences(_clean(text))
-    if len(sents) <= n:
-        return sents
-    scored = [(knowledge.share(question, s) + (0.15 if i == 0 else 0.0), i)
-              for i, s in enumerate(sents)]  # fmt: skip
-    best = sorted(scored, key=lambda x: (-x[0], x[1]))[:n]
-    keep = sorted(i for _, i in best)
-    # A second sentence only when it adds something the first did not cover.
-    if len(keep) == 2 and best[1][0] < 0.1:
-        keep = keep[:1]
-    return [sents[i] for i in keep]
+    if not ranked or len(sents) <= n:
+        return sents[:n]
+    scored = sorted(range(len(sents)), key=lambda i: (-knowledge.share(question, sents[i]), i))
+    return [sents[i] for i in sorted(scored[:n])]
 
 
 def steps(text: str) -> tuple[str, list[str]]:
@@ -192,7 +189,7 @@ def compose(question: str, hit: knowledge.Passage, me: Personal, label: str | No
         )
         parts.append("\n".join(f"{i}. {s}" for i, s in enumerate(how, 1)))
     else:
-        top = direct(question, hit.text)
+        top = direct(question, hit.text, ranked=hit.source in ("pag_2018",))
         parts.append(" ".join(top))
         rest = [s for s in sentences(_clean(hit.text)) if s not in top]
         if rest and len(" ".join(top).split()) < 45:
