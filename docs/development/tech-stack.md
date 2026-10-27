@@ -2,7 +2,8 @@
 
 > The chosen technologies, the versions the repo uses at **1.0.0**, and why. Decisions with
 > real trade-offs have ADRs. Rows marked **planned** were chosen in the design phase and are
-> not part of the 1.0.0 app. Owner: Navin.
+> not part of the 1.0.0 app. The ML rows were updated on 2026-10-27 for the unreleased work on
+> `main` (intent router, knowledge base, the food-photo runtime). Owner: Navin.
 
 ---
 
@@ -34,7 +35,7 @@
 | Schemas | Pydantic v2 | 2.14 | Contracts source of truth |
 | DB | SQLite (WAL) + SQLAlchemy 2 + Alembic | SQLAlchemy 2.1, Alembic 1.20 | [ADR-0003](../architecture/adr/0003-sqlite-local-only.md) |
 | HTTP client | httpx | 0.28 | Ollama and opt-in online lookups, with timeouts |
-| Inference | ONNX Runtime (CPU) | planned | Classifier without PyTorch in the app; not in 1.0.0 (no classifier ships) |
+| Inference | ONNX Runtime (CPU), numpy, Pillow | onnxruntime 1.31 (`uv.lock`, added after 1.3.0) | Food-photo suggestions without PyTorch in the app. The runtime ships; no food model is trained yet, so Scan meal stays hidden |
 | Logging | Standard `logging` | — | structlog was planned and not adopted |
 | Tests / quality | pytest, pytest-cov, Hypothesis, ruff, mypy | pytest ≥ 8.2 | Rules are tested like maths |
 | Packaging | PyInstaller one-folder | ≥ 6.10 | [ADR-0008](../architecture/adr/0008-electron-builder-pyinstaller-packaging.md) |
@@ -59,12 +60,14 @@ Sizes are from the Ollama tag pages (Oct 2026); speeds on the reference laptop a
 
 | Tool | Use |
 |---|---|
-| PyTorch + torchvision (MobileNetV3-Small) | Training; CPU wheels for the smoke run, CUDA build on the training PC |
+| PyTorch + torchvision (MobileNetV3-Small) | Food-photo training; CPU wheels for the smoke run, the CUDA build on the training PC from the `cu126` index (torch 2.14.1 has no `cu128` wheel) |
+| scikit-learn | Intent router: TF-IDF n-grams + logistic regression, exported to a JSON weights file the sidecar runs with the standard library |
+| BM25 (own code, standard library) | Knowledge-base retrieval in the sidecar (`app/modules/ml/knowledge.py`) |
 | DVC | Dataset + pipeline versioning; local/external-drive remote |
 | MLflow | Tracking + model registry (Docker Compose) |
 | ONNX | Export + parity test |
 | Docker Desktop (WSL2 backend) | Training image, MLflow, Prometheus/Grafana |
-| GitHub Actions | `ml.yml`: lint, tests and a smoke `dvc repro` on synthetic data |
+| GitHub Actions | `ml.yml`: lint, tests, the labels → food table check, a smoke `dvc repro gate` on synthetic data that must not pass the gate, and a nightly intent + knowledge-base rebuild |
 
 ## 5. DevOps
 

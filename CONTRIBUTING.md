@@ -36,8 +36,10 @@ pre-commit install --hook-type pre-commit --hook-type commit-msg
 | `chore` | tooling, dependencies, housekeeping |
 | `style` | formatting only |
 
-Scopes: `sidecar`, `workouts`, `nutrition`, `gamification`, `progress`, `coach`, `db`,
-`desktop`, `shared`, `ml`, `docker`. Example: `feat(nutrition): add katori portion presets`.
+Common scopes: `sidecar`, `workouts`, `nutrition`, `gamification`, `progress`, `coach`, `db`,
+`desktop`, `shared`, `ml`, `docker`, `trainer`, `actions`, `planner`, `schedule`, `readme`.
+The full list is `scope-enum` in [commitlint.config.mjs](commitlint.config.mjs); an unknown
+scope is a warning, not an error. Example: `feat(nutrition): add katori portion presets`.
 
 Small commits are better than big ones: one logical change each, tests included.
 

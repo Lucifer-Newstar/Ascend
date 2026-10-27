@@ -147,11 +147,25 @@ docker run --rm hello-world
 # GPU inside containers (NVIDIA driver on Windows is enough; no driver inside WSL)
 docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
 
-# MLflow tracking server (file arrives in Phase 1)
-docker compose -f infra/compose/mlflow.yml up -d       # http://127.0.0.1:5000
-# Prometheus + Grafana for the dev sidecar (Phase 2)
-docker compose -f infra/compose/observability.yml up -d # :9090, :3000
+# MLflow tracking server (or: make docker-mlflow)
+docker compose -f docker/docker-compose.yml --profile ml up mlflow   # http://localhost:5000
+# Prometheus + Grafana for the dev sidecar: planned, not built (there is no infra/ folder)
 ```
+
+The ML pipelines themselves run in a uv virtual environment, not in Docker. On the training
+laptop (NVIDIA GPU), install the CUDA build of PyTorch from the `cu126` index; torch 2.14.1
+has no `cu128` wheel:
+
+```powershell
+cd ml
+uv venv --python 3.12 .venv
+.\.venv\Scripts\Activate.ps1
+uv pip install --index-strategy unsafe-best-match -r requirements.txt
+uv pip install --reinstall torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu126
+python -c "import torch; print('CUDA', torch.cuda.is_available())"
+```
+
+The full food-model run is in [ml/food/README.md](../../ml/food/README.md).
 
 Give Docker enough memory on a 12 GB machine: create `%UserProfile%\.wslconfig` with
 
