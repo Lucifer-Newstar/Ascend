@@ -1,6 +1,6 @@
-# Card: ASCEND knowledge base and retrieval (kb-v1)
+# Card: ASCEND knowledge base and retrieval (kb-v1.4)
 
-**What it is.** 1,473 short passages, each with its source, licence and place (PDF page,
+**What it is.** 1,779 short passages, each with its source, licence and place (PDF page,
 exercise id, food), searched by BM25 in the sidecar (`app/modules/ml/knowledge.py`,
 standard library only, about 2 ms per query on this corpus). The AI tab answers from the top passage and
 shows its source. When the local AI is on, the top two passages are sent to it as context
@@ -10,9 +10,10 @@ and its numbers are checked against them.
 |---|---|---|
 | free-exercise-db (exercise steps) | 871 | Unlicense |
 | Physical Activity Guidelines for Americans 2018 | 306 | Public domain (US gov) |
-| ASCEND food table (portion values) | 188 | MIT |
+| ASCEND food table (portion values) | 203 | MIT |
+| ASCEND team notes | 166 | MIT |
+| ASCEND library entries with steps (v1.4) | 166 | MIT |
 | USDA FoodData Central SR Legacy (per 100 g) | 61 | CC0 |
-| ASCEND team notes | 41 | MIT |
 | WHO 2020 guidance, our own summary | 6 | MIT (our words) |
 
 Built by `knowledge/src/build_corpus.py` (DVC `kb_build`), checked by `evaluate_kb.py`
@@ -28,7 +29,39 @@ fitness aliases. Two additions:
 A passage is shown only when its score is ≥ 12 **and** it contains ≥ 40% of the query's
 terms. Otherwise the trainer says it has no note on that.
 
-## How good is it (measured 2026-10-25)
+## v1.4 gap fill (measured 2026-10-27)
+
+15,439 real questions from five Stack Exchange sites showed which topics the base could not
+answer (meditation, martial arts, breathing, yoga, interval cardio, supplements). v1.4 adds
+125 note passages, 166 library passages (`lib:<coach>:<slug>`, so the coaching team knows
+the area) and 15 food rows. Details and the per-topic table: [GAP_ANALYSIS.md](GAP_ANALYSIS.md).
+
+| Measure | kb-v1 | v1.4 |
+|---|---|---|
+| Real questions, odd half (80): relevant passage first | 28 | **31** |
+| Real questions, odd half (80): relevant passage in the top 3 | 38 | **40** |
+| Real questions, odd half: answered at the gate / of which relevant | 30 / 17 | 41 / 22 |
+| Held-out gap questions (40 in scope): relevant first | 11 | 11 |
+| Held-out gap questions (40 in scope): relevant in the top 3 | 15 | **18** |
+| Held-out gap questions: answered at the gate / of which relevant | 13 / 6 | 19 / 7 |
+| Held-out gap questions out of scope (15): "no note" | 14 | 13 |
+| App-style questions (49, top 3) | 16 / 49 | **49 / 49** |
+| Stack Exchange titles passing the gate (15,420) | 25.8% | 38.3% |
+
+Judged per question **and** passage (`kb_passage_judgments.json`, outside the repo), so each
+build is scored on its own ranking. The kb-v1 column matches the frozen kb-v1 marks on all
+80 real questions. One rater, not double-checked: treat the v1.4 numbers as unverified.
+The honest reading: more questions get an answer and the top 3 is a bit better, but on the
+new questions the first passage is often a neighbouring topic, so precision at the gate did
+not improve. The app-style set grew from 16 to 49 questions (33 new gap topics); the gate
+(hit@3 ≥ 0.9) still applies.
+
+```
+python knowledge/src/evaluate_kb.py --external <dir>                       # v1.4
+python knowledge/src/evaluate_kb.py --external <dir> --build <old build> --intent-model <old model> --out before.json
+```
+
+## How good was kb-v1 (measured 2026-10-25)
 
 **Real questions, judged by hand.** The 160 external questions were split by index. The
 even half (80) was used to tune the source weights and the question-focus rule, to add two

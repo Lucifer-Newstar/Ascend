@@ -21,7 +21,8 @@ the CPU with ONNX Runtime, offline.
   epochs. AdamW, lr 0.001, cosine schedule, label smoothing 0.05, batch 64 with mixed
   precision on an RTX 3050 4 GB laptop GPU.
 * Input: 224×224 RGB. Shorter side resized to 256, then centre crop, ImageNet mean/std, CHW.
-* Output: logits for 18 dishes plus `not_food` (`ml/labels.json`).
+* Output: logits for the dishes in `ml/labels.json` plus `not_food` (50 dishes listed in v1.4;
+  a first model may train a smaller set, see [README.md](README.md) section 1b).
 * Exported to ONNX opset 17, checked against PyTorch on up to 200 images (parity gate).
 
 ## Data

@@ -1,4 +1,4 @@
-# Model card: ASCEND intent router 1.0.0 (intent-v1)
+# Model card: ASCEND intent router 1.1.0 (intent-v1.4)
 
 **What it does.** It decides what a trainer-chat message is: one of 22 intents, such as
 `log_set`, `log_meal`, `nutrition_question`, `injury_pain` or `out_of_scope`. It never
@@ -6,7 +6,7 @@ reads numbers or food names out of a message; the rule parser does that.
 
 **Where it runs.** In the sidecar, on the CPU, with the standard library only
 (`services/sidecar/app/modules/ml/intent_runtime.py`). It takes about 1 ms per message (0.8 ms measured on the 160 questions). The
-file is `assets/intent_model.json.gz` (742 KB) and is checked against
+file is `assets/intent_model.json.gz` (734 KB) and is checked against
 `intent-manifest.json` by SHA-256. Set `ASCEND_INTENT_MODEL=off` to turn it off.
 
 **How the app uses it** (`trainer/ml_route.py`):
@@ -18,21 +18,28 @@ file is `assets/intent_model.json.gz` (742 KB) and is checked against
 **Model.** TF-IDF on word 1–2-grams and character 2–5-grams, then multinomial logistic
 regression (scikit-learn, C=10, class_weight balanced; C chosen on val from {1, 4, 10}).
 Coefficients below 0.02 are pruned and the rest rounded to 3 decimals. The pruned runtime
-agrees with scikit-learn on 99.89% of 5,414 texts (the export gate needs 99.5%). Training
+agrees with scikit-learn on 99.87% of 5,483 texts (the export gate needs 99.5%). Training
 takes about 1 minute on a laptop CPU and is logged to MLflow (experiment `ascend-intent`).
 
 **Data.** See [DATA_CARD.md](DATA_CARD.md): weak-labelled Stack Exchange titles, templated
 Tanglish/Hinglish commands with typos, and CLINC150.
 
-## Results (measured 2026-10-25, held-out data only)
+## Results (1.1.0 measured 2026-10-27, held-out data only)
 
-| Test set | n | Accuracy | Macro-F1 | Notes |
-|---|---|---|---|---|
-| Held-out templates | 580 | 0.816 | 0.822 | Templates never seen in training. At ≥0.55: 75% of messages answered, 94% of those correct. |
-| CLINC150 test | 2,463 | 0.877 | 0.868 | Out-of-scope recall 0.871 |
-| Stack Exchange, hand-labelled | 200 | 0.755 | 0.566 | Route accuracy (does it reach the right handler) 0.955 |
-| **160 real questions** (external) | 160 | **0.713** | **0.406** | Route accuracy 0.944. At ≥0.55: 72.5% answered, 74.1% of those correct. |
-| 343 app-style messages | 329 | 0.918 | 0.841 | Written by the test author, **not real users** |
+1.1.0 is 1.0.0 retrained with the v1.4 gap-fill templates (strikes, yoga poses, breathing,
+calisthenics skills, new moves; see `knowledge/GAP_ANALYSIS.md`). Same recipe and gate.
+
+| Test set | n | 1.1.0 accuracy | Macro-F1 | 1.0.0 accuracy | Notes (1.1.0) |
+|---|---|---|---|---|---|
+| Held-out templates | 580 | 0.805 | 0.809 | 0.816 | At ≥0.55: 75% answered, 93% of those correct. |
+| CLINC150 test | 2,463 | 0.875 | 0.864 | 0.877 | Out-of-scope recall 0.869 (1.0.0: 0.871) |
+| Stack Exchange, hand-labelled | 200 | 0.775 | 0.602 | 0.755 | Route accuracy 0.960 (1.0.0: 0.955) |
+| **160 real questions** (external) | 160 | **0.738** | **0.376** | 0.713 | Route accuracy 0.938 (1.0.0: 0.944). At ≥0.55: 68.8% answered, 78.2% of those correct. |
+| 343 app-style messages | 329 | 0.915 | 0.838 | 0.918 | Written by the test author, **not real users** |
+
+Real questions and hand-labelled titles improved; templates, CLINC and app-style messages
+moved by one to three hundredths, within what a retrain changes. One fewer real question is
+routed to the right handler.
 
 Gate (`params.yaml` `intent.gate`): templates macro-F1 ≥ 0.80, hand-labelled SE accuracy ≥
 0.60, out-of-scope recall ≥ 0.85, runtime parity ≥ 0.995. **It passes.**

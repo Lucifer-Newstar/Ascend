@@ -4,8 +4,8 @@ Navin's area. Three models, each with its own card, all tracked with DVC and MLf
 
 | Model | Status | Card |
 |---|---|---|
-| Trainer-chat **intent router** (`intent/`) | **Trained and shipped** in the sidecar. 0.713 accuracy on 160 real questions. | [intent/MODEL_CARD.md](intent/MODEL_CARD.md), [intent/DATA_CARD.md](intent/DATA_CARD.md) |
-| **Knowledge base** for cited answers (`knowledge/`) | **Built and shipped**: 1,473 passages, BM25. On real questions a relevant passage ranks first for 35%. | [knowledge/KB_CARD.md](knowledge/KB_CARD.md) |
+| Trainer-chat **intent router** (`intent/`) | **Trained and shipped** in the sidecar (1.1.0). 0.738 accuracy on 160 real questions. | [intent/MODEL_CARD.md](intent/MODEL_CARD.md), [intent/DATA_CARD.md](intent/DATA_CARD.md) |
+| **Knowledge base** for cited answers (`knowledge/`) | **Built and shipped**: 1,779 passages, BM25. On real questions a relevant passage ranks first for 39% (v1.4, one rater). | [knowledge/KB_CARD.md](knowledge/KB_CARD.md) |
 | **Food photo** classifier v0 (`src/`, `food/`) | **Not trained.** Pipeline, gate and app integration are ready; it waits on datasets, the team's photos and a GPU run. | [food/MODEL_CARD.md](food/MODEL_CARD.md), [food/README.md](food/README.md) |
 
 Sources and licences for all of them: [SOURCES.md](SOURCES.md).
@@ -30,7 +30,7 @@ data/raw ──prepare──> data/processed ──train──> models/food_clf.
 | Roboflow COCO → crops (class map), Open Images not-food fetch | `food/src/coco_to_cls.py`, `food/class_map.yaml`, `food/src/fetch_not_food.py` | done (fetch checked on 6 photos) |
 | GPU training (CUDA, mixed precision) | `src/train.py`, `params.yaml` | done, not yet run on a GPU |
 | release packaging for Hugging Face | `food/src/publish_food.py` | done |
-| labels.json → food table check | `labels.json`, `src/check_labels.py` | done (18 dishes + not_food) |
+| labels.json → food table check | `labels.json`, `src/check_labels.py` | done (50 dishes + not_food) |
 | DVC stages + MLflow project | `dvc.yaml`, `params.yaml`, `MLproject` | done |
 | CI | `.github/workflows/ml.yml` | lint, tests, smoke `dvc repro` |
 | Real datasets, licences, team photos, v0 model | DVC remote, [food/README.md](food/README.md) | **not started** (Navin's GPU run) |
@@ -53,7 +53,7 @@ uv pip install --python .venv/bin/python -r requirements.txt --index-strategy un
 # (CI does this), otherwise the run downloads ImageNet weights
 PATH="$PWD/.venv/bin:$PATH" dvc repro gate    # prepare -> train -> export -> evaluate -> gate
 PATH="$PWD/.venv/bin:$PATH" dvc metrics show
-.venv/bin/python -m pytest                    # 43 tests
+.venv/bin/python -m pytest                    # 45 tests
 ```
 
 Without DVC: `python src/prepare.py && python src/train.py && python src/export_onnx.py && python src/evaluate.py`.

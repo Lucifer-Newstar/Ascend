@@ -1,12 +1,12 @@
-# Data card: trainer-chat intent dataset (intent-v1)
+# Data card: trainer-chat intent dataset (intent-v1.4)
 
 Built by `intent/src/build_dataset.py` (DVC stage `intent_data`, seed 42). It covers the 22
 intents in `intents.yaml`.
 
 | Split | Rows | Where the rows come from |
 |---|---|---|
-| train | 8,139 | 4,907 weak-labelled Stack Exchange titles, 1,631 templated app commands, 1,601 CLINC150 |
-| val | 2,171 | 517 weak SE, 175 templates, 1,479 CLINC150 |
+| train | 8,383 | 4,853 weak-labelled Stack Exchange titles, 1,929 templated app commands, 1,601 CLINC150 |
+| val | 2,240 | 541 weak SE, 220 templates, 1,479 CLINC150 |
 | test_templates | 580 | Templated commands from templates **held out of training** (about a quarter of templates, chosen by crc32) |
 | test_se_hand | 200 | Stack Exchange titles, **labelled by hand** |
 | test_clinc | 2,463 | CLINC150 test: 2,224 out-of-scope plus mapped in-scope intents |
@@ -33,6 +33,8 @@ intents in `intents.yaml`.
 * The 200 hand-checked ids are removed from the weak pool.
 * 91 Stack Exchange ids whose title or opening matches one of the 160 external evaluation
   questions are listed in `labels/eval_leak_ids.txt` and removed from training.
+* v1.4: the 74 Fitness Stack Exchange ids of the held-out gap questions
+  (`labels/gap_eval_ids.txt`, see `knowledge/GAP_ANALYSIS.md`) are removed from training too.
 * Duplicates are removed after normalising case, punctuation and spacing. The test
   template families never reach training.
 
@@ -40,7 +42,7 @@ intents in `intents.yaml`.
 
 * The real users are Indian students typing short commands. Most training text is forum
   titles and generated commands. No message from a real ASCEND user was used.
-* Label balance follows the sources: `training_question` has 2,293 train rows and
+* Label balance follows the sources: `training_question` has 2,334 train rows and
   `erase_data` has 49 (class weights are balanced).
 * Out-of-scope recall on the hand-checked Stack Exchange set is meaningless (1 row).
 * Licences: Stack Exchange text is CC BY-SA 4.0 and CLINC150 is CC BY 3.0 (see

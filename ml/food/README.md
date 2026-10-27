@@ -30,34 +30,63 @@ and look the same across a dataset, so a score on them says little about a hoste
   committed (`data/` is ignored by git).
 * Optional: 30+ photos with **no food** (desk, bag, empty plate) in `_test-own/not_food`.
 
-Folder layout (folder names are the labels in `ml/labels.json`):
+Folder layout: one folder per label in `ml/labels.json` (the folder name is the label),
+for example:
 
 ```
 ml/data/raw/_test-own/
   idli/            IMG_2031.jpg ...
   dosa/
-  masala_dosa/
   sambar/
-  chapati/
-  rice/
-  dal/
-  medu_vada/
-  ven_pongal/
-  upma/
-  poori/
-  parotta/
-  chicken_biryani/
-  curd_rice/
-  boiled_egg/
-  chicken_curry/
   coconut_chutney/
-  banana/
+  ...
   not_food/        (optional)
 ```
 
 A dish with no own photos can still be trained, but the gate fails until every dish in
 `labels.json` has its 10. Remove a dish from `labels.json` and `food/class_map.yaml` if you
 will not photograph it.
+
+## 1b. The classes (v1.4) and a smaller v0
+
+`labels.json` lists **50 dishes** plus `not_food`. 45 of them get training crops from the
+team's Roboflow export `Ascend.v1i.coco.zip` (its 59 class names are all in
+`food/class_map.yaml`: 51 mapped, 8 skipped on purpose). The other 5 (`masala_dosa`,
+`parotta`, `curd_rice`, `chicken_curry`, `banana`) have **no photos in that export**: they
+need another dataset or must be dropped before training.
+
+The gate rule is unchanged: **every** dish in `labels.json` needs at least 10 of your own
+test photos, so the full list means about 500 own photos. That is a lot for a first model.
+A v0 of 14 dishes the team eats most, each with at least 100 export crops (most with 600
+or more), needs about 140 own photos:
+
+| v0 dish (label) | export crops |
+|---|---|
+| idli | 1,135 |
+| dosa | 961 |
+| sambar | 926 |
+| coconut_chutney | 1,062 |
+| rice | 848 |
+| ven_pongal | 618 |
+| medu_vada | 814 |
+| chicken_biryani | 634 |
+| lemon_rice | 692 |
+| boiled_egg | 666 |
+| chapati | 172 |
+| dal | 217 |
+| omelette | 105 |
+| poori | 200 |
+
+To train that v0 without touching the gate: on the training PC, delete the other dishes
+from `labels.json` and map their dataset names to `skip` in `food/class_map.yaml` (a local
+change, not committed), shoot 10+ photos of each v0 dish, then run section 2. Add dishes
+back in later versions as photos come in. Counts are boxes from `--list-classes`
+(2026-10-26); a dish's crops can be fewer after the size check and the dedupe in prepare.
+
+Kozhukattai is three labels (`pidi_kozhukattai`, `poorna_kozhukattai`,
+`paal_kozhukattai`): they look different, differ in calories and each has about 660 crops.
+`ragi_kali` assumes the export's "kali" is ragi kali; look at 20 of its photos before
+training and map it to `skip` if they are the sweet ulundhu kali.
 
 ## 2. Copy-paste PowerShell (Windows 11, RTX 3050 4 GB)
 
@@ -77,17 +106,24 @@ needed). These were not clicked through for this PR because they need a login.
 
 ```powershell
 # --- 0. once: environment with the CUDA build of PyTorch ---------------------------------
-cd C:\code\Ascend-                       # your clone; adjust the path
-git fetch origin; git switch feat/ml-models
+cd "D:\navin\Projects\Final Year Project\Ascned"   # your clone; adjust the path
+git switch main; git pull --ff-only
 cd ml
 uv venv --python 3.12 .venv
 .\.venv\Scripts\Activate.ps1
 uv pip install --index-strategy unsafe-best-match -r requirements.txt
-uv pip install --reinstall torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu128
+#   torch 2.14.1 has NO cu128 wheel; the cu126 build works on the RTX 3050 (CUDA True,
+#   checked on the team laptop 2026-10-26). uv takes about 17 min to fetch it.
+uv pip install --reinstall torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu126
 python -c "import torch; print('CUDA', torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 $env:MLFLOW_DISABLE_AGENT_HINT = "1"
 
 # --- 1. training data -------------------------------------------------------------------
+#   the team's own Roboflow export (all its classes are already in food\class_map.yaml):
+Expand-Archive "$env:USERPROFILE\Downloads\Ascend.v1i.coco.zip" downloads\ascend -Force
+python food\src\coco_to_cls.py --list-classes downloads\ascend                   # expect no UNMAPPED
+python food\src\coco_to_cls.py downloads\ascend                                  # crops -> data\raw\<label>\
+#   or the public Universe exports from the clicks above:
 python food\src\coco_to_cls.py --list-classes downloads\bharani downloads\txofy   # check UNMAPPED names
 #   add any real class name you want to keep to food\class_map.yaml, then:
 python food\src\coco_to_cls.py downloads\bharani downloads\txofy                  # crops -> data\raw\<label>\
