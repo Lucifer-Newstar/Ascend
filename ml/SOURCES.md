@@ -4,6 +4,16 @@ Every dataset, document and model that the ML work in `ml/` reads or ships. Lice
 read on each source's own page on 2026-10-25. Raw downloads are never committed: they are
 DVC outputs (`intent/raw`, `knowledge/raw`, `data/raw`) and are git-ignored.
 
+## TODO for Navin before training the food model
+
+- [ ] **Licence of the team's Roboflow export** `Ascend.v1i.coco.zip`: open the project's
+      Roboflow page, copy the licence it shows and the version number into the row
+      "The team's Roboflow project export" below. Until then that row says *not recorded*.
+- [ ] **"kali" is mapped to `ragi_kali`** (`food/class_map.yaml`) on an assumption. Look at
+      about 20 of its photos: if they are sweet ulundhu kali, map it to `skip`.
+- [ ] **Tamil names are unreviewed.** Every `ta` name in `labels.json` has
+      `ta_reviewed: false`; a Tamil speaker should check them and set it to `true`.
+
 ## Shipped inside the app
 
 | What ships | Built from | Licence of the source | How it is used |
@@ -29,7 +39,7 @@ DVC outputs (`intent/raw`, `knowledge/raw`, `data/raw`) and are git-ignored.
 | Roboflow Universe: [south-indian-food-detection](https://universe.roboflow.com/bharani-1ucid/south-indian-food-detection) (bharani-1ucid) | Shown on its page. Record it here at download time. | Food-photo training crops (`food/src/coco_to_cls.py`). **Not downloaded yet.** |
 | Roboflow Universe: [indian-food-txofy](https://universe.roboflow.com/microplastics-vypxl/indian-food-txofy) | Shown on its page. Record it here at download time. | Same. **Not downloaded yet.** |
 | Roboflow Universe: [IndianFoodNet-30](https://universe.roboflow.com/indianfoodnet/indianfoodnet) (optional) | Shown on its page. Record it here at download time. | Same. **Not downloaded yet.** |
-| The team's Roboflow project export `Ascend.v1i.coco.zip` (59 classes) | Record the licence shown on the project's Roboflow page before training | Food-photo training crops (`food/class_map.yaml` maps all 59 class names). Downloaded to the training PC only. |
+| The team's Roboflow project export `Ascend.v1i.coco.zip` (59 classes) | **Not recorded yet (TODO, Navin):** paste the licence shown on the project's Roboflow page here before training | Food-photo training crops (`food/class_map.yaml` maps all 59 class names). Downloaded to the training PC only. |
 | [Open Images V7](https://storage.googleapis.com/openimages/web/index.html), validation split | Annotations CC BY 4.0. Images are listed as CC BY 2.0, each with its author. | `not_food` class (`food/src/fetch_not_food.py`). Author and licence of each photo are written to `_ATTRIBUTION.csv`. |
 | ImageNet-pretrained MobileNetV3-Small weights (torchvision) | BSD-3-Clause (torchvision code and weights) | Starting point for food-photo v0 |
 | The team's own meal photos (`data/raw/_test-own`) | Ours. Kept off the public repo. | The food gate's test set. Never used for training. |

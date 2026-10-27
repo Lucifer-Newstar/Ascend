@@ -29,7 +29,7 @@ the CPU with ONNX Runtime, offline.
 
 | Part | Source | Licence |
 |---|---|---|
-| Training crops | Roboflow Universe: south-indian-food-detection (bharani-1ucid), indian-food-txofy, optional IndianFoodNet-30. Boxes are cropped by `food/src/coco_to_cls.py`. | As stated on each dataset page (see ml/SOURCES.md) |
+| Training crops | The team's Roboflow export `Ascend.v1i.coco.zip` (59 class names, mapped in `food/class_map.yaml`), plus Roboflow Universe: south-indian-food-detection (bharani-1ucid), indian-food-txofy, optional IndianFoodNet-30. Boxes are cropped by `food/src/coco_to_cls.py`. | As stated on each dataset page; the team export's licence is **not recorded yet** (see ml/SOURCES.md) |
 | not_food | Open Images V7 validation photos with no food label | CC BY 2.0 per photo (authors in _ATTRIBUTION.csv); labels CC BY 4.0 |
 | **Test (gate)** | The team's own phone photos, 30–50 per dish, split by meal | Ours; not published |
 
@@ -52,8 +52,12 @@ dataset test split are reported in metrics.json but do not count.
 
 ## Limits (known before training)
 
-* 18 South Indian dishes only. Anything else is forced into the closest of the 18 or into
-  `not_food`.
+* Only the dishes in `labels.json` (50 in v1.4, or the smaller v0 set the run trains).
+  Anything else is forced into the closest of them or into `not_food`. 5 of the 50
+  (`masala_dosa`, `parotta`, `curd_rice`, `chicken_curry`, `banana`) have no photos in the
+  team export.
+* `ragi_kali` assumes the export's "kali" is ragi kali (not checked yet). Tamil names are
+  unreviewed (`ta_reviewed: false`).
 * One dish per photo. A thali or a plate with several dishes gets the most visible one.
 * Portions are not estimated. The user picks the portion count.
 * Dataset photos are mostly well lit and from above; dim hostel or mess lighting will
