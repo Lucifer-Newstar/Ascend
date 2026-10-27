@@ -416,6 +416,21 @@ Not covered by automation: the installed app's screens on a real Windows PC (che
 `qwen3:4b` answers, and the live wger.de and Wikipedia APIs (tests use mocks; the live APIs were
 checked by hand on 2026-10-20).
 
+### Checked on `feat/kb-gap-fill` (not released yet)
+
+On Linux on 2026-10-27, with the code at the gap-fill tip (the doc commits after it change no
+code):
+
+- 1200 sidecar tests pass; ruff and mypy are clean (195 source files).
+- Alembic applies to a fresh database (`0035`), downgrades to base and applies again.
+- tsc, eslint (0 errors, 22 warnings) and 612 vitest tests (92 files) pass; the build succeeds
+  (main chunk 345 kB, 106 kB gzip).
+- The contract drift check passes (146 implemented operations match 18 contracts); the
+  Markdown link check and `scripts/check_rules.py` find no problems; the trainer chat battery
+  (352 messages, AI off) gives 260 pass, 1 fail and 91 to read by hand.
+- 45 ML tests pass on CPU and `ml/src/check_labels.py` resolves all 51 labels to food rows; no GPU
+  step was run and the food model is not trained.
+
 ## Documentation
 
 - [docs/README.md](docs/README.md): the map of all project documentation

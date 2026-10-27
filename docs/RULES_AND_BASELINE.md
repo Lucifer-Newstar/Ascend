@@ -55,22 +55,24 @@ person checks it in review until a test exists.
 
 ## 3. Baseline (measured)
 
-Measured on `feat/v13-trainer-actions` at `81bfb45` (2026-10-25), before wave 3. A later
-branch may raise a number; it may not lower B1, B3 or B4, or raise B2 or the eslint errors,
-without saying so in its RULES CHECK line.
+Measured on `feat/kb-gap-fill` on 2026-10-27 (the code as of `ddbfa72`; the commits after it on
+that branch change docs only). The previous baseline was measured on `feat/v13-trainer-actions`
+at `81bfb45` (2026-10-25) and is kept in the "was" notes. A later branch may raise a number; it
+may not lower B1, B3 or B4, or raise B2 or the eslint errors, without saying so in its RULES
+CHECK line.
 
 | # | What | Value | How measured |
 |---|---|---|---|
-| B1 | Trainer battery passes (352 messages, AI off) | **260** (was 251 of 343 before the nine plan-builder messages, `feat/v14-plan-builder`) | `cd services/sidecar && uv run python -m eval.trainer_chat` |
+| B1 | Trainer battery passes (352 messages, AI off) | **260** (unchanged; was 251 of 343 before the nine plan-builder messages, `feat/v14-plan-builder`) | `cd services/sidecar && uv run python -m eval.trainer_chat` |
 | B2 | Trainer battery fails | **1** ("follow the 5 day split": no 5-day program) | same |
 | B2b | Battery rows a person reads | 91 | same |
-| B3 | Sidecar tests | **1084 passed** | `uv run pytest` |
-| B4 | Desktop tests | **545 passed** (79 files) | `npm test` |
+| B3 | Sidecar tests | **1200 passed** (was 1084) | `uv run pytest` |
+| B4 | Desktop tests | **612 passed** (92 files; was 545 in 79) | `npm test` |
 | B5 | eslint | 0 errors, 22 warnings | `npm run lint` |
-| B6 | Alembic | one head, `0032` | `uv run alembic heads` |
-| B7 | API contract | 137 implemented operations match 16 contracts | `make contracts` |
-| B8 | 160 real fitness questions (dataset batch) | 19 relevant answers, 54 unrelated notes, 87 honest "no note" | hand-graded on `feat/v13-fixes` (wave 1); not re-graded since |
-| B9 | Renderer build | main chunk 336 kB (103 kB gzip); `dist/assets` 5.5 MB; `dist` 23 MB with the exercise images | `npx vite build` |
+| B6 | Alembic | one head, `0035` (was `0032`) | `uv run alembic heads` |
+| B7 | API contract | 146 implemented operations match 18 contracts (was 137 and 16) | `make contracts` |
+| B8 | 160 real fitness questions (dataset batch) | 19 relevant answers, 54 unrelated notes, 87 honest "no note" | hand-graded on `feat/v13-fixes` (wave 1); not re-graded since. The ML cards report later, separate measures on the same questions ([ml/README.md](../ml/README.md)) |
+| B9 | Renderer build | main chunk 345 kB (106 kB gzip); `dist` 23 MB with the exercise images (was 336 kB, 103 kB gzip) | `npm run build` |
 | B10 | Windows installer size | not measured yet (needs a Windows build) | `npm run dist:win` on Windows |
 
 B1 and B2 are enforced by `test_rules.py::test_b1_*`. B3 to B7 are checked by CI running the
