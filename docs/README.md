@@ -8,7 +8,10 @@
 > Maintainer: Navin Jairam M (Team Lead, DevOps/MLOps). Updated whenever the
 > structure changes (rule 2: the docs folder stays clean).
 >
-> Status: **1.2.0 in testing** on the `v12-test` branch (2026-10-23); the latest release is 1.1.0. The planning docs were written on 2026-10-20,
+> Status (2026-10-27): the latest release is **1.3.0**. `main` carries the unreleased work listed
+> under Unreleased in the [CHANGELOG](../CHANGELOG.md) (training week, plan builder, coaching
+> team, rewards, the intent router, cited knowledge answers and a hidden Scan meal), and the
+> `feat/kb-gap-fill` branch adds the knowledge gap fill. The planning docs were written on 2026-10-20,
 > before the first line of code, and are kept as the design record: where the built app
 > differs from a plan, the [README](../README.md), the [CHANGELOG](../CHANGELOG.md) and the
 > per-folder READMEs describe what shipped. Every date in the planning docs is an
@@ -21,7 +24,7 @@
 ```text
 docs/
 ├── README.md                      ← you are here (index & reading order)
-├── RULES_AND_BASELINE.md          ← design rules, checked rules and baseline numbers (v1.3)
+├── RULES_AND_BASELINE.md          ← design rules, checked rules and baseline numbers
 │
 ├── project/                       ← WHAT & WHY
 │   ├── proposal.md                ← the project proposal (incl. AI-assistance disclosure)
@@ -54,6 +57,9 @@ docs/
 │   ├── prompt-library.md          ← every prompt, versioned, with schemas
 │   ├── multilingual-tamil.md      ← Tamil / Tanglish beta: pipelines, test plan, go/no-go
 │   ├── food-recognition.md        ← classifier, portions, VLM second opinion, corrections
+│   ├── coaching-team.md           ← main trainer + specialists, routing rules, the switch
+│   ├── plan-builder.md            ← the trainer builds your plan from chat
+│   ├── trainer-actions.md         ← chat edits as cards you confirm or undo (actions-parse-v2)
 │   ├── model-manager.md           ← VRAM budget, lifecycle state machine, downloads
 │   ├── adaptive-planning-ai.md    ← rules vs AI in planning, proposals, weekly review
 │   ├── data-and-privacy-for-ai.md ← what each model sees, consent, deletion
@@ -69,6 +75,10 @@ docs/
 │   ├── hunter-stats.md            ← the five stats on Today (stats-v1)
 │   ├── skill-trees.md             ← calisthenics skill trees and their criteria
 │   ├── data-model.md              ← SQLite schema, migrations, derived data
+│   ├── habit-engine.md            ← training week, 10-minute version, lock screen, tray
+│   ├── photos-and-sharing.md      ← progress photos and share cards
+│   ├── rewards.md                 ← trophy shelf, cosmetics, unlock scenes
+│   ├── streaks-and-near-goals.md  ← streaks, rest days, near goals, welcome back
 │   ├── ml-pipeline.md             ← DVC → training → MLflow → ONNX → eval gate
 │   ├── telemetry-model.md         ← local-only logs, events, metrics, crash reports
 │   ├── security-privacy.md        ← threat model, Electron hardening, DPDP notes
@@ -81,14 +91,11 @@ docs/
 │   ├── manifest.json              ← module → contract → router prefix
 │   ├── ipc-contract.md            ← Electron preload ↔ main channels
 │   ├── system.yaml                ← health, jobs, models, event stream
-│   ├── workouts.yaml
-│   ├── nutrition.yaml
-│   ├── gamification.yaml
-│   ├── coach.yaml
-│   ├── progress.yaml
+│   ├── workouts.yaml · nutrition.yaml · gamification.yaml · coach.yaml · progress.yaml
 │   ├── intelligence.yaml          ← recovery, progression, TDEE, insights, programs
-│   ├── skills.yaml
-│   └── import-export.yaml
+│   ├── skills.yaml · import-export.yaml · planner.yaml · trainer.yaml · ai.yaml
+│   ├── selector.yaml · actions.yaml · photos.yaml · share.yaml · schedule.yaml
+│   └── ml.yaml                    ← model status, intent, knowledge search, food photo
 │
 ├── development/                   ← HOW TO BUILD
 │   ├── contributing.md            ← branching, commits, PR rules, review
@@ -104,7 +111,7 @@ docs/
 │   ├── loophole-sweep.md          ← XP loophole and bug sweep (v4)
 │   └── release-process.md         ← versioning, release workflow, rollback
 │
-├── releases/                      ← user-facing release notes per version (v0.3.0, v1.0.0)
+├── releases/                      ← user-facing release notes per version (v0.3.0 to v1.3.0)
 ├── research/                      ← v8 research: anatomy, muscle mapping, engagement, trainer
 └── screenshots/                   ← app screenshots used by the README
 ```
@@ -142,7 +149,10 @@ These describe plans, not the shipped app, and each one opens with a "Design rec
 | The trainer builds your plan from chat (v1.4) | [ai/plan-builder.md](ai/plan-builder.md) · actions: [ai/trainer-actions.md](ai/trainer-actions.md) |
 | The coaching team: main trainer + specialists | [ai/coaching-team.md](ai/coaching-team.md) |
 | Tamil / Tanglish (beta) | [ai/multilingual-tamil.md](ai/multilingual-tamil.md) |
-| Meal photo recognition | [ai/food-recognition.md](ai/food-recognition.md) |
+| Meal photo recognition | [ai/food-recognition.md](ai/food-recognition.md) · how to train it: [ml/food/README.md](../ml/food/README.md) |
+| The models in `ml/`: intent router, knowledge base, food photo (cards, sources, licences) | [ml/README.md](../ml/README.md) · [SOURCES.md](../ml/SOURCES.md) · [gap analysis](../ml/knowledge/GAP_ANALYSIS.md) |
+| Design rules, checked rules and the measured baseline | [RULES_AND_BASELINE.md](RULES_AND_BASELINE.md) |
+| Progress photos and share cards | [architecture/photos-and-sharing.md](architecture/photos-and-sharing.md) |
 | Local models, VRAM, downloads | [ai/model-manager.md](ai/model-manager.md) |
 | AI evaluation, risks and roadmap | [ai/evaluation-ai.md](ai/evaluation-ai.md) · [ai/ai-risks.md](ai/ai-risks.md) · [ai/ai-roadmap.md](ai/ai-roadmap.md) |
 | Logs, events, crash reports (local only) | [architecture/telemetry-model.md](architecture/telemetry-model.md) |
@@ -156,7 +166,7 @@ These describe plans, not the shipped app, and each one opens with a "Design rec
 | Set up my Windows machine | [development/local-setup.md](development/local-setup.md) |
 | How we measure success | [operations/evaluation.md](operations/evaluation.md) |
 | How we ship a release | [operations/release-process.md](operations/release-process.md) |
-| What changed in each version | [CHANGELOG](../CHANGELOG.md) · release notes in [releases/](releases/v1.2.0.md) |
+| What changed in each version | [CHANGELOG](../CHANGELOG.md) · release notes in [releases/](releases/v1.3.0.md) |
 | How accurate the engines are (synthetic users) | [ai/evaluation.md](ai/evaluation.md) |
 | Design system, motion, accessibility | [development/design-system.md](development/design-system.md) · [motion.md](development/motion.md) · [accessibility.md](development/accessibility.md) |
 | Research behind v8 | [research/](research/v8-gamified-engagement.md) |
