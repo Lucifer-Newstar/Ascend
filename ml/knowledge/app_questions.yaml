@@ -34,3 +34,70 @@ questions:
     expect: ["note:safety:pain-during-exercise", "note:safety:training-around-a-minor-injury"]
   - q: "what are the benefits of hypertrophy training?"
     expect: ["note:training_basics:building-muscle-hypertrophy"]
+  # v1.4 gap fill: topics the gap analysis found uncovered (GAP_ANALYSIS.md)
+  - q: "how do i throw a hook"
+    expect: ["note:martial_arts:how-to-throw-a-hook", "lib:kai:hook-shadow-drill"]
+  - q: "uppercut technique"
+    expect: ["note:martial_arts:how-to-throw-an-uppercut", "lib:kai:uppercut-shadow-drill"]
+  - q: "how to check kicks in muay thai"
+    expect: ["note:martial_arts:checking-kicks", "lib:kai:kick-check-drill"]
+  - q: "do i need hand wraps for the punching bag"
+    expect: ["note:martial_arts:hand-wraps-and-gloves"]
+  - q: "is it safe to kick trees to harden my shins"
+    expect: ["note:martial_arts:conditioning-shins-and-knuckles"]
+  - q: "how can I kick higher"
+    expect: ["note:martial_arts:kicking-higher"]
+  - q: "orthodox or southpaw stance"
+    expect: ["note:martial_arts:boxing-stance-orthodox-or-southpaw"]
+  - q: "how to start meditating"
+    expect: ["note:meditation_breathing:how-to-start-meditating"]
+  - q: "my mind keeps wandering when I meditate"
+    expect: ["note:meditation_breathing:what-to-do-when-your-mind-keeps-wandering"]
+  - q: "how to do anulom vilom"
+    expect: ["lib:tara:alternate-nostril-breathing", "note:meditation_breathing:alternate-nostril-breathing-anulom-vilom-nadi-shodhana"]
+  - q: "what is box breathing"
+    expect: ["note:meditation_breathing:box-breathing", "lib:tara:box-breathing"]
+  - q: "is kapalbhati safe"
+    expect: ["note:meditation_breathing:kapalbhati-and-other-forceful-breathing"]
+  - q: "meditation made me angry"
+    expect: ["note:meditation_breathing:strong-emotions-during-meditation"]
+  - q: "how to get the front splits"
+    expect: ["note:mobility_yoga:how-to-get-the-front-splits", "lib:tara:front-split-practice"]
+  - q: "how long should I hold a stretch"
+    expect: ["note:mobility_yoga:how-long-to-hold-a-stretch"]
+  - q: "how to do downward dog"
+    expect: ["lib:tara:downward-dog"]
+  - q: "yoga poses for beginners"
+    expect: ["note:mobility_yoga:yoga-for-beginners"]
+  - q: "does foam rolling work"
+    expect: ["note:mobility_yoga:foam-rolling"]
+  - q: "wrist warm up before handstand"
+    expect: ["note:mobility_yoga:wrist-preparation-for-push-ups-and-handstands", "lib:tara:wrist-prep-routine"]
+  - q: "how to get my first muscle up"
+    expect: ["note:calisthenics_skills:how-to-get-your-first-muscle-up"]
+  - q: "front lever progression"
+    expect: ["note:calisthenics_skills:front-lever-progression"]
+  - q: "when should I start weighted pull ups"
+    expect: ["note:calisthenics_skills:when-to-start-weighted-pull-ups-and-dips"]
+  - q: "how to do a knee push up"
+    expect: ["lib:dario:knee-push-up"]
+  - q: "what is HIIT"
+    expect: ["note:cardio_running:hiit-and-interval-training", "lib:kai:hiit-circuit"]
+  - q: "couch to 5k for beginners"
+    expect: ["note:cardio_running:starting-to-run-as-a-beginner-run-walk-couch-to-5k", "lib:kai:run-walk-intervals"]
+  - q: "my shins hurt when I run"
+    expect: ["note:cardio_running:shin-splints"]
+  - q: "cardio that doesn't hurt my knees"
+    expect: ["note:cardio_running:cardio-that-is-easy-on-the-knees"]
+  - q: "how to breathe while lifting heavy"
+    expect: ["note:gym_strength:breathing-and-bracing-when-lifting"]
+  - q: "kettlebell swing form"
+    expect: ["note:gym_strength:kettlebell-swing-technique", "lib:idris:kettlebell-swing"]
+  - q: "do I need a lifting belt"
+    expect: ["note:gym_strength:lifting-belts-and-straps"]
+  - q: "is napping good"
+    expect: ["note:sleep_recovery:napping"]
+  - q: "is ashwagandha good for gym"
+    expect: ["note:supplements:ashwagandha"]
+  - q: "whey before or after workout"
+    expect: ["note:supplements:whey-protein-before-or-after-a-workout"]

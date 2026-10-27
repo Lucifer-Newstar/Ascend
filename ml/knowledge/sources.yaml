@@ -7,6 +7,11 @@ sources:
     licence: Unlicense (public domain)
     url: https://github.com/yuhonas/free-exercise-db
     attribution: Exercise instructions from free-exercise-db by yuhonas and contributors.
+  ascend_library:
+    name: ASCEND exercise library (own entries)
+    licence: MIT (part of ASCEND)
+    url: https://github.com/Lucifer-Newstar/Ascend-
+    attribution: Steps written by the ASCEND team for ASCEND's own library entries (calisthenics progressions, martial-arts drills, mobility, breathing and meditation practices). Not reviewed by a medical professional.
   pag_2018:
     name: Physical Activity Guidelines for Americans, 2nd edition (2018)
     licence: US federal government work (public domain, 17 U.S.C. 105)

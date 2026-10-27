@@ -2,6 +2,10 @@
 
 Sources (all licences in ../SOURCES.md and ../sources.yaml):
   free_exercise_db   one passage per exercise: level, equipment, muscles, the steps
+  ascend_library     one passage per ASCEND-own library entry with steps (calisthenics
+                     progressions, martial-arts drills, everyday moves, the gap-fill moves
+                     and practices); ids are lib:<coach>:<slug> so the coaching team knows
+                     whose area a passage is in
   pag_2018           Physical Activity Guidelines for Americans 2nd ed. (public domain),
                      text from the PDF, chunked to ~110-170 words, reference lists dropped
   usda_fdc_sr        per-100 g energy and macros for ~60 foods common in Indian kitchens
@@ -20,10 +24,12 @@ from __future__ import annotations
 import ast
 import csv
 import gzip
+import importlib.util
 import io
 import json
 import re
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -35,9 +41,12 @@ REPO = KB.parents[1]
 RAW = KB / "raw"
 BUILD = KB / "build"
 FEDB = REPO / "services/sidecar/app/modules/workouts/library_data/free_exercise_db.json"
+WORKOUTS = REPO / "services/sidecar/app/modules/workouts"
+TAXONOMY = REPO / "services/sidecar/app/modules/progress/taxonomy.py"
 SEEDS = [
     REPO / "services/sidecar/app/modules/nutrition/seed.py",
     REPO / "services/sidecar/app/modules/nutrition/seed_v12.py",
+    REPO / "services/sidecar/app/modules/nutrition/seed_v14.py",
 ]
 SR_DIR = "FoodData_Central_sr_legacy_food_csv_2018-04/"
 NUTRIENTS = {
@@ -77,6 +86,148 @@ def exercise_passages() -> list[Passage]:
                 "text": f"{head} Steps: {steps}",
                 "ref": e["id"],
             }
+        )
+    return out
+
+
+# Who coaches each library section (trainer/team.py AREAS); gap_fill_seed names it per entry.
+SECTION_COACH = {
+    "gym": "idris",
+    "calisthenics": "dario",
+    "cardio": "kai",
+    "martial_arts": "kai",
+    "flexibility": "tara",
+    "meditation": "tara",
+}
+SECTION_LABEL = {
+    "gym": "gym",
+    "calisthenics": "calisthenics",
+    "cardio": "cardio",
+    "martial_arts": "martial arts",
+    "flexibility": "mobility and flexibility",
+    "meditation": "meditation and breathing",
+}
+
+
+def _module(name: str, path: Path) -> Any:
+    """Load a seed module by path: they are plain data, the sidecar app is not imported."""
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def _library_passage(
+    name: str,
+    section: str,
+    coach: str,
+    difficulty: str | None,
+    equipment: str | None,
+    muscles: list[str],
+    steps: list[str],
+    aliases: list[str],
+) -> Passage:
+    level = f"{difficulty} level, " if difficulty else ""
+    kit = (equipment or "none").replace("_", " ")
+    head = f"How to do {name} ({SECTION_LABEL[section]}, {level}equipment: {kit})."
+    if muscles:
+        head += f" Main muscles: {', '.join(muscles)}."
+    if aliases:
+        head += f" Also called: {', '.join(aliases)}."
+    return {
+        "id": f"lib:{coach}:{_slug(name)}",
+        "source": "ascend_library",
+        "title": f"How to do {name}",
+        "text": f"{head} Steps: {' '.join(steps)}",
+        "ref": name,
+    }
+
+
+def library_passages() -> list[Passage]:
+    """ASCEND's own library entries that carry steps (written for ASCEND, MIT)."""
+    tax = _module("kb_taxonomy", TAXONOMY)
+    label = {m.key: m.label for m in tax.MUSCLES}
+
+    def names(weights: dict[str, float]) -> list[str]:
+        ranked = sorted(weights.items(), key=lambda kv: -kv[1])
+        return [label.get(k, k.replace("_", " ")) for k, w in ranked if w >= 0.5][:4]
+
+    out: list[Passage] = []
+    cal = _module("kb_cal", WORKOUTS / "calisthenics_seed.py")
+    for row in cal.CALISTHENICS:
+        out.append(
+            _library_passage(
+                row["name"],
+                row["section"],
+                SECTION_COACH[row["section"]],
+                row["difficulty"],
+                row["equipment"],
+                names(row["muscles"]),
+                list(row["instructions"]),
+                list(row["aliases"]),
+            )
+        )
+    ma = _module("kb_ma", WORKOUTS / "martial_arts_seed.py")
+    for d in ma.DRILLS:
+        out.append(
+            _library_passage(
+                d.name,
+                "martial_arts",
+                "kai",
+                d.difficulty,
+                d.equipment,
+                names(d.muscles),
+                list(d.instructions),
+                list(d.aliases),
+            )
+        )
+    ev = _module("kb_ev", WORKOUTS / "everyday_seed.py")
+    for m in ev.MOVES:
+        out.append(
+            _library_passage(
+                m.name,
+                "calisthenics",
+                "dario",
+                m.difficulty,
+                "bodyweight",
+                names(m.muscles),
+                list(m.instructions),
+                list(m.aliases),
+            )
+        )
+    gap = _module("kb_gap", WORKOUTS / "gap_fill_seed.py")
+    for e in gap.ENTRIES:
+        out.append(
+            _library_passage(
+                e.name,
+                e.section,
+                e.coach,
+                e.difficulty,
+                e.equipment,
+                names(e.muscles),
+                list(e.instructions),
+                list(e.aliases),
+            )
+        )
+    # Steps written for rows that shipped without any: the time-based activities carry their
+    # section; the few library rows among them are gym or calisthenics moves.
+    act = _module("kb_act", WORKOUTS / "activity_seed.py")
+    act_section = {a[0]: (a[1], a[2]) for a in act.ACTIVITIES}
+    fedb = {e["name"]: e for e in json.loads(FEDB.read_text(encoding="utf-8"))["exercises"]}
+    for name, steps in gap.INSTRUCTIONS.items():
+        if name in act_section:
+            section, kit = act_section[name]
+        else:
+            body_only = (fedb.get(name) or {}).get("equipment") == "body only"
+            section, kit = ("calisthenics", "bodyweight") if body_only else ("gym", None)
+        out.append(
+            _library_passage(name, section, SECTION_COACH[section], None, kit, [], list(steps), [])
         )
     return out
 
@@ -247,6 +398,7 @@ def build(raw: Path = RAW, out_dir: Path = BUILD) -> dict[str, Any]:
     passages = (
         note_passages()
         + exercise_passages()
+        + library_passages()
         + pag_passages(pdf_text(raw / "pag2.pdf"))
         + usda_passages(raw / "sr_legacy.zip")
         + food_table_passages()

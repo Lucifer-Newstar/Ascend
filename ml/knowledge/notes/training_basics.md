@@ -42,7 +42,7 @@ You can build real strength at home: push-ups and their harder variations, squat
 If full push-ups are hard, start with incline push-ups (hands on a table or wall), then knee push-ups, then full push-ups with a straight body from head to heels. Lower until your chest is close to the floor, elbows at roughly 45 degrees from the body. Once 3 sets of 15 are easy, try decline, diamond or archer push-ups.
 
 ## Pull-up progression
-Build the first pull-up with dead hangs, scapular pulls, inverted (table or ring) rows, and slow negatives: jump to the top and lower yourself over 3 to 5 seconds. Bands can assist. Pull your chest towards the bar and avoid swinging. Rings work as a bar for pull-ups and chin-ups.
+How to do a pull-up: hang with straight arms and pull your chest towards the bar until the chin passes it. Build the first pull-up with dead hangs, scapular pulls, inverted (table or ring) rows, and slow negatives: jump to the top and lower yourself over 3 to 5 seconds. Bands can assist. Pull your chest towards the bar and avoid swinging. Rings work as a bar for pull-ups and chin-ups.
 
 ## Plank and core holds
 Hold a plank with elbows under shoulders and a straight line from head to heels: squeeze your glutes and do not let the hips sag or pike. Build the time gradually, for example 3 holds of 20 to 30 seconds, adding 5 to 10 seconds a week. Side planks and hollow holds train the core from other angles.

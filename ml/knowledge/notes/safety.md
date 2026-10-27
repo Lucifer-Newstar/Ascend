@@ -3,7 +3,7 @@ source: ascend_notes
 title: Pain, injury and safety (ASCEND team notes)
 ---
 ## Pain during exercise
-Stop the exercise if you feel sharp, stabbing or joint pain, pain on one side only, pain that gets worse with each rep, or numbness and tingling. Muscle burning during a set and next-day soreness are normal; joint pain is not. ASCEND cannot diagnose pain. If it lasts more than a few days, keeps coming back, or came with a fall, swelling or a pop, see a doctor or a physiotherapist.
+If something hurts during exercise (a shoulder, knee, elbow, wrist or your back), stop that exercise. Stop straight away with sharp, stabbing or joint pain, pain on one side only, pain that gets worse with each rep, or numbness and tingling. Muscle burning during a set and next-day soreness are normal; joint pain is not. ASCEND cannot diagnose pain. If it lasts more than a few days, keeps coming back, or came with a fall, swelling or a pop, see a doctor or a physiotherapist.
 
 ## Training around a minor injury
 With a doctor's or physio's OK, you can usually keep training the parts that do not hurt (for example the upper body with a sore knee) and return gradually: lighter loads, fewer reps, pain-free range only. Do not train through pain to keep a streak; a rest day never breaks your ASCEND streak.

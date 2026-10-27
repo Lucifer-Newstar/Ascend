@@ -84,8 +84,15 @@ stages:
       - knowledge/notes
       - knowledge/raw
       - ../services/sidecar/app/modules/workouts/library_data/free_exercise_db.json
+      - ../services/sidecar/app/modules/workouts/calisthenics_seed.py
+      - ../services/sidecar/app/modules/workouts/martial_arts_seed.py
+      - ../services/sidecar/app/modules/workouts/everyday_seed.py
+      - ../services/sidecar/app/modules/workouts/activity_seed.py
+      - ../services/sidecar/app/modules/workouts/gap_fill_seed.py
+      - ../services/sidecar/app/modules/progress/taxonomy.py
       - ../services/sidecar/app/modules/nutrition/seed.py
       - ../services/sidecar/app/modules/nutrition/seed_v12.py
+      - ../services/sidecar/app/modules/nutrition/seed_v14.py
     outs: [knowledge/build]
   kb_evaluate:
     cmd: python knowledge/src/evaluate_kb.py
