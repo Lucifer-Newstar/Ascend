@@ -30,4 +30,5 @@ def test_a_food_of_your_own_is_searchable(client: TestClient) -> None:
               "protein_g": 3, "carbs_g": 22, "fat_g": 2},
     )  # fmt: skip
     assert r.status_code == 201
-    assert names(client, "kozhu") == ["Kozhukattai"]
+    found = names(client, "kozhu")  # v1.4 also has three kozhukattai dishes in the table
+    assert found[0] == "Kozhukattai" and "Pidi kozhukattai" in found
