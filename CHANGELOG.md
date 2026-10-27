@@ -11,6 +11,20 @@ where a number you see could change. User-facing release notes live in
 
 ### Added
 
+- **The trainer knows more of what people actually ask.** 63 new moves and practices in the
+  library, each with steps and its specialist: knee push-ups, archer and typewriter pull-ups,
+  wall walks, kettlebell swings, run-walk and sprint intervals, Tabata, hook, uppercut,
+  elbow, parry-and-cover and kick-check drills, yoga poses (downward dog, cobra, warrior II, tree...),
+  splits and mobility work, and breathing and meditation practices (4-7-8, belly breathing,
+  alternate-nostril, humming bee, loving-kindness, walking meditation). Box breathing,
+  shadowboxing and 18 other entries that had no steps now have them. The knowledge base has
+  new notes on meditation, martial arts, cardio, calisthenics skills, gym technique, mobility,
+  sleep and supplements, and each answer goes to the right specialist.
+- **15 South Indian dishes in the food table**: carrot and beetroot poriyal, kara and mint
+  chutney, kambu koozh, pidi, poorna and paal kozhukattai, mushroom and paneer biryani, ghee
+  rice, sambar rice, paneer masala, prawn thokku and crab masala (approximate household
+  portions). Tamil names such as "thengai chutney", "nei satham" and "nandu masala" work in
+  the chat.
 - **The coaching team.** Your trainer is now your main trainer and runs the chat; a question
   in another trainer's area goes to them with a short handoff line: Idris for gym, strength
   and PRs, Dario for calisthenics, Kai for cardio and martial arts, Tara for mobility and

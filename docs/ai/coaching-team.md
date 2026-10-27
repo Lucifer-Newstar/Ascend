@@ -41,8 +41,11 @@ help notes, the knowledge base or the local AI, with the number guard and the sa
 2. A coaching help note uses its owner from `FAQ_OWNER`.
 3. Otherwise the learned intent label and keywords vote: each area word in the message is one
    point, and the intent model's label adds two (`nutrition_question` for Vera, `injury_pain`
-   for Tara). The area with the most points wins. A tie, or no area word at all, keeps the main
-   trainer.
+   for Tara). The area with the most points wins.
+4. With no clear winner, a knowledge-base answer goes to the area of its first passage: a
+   library passage names its specialist in its id (`lib:kai:hook-shadow-drill`) and a note file
+   has an owner (`NOTE_AREA`: martial arts and cardio to Kai, meditation, mobility and sleep to
+   Tara, supplements to Vera...). Otherwise the main trainer keeps it.
 
 Pain questions go to Tara and keep the line "If it hurts, stop that exercise and get it
 checked by a doctor or physiotherapist" in front. Tara does not diagnose.
