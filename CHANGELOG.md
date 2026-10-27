@@ -25,6 +25,21 @@ where a number you see could change. User-facing release notes live in
   rice, sambar rice, paneer masala, prawn thokku and crab masala (approximate household
   portions). Tamil names such as "thengai chutney", "nei satham" and "nandu masala" work in
   the chat.
+- **Answers with sources.** Training, food and technique questions in the trainer chat get a
+  short passage from a local knowledge base, with its source shown under the reply (exercise
+  steps from free-exercise-db, the 2018 Physical Activity Guidelines, the app's food table,
+  team notes, USDA values). If nothing matches well enough, the trainer says it has no note.
+  Offline, works with the AI off. `kb-v1` had 1,473 passages; the gap fill above makes it
+  1,779 (`kb-v1.4`, [ml/knowledge/KB_CARD.md](ml/knowledge/KB_CARD.md)).
+- **A small learned intent router behind the chat rules** (`ascend-intent` 1.0.0, now 1.1.0
+  with the gap-fill phrasings). When the rules are unsure what a message asks, a TF-IDF +
+  logistic-regression model decides; messages the rules are sure of, and out-of-scope ones,
+  keep the rules' answer. It ships as a small weights file with a checksum check, and
+  `ASCEND_INTENT_MODEL=off` turns it off ([ml/intent/MODEL_CARD.md](ml/intent/MODEL_CARD.md)).
+- **Scan meal on Fuel, hidden until a food model is installed.** A food model on the CPU
+  suggests three foods to confirm; it never logs a meal by itself. It appears only when a model
+  that passed the gate on the team's own photos is in the data folder. No food model is trained
+  yet, so nobody sees it today ([ml/food/README.md](ml/food/README.md)).
 - **The coaching team.** Your trainer is now your main trainer and runs the chat; a question
   in another trainer's area goes to them with a short handoff line: Idris for gym, strength
   and PRs, Dario for calisthenics, Kai for cardio and martial arts, Tara for mobility and
@@ -55,6 +70,26 @@ where a number you see could change. User-facing release notes live in
   every unlock with its date and a Replay button.
 - **Tray and start with Windows**, both off by default. With the tray on, closing the window
   keeps ASCEND by the clock and reminders still arrive.
+
+### Machine learning (developer-facing)
+
+- Intent pipeline in `ml/intent/`: weak-labelled Stack Exchange titles, CLINC150 out-of-scope
+  negatives, templated app commands, leak checks against the hand-checked and real-question
+  sets, a parity gate against scikit-learn, and DVC stages.
+- Knowledge-base pipeline in `ml/knowledge/`: a cited corpus with each source's licence,
+  BM25 retrieval in the sidecar, and an evaluation on app questions and hand-judged real
+  questions.
+- Food-photo pipeline: a Roboflow COCO → crops converter with a class map, `not_food` photos
+  from Open Images with attribution, splits by source photo, GPU training with mixed
+  precision, a gate on the team's own photos only, and release packaging. `ml/labels.json`
+  has 50 dishes plus `not_food`. Install the CUDA build of torch from the `cu126` index
+  (torch 2.14.1 has no `cu128` wheel).
+- `/ml` endpoints: model status, intent, knowledge search and food-photo suggestions
+  ([docs/contracts/ml.yaml](docs/contracts/ml.yaml)). The packaged sidecar ships the ML assets
+  and ONNX Runtime.
+- `ml.yml` runs the food smoke through the gate and asserts it never passes, and rebuilds the
+  text models nightly.
+- Every ML data source and licence is listed in [ml/SOURCES.md](ml/SOURCES.md).
 
 ### Fixed
 
