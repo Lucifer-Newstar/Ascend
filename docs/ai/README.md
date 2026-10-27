@@ -42,7 +42,7 @@ breaks, because the models were never the source of the numbers.
 | Feature | AI on | AI off |
 |---|---|---|
 | Coach tip of the day | Rule tip, phrased by `qwen3:4b` | Rule tip as written (**implemented**) |
-| Coach Q&A / chat | Model answer from facts, checked | Rules route the message (intent router when they are unsure); a cited knowledge-base passage or a help note answers (**implemented**, unreleased) |
+| Coach Q&A / chat | Model answer from facts, checked | Rules route the message (intent router when they are unsure); a cited knowledge-base answer composed like a coach, or a help note, answers in the speaker's voice; unsure retrieval gives the closest note and one clarifying question (**implemented**, unreleased) |
 | Weekly review | Rule findings + proposals + model summary | Same findings + proposals + template summary |
 | Plan generation | Planner rules + model explanation | Planner rules + template explanation |
 | Injury protocol | Rules + kind model wording | Rules + fixed wording |
@@ -64,7 +64,7 @@ Measured by metric R6 (the E2E journey with Ollama stopped) in
 | Tip of the day, "ask the coach" | `qwen3:4b` (prompt `P-00`) over rules `coach-rules-v1` | Ollama, GPU | `modules/coach` (`rules.py`, `ollama.py`, `runtime.py`, `service.py`) | **implemented** | [coach-llm.md](coach-llm.md) |
 | Trainer chat routing | none: rules `trainer-intents-v1` first, help notes `trainer-kb-v1` | Sidecar, CPU | `modules/trainer` (`intents.py`, `kb.py`, `chat.py`) | **implemented** (1.1) | [trainer-actions.md](trainer-actions.md) |
 | Intent router for messages the rules are unsure of | `ascend-intent` 1.1.0: TF-IDF n-grams + logistic regression | Sidecar, CPU, standard-library runtime (`ASCEND_INTENT_MODEL=off` disables it) | `modules/ml/intent.py`, `intent_runtime.py`, `trainer/ml_route.py`; training in `ml/intent/` | **implemented** (unreleased) | [ml/intent/MODEL_CARD.md](../../ml/intent/MODEL_CARD.md) |
-| Cited knowledge answers | none: BM25 over 1,779 passages (`kb-v1.4`) | Sidecar, CPU | `modules/ml/knowledge.py`; corpus in `ml/knowledge/` | **implemented** (unreleased) | [ml/knowledge/KB_CARD.md](../../ml/knowledge/KB_CARD.md) |
+| Cited knowledge answers | none: BM25F + feature re-ranker over 1,779 passages (`kb-v2`); answers composed by rules (`trainer-answers-v1`), worded by the local AI only when it is on | Sidecar, CPU | `modules/ml/knowledge.py`, `modules/trainer/compose.py`, `modules/trainer/voice.py`; corpus in `ml/knowledge/` | **implemented** (unreleased) | [ml/knowledge/KB_CARD.md](../../ml/knowledge/KB_CARD.md), [evaluation.md](evaluation.md) section 10 |
 | Coaching team (who answers) | none: rules over the routed topic | Sidecar | `modules/trainer/team.py` | **implemented** (unreleased) | [coaching-team.md](coaching-team.md) |
 | Trainer edits and plan building from chat | none: rules (`actions-parse-v2`, plan facts) | Sidecar | `modules/actions`, `modules/planbuilder` | **implemented** (1.3; plan builder unreleased) | [trainer-actions.md](trainer-actions.md), [plan-builder.md](plan-builder.md) |
 | AI setup: tiers from RAM / VRAM | none (`ai-tiers-v1`) | Sidecar | `modules/ai` (`setup.py`, `hardware.py`) | **implemented** (1.1) | [model-manager.md](model-manager.md) |

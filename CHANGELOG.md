@@ -11,6 +11,18 @@ where a number you see could change. User-facing release notes live in
 
 ### Added
 
+- **Trainer answers that read like a coach.** A knowledge answer now leads with the answer in
+  a line or two, then numbered steps for an exercise or one more tip, then at most one line
+  for you from your profile (your kit, goal, experience, baseline test or protein target),
+  with the source still shown under it. Each trainer answers in their own voice: Iskra stern
+  ("Hunter"), Vera playful, Kai high-energy, Dario calm and tactical, Tara calm and warm,
+  Idris steady. The facts and numbers never change with the voice, and pain answers stay
+  plain with the doctor/physio line first.
+- **The trainer asks instead of guessing.** When it is not sure, it names the closest note it
+  has and asks one question, instead of answering with a neighbouring topic. A question that
+  names no topic ("which workout is the best?") gets one clarifying question, using the goal
+  on your profile for the first suggestion.
+
 - **The trainer knows more of what people actually ask.** 63 new moves and practices in the
   library, each with steps and its specialist: knee push-ups, archer and typewriter pull-ups,
   wall walks, kettlebell swings, run-walk and sprint intervals, Tabata, hook, uppercut,
@@ -100,6 +112,15 @@ where a number you see could change. User-facing release notes live in
 - The Harvest Colossus now drops the Harvest Festival set.
 
 ### Changed
+
+- **Better first answers in the trainer chat** (knowledge retrieval `kb-v2`): titles count
+  more, synonyms and exercise aliases are understood, the topic of the question matters, and a
+  question about something the notes do not cover is no longer answered with a word match
+  ("boxing" no longer finds box breathing). On 80 real questions the right passage comes first
+  for 37 instead of 31, and confident answers are right 76% of the time instead of 54% (one
+  rater, unverified; see `ml/knowledge/KB_CARD.md`). A help note that matched only one word
+  ("Should I stretch after exercise?" used to get the after-workout food note) now gives way
+  to the passage that answers the question.
 
 - Locked cosmetics in the Wardrobe are silhouettes with how to unlock them.
 - Today's workout reminder waits for your usual training time (from an hour before) and names

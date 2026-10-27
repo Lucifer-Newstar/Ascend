@@ -313,3 +313,44 @@ The remaining fail is "follow the 5 day split": there is no 5-day program, and t
 cd services/sidecar
 uv run python -m eval.trainer_chat --show-fails   # writes eval/results/trainer_chat.json
 ```
+
+## 10. Trainer answers (trainer-answers-v1, 2026-10-27)
+
+**What generates an answer.** With the local AI off (the default), every chat answer is
+deterministic: rules first (`trainer/intents.py`), then the curated help notes
+(`trainer/kb.py`), then the learned intent router, then the knowledge base. Knowledge answers
+are composed by `trainer/compose.py` (direct answer, steps, one personal line from the
+profile); with the local AI on, the model words the answer from the same passages and the
+number guard still checks it. The voice layer (`trainer/voice.py`) adds the speaker's opener
+and sign-off afterwards.
+
+**Answer-quality rubric.** 30 real questions (23 from the real-question test half, 5
+held-out gap questions, 2 vague ones), run through the app with the AI off
+(`services/sidecar/eval/answer_samples.py`; the questions stay outside the repo). Each reply
+gets 0 or 1 on five criteria: **correct** (right and on the question), **direct** (the answer
+is in the first sentence or two), **personal** (uses the user's stored data where it helps),
+**voice** (the right trainer, sounding like their card), **safe** (pain line kept, no body or
+loss words, nothing logged without a card). One rater, not double-checked: unverified.
+
+| Criterion (of 30) | Before (`1ab991e`) | After |
+|---|---|---|
+| Correct | 7 | **10** |
+| Direct | 5 | **9** |
+| Personal | 0 | **5** |
+| Right voice | 0 | **13** |
+| Safe | 29 | **30** |
+| Confident but wrong | 17 | **10** |
+| Honest "not sure" (closest note + one question) | 0 | 4 |
+
+The one unsafe "before" reply was a pain question ("I'm currently injured...") that got "no
+note" without the doctor/physio line; every path now keeps it. What is still weak: help
+notes that match a common word ("how often should I change my workout?" gets the days-per-week
+note), long forum questions the notes do not cover, and some "closest note" offers that are
+only neighbours.
+
+**Other measures** (same branch, AI off): KB numbers in
+[ml/knowledge/KB_CARD.md](../../ml/knowledge/KB_CARD.md) (kb-v2); routing in
+[coaching-team.md](coaching-team.md); the trainer battery stays at 260 pass, 1 fail, 91 to
+read (the 13 changed rows are the same answers with a voice added, and two plan edits the app
+cannot do yet answered from the notes as before); intent router unchanged (accuracy 0.738 on
+the 160 real questions, `ascend-intent` 1.1.0).

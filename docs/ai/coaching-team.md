@@ -24,7 +24,7 @@ off: the main trainer then answers everything, as before v1.4.
 
 ## What moves to a specialist
 
-Routing never changes **what** is said, only **who** says it. The reply is built first (rules,
+Routing never changes the **facts**, only **who** says them and in which voice. The reply is built first (rules,
 help notes, the knowledge base or the local AI, with the number guard and the safety line), and
 `services/sidecar/app/modules/trainer/team.py` then stamps the speaker:
 
@@ -33,6 +33,26 @@ help notes, the knowledge base or the local AI, with the number guard and the sa
 - **Stays with the main trainer:** app questions and tours, greetings, goal checks, plans, the
   "why?" explanation, and every proposal card (propose, confirm, undo). A meal logged from chat
   is still the main trainer's card; Scan meal still only suggests and never logs.
+
+## Each trainer's voice (trainer-answers-v1)
+
+A coaching answer (knowledge passage, coaching help note, clarifying question) gets one short
+opener and, on a short reply, one sign-off in the speaker's voice
+(`services/sidecar/app/modules/trainer/voice.py`), following the trainer cards and the persona
+rules in [v8-trainer-persona.md](../research/v8-trainer-persona.md):
+
+| Trainer | Style | Example opener / sign-off |
+| --- | --- | --- |
+| Iskra | Stern drill instructor, calls you "Hunter" | "Facts first, Hunter." / "Your call, Hunter." |
+| Vera | Playful hype coach | "Ooh, good one!" / "Easy wins, promise." |
+| Kai | High-energy hype-man | "Let's go!" / "Stay light on your feet!" |
+| Dario | Calm strategist | "Here's the plan." / "Small steps compound." |
+| Tara | Calm and warm | "Gently now." / "Listen to your body." |
+| Idris | Steady and exact | "Do it right." / "Form before load." |
+
+Voice lines carry no numbers, no body or loss words and pass the coach guard. A warning, a
+pain question, a "not sure" reply, the local AI's own words, app answers and action cards get
+no voice, so the safety line always comes first and plain.
 
 ## How the topic is picked
 
@@ -45,7 +65,14 @@ help notes, the knowledge base or the local AI, with the number guard and the sa
 4. With no clear winner, a knowledge-base answer goes to the area of its first passage: a
    library passage names its specialist in its id (`lib:kai:hook-shadow-drill`) and a note file
    has an owner (`NOTE_AREA`: martial arts and cardio to Kai, meditation, mobility and sleep to
-   Tara, supplements to Vera...). Otherwise the main trainer keeps it.
+   Tara, supplements to Vera...). Since trainer-answers-v1 a free-exercise-db exercise goes by
+   what it is (a stretch to Tara, a weights exercise to Idris, a bodyweight one to Dario) and
+   food passages go to Vera. Otherwise the main trainer keeps it.
+
+Measured on the 105 in-scope gap questions (each labelled with the specialist who should
+answer; one rater, unverified): the right trainer gave the reply for 44 before and **51**
+after, out of 71 and 80 coaching replies (62% both times; more questions now get a coaching
+reply).
 
 Pain questions go to Tara and keep the line "If it hurts, stop that exercise and get it
 checked by a doctor or physiotherapist" in front. Tara does not diagnose.

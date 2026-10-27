@@ -66,12 +66,14 @@ CHECK line.
 | B1 | Trainer battery passes (352 messages, AI off) | **260** (unchanged; was 251 of 343 before the nine plan-builder messages, `feat/v14-plan-builder`) | `cd services/sidecar && uv run python -m eval.trainer_chat` |
 | B2 | Trainer battery fails | **1** ("follow the 5 day split": no 5-day program) | same |
 | B2b | Battery rows a person reads | 91 | same |
-| B3 | Sidecar tests | **1200 passed** (was 1084) | `uv run pytest` |
+| B3 | Sidecar tests | **1228 passed** (was 1200 on `ddbfa72`; 1084 before that) | `uv run pytest` |
 | B4 | Desktop tests | **612 passed** (92 files; was 545 in 79) | `npm test` |
 | B5 | eslint | 0 errors, 22 warnings | `npm run lint` |
 | B6 | Alembic | one head, `0035` (was `0032`) | `uv run alembic heads` |
 | B7 | API contract | 146 implemented operations match 18 contracts (was 137 and 16) | `make contracts` |
 | B8 | 160 real fitness questions (dataset batch) | 19 relevant answers, 54 unrelated notes, 87 honest "no note" | hand-graded on `feat/v13-fixes` (wave 1); not re-graded since. The ML cards report later, separate measures on the same questions ([ml/README.md](../ml/README.md)) |
+| B11 | Knowledge answers on 80 real questions (test half) | right passage first **37**, in the top 3 **44**; answered at the gate 25, of which right 19 (76%) (was 31, 40, 41 / 22 on `1ab991e`) | `python ml/knowledge/src/evaluate_kb.py --external <dir>` on `feat/trainer-answers`; one rater, unverified ([KB_CARD.md](../ml/knowledge/KB_CARD.md)) |
+| B12 | Answer-quality rubric, 30 real questions (correct / direct / personal / voice / safe) | **10 / 9 / 5 / 13 / 30** (was 7 / 5 / 0 / 0 / 29) | `uv run python -m eval.answer_samples`, hand-graded on `feat/trainer-answers`; one rater, unverified ([evaluation.md](ai/evaluation.md) section 10) |
 | B9 | Renderer build | main chunk 345 kB (106 kB gzip); `dist` 23 MB with the exercise images (was 336 kB, 103 kB gzip) | `npm run build` |
 | B10 | Windows installer size | not measured yet (needs a Windows build) | `npm run dist:win` on Windows |
 
