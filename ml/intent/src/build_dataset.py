@@ -9,8 +9,9 @@ Outputs (intent/dataset/, one JSON object per line: text, label, source, plus id
   stats.json             counts per split and label
 
 Leak rules, all enforced here and tested in tests/test_intent_dataset.py:
-  * hand-checked SE ids and the external real-question ids (labels/eval_leak_ids.txt)
-    never reach train or val;
+  * hand-checked SE ids, the external real-question ids (labels/eval_leak_ids.txt) and the
+    Stack Exchange ids of the held-out gap questions (labels/gap_eval_ids.txt, v1.4) never
+    reach train or val;
   * an exact duplicate text (case/space-insensitive) is kept once, in the first split
     that claims it, with test splits claiming first.
 """
@@ -73,6 +74,7 @@ def build(params: dict, raw: Path, out: Path, real_eval: Path | None = None) -> 
         for r in csv.DictReader((ROOT / "labels" / "se_handchecked.csv").open(encoding="utf-8"))
     }
     leak = read_ids(ROOT / "labels" / "eval_leak_ids.txt")
+    leak |= read_ids(ROOT / "labels" / "gap_eval_ids.txt")
     if real_eval is not None and real_eval.exists():
         leak |= leak_ids_from(real_eval, se_rows)
 

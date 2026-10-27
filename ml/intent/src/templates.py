@@ -81,6 +81,90 @@ HOLDS = [
     "glute bridge hold",
     "bar hang",
 ]
+# v1.4 gap fill: topics real users ask about (ml/knowledge/GAP_ANALYSIS.md), for the
+# coaching intents below. Our own phrasings; no public question text is copied.
+STRIKES = [
+    "hook",
+    "uppercut",
+    "jab",
+    "cross",
+    "teep",
+    "roundhouse kick",
+    "low kick",
+    "switch kick",
+    "elbow strike",
+    "knee strike",
+    "front kick",
+    "side kick",
+]
+POSES = [
+    "downward dog",
+    "cobra pose",
+    "warrior 2",
+    "tree pose",
+    "triangle pose",
+    "bridge pose",
+    "cat cow",
+    "pigeon pose",
+    "child's pose",
+    "front splits",
+    "middle splits",
+    "pancake stretch",
+    "couch stretch",
+]
+BREATHS = [
+    "box breathing",
+    "4-7-8 breathing",
+    "belly breathing",
+    "alternate nostril breathing",
+    "anulom vilom",
+    "bhramari",
+    "kapalbhati",
+    "body scan",
+    "metta meditation",
+    "walking meditation",
+    "mindfulness meditation",
+    "breath counting",
+]
+SKILLS = [
+    "muscle up",
+    "front lever",
+    "back lever",
+    "planche",
+    "handstand",
+    "l sit",
+    "pistol squat",
+    "human flag",
+    "one arm pushup",
+    "one arm pullup",
+    "elbow lever",
+    "dragon flag",
+]
+NEW_MOVES = [
+    "hindu pushups",
+    "archer pullups",
+    "shrimp squats",
+    "cossack squats",
+    "kettlebell swings",
+    "toes to bar",
+    "wall walks",
+    "pendlay rows",
+    "gripper squeezes",
+    "knee push ups",
+]
+NEW_HOLDS = ["elbow lever", "horse stance", "tree pose", "downward dog", "bear crawl"]
+CARDIO = [
+    "hiit",
+    "tabata",
+    "sprint intervals",
+    "hill sprints",
+    "zone 2 runs",
+    "run walk intervals",
+    "couch to 5k",
+    "shuttle runs",
+    "skipping",
+    "swimming",
+]
 FOODS = [
     "idli",
     "dosa",
@@ -799,6 +883,95 @@ for _intent, _more in {
     T[_intent] = T[_intent] + _more
 
 
+# v1.4 gap fill: coaching questions on the topics the gap analysis found uncovered, plus logs
+# of the new library moves. TRAINING ONLY: generate() never puts these in test_templates (that
+# split stays the app-command test the gate was built for); the coaching intents are
+# measured on real questions instead (real160 and the held-out gap set).
+COACHING: dict[str, list[str]] = {
+    "exercise_howto": [
+        "how do i throw a {strike}",
+        "how to do a proper {strike}",
+        "correct technique for the {strike}",
+        "how to do {pose}",
+        "steps for {pose}",
+        "how do i do {breath}",
+        "teach me {breath}",
+        "how to start {breath}",
+        "how do i learn the {skill}",
+        "{skill} progression",
+        "how to get my first {skill}",
+        "how do i do {newex} properly",
+        "form tips for {newex}",
+        "how to do a {newhold}",
+        "how to {cardio} properly",
+        "{strike} kaise maarte hai",
+        "{pose} eppadi pannanum",
+    ],
+    "training_question": [
+        "how often should i do {cardio}",
+        "is {cardio} good for stamina",
+        "how long should i hold {pose}",
+        "how long until i can do the {skill}",
+        "can i train {skill} every day",
+        "how many minutes of {breath} a day",
+        "is {breath} good before sleep",
+        "best time to meditate",
+        "how to stop my mind wandering when i meditate",
+        "is shadowboxing enough cardio",
+        "how many rounds on the heavy bag",
+        "can i do muay thai and gym in the same week",
+        "how to kick higher",
+        "how do i get more flexible for kicks",
+        "how much sleep do i need for muscle",
+        "is a nap after training ok",
+        "what to do on a rest day",
+        "how to recover faster after training",
+        "how fast should i increase my running",
+        "how do i breathe while running",
+        "can i get the splits in a month",
+    ],
+    "injury_pain": [
+        "my wrist hurts after {strike} on the bag",
+        "shins hurt after {cardio}",
+        "knee pain in {pose}",
+        "my back hurts when i do {pose}",
+        "elbow pain from {skill} training",
+        "wrist pain during {skill}",
+        "shoulder hurts after {newex}",
+        "dizzy after {breath}",
+        "sharp pain in my hip during splits",
+        "my knuckles are swollen after bag work",
+        "neck pain after meditation sitting",
+        "shin splints from running",
+    ],
+    "nutrition_question": [
+        "is ashwagandha good for gym",
+        "should i take whey before or after workout",
+        "is a mass gainer worth it",
+        "how much caffeine before workout",
+        "do i need bcaa",
+        "do i need electrolytes when i sweat a lot",
+        "is pre workout safe",
+        "should i take a multivitamin",
+        "is l carnitine useful",
+        "protein shake after football or cardio",
+        "how much protein on rest days",
+        "do protein powders have side effects",
+        "is beta alanine worth it",
+        "is coffee ok before the gym",
+    ],
+    "log_set": [
+        "{n} {newex} {done}",
+        "{s}x{n} {newex}",
+        "did {s} sets of {newex}",
+    ],
+    "log_hold": [
+        "{newhold} {sec} sec",
+        "held {newhold} for {sec} seconds",
+    ],
+}
+
+
 def stable_id(intent: str, template: str) -> int:
     return zlib.crc32(f"{intent}|{template}".encode())
 
@@ -872,6 +1045,11 @@ def fill(template: str, rng: random.Random) -> str:
         "name": rng.choice(["Navin", "Gokul", "Dhanush", "Priya", "Arun", "Kavya"]),
         "done": rng.choice(TANGLISH_DONE),
     }
+    # v1.4 slots are drawn only when a template uses them, so the older templates keep
+    # exactly the texts (and random draws) they had.
+    for key, pool in EXTRA_SLOTS.items():
+        if "{" + key + "}" in template:
+            values[key] = rng.choice(pool)
     return template.format(**values)
 
 
@@ -894,6 +1072,17 @@ def augment(text: str, rng: random.Random) -> str:
     return out
 
 
+EXTRA_SLOTS: dict[str, list[str]] = {
+    "strike": STRIKES,
+    "pose": POSES,
+    "breath": BREATHS,
+    "skill": SKILLS,
+    "cardio": CARDIO,
+    "newex": NEW_MOVES,
+    "newhold": NEW_HOLDS,
+}
+
+
 def generate(per_template: int = 6, seed: int = 42) -> list[dict[str, str]]:
     """[{text, label, split, template_id}] with `per_template` variants per template."""
     rng = random.Random(seed)
@@ -912,6 +1101,22 @@ def generate(per_template: int = 6, seed: int = 42) -> list[dict[str, str]]:
                         "text": text,
                         "label": intent,
                         "split": split_of(intent, tpl),
+                        "template_id": str(stable_id(intent, tpl)),
+                    }
+                )
+    for intent, templates in COACHING.items():
+        for tpl in templates:
+            n = per_template if "{" in tpl else max(2, per_template // 2)
+            for _ in range(n):
+                text = augment(fill(tpl, rng), rng)
+                if text.lower() in seen:
+                    continue
+                seen.add(text.lower())
+                rows.append(
+                    {
+                        "text": text,
+                        "label": intent,
+                        "split": "train",
                         "template_id": str(stable_id(intent, tpl)),
                     }
                 )

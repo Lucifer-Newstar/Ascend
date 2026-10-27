@@ -43,7 +43,7 @@ intent:
     sublinear_tf: true
     c_grid: [1.0, 4.0, 10.0]
   export:
-    version: 1.0.0
+    version: 1.1.0
     prune_below: 0.02      # coefficients smaller than this are dropped from the runtime file
     decimals: 3
   gate:
