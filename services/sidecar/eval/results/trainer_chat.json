@@ -2031,10 +2031,10 @@
   },
   {
    "cat": "meal",
-   "text": "1 kozhukattai",
+   "text": "1 kuzhi paniyaram",
    "exp": "meal:notintable",
    "verdict": true,
-   "reply": "\u201ckozhukattai\u201d isn't in the food table yet. You can add it as your own food (Fuel > Add your own food, or tell me: add food <name> <kcal> kcal).",
+   "reply": "\u201ckuzhi paniyaram\u201d isn't in the food table yet. You can add it as your own food (Fuel > Add your own food, or tell me: add food <name> <kcal> kcal).",
    "proposal": null
   },
   {
@@ -2375,7 +2375,7 @@
    "text": "add pull ups to tuesday",
    "exp": "unsupported_v13",
    "verdict": null,
-   "reply": "Here's what I have on that (Training at home without equipment): You can build real strength at home: push-ups and their harder variations, squats, lunges, glute bridges, planks, and pulling work with a table row or a pull-up bar. Make exercises harder by slowing the reps, pausing, moving to one-leg or one-arm versions, or adding a backpack with books.",
+   "reply": "Here's what I have on that (When to start weighted pull-ups and dips): Adding weight makes sense once you can do around 10 to 15 strict reps with good form. Start light (a backpack with books or a few kilograms on a belt) and keep the full range of motion. Weighted work builds strength for skills like the muscle-up and front lever. Log the added load as the set's weight in ASCEND.",
    "proposal": null
   },
   {
