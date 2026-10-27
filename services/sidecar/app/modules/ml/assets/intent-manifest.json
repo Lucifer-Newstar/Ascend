@@ -1,9 +1,9 @@
 {
   "name": "ascend-intent",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "file": "intent_model.json.gz",
-  "sha256": "f75804d1a0ac8e15e1ea7c29cd060910c6595b4e149491c5abb89930b8109fc2",
-  "bytes": 742263,
+  "sha256": "fad0772f1fd90cc06058af40f65ebecae25c354e35b95e0ba049ffbf59660c6e",
+  "bytes": 751228,
   "labels": [
     "add_food",
     "ask_progress",
@@ -30,43 +30,43 @@
   ],
   "threshold": 0.55,
   "parity": {
-    "texts": 5414,
-    "argmax_agreement": 0.9989,
-    "max_prob_diff": 0.0122
+    "texts": 5483,
+    "argmax_agreement": 0.9987,
+    "max_prob_diff": 0.0158
   },
-  "weights_kept": 288216,
-  "weights_total": 770396,
-  "created_at": "2026-10-25T10:46:05Z",
+  "weights_kept": 293185,
+  "weights_total": 782496,
+  "created_at": "2026-10-27T04:14:47Z",
   "metrics": {
     "test_templates": {
       "n": 580,
-      "accuracy": 0.8155,
-      "macro_f1": 0.8215,
-      "route_accuracy": 0.8379
+      "accuracy": 0.8052,
+      "macro_f1": 0.8086,
+      "route_accuracy": 0.8293
     },
     "test_clinc": {
       "n": 2463,
-      "accuracy": 0.877,
-      "macro_f1": 0.8677,
-      "route_accuracy": 0.877
+      "accuracy": 0.8749,
+      "macro_f1": 0.8644,
+      "route_accuracy": 0.8749
     },
     "test_se_hand": {
       "n": 200,
-      "accuracy": 0.755,
-      "macro_f1": 0.5661,
-      "route_accuracy": 0.955
+      "accuracy": 0.775,
+      "macro_f1": 0.6022,
+      "route_accuracy": 0.96
     },
     "real160": {
       "n": 160,
-      "accuracy": 0.7125,
-      "macro_f1": 0.4058,
-      "route_accuracy": 0.9437
+      "accuracy": 0.7375,
+      "macro_f1": 0.3761,
+      "route_accuracy": 0.9375
     },
     "app343": {
       "n": 329,
-      "accuracy": 0.9179,
-      "macro_f1": 0.8408,
-      "route_accuracy": 0.9271
+      "accuracy": 0.9149,
+      "macro_f1": 0.8384,
+      "route_accuracy": 0.921
     }
   }
 }
