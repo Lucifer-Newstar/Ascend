@@ -52,7 +52,8 @@ _GREETING = re.compile(
     r"^\s*(hi+|hello+|hey+|yo|hola|namaste|vanakkam|sup|good (morning|afternoon|evening))\b", re.I
 )
 _HELP = re.compile(
-    r"\b(what can you do|what do you do|how can you help|help me|^help$|what are you for|"
+    r"\b(what can you do|what do you do|how can you help|help me(?=\s*[.!?]*$)|^help$|"
+    r"what are you for|"
     r"what can i (ask|do here)|commands)\b",
     re.I,
 )
@@ -168,7 +169,8 @@ _CHANGE_TRAINER = re.compile(
     r"\b(change|switch|swap|pick|choose|new|different)\b.*\btrainers?\b", re.I
 )
 _TRAIN_TODAY = re.compile(
-    r"\b(what (should|do|can) i (train|do|work)|today'?s (workout|tip|plan|session)|tip for today|"
+    r"\b((?<![,;.]\s)what (should|do|can) i (train|do|work)|"
+    r"today'?s (workout|tip|plan|session)|tip for today|"
     r"what to train|which muscles?|train today|(my )?workout (for )?today|what'?s my (next )?"
     r"(workout|session)|my next (workout|session)|what'?s (on )?(the plan|my plan) today)\b",
     re.I,

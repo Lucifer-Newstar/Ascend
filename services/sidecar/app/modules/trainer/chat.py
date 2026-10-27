@@ -138,23 +138,39 @@ def _why(db: Session) -> ChatOut:
 
 
 def _ai_or_fallback(db: Session, settings: Settings, now: datetime, text: str) -> ChatOut:
+    # trainer-answers-v1: a message that names no topic ("which workout is the best?") gets
+    # one clarifying question instead of a guess.
+    vague = ml_route.clarify_answer(db, text)
+    if vague is not None:
+        return vague
     # A confident passage from the knowledge base beats "I don't have a note on that".
-    if not ml_route.model_says_out_of_scope(text):
-        cited = ml_route.knowledge_answer(db, settings, now, text, None)
+    oos = ml_route.model_says_out_of_scope(text)
+    label = ml_route.knowledge_label(text)
+    if not oos:
+        cited = ml_route.knowledge_answer(db, settings, now, text, label)
         if cited is not None:
             return cited
     r = coach.answer(db, settings, now, text)
     if r.source == "ollama":
         return ChatOut(reply=r.text, mood="neutral", intent="unknown", source="ollama")
+    # Near but not sure: the closest note, said as such, and one clarifying question.
+    if not oos:
+        near = ml_route.unsure_answer(db, text, label)
+        if near is not None:
+            return near
     best = [e.question for e in kb.ENTRIES if kb.score(e, text) > 0][:3] or START_SUGGESTIONS[:3]
     # v1.2: with AI off (the default) the reply says what the trainer CAN answer, once,
     # instead of a note about a local model most PCs don't have.
     extra = "" if r.fallback_reason == "ai_disabled" else coach.fallback_sentence(r.fallback_reason)
+    # A pain question keeps the doctor/physio line even when there is no note.
+    safety = ml_route.SAFETY if ml_route.is_pain(text, label) else ""
     return ChatOut(
         reply=(
-            "I don't have a note on that one yet. Try one of these, or ask it another way. " + extra
+            safety
+            + "I don't have a note on that one yet. Try one of these, or ask it another way. "
+            + extra
         ).strip(),
-        mood="neutral",
+        mood="warning" if safety else "neutral",
         intent="unknown",
         source="rules",
         fallback_reason=r.fallback_reason,

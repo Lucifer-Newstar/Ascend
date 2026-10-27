@@ -46,8 +46,8 @@ B = 0.75
 # says it has no note.
 MIN_SCORE = 12.0
 MIN_COVERAGE = 0.35
-CLOSE_SCORE = 6.0
-CLOSE_COVERAGE = 0.25
+CLOSE_SCORE = 8.0
+CLOSE_COVERAGE = 0.3
 
 _STOP = set(
     """a an the and or but if then so of to in on at by for with from into over under about
@@ -137,6 +137,7 @@ PRIORS: dict[str, dict[str, float]] = {
 _PHRASES = [
     (re.compile(r"\bbox[\s-]+breath\w*"), " boxbreathing "),
     (re.compile(r"\bfront[\s-]+crawl\b"), " frontcrawl "),
+    (re.compile(r"\bpre[\s-]?workouts?\b"), " preworkout "),
     (re.compile(r"\bbear[\s-]+crawls?\b"), " bearcrawl "),
     (re.compile(r"\bspider[\s-]+crawls?\b"), " spidercrawl "),
     (re.compile(r"\bshadow[\s-]?box\w*"), " shadowboxing "),
@@ -339,6 +340,16 @@ GENERAL_TOPIC = 1.3  # general team notes (training basics, safety, WHO) for any
 TITLE_EXTRA = 0.5  # a title naming more than the question (a variant) ranks lower
 
 
+# Words too general to name what a question is about: a title that shares only these with
+# the question ("Tabata workouts" for "which workout is best?") is not the answer.
+GENERIC = frozenset(
+    tokens(
+        "workout workouts exercise exercises training train fitness fit routine program "
+        "programme best good healthy body diet food eat often time way start beginner"
+    )
+)
+
+
 def _topics(text: str) -> set[str]:
     return {name for name, rx in TOPIC_WORDS.items() if rx.search(text)}
 
@@ -364,7 +375,7 @@ class Passage:
     ref: str
     score: float
     coverage: float  # share of the query's meaning (idf-weighted) found in the passage
-    title_hit: bool = False  # at least one question word is in the passage's title
+    title_hit: bool = False  # a question word (not a GENERIC one) is in the passage's title
     margin: float = 1.0  # this score over the next passage's (1.0 when it is alone)
 
     @property
@@ -478,11 +489,12 @@ class Index:
             elif qtop and pt:
                 s *= TOPIC_SAME if pt in qtop else TOPIC_OTHER
             tcov = sum(weight[t] for t in q if t in self.title[i]) / total
+            named = any(t in self.title[i] for t in q if t not in GENERIC)
             tw = sum(self.idf.get(t, 0.0) for t in self.title[i])
             extra = sum(self.idf.get(t, 0.0) for t in self.title[i] if t not in qset)
             s /= 1 + TITLE_EXTRA * (extra / tw if tw else 0.0)
             s *= 1 + TITLE_COVER * tcov
-            scored.append((s, i, cov / total, tcov > 0))
+            scored.append((s, i, cov / total, named))
         scored.sort(key=lambda x: (-x[0], x[1]))
         out = []
         top = scored[:k]
@@ -544,6 +556,33 @@ def retrieve(
         return []
     prior = PRIORS.get(intent or "", PRIORS["default"])
     return idx.search(focus(query)[:500], max(1, min(k, 10)), sources_only, prior)
+
+
+def passage(passage_id: str) -> dict[str, Any] | None:
+    """One passage of the corpus by id (title, text, source), or None."""
+    idx = _index()
+    if idx is None:
+        return None
+    if not hasattr(idx, "by_id"):
+        idx.by_id = {p["id"]: p for p in idx.passages}  # type: ignore[attr-defined]
+    found: dict[str, Any] | None = idx.by_id.get(passage_id)  # type: ignore[attr-defined]
+    return found
+
+
+def share(query: str, text: str) -> float:
+    """How much of a question's meaning (idf-weighted, unseen words count as the rarest) a
+    piece of text covers, 0..1. The trainer uses it to choose between a help note and a
+    knowledge passage, and to pick a passage's most relevant sentence."""
+    idx = _index()
+    q = list(dict.fromkeys(tokens(query)))
+    if idx is None or not q:
+        return 0.0
+    have = set(tokens(text))
+    for t in list(have):
+        have.update(idx.syn.get(t, []))
+    weight = {t: idx.idf.get(t, idx.unseen) for t in q}
+    total = sum(weight.values()) or 1.0
+    return sum(w for t, w in weight.items() if t in have or set(idx.syn.get(t, [])) & have) / total
 
 
 def citation(p: Passage) -> dict[str, str]:
