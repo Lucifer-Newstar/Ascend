@@ -94,6 +94,7 @@ _FOLD = {
 PRIORS: dict[str, dict[str, float]] = {
     "exercise_howto": {
         "free_exercise_db": 1.3,
+        "ascend_library": 1.2,
         "ascend_notes": 1.3,
         "usda_fdc_sr": 0.3,
         "ascend_food_table": 0.3,
@@ -104,11 +105,13 @@ PRIORS: dict[str, dict[str, float]] = {
         "ascend_food_table": 1.2,
         "pag_2018": 0.7,
         "free_exercise_db": 0.4,
+        "ascend_library": 0.4,
     },
     "default": {
         "ascend_notes": 1.5,
         "who_pa_2020": 1.2,
         "free_exercise_db": 0.9,
+        "ascend_library": 0.9,
         "usda_fdc_sr": 0.5,
         "ascend_food_table": 0.5,
     },

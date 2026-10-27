@@ -61,13 +61,17 @@ KEYWORDS: dict[str, re.Pattern[str]] = {
         r"\b(bench|bench press|squats?|deadlifts?|overhead press|ohp|barbell|dumbbells?|"
         r"kettlebells?|gym|lift|lifts|lifting|prs?|1rm|one rep max|rep max|hypertrophy|"
         r"strength|strong|stronger|progressive overload|leg press|lat pulldown|rows?|"
-        r"plates?|e1rm|rpe|sets per muscle|reps in reserve)\b",
+        r"plates?|e1rm|rpe|sets per muscle|reps in reserve|trap bar|hex bar|landmine|pendlay|"
+        r"grippers?|grip strength|lifting belts?|lifting straps|rdl|romanian deadlifts?|curls?|"
+        r"spotters?|safety bars?|powerlifting|olympic lifts?|snatch|clean and jerk)\b",
         re.I,
     ),
     "dario": re.compile(
         r"\b(calisthenics|push-?ups?|pull-?ups?|chin-?ups?|dips?|muscle-?ups?|handstands?|"
         r"planche|front lever|back lever|l-?sit|pistol squats?|bodyweight|body weight|"
-        r"hollow body|planks?|no equipment|without equipment)\b",
+        r"hollow body|planks?|no equipment|without equipment|archer|typewriter|human flag|"
+        r"dragon flag|skin the cat|elbow lever|crow pose|wall walks?|shrimp squats?|"
+        r"cossack squats?|toes to bar|bear crawls?|parallettes)\b",
         re.I,
     ),
     "kai": re.compile(
@@ -75,16 +79,39 @@ KEYWORDS: dict[str, re.Pattern[str]] = {
         r"swimming|hiit|stamina|endurance|zone 2|heart rate|vo2|muay thai|boxing|kickboxing|"
         r"mma|martial arts?|karate|taekwondo|bjj|jiu-?jitsu|sparring|shadow ?boxing|punch|"
         r"punches|punching bag|heavy bag|kicks?|skipping|jump rope|footwork|conditioning|"
-        r"steps|walking)\b",
+        r"steps|walking|jab|hooks?|uppercuts?|elbow strikes?|teep|roundhouse|low kicks?|clinch|"
+        r"parry|southpaw|orthodox|speed bag|hand wraps?|breakfalls?|ukemi|kata|tabata|"
+        r"intervals?|5k|10k|marathon|couch to 5k|rowing|elliptical|stairs|shuttle runs?|"
+        r"freestyle|breaststroke|backstroke)\b",
         re.I,
     ),
     "tara": re.compile(
         r"\b(mobility|stretch|stretches|stretching|flexible|flexibility|yoga|foam roll(er|ing)?|"
         r"recovery|recover|recovering|rest days?|sore|soreness|doms|sleep|sleeping|meditat\w*|"
         r"breathing|cool ?down|warm ?up|warming up|tight|stiff|stiffness|posture|pain|hurts?|"
-        r"injur\w*|ache|aching|massage)\b",
+        r"injur\w*|ache|aching|massage|pranayama|anulom|nadi shodhana|bhramari|kapalbhati|"
+        r"mindfulness|metta|loving.?kindness|body scan|box breathing|4-7-8|front splits?|"
+        r"middle splits?|side splits?|the splits|downward dog|cobra|warrior pose|child'?s pose|"
+        r"cat.?cow|pigeon pose|hip flexors?|thoracic|ankle mobility|wrist prep|"
+        r"legs up the wall|insomnia|naps?|relax\w*|stress|calm)\b",
         re.I,
     ),
+}
+
+# Whose area a cited knowledge passage is in: library passages carry the coach in their id
+# (lib:<coach>:<slug>), team notes are grouped by file (ml/knowledge/notes/<stem>.md). Used
+# only when the message's own words do not pick one specialist.
+NOTE_AREA: dict[str, str] = {
+    "cardio_running": "kai",
+    "martial_arts": "kai",
+    "calisthenics_skills": "dario",
+    "gym_strength": "idris",
+    "mobility_yoga": "tara",
+    "meditation_breathing": "tara",
+    "sleep_recovery": "tara",
+    "safety": "tara",
+    "nutrition_basics": "vera",
+    "supplements": "vera",
 }
 
 # The learned intent's label is a stronger hint than any one word.
@@ -154,6 +181,17 @@ def topic(text: str, label: str | None = None) -> str | None:
     return winners[0] if len(winners) == 1 else None
 
 
+def passage_area(passage_id: str) -> str | None:
+    """The specialist whose area a knowledge passage is in, from its id, or None."""
+    kind, _, rest = passage_id.partition(":")
+    head = rest.split(":", 1)[0]
+    if kind == "lib":
+        return head if head in AREAS else None
+    if kind == "note":
+        return NOTE_AREA.get(head)
+    return None
+
+
 def _topical(out: ChatOut) -> bool:
     if out.proposal is not None:
         return False
@@ -171,7 +209,10 @@ def specialist_for(text: str, out: ChatOut) -> str | None:
         return named
     if out.source == "faq":
         return FAQ_OWNER.get(out.faq_id or "")
-    return topic(text, out.intent)
+    who = topic(text, out.intent)
+    if who is None and out.citations:
+        who = passage_area(out.citations[0].passage_id)
+    return who
 
 
 def handoff_line(main: str, who: str) -> str:
