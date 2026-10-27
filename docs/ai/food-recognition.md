@@ -14,13 +14,20 @@
 
 | Piece | Status |
 |---|---|
-| Diet log by **search** over a seeded table of about 30 Indian foods with katori / piece portions (values approximate, source noted) | **implemented** (v0.1) |
-| `ml/` skeleton: `dvc.yaml` stages, `params.yaml`, `MLproject`, placeholder scripts | **implemented as stubs** (scripts exit with "not implemented yet") |
-| INDB / IFCT / Open Food Facts India import with a licence column | planned · Phase 1 |
-| Classifier v0 (ONNX, CPU) and the scan pipeline | planned · Phase 2 |
+| Diet log by **search** over a seeded table with katori / piece portions (values approximate, source noted): 31 foods in v0.1, 188 in 1.2, **203** with the gap fill (`nutrition/seed.py`, `seed_v12.py`, `seed_v14.py`) | **implemented** |
+| `ml/` food pipeline: prepare (dedupe, split by source photo, own photos test-only) → train (MobileNetV3-Small, GPU with mixed precision) → ONNX export with a parity gate → evaluate → gate on own photos; Roboflow COCO → crops converter (`ml/food/src/coco_to_cls.py`, `class_map.yaml`), `not_food` from Open Images | **implemented**, run only on synthetic smoke data |
+| Class list: `ml/labels.json`, **50 dishes + `not_food`**, each mapped to a food-table row (`src/check_labels.py`); all 59 class names of the team's Roboflow export mapped (51 to dishes, 8 skipped) | **implemented**; Tamil names `ta_reviewed: false`; `kali` → `ragi_kali` pending a photo check |
+| Classifier v0 trained on real photos | **not trained**: waits on the export's licence, the team's own test photos (≥ 10 per dish) and a GPU run ([ml/food/README.md](../../ml/food/README.md)) |
+| Scan meal in the app: `POST /ml/food-photo` (ONNX Runtime on the CPU, top 3, never logs by itself) and the Scan meal button on Fuel, shown only when a gated model is in `<data dir>/models/food/` | **implemented** (unreleased), hidden because no model exists |
+| INDB / IFCT / Open Food Facts India import with a licence column | planned · Phase 1 (not built; the food table is the app's own approximate values) |
+| Quality checks (dark / blurry), multi-item crops, confidence bands, portions from the photo | planned · Phase 2 (not built: the v0 runtime classifies the whole photo and the user picks the portion) |
 | VLM second opinion (`qwen3-vl:2b`) | planned · Phase 2, optional feature |
 | Personal swaps from corrections | planned · Phase 2 |
 | Retraining from exported corrections | planned · Phase 5 |
+
+Updated 2026-10-27. Sections 2 to 9 are the original design (2026-10-20); where the code
+differs, the status table above and [ml/food/README.md](../../ml/food/README.md) describe what
+is built. The v0 class list is the one in `ml/labels.json`, not the candidate list in §3.2.
 
 No accuracy figure in this file is measured. Every number marked **target** is a goal for the
 evaluation in [evaluation-ai.md](evaluation-ai.md#2-food-classifier-and-portions).
@@ -139,8 +146,9 @@ Target CPU latency ≤ 150 ms per crop on the Ryzen 7 7435HS (target from
 [ml-pipeline.md §5](../architecture/ml-pipeline.md#5-evaluation-and-gate)). The classifier
 runs on **CPU** so it never competes with the language model for the 4 GB of VRAM.
 
-The v0.1 stub `ml/params.yaml` says `mobilenet_v3_small`, 15 epochs, `lr 0.0005`; those are
-smoke-test defaults. The recipe below replaces them in Phase 2.
+`ml/params.yaml` now sets the v0 recipe: `mobilenet_v3_small`, ImageNet-pretrained, 20 epochs,
+batch 64, `lr 0.001`, mixed precision on the GPU (the v0.1 stub had 15 epochs and `lr 0.0005`). The model table above and the recipe below are
+the original plan; the augmentations actually used are in `ml/src/train.py`.
 
 ### 4.2 Augmentation (training only)
 

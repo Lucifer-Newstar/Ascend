@@ -3,9 +3,12 @@
 > **The AI section of the docs: what the AI does, what it is never allowed to do, which model
 > powers each feature and where its code lives.** Start here, then follow the index.
 > Owners: **Navin** (MLOps, food classifier, evaluation) and **Jegatheesan** (sidecar AI:
-> coach, model manager, scan pipeline). Status: v0.1 skeleton (2026-10-20), updated for the v6 engines (2026-10-21). Each feature below
-> is marked **implemented** (exists in the v0.1 code) or **planned** (agreed design, with
-> its phase).
+> coach, model manager, scan pipeline). Status: v0.1 skeleton (2026-10-20), updated for the v6 engines (2026-10-21) and for the
+> unreleased ML work on `main` and `feat/kb-gap-fill` (2026-10-27). Each feature below is marked
+> **implemented** (exists in the code today, with the version it arrived in) or **planned**
+> (agreed design, with its phase). The three models in `ml/` have their own cards:
+> [intent router](../../ml/intent/MODEL_CARD.md), [knowledge base](../../ml/knowledge/KB_CARD.md),
+> [food photo](../../ml/food/MODEL_CARD.md).
 
 ---
 
@@ -39,11 +42,11 @@ breaks, because the models were never the source of the numbers.
 | Feature | AI on | AI off |
 |---|---|---|
 | Coach tip of the day | Rule tip, phrased by `qwen3:4b` | Rule tip as written (**implemented**) |
-| Coach Q&A / chat | Model answer from facts, checked | Rule tip for the detected intent + link to the screen |
+| Coach Q&A / chat | Model answer from facts, checked | Rules route the message (intent router when they are unsure); a cited knowledge-base passage or a help note answers (**implemented**, unreleased) |
 | Weekly review | Rule findings + proposals + model summary | Same findings + proposals + template summary |
 | Plan generation | Planner rules + model explanation | Planner rules + template explanation |
 | Injury protocol | Rules + kind model wording | Rules + fixed wording |
-| Meal photo | Classifier top-3 (+ optional VLM) | Search-and-pick with the photo on screen |
+| Meal photo | Classifier top-3 to confirm (the classifier runs on the CPU and is not an Ollama model) | Same; with no gated food model installed, Scan meal is hidden and food is logged by search (**implemented**, unreleased; no model trained yet) |
 | Muscle map, XP, quests, PRs, TDEE | Engines | Engines (identical) |
 | Next-set targets, readiness and their "Why?" | Engines; one sentence phrased by `qwen3:4b`, shown only if every number passes the coach guard | Engines; the template sentence (**implemented**, v6) |
 | System notices (deload, target raised, muscle recovered) | Engines and fixed templates | Identical (**implemented**, v6) |
@@ -58,20 +61,26 @@ Measured by metric R6 (the E2E journey with Ollama stopped) in
 
 | Feature | Model | Runtime / where | Code module | Status | Doc |
 |---|---|---|---|---|---|
-| Tip of the day, "ask the coach" | `qwen3:4b` (prompt `P-00`) over rules `coach-rules-v1` | Ollama, GPU | `modules/coach` (`rules.py`, `ollama.py`, `service.py`) | **implemented** (no validators yet) | [coach-llm.md](coach-llm.md) |
+| Tip of the day, "ask the coach" | `qwen3:4b` (prompt `P-00`) over rules `coach-rules-v1` | Ollama, GPU | `modules/coach` (`rules.py`, `ollama.py`, `runtime.py`, `service.py`) | **implemented** | [coach-llm.md](coach-llm.md) |
+| Trainer chat routing | none: rules `trainer-intents-v1` first, help notes `trainer-kb-v1` | Sidecar, CPU | `modules/trainer` (`intents.py`, `kb.py`, `chat.py`) | **implemented** (1.1) | [trainer-actions.md](trainer-actions.md) |
+| Intent router for messages the rules are unsure of | `ascend-intent` 1.1.0: TF-IDF n-grams + logistic regression | Sidecar, CPU, standard-library runtime (`ASCEND_INTENT_MODEL=off` disables it) | `modules/ml/intent.py`, `intent_runtime.py`, `trainer/ml_route.py`; training in `ml/intent/` | **implemented** (unreleased) | [ml/intent/MODEL_CARD.md](../../ml/intent/MODEL_CARD.md) |
+| Cited knowledge answers | none: BM25 over 1,779 passages (`kb-v1.4`) | Sidecar, CPU | `modules/ml/knowledge.py`; corpus in `ml/knowledge/` | **implemented** (unreleased) | [ml/knowledge/KB_CARD.md](../../ml/knowledge/KB_CARD.md) |
+| Coaching team (who answers) | none: rules over the routed topic | Sidecar | `modules/trainer/team.py` | **implemented** (unreleased) | [coaching-team.md](coaching-team.md) |
+| Trainer edits and plan building from chat | none: rules (`actions-parse-v2`, plan facts) | Sidecar | `modules/actions`, `modules/planbuilder` | **implemented** (1.3; plan builder unreleased) | [trainer-actions.md](trainer-actions.md), [plan-builder.md](plan-builder.md) |
+| AI setup: tiers from RAM / VRAM | none (`ai-tiers-v1`) | Sidecar | `modules/ai` (`setup.py`, `hardware.py`) | **implemented** (1.1) | [model-manager.md](model-manager.md) |
 | Coach chat with streaming and tool calls | `qwen3:4b` (`P-01`, `P-02`); tiers `gemma3:4b`, `qwen3:1.7b` | Ollama, GPU | `modules/coach` + `ai/ollama_client.py` | planned · Phase 2 | [coach-llm.md](coach-llm.md) |
-| Output validators and safety filter | none (rules) | Sidecar, CPU | `coach/validate.py`, `coach/safety.py` | planned · Phase 2 | [coach-llm.md §5–7](coach-llm.md#5-structured-output-and-validation) |
+| Output validators and safety filter | none (rules) | Sidecar, CPU | `coach/validate.py` (number fidelity, banned phrases); no separate `coach/safety.py` | validators **implemented**; a separate safety module planned | [coach-llm.md §5–7](coach-llm.md#5-structured-output-and-validation) |
 | Tip-card rephrase and "why?" | `qwen3:4b` (`P-03`, `P-04`) | Ollama | `modules/coach` | planned · Phase 2 | [prompt-library.md](prompt-library.md) |
-| Weekly review summary | `qwen3:4b` (`P-05`) over rule findings | Ollama, background job | `coach/weekly_review` | planned · Phase 2 | [adaptive-planning-ai.md §5](adaptive-planning-ai.md#5-the-weekly-review-every-7th-day) |
+| Weekly review summary | `qwen3:4b` (`P-05`) over rule findings | Ollama, background job | `coach/weekly_review.py` | rule findings + template summary **implemented**; model summary planned · Phase 2 | [adaptive-planning-ai.md §5](adaptive-planning-ai.md#5-the-weekly-review-every-7th-day) |
 | Plan explanation, proposal reasons | `qwen3:4b` (`P-06`, `P-07`) | Ollama | `coach/planner`, `coach/proposals` | planned · Phase 2 | [adaptive-planning-ai.md](adaptive-planning-ai.md) |
 | Injury follow-up wording | `qwen3:4b` (`P-08`) after rules triage | Ollama | `coach/injury` | planned · Phase 2 | [adaptive-planning-ai.md §6](adaptive-planning-ai.md#6-injury-adaptation) |
 | Readiness note | `qwen3:4b` (`P-09`) | Ollama | `progress/readiness` | planned · Phase 4 | [adaptive-planning-ai.md §7](adaptive-planning-ai.md#7-readiness-check-in) |
 | Tamil / Tanglish replies (beta) | `qwen3:4b` + `P-10`; fallback IndicTrans2 distilled | Ollama; CPU for IndicTrans2 | `modules/coach`, `ai/translate.py` | planned · Phase 2 (path A), Phase 4 (path B) | [multilingual-tamil.md](multilingual-tamil.md) |
-| Meal photo: dish suggestions | Own classifier (MobileNetV3 / EfficientNet-Lite class, ONNX INT8) | ONNX Runtime, **CPU** | `modules/nutrition` (scan) + `ai/onnx_runtime.py`; training in `ml/` | planned · Phase 2 (ml/ stubs exist) | [food-recognition.md](food-recognition.md) |
+| Meal photo: dish suggestions | Own classifier: food-photo v0, MobileNetV3-Small, ONNX (FP32; INT8 not started) | ONNX Runtime, **CPU** | `modules/ml/food_photo.py`, `POST /ml/food-photo`; training in `ml/` | runtime, gate and hidden Scan meal **implemented** (unreleased); **no model trained yet** | [food-recognition.md](food-recognition.md) |
 | Meal photo: find items / second opinion | `qwen3-vl:2b` (`P-11`), optional | Ollama, GPU after unloading the coach | `modules/nutrition` (scan job) | planned · Phase 2 | [food-recognition.md §7](food-recognition.md#7-vlm-second-opinion-qwen3-vl2b-optional) |
 | Portions | none: default unit + user quantity | Sidecar | `nutrition/portions` | planned · Phase 1 | [food-recognition.md §5.2](food-recognition.md#52-portions) |
 | Nutrient values | none: database rows | SQLite | `modules/nutrition` | **implemented** (seeded search table) | [food-recognition.md §6](food-recognition.md#6-nutrients-always-from-the-database) |
-| Model install, load/unload, health | none (manager) | Sidecar + Ollama API | `ai/model_manager.py` | partly **implemented** (availability check) | [model-manager.md](model-manager.md) |
+| Model install, load/unload, health | none (manager) | Sidecar + Ollama API | `modules/ai` (no `model_manager.py`) | partly **implemented** (availability check, AI setup tiers) | [model-manager.md](model-manager.md) |
 | Retraining from corrections | Classifier (training) | Docker + WSL2 + RTX 3050, offline | `ml/` | planned · Phase 5 | [mlops-lifecycle.md](mlops-lifecycle.md) |
 | Progress photos | **none** (no AI judging in v1) | — | — | decided | [features.md §4](../planning/features.md#4-cut-or-replaced) |
 | Muscle map, XP, quests, PRs, TDEE | **none** (engines) | Sidecar | `progress`, `gamification`, `workouts` | **implemented** (v0.1) | [system-architecture.md](../architecture/system-architecture.md) |

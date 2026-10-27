@@ -33,10 +33,22 @@ are GitHub Releases that the app reads only if updates are enabled.
 
 ### What exists today
 
-The v0.1 repo has the skeleton only: `ml/dvc.yaml` (stages prepare → train → export →
-evaluate), `ml/params.yaml`, `ml/MLproject`, `ml/requirements.txt` and four placeholder
-scripts in `ml/src/` that exit with "not implemented yet". Everything below is the plan for
-Phases 1, 2 and 5; each step lists its commit in [ai-roadmap.md](ai-roadmap.md).
+Updated 2026-10-27. The v0.1 skeleton is gone; what is built is described in
+[ml/README.md](../../ml/README.md):
+
+- **Food photo:** `dvc repro gate` runs prepare → train → export (ONNX, parity gate) →
+  evaluate → gate (own photos only). It has only run on synthetic smoke data; no food model is
+  trained yet. `ml/food/src/publish_food.py` packages a gated model; the app looks for it in
+  `<data dir>/models/food/`. GPU set-up uses the CUDA build of torch from the `cu126` index.
+- **Intent router** (`ml/intent/`, 1.1.0) and **knowledge base** (`ml/knowledge/`,
+  1,779 passages): trained or built on a CPU through DVC stages (`intent_evaluate`,
+  `kb_evaluate`) and copied into `services/sidecar/app/modules/ml/assets/` by their
+  `publish.py`.
+- MLflow logs to a SQLite store in `ml/mlruns/`. The DVC remote, a model registry, temperature
+  scaling and INT8 quantisation are not set up yet.
+
+The rest of this page is the original plan for Phases 1, 2 and 5; each step lists its commit
+in [ai-roadmap.md](ai-roadmap.md).
 
 ---
 
