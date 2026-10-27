@@ -19,7 +19,7 @@ from common import ML_DIR
 
 NUTRITION = ML_DIR.parent / "services" / "sidecar" / "app" / "modules" / "nutrition"
 SEED = NUTRITION / "seed.py"
-SEEDS = (SEED, NUTRITION / "seed_v12.py")
+SEEDS = (SEED, NUTRITION / "seed_v12.py", NUTRITION / "seed_v14.py")
 # Classifier classes with no food row: the model may answer them, the app never logs them.
 NON_FOOD = {"not_food"}
 

@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "note": "Maps classifier classes to the sidecar food table. food_name must match a row in services/sidecar/app/modules/nutrition/seed.py or seed_v12.py (checked by src/check_labels.py). indb_id is filled from the full INDB import once its licence is recorded in SOURCES.md. Tamil names are pending review by a native speaker (ta_reviewed). not_food is the reject class (Open Images photos with no food); it has no food row and is never logged.",
+  "version": 3,
+  "note": "Maps classifier classes to the sidecar food table. food_name must match a row in services/sidecar/app/modules/nutrition/seed.py, seed_v12.py or seed_v14.py (checked by src/check_labels.py). indb_id is filled from the full INDB import once its licence is recorded in SOURCES.md. Tamil names are pending review by a native speaker (ta_reviewed). not_food is the reject class (Open Images photos with no food); it has no food row and is never logged.",
   "classes": {
     "idli": {
       "food_name": "Idli",
@@ -144,6 +144,262 @@
       "ta": "வாழைப்பழம்",
       "ta_reviewed": false,
       "default_portion": "1 medium",
+      "indb_id": null
+    },
+    "carrot_poriyal": {
+      "food_name": "Carrot poriyal",
+      "en": "Carrot poriyal",
+      "ta": "கேரட் பொரியல்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "beetroot_poriyal": {
+      "food_name": "Beetroot poriyal",
+      "en": "Beetroot poriyal",
+      "ta": "பீட்ரூட் பொரியல்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "ragi_kali": {
+      "food_name": "Ragi ball (mudde)",
+      "en": "Ragi kali",
+      "ta": "கேழ்வரகு களி",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "paruppu_vadai": {
+      "food_name": "Masala vada",
+      "en": "Paruppu vadai",
+      "ta": "பருப்பு வடை",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "koozh": {
+      "food_name": "Kambu koozh",
+      "en": "Kambu koozh",
+      "ta": "கம்பங் கூழ்",
+      "ta_reviewed": false,
+      "default_portion": "1 glass",
+      "indb_id": null
+    },
+    "lemon_rice": {
+      "food_name": "Lemon rice",
+      "en": "Lemon rice",
+      "ta": "எலுமிச்சை சாதம்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "pidi_kozhukattai": {
+      "food_name": "Pidi kozhukattai",
+      "en": "Pidi kozhukattai",
+      "ta": "பிடி கொழுக்கட்டை",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "poorna_kozhukattai": {
+      "food_name": "Poorna kozhukattai",
+      "en": "Poorna kozhukattai",
+      "ta": "பூரண கொழுக்கட்டை",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "paal_kozhukattai": {
+      "food_name": "Paal kozhukattai",
+      "en": "Paal kozhukattai",
+      "ta": "பால் கொழுக்கட்டை",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "appam": {
+      "food_name": "Appam",
+      "en": "Appam",
+      "ta": "ஆப்பம்",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "kara_chutney": {
+      "food_name": "Kara chutney",
+      "en": "Kara chutney",
+      "ta": "கார சட்னி",
+      "ta_reviewed": false,
+      "default_portion": "1 tbsp",
+      "indb_id": null
+    },
+    "mint_chutney": {
+      "food_name": "Mint chutney",
+      "en": "Mint chutney",
+      "ta": "புதினா சட்னி",
+      "ta_reviewed": false,
+      "default_portion": "1 tbsp",
+      "indb_id": null
+    },
+    "mushroom_biryani": {
+      "food_name": "Mushroom biryani",
+      "en": "Mushroom biryani",
+      "ta": "காளான் பிரியாணி",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "veg_biryani": {
+      "food_name": "Veg biryani",
+      "en": "Veg biryani",
+      "ta": "காய்கறி பிரியாணி",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "paneer_biryani": {
+      "food_name": "Paneer biryani",
+      "en": "Paneer biryani",
+      "ta": "பனீர் பிரியாணி",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "mutton_biryani": {
+      "food_name": "Mutton biryani",
+      "en": "Mutton biryani",
+      "ta": "மட்டன் பிரியாணி",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "chicken_65": {
+      "food_name": "Chicken 65",
+      "en": "Chicken 65",
+      "ta": "சிக்கன் 65",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "prawn_thokku": {
+      "food_name": "Prawn thokku",
+      "en": "Prawn thokku",
+      "ta": "இறால் தொக்கு",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "crab_masala": {
+      "food_name": "Crab masala",
+      "en": "Crab masala",
+      "ta": "நண்டு மசாலா",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "paneer_masala": {
+      "food_name": "Paneer masala",
+      "en": "Paneer masala",
+      "ta": "பனீர் மசாலா",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "ghee_rice": {
+      "food_name": "Ghee rice",
+      "en": "Ghee rice",
+      "ta": "நெய் சாதம்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "sambar_rice": {
+      "food_name": "Sambar rice",
+      "en": "Sambar rice",
+      "ta": "சாம்பார் சாதம்",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "omelette": {
+      "food_name": "Omelette (2 eggs)",
+      "en": "Omelette",
+      "ta": "ஆம்லெட்",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "poha": {
+      "food_name": "Poha",
+      "en": "Poha",
+      "ta": "அவல் உப்புமா",
+      "ta_reviewed": false,
+      "default_portion": "1 plate",
+      "indb_id": null
+    },
+    "chole": {
+      "food_name": "Chana masala",
+      "en": "Chole",
+      "ta": "கொண்டைக்கடலை மசாலா",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "rajma": {
+      "food_name": "Rajma curry",
+      "en": "Rajma",
+      "ta": "ராஜ்மா",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "paratha": {
+      "food_name": "Plain paratha",
+      "en": "Paratha",
+      "ta": "பராத்தா",
+      "ta_reviewed": false,
+      "default_portion": "1 piece",
+      "indb_id": null
+    },
+    "bhindi_fry": {
+      "food_name": "Bhindi fry",
+      "en": "Bhindi fry",
+      "ta": "வெண்டைக்காய் வறுவல்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "aloo_gobi": {
+      "food_name": "Aloo gobi",
+      "en": "Aloo gobi",
+      "ta": "ஆலு கோபி",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "aloo_sabzi": {
+      "food_name": "Aloo sabzi",
+      "en": "Aloo sabzi",
+      "ta": "உருளைக்கிழங்கு கறி",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
+      "indb_id": null
+    },
+    "dhokla": {
+      "food_name": "Dhokla",
+      "en": "Dhokla",
+      "ta": "டோக்ளா",
+      "ta_reviewed": false,
+      "default_portion": "2 pieces",
+      "indb_id": null
+    },
+    "veg_pulao": {
+      "food_name": "Veg pulao",
+      "en": "Veg pulao",
+      "ta": "வெஜ் புலாவ்",
+      "ta_reviewed": false,
+      "default_portion": "1 katori",
       "indb_id": null
     },
     "not_food": {

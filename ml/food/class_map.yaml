@@ -2,9 +2,10 @@
 # lower-casing and turning spaces, dashes and dots into underscores, so "Medu Vada",
 # "medu-vada" and "medu_vada" are one key.
 #
-# NOT VERIFIED against the exports: Roboflow Universe pages render their class lists with
-# JavaScript, so the names below are the common spellings, not copied from each dataset.
-# Before the first conversion run
+# The block at the end ("Ascend.v1i.coco") is checked against the team's own Roboflow export:
+# its 59 class names come from `coco_to_cls.py --list-classes` on Navin's PC (2026-10-26).
+# The older entries above it are common spellings, not copied from each dataset.
+# Before each conversion run
 #     python food/src/coco_to_cls.py --list-classes <export folder>
 # and add any real name you want to keep. Classes not listed here are skipped and counted
 # in the report; nothing is guessed. Map a class to `skip` to drop it on purpose.
@@ -28,14 +29,19 @@ aliases:
   chapati: chapati
   chapathi: chapati
   roti: chapati
+  roti_phulka: chapati
   rice: rice
   white_rice: rice
   steamed_rice: rice
   plain_rice: rice
+  satham: rice
   dal: dal
   dhal: dal
+  daal: dal
+  varan: dal                 # Maharashtrian plain toor dal
   toor_dal: dal
   medu_vada: medu_vada
+  medu_vadai: medu_vada
   vada: medu_vada
   uzhunnu_vada: medu_vada
   pongal: ven_pongal
@@ -48,12 +54,15 @@ aliases:
   porotta: parotta
   biryani: chicken_biryani   # most dataset biryani boxes are chicken; check a sample
   chicken_biryani: chicken_biryani
+  chicken_briyani: chicken_biryani
   curd_rice: curd_rice
   thayir_sadam: curd_rice
   boiled_egg: boiled_egg
   egg: boiled_egg
+  eggs: skip                 # mixed egg dishes in one class: ambiguous
   chicken_curry: chicken_curry
   coconut_chutney: coconut_chutney
+  thengai_chutney: coconut_chutney
   chutney: coconut_chutney   # check a sample: some datasets mix chutneys
   banana: banana
   # Common in these datasets but not food rows the app can log yet:
@@ -61,3 +70,59 @@ aliases:
   yogurt: skip
   curd: skip
   plate: skip
+
+  # ---- Ascend.v1i.coco (the team's export, v1.4) ----------------------------------------
+  # Every class of that export is now mapped or skipped on purpose. Image counts are the
+  # box counts its --list-classes run printed.
+  carrot_poriyal: carrot_poriyal          # 970
+  beetroot_poriyal: beetroot_poriyal      # 884
+  kali: ragi_kali                         # 896. Tamil "kali" here assumed ragi (finger
+                                          # millet) kali; check ~20 photos: if they are the
+                                          # sweet ulundhu kali, map it to skip instead
+  parupu_vadai: paruppu_vadai             # 744 (chana dal vada = the "Masala vada" row)
+  paruppu_vadai: paruppu_vadai
+  koozh: koozh                            # 742 (kambu/ragi koozh)
+  lemon_satham: lemon_rice                # 692
+  lemon_rice: lemon_rice
+  # Kozhukattai stays three classes: pidi (hand-pressed), poorna (filled, sweet) and paal
+  # (small balls in sweet milk) look different and differ in calories, and each has about
+  # 660 photos. Merging them would teach one label three shapes for no gain.
+  pidi_kolukattai: pidi_kozhukattai       # 670
+  poorna_kolukattai: poorna_kozhukattai   # 664
+  paal_kolukattai: paal_kozhukattai       # 660
+  appam: appam                            # 666
+  kaara_chutney: kara_chutney             # 646
+  kara_chutney: kara_chutney
+  puthina_chutney: mint_chutney           # 608
+  mint_chutney: mint_chutney
+  mushroom_briyani: mushroom_biryani      # 642
+  veg_briyani: veg_biryani                # 618
+  veg_biryani: veg_biryani
+  paneer_briyani: paneer_biryani          # 604
+  mutton_briyani: mutton_biryani          # 600
+  mutton_biryani: mutton_biryani
+  chicken_65: chicken_65                  # 630
+  prawn_thokku: prawn_thokku              # 620
+  nandu_masala: crab_masala               # 620
+  paneer_masala: paneer_masala            # 612
+  nei_satham: ghee_rice                   # 606
+  ghee_rice: ghee_rice
+  sambar_satham: sambar_rice              # 600
+  sambar_rice: sambar_rice
+  rajma: rajma                            # 325
+  omelette: omelette                      # 105
+  poha: poha                              # 109
+  chole: chole                            # 96
+  paratha: paratha                        # 126
+  bhindi: bhindi_fry                      # 152
+  aloo_gobhi: aloo_gobi                   # 115
+  aloo_gobi: aloo_gobi
+  aloo_sabji: aloo_sabzi                  # 94
+  yellow_dhokla: dhokla                   # 103
+  veg_pulao: veg_pulao                    # 87
+  # No food row the app can log yet (add a row first, then map):
+  saag: skip                              # 254
+  khandvi: skip                           # 165
+  bhakarwadi: skip                        # 123
+  bhakri: skip                            # 102
+  thepla: skip                            # 91
