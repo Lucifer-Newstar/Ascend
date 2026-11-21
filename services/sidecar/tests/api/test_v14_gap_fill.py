@@ -38,8 +38,12 @@ def test_dataset_dishes_are_in_the_food_table(client: TestClient) -> None:
 
 
 def test_labels_json_and_the_seed_agree() -> None:
-    labels = Path(__file__).resolve().parents[4] / "ml" / "labels.json"
-    if not labels.exists():  # the sidecar can be tested on its own
+    here = Path(__file__).resolve()
+    labels = next(
+        (p / "ml" / "labels.json" for p in here.parents if (p / "ml" / "labels.json").exists()),
+        None,
+    )
+    if labels is None:  # the sidecar can be tested on its own
         return
     from app.modules.nutrition.seed import FOODS
     from app.modules.nutrition.seed_v12 import FOODS_V12

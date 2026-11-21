@@ -141,6 +141,9 @@ jobs:
           cache-dependency-glob: ml/requirements.txt
       - run: uv venv --python 3.12 .venv
       - run: uv pip install --python .venv/bin/python -r requirements.txt
+      - name: Install poppler-utils
+        # kb_build shells out to pdftotext to extract the PAG 2018 PDF.
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: dvc repro (intent + knowledge)
         # Downloads the Stack Exchange dump, CLINC150, PAG 2018 and SR Legacy (about 60 MB),
         # trains the intent model (about a minute on CPU) and checks both gates.

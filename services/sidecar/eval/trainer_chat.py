@@ -133,6 +133,7 @@ def run() -> list[dict[str, Any]]:
                 out.append({"cat": cat, "text": text, "exp": exp, "verdict": verdict,
                             "reply": resp.get("reply"),
                             "proposal": (resp.get("proposal") or {}).get("summary")})  # fmt: skip
+        app.state.engine.dispose()  # release chat.db so Windows can clean the tmp dir
     return out
 
 
