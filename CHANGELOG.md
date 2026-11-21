@@ -11,6 +11,11 @@ where a number you see could change. User-facing release notes live in
 
 ### Added
 
+- **Academic review preparation:** a bounded problem statement, measurable proposed objectives,
+  current-app comparison, evaluation protocol, offline Windows demo checklist and unfilled
+  contribution-evidence template. These do not claim a completed user study or approved title.
+
+
 - **Trainer answers that read like a coach.** A knowledge answer now leads with the answer in
   a line or two, then numbered steps for an exercise or one more tip, then at most one line
   for you from your profile (your kit, goal, experience, baseline test or protein target),

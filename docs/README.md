@@ -19,6 +19,15 @@
 
 ---
 
+## Academic review preparation
+
+The current proposed [problem statement and scope](project/academic-scope.md),
+[evaluation protocol](project/evaluation-plan.md),
+[offline Windows demo checklist](operations/academic-demo.md) and
+[contribution evidence template](project/contribution-evidence.md) separate completed
+implementation from proposed validation. Targets are not measured results, and team
+planning roles are not verified contribution records.
+
 ## 1. Document Tree
 
 ```text
@@ -115,6 +124,13 @@ docs/
 ├── research/                      ← v8 research: anatomy, muscle mapping, engagement, trainer
 └── screenshots/                   ← app screenshots used by the README
 ```
+
+## Historical evaluation planning tables
+
+[operations/evaluation.md](operations/evaluation.md) records earlier product/ML targets and
+planned owners. It is not evidence that those targets were achieved or those members
+implemented the work. For the bounded academic protocol, use
+[project/evaluation-plan.md](project/evaluation-plan.md).
 
 ## 1a. Design-only documents
 

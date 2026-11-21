@@ -16,6 +16,14 @@ fully without it.
 ASCEND is our final-year project: an Electron + React desktop app, a FastAPI + SQLite engine
 that runs beside it, deterministic training and diet engines, and an MLOps pipeline.
 
+**Academic scope:** the proposed contribution is an offline, inspectable fitness planning and
+progress-tracking system, not a claim of new physiological science. Start with the
+[bounded problem statement and objectives](docs/project/academic-scope.md),
+[evaluation plan](docs/project/evaluation-plan.md),
+[Windows demo checklist](docs/operations/academic-demo.md) and
+[team contribution evidence template](docs/project/contribution-evidence.md).
+These are preparation documents, not completed studies or university approval.
+
 ![Today](docs/screenshots/ASCEND_v5_Today.png)
 
 | Train: three-pane logger | Skills: tree canvas |
@@ -177,8 +185,13 @@ what the engines computed.
 - **Recovery r ≈ 0.9 is partly circular.** It is measured against the simulator's own ground truth,
   which uses the same model family as the engine. It shows the estimation works under those
   assumptions, not that people recover this way.
-- **Stall detection is weak:** precision 0.113, recall 0.62 on synthetic stalls. That is why a stall
-  alone never triggers a deload.
+- **Stall detection is weak:** precision 0.113, recall 0.62 on synthetic stalls. The progression
+  rule can recommend a 10 % reset of that lift after a stall flag; a false alarm can therefore
+  change a target. This is not a diagnosis or evidence of a need for a real-world deload.
+- **The recovery hold was inactive in the published progression experiment.** Removing recovery
+  input produced identical results because no primary muscle crossed the hold threshold.
+  That experiment does not show that recovery improves progression; separate stress cases are
+  needed ([evaluation plan](docs/project/evaluation-plan.md)).
 - **The adaptive TDEE is slow to learn.** Only 57% of synthetic users are within 150 kcal of their
   true expenditure on day 28; the target stays on the formula until the estimate settles. If meals
   are under-logged, "you burn" matches what was logged.

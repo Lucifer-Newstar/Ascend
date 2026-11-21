@@ -1,5 +1,12 @@
 # Evaluation
 
+> **Historical planning record, not measured results.** The tables below retain earlier
+> product/ML targets and proposed measuring roles. They do not establish implementation,
+> contribution ownership or completed validation. In particular, food-photo metrics remain
+> planned: no food model is trained. Commit/PR counts are not academic contribution quotas.
+> Use the [current proposed academic evaluation plan](../project/evaluation-plan.md) and
+> [contribution evidence template](../project/contribution-evidence.md) for review preparation.
+
 > **How ASCEND is judged** — product, engineering, AI/ML and team metrics, with targets,
 > how each is measured, and when. Every target is an **estimate** until the first
 > measurement; measured values replace it with a date and a link to the run.
