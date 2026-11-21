@@ -14,6 +14,11 @@ function connectSrc(html: string): string {
 }
 
 describe("CSP", () => {
+  it("permits local photo object URLs without allowing remote images", () => {
+    const match = /img-src\s+([^;"]*)/.exec(indexHtml);
+    expect(match?.[1].trim().split(/\s+/)).toEqual(["'self'", "data:", "blob:"]);
+  });
+
   it("ships connect-src 'self' only (review M3)", () => {
     expect(connectSrc(indexHtml)).toBe("'self'");
     expect(indexHtml).not.toMatch(/localhost|127\.0\.0\.1/);
