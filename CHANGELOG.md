@@ -9,7 +9,25 @@ where a number you see could change. User-facing release notes live in
 
 ## [Unreleased]
 
+### Fixed
+
+- Trainer action status now stays in the shared conversation when switching between Chat and
+  its drawer or returning to the page. Confirmed or undone actions no longer reappear as
+  fresh confirmation cards. A remount regression test covers the case.
+- Update the locked development-tooling dependencies `joi` and `follow-redirects` within
+  their existing compatible ranges to remove their high-severity advisories. Other
+  moderate development-tooling advisories remain; no forced major downgrade was applied.
+
 ### Added
+
+- College review preparation is grouped under `docs/college-docs`, including sourced
+  amended R2021 marking rules, the Dec 2026-Apr 2027 review windows and an auditable
+  decision-loop proposal. Proposed studies and measured results remain separate.
+
+- **Academic review preparation:** a bounded problem statement, measurable proposed objectives,
+  current-app comparison, evaluation protocol, offline Windows demo checklist and unfilled
+  contribution-evidence template. These do not claim a completed user study or approved title.
+
 
 - **Trainer answers that read like a coach.** A knowledge answer now leads with the answer in
   a line or two, then numbered steps for an exercise or one more tip, then at most one line

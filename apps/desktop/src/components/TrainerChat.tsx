@@ -178,7 +178,7 @@ export function TrainerChat({
               {m.reply?.fallback_reason && <p className="mt-1 text-[11px] text-muted">{fallbackLabel(m.reply.fallback_reason)}</p>}
               {m.reply?.source === "ollama" && <p className="mt-1 text-[11px] text-muted">Worded by the local AI · numbers checked</p>}
               <Citations items={m.reply?.citations} />
-              {m.reply?.proposal && <ActionCard initial={m.reply.proposal} onDone={() => onActionDone?.()} />}
+              {m.reply?.proposal && <ActionCard key={`${m.reply.proposal.id}:${m.reply.proposal.status}`} initial={m.reply.proposal} onDone={(proposal) => { chatStore.updateProposal(proposal); onActionDone?.(); }} />}
               {(m.reply?.actions ?? []).filter((a) => supports.includes(a.kind)).length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.reply!.actions.filter((a) => supports.includes(a.kind) && a.kind !== "proposal").map((a) => (

@@ -63,7 +63,7 @@ parent's recovery group, the factor error barely moves (frequent 0.138 to 0.149)
 
 **What it shows**
 
-- **recovery-v2 tracks true readiness far better than a fixed 48 h rule** in both cohorts: Pearson r 0.842-0.926 against 0.552-0.579, and MAE 0.040-0.056 against 0.130-0.191. Dose matters: three easy sets and eight hard sets do not need the same 48 hours.
+- **recovery-v2 tracks the simulator's readiness more closely than a fixed 48 h rule** in both cohorts: Pearson r 0.842-0.926 against 0.552-0.579, and MAE 0.040-0.056 against 0.130-0.191. This comparison is conditional on the simulated dose/decay assumptions, not a measurement of human recovery.
 - **Personal factors help most where they can be learned.**
   - For frequent users, r rises from 0.842 to 0.926. The correlation with true daily capacity rises from 0.712 to 0.806.
   - For typical users the gain is small (0.917 to 0.926). With 2-4 day gaps, most fatigue is gone by the next session, so the data says little about recovery speed.
@@ -120,7 +120,7 @@ By RPE habit (hit within 1 rep / mean RIR error):
 
 **What it shows**
 
-- **prog-v1 is the only policy that is both reliable and not too easy.** Repeating last session always "hits" but leaves users 6.09 reps more in reserve than the target (about 8 in reserve). A fixed +2.5 kg every session fails almost every set within weeks. The classic linear progression with resets is the closest competitor: it is centred (mean error near 0) but too hard on 22.4% of exposures, against 2.7% for prog-v1.
+- **prog-v1 trades fewer too-hard prescriptions for more too-easy ones in this simulation.** Repeating the last session hits within 1 rep on 99.8% of exposures, but is too easy on 91.2%. Compared with linear progression with resets, prog-v1 is too hard less often (2.7% vs 22.4%) but too easy more often (42.9% vs 22.0%), and has higher RIR MAE (2.89 vs 2.08). A target-hit rate alone does not establish the best policy or real-user safety.
 - **prog-v1 errs on the easy side**: on average 2.43 reps more in reserve than the target, and too easy on 42.9% of exposures. This is the price of never asking for more than the user showed, and it is largest when no RPE is logged (3.21 reps over the target). Without RPE the engine cannot see reserve and climbs one rep at a time. Logging RPE is the single biggest improvement a user can make.
 - **The recovery hold did not change these numbers.** A run without recovery input gave identical results: in this simulation no primary muscle was under 40 % at a session start. In development, a 60 % threshold held so often that users who never log RPE ended up more than 10 reps above the target reserve, so 40 % was kept.
 
@@ -290,6 +290,7 @@ On the build machine the three runs took about 3, 2 and 1 minutes.
 
 - **Synthetic users only.** No result here comes from real people. Real training logs with consent are needed before any claim about real users.
 - **Recovery r is partly circular.** recovery-v2 reaches Pearson r 0.842-0.926 against the simulator's ground truth, but the simulator uses the same model family (exponential decay, capacity per muscle). Agreement of about 0.9 shows the estimation works under those assumptions; it does not show that people recover this way. The deliberate mismatches listed at the top reduce, but do not remove, that circularity.
+- **No demonstrated recovery-to-progression benefit in this experiment.** The recovery hold never activated, so hold-on/hold-off produced identical progression results. Separate paired stress cases are needed; see the [proposed academic protocol](../college-docs/evaluation-plan.md).
 - **Stall detection is weak.** Precision 0.113 and recall 0.62 on synthetic stalls (103 of 166 found, 811 false alarms). A stall flag is a hint, not a diagnosis; one false alarm costs one 10 % reset of that lift.
 - **Real local-model phrasing is unverified.** No Ollama was available on the build machine, so no qwen3:4b sentence was produced or checked. Only the guard logic is tested, with a stub model. The app shows the template text whenever the model is missing.
 - **Adaptive TDEE is slower to learn than hoped.** 57% of synthetic users are within 150 kcal on day 28 (the aim was 80 %), and the first two weeks are no better than the formula. The ±1 SD band is slightly narrow (61% vs 68 %).
