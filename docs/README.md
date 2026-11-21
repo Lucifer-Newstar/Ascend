@@ -21,10 +21,12 @@
 
 ## Academic review preparation
 
-The current proposed [problem statement and scope](project/academic-scope.md),
-[evaluation protocol](project/evaluation-plan.md),
-[offline Windows demo checklist](operations/academic-demo.md) and
-[contribution evidence template](project/contribution-evidence.md) separate completed
+The [college-docs index](college-docs/README.md) contains the proposed scope, sourced Anna
+University rules/review windows and evidence preparation. The proposed
+[problem statement and scope](college-docs/academic-scope.md),
+[evaluation protocol](college-docs/evaluation-plan.md),
+[offline Windows demo checklist](college-docs/academic-demo.md) and
+[contribution evidence template](college-docs/contribution-evidence.md) separate completed
 implementation from proposed validation. Targets are not measured results, and team
 planning roles are not verified contribution records.
 
@@ -35,6 +37,7 @@ docs/
 ├── README.md                      ← you are here (index & reading order)
 ├── RULES_AND_BASELINE.md          ← design rules, checked rules and baseline numbers
 │
+├── college-docs/                  ← academic scope, AU rules, evaluation and demo preparation
 ├── project/                       ← WHAT & WHY
 │   ├── proposal.md                ← the project proposal (incl. AI-assistance disclosure)
 │   └── roadmap.md                 ← milestone-level roadmap (v0.1 → v1.0 → v1.2)
@@ -130,7 +133,7 @@ docs/
 [operations/evaluation.md](operations/evaluation.md) records earlier product/ML targets and
 planned owners. It is not evidence that those targets were achieved or those members
 implemented the work. For the bounded academic protocol, use
-[project/evaluation-plan.md](project/evaluation-plan.md).
+[college-docs/evaluation-plan.md](college-docs/evaluation-plan.md).
 
 ## 1a. Design-only documents
 

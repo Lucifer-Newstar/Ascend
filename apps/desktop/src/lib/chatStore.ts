@@ -2,7 +2,7 @@
  * The trainer conversation, shared by the chat drawer and the Chat page (v1.3), so moving
  * between them keeps the thread. It lives for the app session, like the drawer did.
  */
-import type { ChatReply, FeedMessage, TrainerId } from "@ascend/shared";
+import type { ActionProposal, ChatReply, FeedMessage, TrainerId } from "@ascend/shared";
 import { useSyncExternalStore } from "react";
 
 import type { TrainerMood } from "./trainer";
@@ -31,6 +31,13 @@ export const chatStore = {
   },
   push(...items: Omit<ChatMsg, "id">[]): void {
     msgs = [...msgs, ...items.map((m) => ({ ...m, id: ++seq }))];
+    emit();
+  },
+  /** Persist action status for both chat views and later remounts of the same thread. */
+  updateProposal(proposal: ActionProposal): void {
+    msgs = msgs.map((m) => m.reply?.proposal?.id === proposal.id
+      ? { ...m, reply: { ...m.reply, proposal } }
+      : m);
     emit();
   },
   /** True the first time it is called in a session: the greeting and unread notices go in once. */

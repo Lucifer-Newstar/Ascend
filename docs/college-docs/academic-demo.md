@@ -34,7 +34,7 @@ Record each result, not just the final screen. Disable external networking for t
 
 ## Review sequence
 
-1. State the [problem and limits](../project/academic-scope.md), build and offline conditions.
+1. State the [problem and limits](academic-scope.md), build and offline conditions.
 2. Log a workout, open its suggestion and connect explanation inputs to stored records.
 3. Show the hold-triggering case and why it is an estimate.
 4. Cancel and confirm a trainer change; show persistence and one manual meal entry.
@@ -48,4 +48,4 @@ Record each result, not just the final screen. Disable external networking for t
 - [ ] Do not claim a trained LLM, clinical accuracy, injury prevention, guaranteed security or superiority to commercial apps.
 - [ ] Every member rehearses their own implementation/testing contribution and the overall architecture. Navin is the team lead, not the sole author.
 
-Save results using the [evaluation report template](../project/evaluation-plan.md#run-report-template). A clean CI run, checklist or polished screenshot is not a substitute for observed Windows results.
+Save results using the [evaluation report template](evaluation-plan.md#run-report-template). A clean CI run, checklist or polished screenshot is not a substitute for observed Windows results.

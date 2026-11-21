@@ -18,10 +18,10 @@ that runs beside it, deterministic training and diet engines, and an MLOps pipel
 
 **Academic scope:** the proposed contribution is an offline, inspectable fitness planning and
 progress-tracking system, not a claim of new physiological science. Start with the
-[bounded problem statement and objectives](docs/project/academic-scope.md),
-[evaluation plan](docs/project/evaluation-plan.md),
-[Windows demo checklist](docs/operations/academic-demo.md) and
-[team contribution evidence template](docs/project/contribution-evidence.md).
+[bounded problem statement and objectives](docs/college-docs/academic-scope.md),
+[evaluation plan](docs/college-docs/evaluation-plan.md),
+[Windows demo checklist](docs/college-docs/academic-demo.md) and
+[team contribution evidence template](docs/college-docs/contribution-evidence.md).
 These are preparation documents, not completed studies or university approval.
 
 ![Today](docs/screenshots/ASCEND_v5_Today.png)
@@ -191,7 +191,7 @@ what the engines computed.
 - **The recovery hold was inactive in the published progression experiment.** Removing recovery
   input produced identical results because no primary muscle crossed the hold threshold.
   That experiment does not show that recovery improves progression; separate stress cases are
-  needed ([evaluation plan](docs/project/evaluation-plan.md)).
+  needed ([evaluation plan](docs/college-docs/evaluation-plan.md)).
 - **The adaptive TDEE is slow to learn.** Only 57% of synthetic users are within 150 kcal of their
   true expenditure on day 28; the target stays on the formula until the estimate settles. If meals
   are under-logged, "you burn" matches what was logged.

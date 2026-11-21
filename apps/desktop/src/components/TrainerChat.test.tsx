@@ -1,4 +1,4 @@
-import type { ChatReply } from "@ascend/shared";
+import type { ActionProposal, ChatReply } from "@ascend/shared";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -130,6 +130,35 @@ describe("TrainerChat", () => {
     await waitFor(() => expect(api.confirmAction).toHaveBeenCalledWith(7, null));
     await userEvent.click(await screen.findByRole("button", { name: "Undo" }));
     expect(await screen.findByText("Undone.")).toBeInTheDocument();
+  });
+
+  it("keeps the executed and undone card state when the chat view remounts", async () => {
+    const proposal: ActionProposal = {
+      id: 17, kind: "log_weight", label: "Log a weigh-in", risk: "low", params: { weight_kg: 70 },
+      summary: ["Log 70 kg for today"], status: "proposed", source: "chat", origin_text: "weight 70",
+      confirm_word: null, undoable: true, auto_ok: false, result: null, error: null,
+      created_at: "2026-11-22T09:00:00", executed_at: null, undone_at: null,
+    };
+    vi.mocked(api.trainerChat).mockResolvedValue(reply({ proposal }));
+    vi.mocked(api.confirmAction).mockResolvedValue({ ...proposal, status: "executed" });
+    vi.mocked(api.undoAction).mockResolvedValue({ ...proposal, status: "undone" });
+    const chat = <PrefsProvider initial={DEFAULT_SETTINGS} save={async (p) => ({ ...DEFAULT_SETTINGS, ...p })}>
+      <TrainerChat variant="page" open onClose={() => {}} onAction={vi.fn()} />
+    </PrefsProvider>;
+    const first = render(chat);
+    await userEvent.type(screen.getByLabelText("Message the trainer"), "weight 70{Enter}");
+    await userEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+    await screen.findByRole("button", { name: "Undo" });
+    first.unmount();
+    const second = render(chat);
+    expect(screen.queryByRole("button", { name: "Confirm" })).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Undo" }));
+    await screen.findByText("Undone.");
+    second.unmount();
+    render(chat);
+    expect(screen.getByText("Undone.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirm" })).not.toBeInTheDocument();
+    expect(api.confirmAction).toHaveBeenCalledTimes(1);
   });
 
   it("needs the confirm word typed for a destructive action", async () => {

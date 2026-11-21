@@ -16,6 +16,8 @@ ASCEND integrates workout history, self-reported effort and optional daily check
 
 The preference for a Windows-only local workflow is a target-user hypothesis, not a demonstrated unmet market need. A PC is less convenient than a phone at the gym; ask intended users whether the workflow fits before claiming demand.
 
+See the [auditable decision-loop proposal](proposal-auditable-decisions.md) for the literature-grounded design/evaluation angle: inspect inputs and reasons, choose whether to apply the change, then verify and undo where supported. It does not claim market exclusivity. Official [AU rules and review windows](anna-university-r2021.md) are recorded separately.
+
 ## Assessed core and boundaries
 
 | Core | Supporting or optional | Outside the completed-work claim |
@@ -51,7 +53,7 @@ These are proposed acceptance targets to agree with the guide **before** measure
 | A4 | Reproducible evaluation | Rerun existing synthetic baselines with saved seeds/configuration and add cases that activate the recovery hold. Report calibration, errors and tradeoffs. Do not call simulated readiness measured biological truth. |
 | A5 | Task usability | If the guide approves, 5-8 consenting adult volunteers attempt the same six tasks. Proposed target: at least 80% unassisted completion across participant-task attempts. Report numerator/denominator, time, errors and explanation comprehension. This small convenience sample cannot establish population-level or health effects. |
 
-See [evaluation plan](evaluation-plan.md), [demo checklist](../operations/academic-demo.md) and [contribution evidence](contribution-evidence.md).
+See [evaluation plan](evaluation-plan.md), [demo checklist](academic-demo.md) and [contribution evidence](contribution-evidence.md).
 
 ## Priority order
 
