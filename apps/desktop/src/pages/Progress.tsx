@@ -294,7 +294,7 @@ function MuscleBandPanel({ refreshKey }: { refreshKey: number }) {
       <ul className="space-y-1.5" aria-label="Effective sets per muscle in the last 7 days">
         {list.slice(0, 12).map((m) => <BandRow key={m.key} m={m} />)}
       </ul>
-      {list.length > 12 && <p className="mt-2 text-[11px] text-muted">Top 12 by sets. The muscle map on Today shows all {list.length}.</p>}
+      {list.length > 12 && <p className="mt-2 text-[11px] text-muted">Top 12 by sets. Open Muscle recovery below for the detailed map.</p>}
       <p className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted">
         <span><span className="mr-1 inline-block h-2 w-3 rounded-sm bg-under align-middle" />under</span>
         <span><span className="mr-1 inline-block h-2 w-3 rounded-sm bg-good align-middle" />in band</span>

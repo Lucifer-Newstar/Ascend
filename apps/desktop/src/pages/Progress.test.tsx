@@ -135,6 +135,16 @@ describe("ProgressPage", () => {
     expect(screen.getByLabelText("Lats: 4 sets, band 10 to 20, under")).toBeInTheDocument();
   });
 
+  it("points the truncated weekly list to the detailed map on this page", async () => {
+    vi.mocked(api.muscles).mockResolvedValue(Array.from({ length: 13 }, (_, i) => ({
+      key: `qa-muscle-${i}`, label: `QA muscle ${i}`, group: "push", map_slug: "chest",
+      status: "under", es_7d: 1, weekly_low: 10, weekly_high: 20, readiness: 1, ready_at: null,
+    })) as never);
+    renderPage();
+    expect(await screen.findByText("Top 12 by sets. Open Muscle recovery below for the detailed map.")).toBeInTheDocument();
+    expect(screen.queryByText(/muscle map on Today/)).not.toBeInTheDocument();
+  });
+
   it("suggests the last weigh-in as the placeholder for today's weight", async () => {
     renderPage();
     await screen.findAllByText("74.3 kg");
