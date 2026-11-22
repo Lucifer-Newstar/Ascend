@@ -41,6 +41,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Check release versions and tag
+        run: python scripts/check_release.py
+
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
@@ -118,15 +121,23 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           notes="docs/releases/${TAG}.md"
+          release_args=()
+          if [[ "$TAG" == *-beta.* || "$TAG" == *-rc.* || "$TAG" == *-alpha.* ]]; then
+            release_args+=(--prerelease --latest=false)
+          fi
           if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
             gh release upload "$TAG" installer/*.exe installer/SHA256SUMS.txt --repo "$REPO" --clobber
+            # Mark an existing beta as pre-release even when notes were generated.
+            if [ "${#release_args[@]}" -gt 0 ]; then
+              gh release edit "$TAG" --repo "$REPO" "${release_args[@]}"
+            fi
             if [ -f "$notes" ]; then
               gh release edit "$TAG" --repo "$REPO" --title "ASCEND $TAG" --notes-file "$notes"
             fi
           elif [ -f "$notes" ]; then
             gh release create "$TAG" installer/*.exe installer/SHA256SUMS.txt --repo "$REPO" \
-              --verify-tag --title "ASCEND $TAG" --notes-file "$notes"
+              --verify-tag --title "ASCEND $TAG" --notes-file "$notes" "${release_args[@]}"
           else
             gh release create "$TAG" installer/*.exe installer/SHA256SUMS.txt --repo "$REPO" \
-              --verify-tag --title "ASCEND $TAG" --generate-notes
+              --verify-tag --title "ASCEND $TAG" --generate-notes "${release_args[@]}"
           fi

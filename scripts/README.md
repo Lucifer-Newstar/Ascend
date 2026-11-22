@@ -10,6 +10,8 @@ the Python tools CI and the maintainers run.
 | `check_contract_drift.py` | Compares the sidecar's OpenAPI with `docs/contracts` (`make contracts`; CI job "sidecar"). |
 | `sync_contract.py` | Copies operations or schemas from the sidecar's OpenAPI into a `docs/contracts` file after an API change. |
 | `check_md_links.py` | Fails when a relative link in a Markdown file points at a missing file or heading (CI job "docs"). |
+| `check_release.py` | Checks active app/runtime/lock versions, notes and changelog; understands normalized Python beta spelling. |
+| `test_release.py` | Tests release consistency and publication flags offline with a fake `gh` (CI docs job). |
 | `make_icons.py` | Renders `apps/desktop/build/icon.png` and `icon.ico`. |
 | `build_exercise_library.py` | Rebuilds the bundled exercise library (and with `--images` the 320 px photos) from free-exercise-db; needs network once. |
 | `body_map/` | Generator and notes for the muscle map artwork (`build_map.py`). |

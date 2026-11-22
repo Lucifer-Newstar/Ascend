@@ -62,6 +62,9 @@ jobs:
       # docs/RULES_AND_BASELINE.md R8 and R9: no phone numbers or secrets, the team is the author.
       - name: Repo rules (no phone numbers, secrets or assistant credits)
         run: python3 scripts/check_rules.py
+      - name: Release versions and pre-release workflow tests
+        run: python3 scripts/test_release.py
+
 
   sidecar:
     name: Sidecar (lint, types, tests) · ${{ matrix.os }}

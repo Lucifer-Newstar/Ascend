@@ -6,10 +6,10 @@
 
 ---
 
-## 0. As built (1.0.0)
+## 0. Current release procedure
 
-Sections 1–7 below are the plan from the design phase. This is how a release is actually cut
-at 1.0.0:
+Sections 1–7 below include design-phase plans, not claims of implemented automation.
+The current release procedure is:
 
 1. **Bump the version** in one commit (`chore(release): bump version to x.y.z`): the root,
    `apps/desktop` and `packages/shared` `package.json` files (and the `@ascend/shared`
@@ -19,7 +19,9 @@ at 1.0.0:
    `package.json`: `ASCEND-Setup-x.y.z.exe`.
 2. **Write the notes:** a `## [x.y.z] - date` section in `CHANGELOG.md` and the user-facing
    notes in `docs/releases/vx.y.z.md` (highlights, install, requirements, known limitations).
-3. **Push to `main`** and wait until CI, ML and the Windows installer workflow are green.
+3. **Open a normal PR** for the bump, notes and any automation changes. Merge only after
+   current-head CI is green. On the merged commit, wait for CI, ML (dispatch it if path
+   filters skipped it) and the Windows installer workflow to finish successfully.
 4. **Tag it:** `git tag vx.y.z` on that commit, then `git push origin vx.y.z`.
 5. **`release.yml` runs:** job `windows-installer` builds the PyInstaller sidecar and smoke-tests
    it, builds the NSIS installer and checks the Electron fuses; job `publish` creates the GitHub
@@ -27,10 +29,17 @@ at 1.0.0:
    `docs/releases/vx.y.z.md` (generated notes if that file is missing). A release drafted by hand
    first is updated, not duplicated.
 6. **Check the release page:** the `.exe` name carries the new version and `SHA256SUMS.txt` is
-   attached.
+   attached. Tags containing `-beta.`, `-rc.` or `-alpha.` are marked as GitHub
+   pre-releases with `latest=false`; they do not replace the stable/latest release.
+7. **Recheck the published artifacts** and record passed, failed and untested paths. A
+   Linux unpacked test is not a Windows install/uninstall certification.
+
+Run `python3 scripts/test_release.py` before the PR: it checks active version fields and
+uses a fake `gh` to test beta/stable creation and existing-release paths offline. Python
+lock metadata normalizes `1.4.0-beta.1` to `1.4.0b1`; the runtime and app display SemVer.
 
 Not built from the plan (yet): the beta channel and electron-updater (`latest.yml`,
-blockmaps), the release script and its version-consistency check, the silent-install smoke test,
+blockmaps), the end-to-end release script, the silent-install smoke test,
 the SBOM, the protected `release` environment and model-only releases. Users update by
 downloading the new installer; their data in `%APPDATA%\ASCEND` is kept.
 
@@ -44,7 +53,7 @@ downloading the new installer; their data in `%APPDATA%\ASCEND` is kept.
 - **Models:** independent versions in `models-manifest.json` (`ascend-food-cls@1.2.0`),
   each with `min_app_version`.
 - Version source of truth: `apps/desktop/package.json` and `services/sidecar/pyproject.toml`
-  bumped together by the release script (CI fails if they differ).
+  bumped together and checked by `scripts/check_release.py` in CI.
 
 ## 2. Channels
 
