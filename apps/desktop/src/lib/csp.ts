@@ -4,6 +4,9 @@
  * The committed index.html carries the production policy, `connect-src 'self'`: inside
  * Electron the renderer talks to the sidecar over IPC only, so it needs no network
  * origin, and an injected script couldn't reach Ollama or any other localhost service.
+ * Image sources include blob: for the temporary object URL used to decode a local photo
+ * before the canvas strips its metadata. This does not permit remote images or scripts.
+ *
  * Only the Vite dev server (`vite`, `npm run dev`) widens connect-src, for its HMR
  * websocket and for the browser-only mode that calls the sidecar on 127.0.0.1:8765.
  */

@@ -11,6 +11,9 @@ where a number you see could change. User-facing release notes live in
 
 ### Fixed
 
+- Progress photos can be decoded from local object URLs in the packaged app. The image
+  policy now permits `blob:` without allowing remote image origins or network connections.
+
 - Trainer action status now stays in the shared conversation when switching between Chat and
   its drawer or returning to the page. Confirmed or undone actions no longer reappear as
   fresh confirmation cards. A remount regression test covers the case.
