@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.modules.coach import ollama, validate
+from app.modules.coach import ollama, runtime, validate
 from app.modules.intelligence import progression as prog
 from app.modules.intelligence import recovery as rec
 from app.modules.progress import service as progress
@@ -43,7 +43,7 @@ class Explanation:
     version: str = EXPLAIN_VERSION
 
 
-_cache: OrderedDict[tuple[str, str, str], Explanation] = OrderedDict()
+_cache: OrderedDict[tuple[str, str, str, str], Explanation] = OrderedDict()
 
 
 def clear_cache() -> None:
@@ -113,16 +113,18 @@ def explain(
     block = facts_block(facts, template)
     if not progress.ai_enabled(db):
         return Explanation(template, template, "template", None, "ai_disabled", None, block)
-    cached = _cache.get(key)
+    model = runtime.model_for(db, settings)
+    cache_key = (model, *key)
+    cached = _cache.get(cache_key)
     if cached is not None and cached.template == template:
-        _cache.move_to_end(key)
+        _cache.move_to_end(cache_key)
         return cached
-    if not ollama.is_available(settings.ollama_host, settings.coach_model):
+    if not ollama.is_available(settings.ollama_host, model):
         return Explanation(template, template, "template", None, "model_unavailable", None, block)
     try:
         text = ollama.chat(
             settings.ollama_host,
-            settings.coach_model,
+            model,
             block,
             f"Rewrite the explanation for the lifter: {template}",
             timeout=settings.coach_timeout_s,
@@ -133,7 +135,7 @@ def explain(
             template,
             template,
             "template",
-            settings.coach_model,
+            model,
             f"model_error: {e}"[:120],
             None,
             block,
@@ -146,16 +148,14 @@ def explain(
             template,
             template,
             "template",
-            settings.coach_model,
+            model,
             f"check_failed: {failed}",
             checks.summary(),
             block,
         )
     else:
-        out = Explanation(
-            text, template, "model", settings.coach_model, None, checks.summary(), block
-        )
-    _cache[key] = out
+        out = Explanation(text, template, "model", model, None, checks.summary(), block)
+    _cache[cache_key] = out
     while len(_cache) > CACHE_SIZE:
         _cache.popitem(last=False)
     return out

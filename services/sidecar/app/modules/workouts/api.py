@@ -135,6 +135,7 @@ def analyze_exercise(
     request carries allow_once. `insufficient` lists core fields the offline stages could
     not support. Each online lookup is written to the local lookup log. Nothing else is
     saved."""
+    from app.modules.coach import runtime
     from app.modules.progress import service as progress
 
     settings = request.app.state.settings
@@ -145,7 +146,7 @@ def analyze_exercise(
         notes=body.notes,
         ai_enabled=progress.ai_enabled(db),
         ollama_host=settings.ollama_host,
-        model=settings.coach_model,
+        model=runtime.model_for(db, settings),
         online_allowed=progress.online_lookup(db),
         online_requested=body.online,
         allow_once=body.allow_once,

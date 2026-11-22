@@ -17,7 +17,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.modules.coach import ollama, validate
+from app.modules.coach import ollama, runtime, validate
 from app.modules.nutrition.models import Food
 from app.modules.planner import diet_gen, section_gen, workout_gen
 from app.modules.planner import validate as goalcheck
@@ -115,12 +115,13 @@ def phrase(db: Session, settings: Settings, text: str, use_ai: bool) -> tuple[st
     an error, or the number guard rejecting the rewording)."""
     if not use_ai or not progress.ai_enabled(db):
         return text, "rules"
-    if not ollama.is_available(settings.ollama_host, settings.coach_model):
+    model = runtime.model_for(db, settings)
+    if not ollama.is_available(settings.ollama_host, model):
         return text, "rules"
     try:
         out = ollama.chat(
             settings.ollama_host,
-            settings.coach_model,
+            model,
             text,
             "Reword the summary above.",
             timeout=settings.coach_timeout_s,
