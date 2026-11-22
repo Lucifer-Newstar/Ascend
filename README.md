@@ -85,10 +85,11 @@ the full history is in [CHANGELOG.md](CHANGELOG.md).
 Shortcuts: **Ctrl+K** command bar · **Ctrl+1…0** pages (Profile has none) · **Enter** log the set shown ·
 **Space** pause rest · arrows on the skill canvas.
 
-### On main, not released yet (after 1.3.0)
+### Beta candidate v1.4.0-beta.1 (after 1.3.0)
 
-Merged after the 1.3.0 tag (plus the knowledge gap fill on `feat/kb-gap-fill`). Not in an
-installer yet; [CHANGELOG.md](CHANGELOG.md) lists them under Unreleased.
+Included in the v1.4.0-beta.1 candidate. Stable v1.3.0 remains the default download;
+use the [Releases list](https://github.com/Lucifer-Newstar/Ascend/releases) to find the beta
+when its build is published. See the [beta notes](docs/releases/v1.4.0-beta.1.md) for limits.
 
 | What | How it works |
 |---|---|

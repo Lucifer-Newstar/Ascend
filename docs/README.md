@@ -8,10 +8,10 @@
 > Maintainer: Navin Jairam M (Team Lead, DevOps/MLOps). Updated whenever the
 > structure changes (rule 2: the docs folder stays clean).
 >
-> Status (2026-10-27): the latest release is **1.3.0**. `main` carries the unreleased work listed
-> under Unreleased in the [CHANGELOG](../CHANGELOG.md) (training week, plan builder, coaching
-> team, rewards, the intent router, cited knowledge answers and a hidden Scan meal), and the
-> `feat/kb-gap-fill` branch adds the knowledge gap fill. The planning docs were written on 2026-10-20,
+> Status (2026-11-22): the latest stable release is **1.3.0**. The **1.4.0-beta.1**
+> candidate collects the work in the [CHANGELOG](../CHANGELOG.md) (training week, plan builder, coaching
+> team, rewards, the intent router, cited knowledge answers, the merged knowledge gap fill
+> and a hidden Scan meal). The planning docs were written on 2026-10-20,
 > before the first line of code, and are kept as the design record: where the built app
 > differs from a plan, the [README](../README.md), the [CHANGELOG](../CHANGELOG.md) and the
 > per-folder READMEs describe what shipped. Every date in the planning docs is an

@@ -9,6 +9,13 @@ where a number you see could change. User-facing release notes live in
 
 ## [Unreleased]
 
+## [1.4.0-beta.1] - 2026-11-22
+
+Pre-release for testing, not a stable promotion. Database `0032` → `0035`.
+Windows install/uninstall and Windows-specific integration remain untested in this review.
+See [release notes](docs/releases/v1.4.0-beta.1.md) and the
+[packaged verification report](docs/operations/reports/packaged-verification-2026-11-22.md).
+
 ### Fixed
 
 - Progress photos can be decoded from local object URLs in the packaged app. The image
